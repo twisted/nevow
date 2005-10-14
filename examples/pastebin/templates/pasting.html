@@ -1,0 +1,14 @@
+<div nevow:render="aPasting">
+
+  <p>Pasted by <nevow:slot name="author">author</nevow:slot> at <nevow:slot name="time">time</nevow:slot>.</p>
+  <div class="pastingText"><nevow:slot name="text">Pasting goes here</nevow:slot></div>
+  <div class="revision-history">
+    <p>Revision history:</p>
+    <ul nevow:render="sequence" nevow:data="history">
+      <li nevow:pattern="item" nevow:render="version"><a href=""><nevow:attr name="href"><nevow:slot name="url"/></nevow:attr><nevow:slot name="time"/> (<nevow:slot name="author"/>)</a></li>
+    </ul>
+  </div>
+  
+  <form nevow:render="form"/>
+
+</div>

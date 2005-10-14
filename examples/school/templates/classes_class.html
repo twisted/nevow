@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<n:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <ul id="pagemenu">
+    <li><a href="/classes/years">School Year</a></li>
+    <li><a href="/classes" id="current">All Classes</a></li>
+    <li><a href="/classes/proposals">Proposals</a></li>
+    <li><a href="/classes/laboratories">Laboratories</a></li>
+    <li><a href="/classes/timetable">TimeTable</a></li>
+    <!-- <li><a href="/classi/avvisi">Avvisi</a></li>  Link duplicato nella barra principale-->
+    <li><a href="/classes/useful_material">Useful Material</a></li>
+    <li><a href="/classes/teachers">Teachers</a></li>
+  </ul>
+  <div id="content">
+    <h1>Class <n:invisible n:data="class" n:render="string" /></h1>
+    <h2>Class summary</h2>
+    <table>
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Surname</th>
+	  <th>Address</th>
+	  <th>Phone</th>
+	  <th>Fiscal Code</th>
+	</tr>
+      </thead>
+      <tbody n:data="students" n:render="sequence">
+	<tr n:pattern="item">
+	  <td n:data="name" n:render="string" />
+	  <td n:data="surname" n:render="string" />
+	  <td n:data="address" n:render="string" />
+	  <td n:data="phone" n:render="string" />
+	  <td n:data="fiscal_code" n:render="string" />	  
+	</tr>
+	<tr n:pattern="empty">
+	  <td colspan="5">No students</td>
+	</tr>
+      </tbody>
+    </table>
+  </div>
+</n:invisible> 

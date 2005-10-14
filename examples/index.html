@@ -1,0 +1,973 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for Mac OS X (vers 12 April 2005), see www.w3.org" />
+
+  <title>Nevow Examples</title>
+  <link href="cssfile" type="text/css" rel="stylesheet" title=
+  "MainTheme" />
+</head>
+
+<body>
+  <div id="main">
+    <h1>Welcome to Nevow</h1>
+
+    <p>This page contains examples of how to build web applications
+    on top of Nevow, in order of increasing complexity. To get a
+    feel of how to structure your Python code while using Nevow,
+    the source of all examples is linked for easy reference. In
+    order to run each example, you will need Zope Interface,
+    Twisted, and Nevow installed, and then you will need to run the
+    example server.</p>
+
+    <p>Under <strong>windows</strong>: you need to run the Twisted
+    Shell from Start--&gt;Applications--&gt;Twisted menu. Under a
+    unix like operating system, make sure that the twistd binary is
+    on your PATH. Installing Twisted will do this for you.</p>
+
+    <p>To run the example server, go to the Nevow examples
+    directory (eg: C:\Nevow\examples or /usr/src/Nevow/examples)
+    and run the following command:</p>
+
+    <blockquote>
+      twistd -noy examples.tac
+    </blockquote>
+
+    <p>Then, to view the running examples, point your web browser
+    at: <a class="linkification-ext" href=
+    "http://localhost:8080/">http://localhost:8080/</a></p>
+
+    <p>Once you are viewing this page as served by the example
+    server, all of the "live" links below will work.</p>
+
+    <h2>Table of Contents</h2>
+
+    <ol>
+      <li><a href="#tests">Test Suite</a></li>
+
+      <li><a href="#examples">Examples</a></li>
+
+      <li><a href="#livepage">LivePage/Canvas/XUL</a></li>
+
+      <li><a href="#taglibrary">Tag Library Examples</a></li>
+
+      <li><a href="#demoapp">Demo Applications</a></li>
+    </ol>
+
+    <h1 id="tests">Test Suite</h1>
+
+    <p>Nevow 0.4 now includes a live test runner which operates
+    inside of your web browser. The test runner currently operates
+    only under Firefox, and not IE or Safari. This will be fixed in
+    a future release. Test suites for some of the examples provided
+    here have been written. The following test suites may be
+    executed by visiting their respective pages:</p>
+
+    <ol>
+      <li><a href="/tests/">Run basic tests</a></li>
+
+      <li><a href="/formless_tests/">Run formless tests</a></li>
+
+      <li><a href="/livetests/">Run livepage example tests</a></li>
+
+      <li><a href="/testtests/tests/">Test test harness</a></li>
+    </ol>
+
+    <h1 id="examples">Examples Listing</h1>
+
+    <ol>
+      <li>
+        <span>A Nevow example that doesn't use any of Nevow
+        automations</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/most_basic/most_basic.py">most_basic.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href=
+          "most_basic/">most_basic</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Hello world in Nevow</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/hello/hellostan.py">hellostan.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Source</td>
+
+                <td><a href=
+                "sources/hello/hellohtml.py">hellohtml.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Template</td>
+
+                <td><a href=
+                "sources/hello/hellohtml.html">hellohtml.html</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href="hellohtml/">xmlfile</a>,
+          <a href="hellostan/">Stan</a>
+        </div>
+      </li><!--
+
+  <li>
+
+                <span>Hello world in Nevow</span>
+
+                <div class="source">            
+
+                        <table width="100%"  border="0" cellspacing="0" cellpadding="0">
+
+                <tr>
+
+                        <td><a href="sources/hellostan.py">Stan Source</a></td>
+
+                        <td width="100%"></td>
+
+                        </tr>
+
+                <tr>
+
+                        <td><a href="b">xmlfile Source</a></td>
+
+                        <td></td>
+
+                        </tr>
+
+                <tr>
+
+                        <td><a href="c">xmlfile Template</a></td>
+
+                        <td></td>
+
+                        </tr>
+
+                </table>                        
+
+                    Live examples: <a href="hellohtml/">xmlfile</a>, <a href="hellostan/">Stan</a></div>
+
+  </li>
+
+-->
+
+      <li>
+        <span>How to get Session and Request objects from the
+        context</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/simple/simple.py">simple.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Source</td>
+
+                <td><a href=
+                "sources/simple/simplehtml.py">simplehtml.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Template</td>
+
+                <td><a href=
+                "sources/simple/simplehtml.html">simplehtml.html</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href="simplehtml/">xmlfile</a>,
+          <a href="simple/">Stan</a><br />
+        </div>
+      </li>
+
+      <li>
+        <span>Render tables in Nevow</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>xmlfile Source</td>
+
+                <td width="100%"><a href=
+                "sources/table/tablehtml.py">tablehtml.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Template</td>
+
+                <td><a href=
+                "sources/table/tablehtml.html">tablehtml.html</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="tablehtml/">tables</a>
+        </div>
+      </li>
+
+      <li>
+        <span>How to use xmlfile directives</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/disktemplates/disktemplates_stan.py">disktemplates_stan.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Source</td>
+
+                <td><a href=
+                "sources/disktemplates/disktemplates.py">disktemplates.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Template</td>
+
+                <td><a href=
+                "sources/disktemplates/disktemplates.html">disktemplates.html</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href=
+          "disktemplates/">xmlfile</a>, <a href=
+          "disktemplates_stan/">Stan</a>
+        </div>
+      </li>
+
+      <li>
+        <span>How to handles page children with Nevow, and how to
+        use the &lt;nevow:attr&gt; tag</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/children/children.py">children.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Source</td>
+
+                <td><a href=
+                "sources/children/childrenhtml.py">childrenhtml.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Templates</td>
+
+                <td><a href=
+                "sources/children/childrenhtml_RootPage.html">childrenhtml_RootPage.html</a><br />
+
+                <a href=
+                "sources/children/childrenhtml_ChildPage.html">childrenhtml_ChildPage.html</a><br />
+
+                <a href=
+                "sources/children/childrenhtml_ChildOfChildPage.html">
+                childrenhtml_ChildOfChildPage.html</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href="children/">stan</a>,
+          <a href="childrenhtml/">xmlfile</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Use Fragments to divide a page in logical
+        components</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/fragments/fragments.py">fragments.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Template</td>
+
+                <td width="100%"><a href=
+                "sources/fragments/main.html">main.html</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="fragments/">fragments</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Use Macro directive to compose pages by transforming
+        the docFactory at precompile time</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/macros/macros.py">macros.py</a></td>
+              </tr>
+
+              <tr>
+                <td>xmlfile Template</td>
+
+                <td><a href=
+                "sources/macros/main.html">main.html</a><br />
+                <a href=
+                "sources/macros/root_macro.html">root_macro.html</a><br />
+
+                <a href=
+                "sources/macros/child_macro.html">child_macro.html</a><br />
+                </td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="macros/">macros</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Allow data= directives to look inside application
+        objects</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/objcontainer/objcontainer.py">objcontainer.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "objcontainer/">objcontainer</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Use nested sequences to render an attribute of type
+        list of an object</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/nestedsequence/nestedsequence.py">nestedsequence.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "nestedsequence/">nestedsequence</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Manual form example</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/manualform/manualform.py">manualform.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="manualform/">form</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Advanced manual form example</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/advanced_manualform/advanced_manualform.py">
+                advanced_manualform.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "advanced_manualform/">form</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Formless example</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/formpost/formpost.py">formpost.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="formpost/">formpost</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Another formless example, but a little bit more
+        complex</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/formpost/formpost2.py">formpost2.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="formpost2/">formpost2</a>
+        </div>
+      </li>
+
+      <li>
+        <span><b>[0.5]</b>Using formless to create multi-step
+        wizards by returning Page instances from
+        autocallables</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/tests/testformless.py">tests/testformless.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "testformless">testformless</a>
+        </div>
+      </li>
+
+      <li>
+        <span><b>[0.5]</b>Using formless, return a URL instance
+        from an autocallable to redirect to it</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/tests/testformless.py">tests/testformless.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "formless_redirector">formless_redirector</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Example of interacting with a database</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source:</td>
+
+                <td width="100%"><a href=
+                "sources/db/db.py">db.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href="db/">db</a>
+        </div>
+      </li>
+
+      <li>
+        <span>An example of using HTTP Basic Auth for simple
+        authentication</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/http_auth/http_auth.py">http_auth.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="http_auth/">http_auth</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Various examples of how to integrate twisted.guard
+        with Nevow for authentication</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/guarded/guarded.py">guarded.py</a></td>
+              </tr>
+
+              <tr>
+                <td>Stan Source</td>
+
+                <td><a href=
+                "sources/guarded/guarded2.py">guarded2.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href="guarded/">guarded</a>,
+          <a href="guarded2/">guarded2</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Examples of how to access the session when a user
+        logs out of guarded sites</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/logout_guard/logout_guard.py">logout_guard.py</a></td>
+              </tr>
+
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/logout_guard/logout_guard2.py">logout_guard2.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live examples: <a href=
+          "logout_guard/">logout_guard</a>, <a href=
+          "logout_guard2/">logout_guard2</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Use Configurables to render a form with Formless in a
+        customized template</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>xmlfile Source</td>
+
+                <td width="100%"><a href=
+                "sources/customform/customform.py">customform.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "customform/">customform</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Dynamically build your forms</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/formbuilder/formbuilder.py">formbuilder.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "formbuilder/">formbuilder</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Adapting an object to the IRenderer interface in
+        order to make it render itself</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/irenderer/simple_irenderer.py">simple_irenderer.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="simple_irenderer/">simple
+          IRenderer</a>
+        </div>
+      </li>
+
+      <li>
+        <span>More complex example of adapting objects to IRenderer
+        and to different interfaces</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/irenderer/irenderer.py">irenderer.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="irenderer/">IRenderer</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Handling and building a Tree structure dynamically on
+        yor site</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/tree/tree.py">tree.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="tree/">tree</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Simple example of text localisation</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/i18n/i18n.py">i18n.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="i18n/">i18n</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Localisation of disk templates</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td>xmlfile Source</td>
+
+                <td width="100%"><a href=
+                "sources/i18n/hello.html">hello.html</a></td>
+              </tr>
+
+              <tr>
+                <td>Python Source</td>
+
+                <td width="100%"><a href=
+                "sources/i18n/diski18n.py">xmli18n.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="xmli18n/">xmli18n</a>
+        </div>
+      </li>
+    </ol>
+
+    <h1 id="livepage">LivePage/Canvas/XUL</h1>
+
+    <ul>
+      <li>
+        <span>Chatola: A multiuser realtime chat application using
+        LivePage</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td>Python Source</td>
+
+                <td width="100%"><a href=
+                "sources/chatola/chatola.py">chatola.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="chatola/">chatola</a>
+        </div>
+      </li>
+
+      <li>
+        <span>LiveAnimal: A small LivePage game</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td>Python Source</td>
+
+                <td width="100%"><a href=
+                "sources/liveanimal/liveanimal.py">liveanimal.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href=
+          "liveanimal/">liveanimal</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Integration between Flash(TM) and Nevow</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/canvas/canvas.py">canvas.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="canvas/">canvas</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Integration between XUL and Nevow</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/xul/xul_nevow.py">xul_nevow.py</a></td>
+              </tr>
+
+              <tr>
+                <td>XUL Source</td>
+
+                <td width="100%"><a href=
+                "sources/xul/xul_example.xul">xul_example.xul</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="xul_nevow/">xul_nevow</a>
+        </div>
+      </li>
+    </ul>
+
+    <h1 id="taglibrary">Tag Library Examples</h1>
+
+    <ul>
+      <li>
+        <span>How to use the Calendar tag from the
+        taglibrary</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/cal/cal.py">cal.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="calendar/">calendar</a>
+        </div>
+      </li>
+
+      <li>
+        <span>How to use the TabbedPane tag from the
+        taglibrary</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/tabbed/tabbed.py">tabbed.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="tabbed/">tabbed</a>
+        </div>
+      </li>
+
+      <li>
+        <span>How to use the Progressbar tag from the
+        taglibrary</span>
+
+        <div class="source">
+          <table border="0" cellpadding="0" cellspacing="0" width=
+          "100%">
+            <tbody>
+              <tr>
+                <td>Stan Source</td>
+
+                <td width="100%"><a href=
+                "sources/progress/progress.py">progress.py</a></td>
+              </tr>
+            </tbody>
+          </table>Live example: <a href="progress/">progress</a>
+        </div>
+      </li>
+    </ul>
+
+    <h1 id="demoapp">Demo Applications</h1>
+
+    <ul>
+      <li>
+        <span>Extremely basic library, made with axiom (redesigned atop)</span>
+
+        <div class="source">
+          xmlfile Source: <a href="sources/with_axiom">with_axiom</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Handling users in a web site</span>
+
+        <div class="source">
+          Stan Source: <a href="sources/userdb">userdb</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Liveevil example in a live chat page</span>
+
+        <div class="source">
+          Source: <a href="sources/chatola">chatola</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Pastebin example with nevow</span>
+
+        <div class="source">
+          Source: <a href="sources/pastebin">pastebin</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Blog engine</span>
+
+        <div class="source">
+          Source: <a href="sources/blogengine">blogengine</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Link storage webservice (uses Twisted's
+        XML-RPC)</span>
+
+        <div class="source">
+          Source: <a href="sources/postit">postit</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Todo list with rails like file structure (requires
+        pgasync 1.3b and postgres)</span>
+
+        <div class="source">
+          Source: <a href="sources/todo">todo</a>
+        </div>
+      </li>
+
+      <li>
+        <span>Image uploader that uses atop</span>
+
+        <div class="source">
+          Source: <a href="sources/image_uploader">imagination</a>
+        </div>
+      </li>
+      <li>
+        <span>Small application to manage a primary school</span>
+
+        <div class="source">
+            Source: <a href="sources/school">school</a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</body>
+</html>

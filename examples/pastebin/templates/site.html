@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <title>Twisted Pastebin</title>
+    <link rel="stylesheet" type="text/css" href="/css/standard.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/default.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/freeform.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/python.css"/>
+  </head>
+
+  <body>
+
+    <div id="header">
+      <h1>Twisted Pastebin</h1>
+    </div>
+
+    <div id="content-container">
+
+      <div id="nav">
+
+	Menu:
+	<ul id="menu">
+	  <li><a href="/">Add pasting</a></li>
+	</ul>
+
+	Recent pastings:
+	<ul id="pastings" nevow:data="pastings" nevow:render="sequence">
+	  <li nevow:pattern="empty"><em>none</em></li>
+	  <li nevow:pattern="item" nevow:render="pasting">
+	    <a href="#"><nevow:attr name="href"><nevow:slot name="url"/></nevow:attr><nevow:slot name="id" /> (<nevow:slot name="author"/>)</a>
+	  </li>
+	</ul>
+
+      </div>
+
+      <div id="content" nevow:render="content">
+      </div>
+
+    </div>
+
+    <div id="footer">
+      Powered by <a href="http://www.twistedmatrix.com/">Twisted</a> and
+      <a href="http://divmod.org/users/wiki.twistd/nevow/moin.cgi">Nevow</a>.
+    </div>
+
+  </body>
+
+</html>

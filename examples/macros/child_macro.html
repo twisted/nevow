@@ -1,0 +1,16 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<n:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <p>
+    Again, as you see this page has run the macro
+    for this page. If you try to refresh you will see that the counter
+    won't increase. That's because the macro is called only once, but
+    different pages don't share the same expanded macro when you use
+    xhtml templates with xmlfile. Currently loaders.stan,
+    loaders.htmlfile, loaders.htmlstr, loaders.xmlstr do not allow
+    this 'macro sharing' functionality because of the way they handle
+    template cache. This will be fixed in the future.
+  </p>
+  <p n:render="advice" />
+  <p><a href="../">Back</a></p>
+</n:invisible>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<feed version="0.3" xmlns="http://purl.org/atom/ns#" xml:lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <title mode="escaped">Post-it</title>
+  <link rel="alternate" type="text/html" href="http://vercingetorix.dyndns.org:8080/postit/" />
+  <tagline mode="escaped">#verbamanent daily habit</tagline>
+  <modified n:data="getFirstPost" n:render="modified">$page.formatDatetime($page._modified)</modified>
+  <id>tag:deelan.com,2004:/postit/</id>  
+  <n:invisible n:data="get_posts" n:render="sequence">
+    <entry n:pattern="item" n:render="post">
+      <title mode="escaped"><n:slot name="title">$page.htmlEncode($entry.title)</n:slot></title>
+      <link rel="alternate" type="text/html" href="$page.htmlEncode($entry.uri)">
+      	<n:attr name="href"> <n:slot name="link" /> </n:attr>
+      </link>
+      <id>tag:deelan.com,2004:/postit/<n:slot name="id">$entry.id</n:slot></id>
+      <issued><n:slot name="created">$page.formatDatetime($entry.issued)</n:slot></issued>
+      <modified><n:slot name="modified">$page.formatDatetime($entry.issued)</n:slot></modified>
+      <author>
+        <name><n:slot name="author">$page.htmlEncode($entry.nickname)</n:slot></name>
+      </author>
+      <content type="text/plain" mode="escaped"><n:slot name="content">$page.htmlEncode($entry.description)</n:slot></content>
+    </entry>	</n:invisible>
+</feed>

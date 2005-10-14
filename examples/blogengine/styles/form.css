@@ -1,0 +1,78 @@
+form {
+	margin: 0;
+}
+
+/*
+form div {
+	margin-top: 10px;
+}
+*/
+
+form .field {
+	margin-top: 10px;
+}
+
+fieldset {
+  margin: 0;
+  margin-top: 10px;
+
+/*border: 1px solid red;*/
+    border-style: none;
+    padding: 0;
+}
+
+
+label {
+    display: block; 
+    margin-bottom: 2px; 
+}
+
+label span {
+    font-size: 85%;
+    color: #666;
+}
+
+input, textarea {
+    /* f a t font to ease input */
+    font: bold 12px/100% "Lucida Console", Curier, monospace;  
+    color: #444;
+
+    padding: 4px 2px;
+    border: 1px solid #ccc;
+
+    margin: 0;
+}
+
+input:focus, textarea:focus {
+    border-color: #6cc;
+}
+
+
+input.btn {
+    margin: 0;
+    margin-right: 2px; /* space between the next button */
+
+    padding: 2px 4px;
+
+    color: #333;
+    background: #6cc;
+
+    /* raised 3d look */
+    border-top: 2px solid #ccc;
+    border-left: 2px solid #ccc;
+    border-bottom: 2px solid #444;
+    border-right: 2px solid #444;
+    
+    font-family: Verdana, Helvetica, sans-serif;
+    line-height: 150%;
+
+    font-size: xx-small; /* fake value for IE4/5.x */
+    voice-family: "\"}\""; 
+    voice-family: inherit; 
+    font-size: x-small; /* real inteded value for text size */
+}
+
+blah {
+    /* fake rule for IE */
+}
+

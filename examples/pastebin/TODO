@@ -1,0 +1,11 @@
+Syntax highlighting: Python, HTML, diff etc
+Coloured diff view
+Cookie to save author
+UI - move menu etc to right
+View | Edit when viewing latest revision
+Line numbers
+Wrap the syntax highlighted bit.
+
+Syntax highligh options:
+t.p.htmlizer, enscript, webcpp, SilverCity
+copy source code highlight code from viewcvs

@@ -1,0 +1,32 @@
+.py-src-comment
+{
+  color: #1111CC
+}
+
+.py-src-keyword
+{
+  color: #3333CC;
+  font-weight: bold;
+}
+
+.py-src-parameter
+{
+  color: #000066;
+  font-weight: bold;
+}
+
+.py-src-identifier
+{
+  color: #CC0000
+}
+
+.py-src-string
+{
+  
+  color: #115511
+}
+
+.py-src-endmarker
+{
+  display: block; /* IE hack; prevents following line from being sucked into the py-listing box. */
+}

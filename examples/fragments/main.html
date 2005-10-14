@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <title>Fragments Example</title>
+    <style type="text/css">
+#header {
+font-size: 30px;
+border-bottom: 1px solid #000;
+}
+
+#sidebar {
+float:left;
+}
+
+#sidebar ul{
+list-style: none;
+margin-right: 30px;
+margin-left: 15px;
+padding: 5px;
+}
+#content {
+margin-left: 50px;
+border-left: 50px;
+padding: 5px;
+}
+    </style>
+  </head>
+  <body>
+    <div id="header" n:data="ip" n:render="header" />
+    <div id="sidebar" n:render="sidebar">
+      <!-- you can also avoid using the slot by just 
+      returning ctx.tag[The_Fragment_Instance]
+      from the render_* like it is done with the 
+      others in this page -->
+      <n:slot name="main_sidebar" />
+    </div>
+    <div id="content" n:render="content" />
+  </body>
+</html>

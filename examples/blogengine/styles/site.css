@@ -1,0 +1,482 @@
+@import url("typo.css");
+@import url("form.css");
+
+/* 
+-------------------------------------------------
+Theme by Andrea Peltrin (http://www.deelan.com)
+-------------------------------------------------
+*/
+
+
+/* basic elements */
+/*---------------------------------------------------*/
+
+body, html {
+	margin: 0;
+	padding: 0;
+}
+
+
+body { 
+	color: #222; 
+	
+	margin: 0;	
+/*	background: #903 url("images/background.gif"); */
+	background: #fafafa;
+}
+
+body, p, li, td, th, dd, dt, h1, h2, h3, h4, h5, h6 /* help browser to not forget */
+{		
+	font-family: verdana, geneva, arial, sans-serif;
+/*	line-height: 200%;*/
+
+	font-size: x-small;  	/* IE5 */
+	voice-family: "\"}\""; 
+	voice-family: inherit;
+	font-size: small; 
+}
+
+html>body {
+	font-size: small; 
+}
+
+
+a img {
+    border-style: none;
+}
+
+/* main contents */
+
+#main {	
+	/*border: 1px solid red; */ /* debug */
+	/*border-top: none;*/
+		
+
+
+	margin: 0 auto; 
+	padding: 0; 
+
+	position: absolute;
+
+	top: 30px;
+	left: 50%;
+	margin-left: -380px; 
+
+	width: 760px;
+}
+
+/* header */
+
+#header { 
+	background: #069 url("/images/bg-header2.jpg") top right no-repeat; 
+	
+	height: 235px;  
+	border: 1px solid #ccc;
+}
+
+
+#header h1 { 
+	margin: 0;
+	margin-top: 140px;
+	/*margin-right: 280px;*/
+
+    padding: 0;
+    padding-left:30px;
+
+
+	font: bold italic 52px/100% georgia, times, serif;
+	color: #fff;
+}
+
+#header p {
+	margin: 0;
+	/*margin-left: 280px;*/ /* == #header h1 */
+	
+    padding: 0;
+    padding-left:30px;
+
+
+	text-transform: lowercase;
+	font: bold 18px/100% verdana, arial, sans-serif;
+			
+	color: #fff;
+}
+
+
+/*---------------------------------------------------*/
+
+#content{
+	padding: 35px;
+	margin: 0;
+	
+	/*border: 1px solid red; */ /* debug */	
+	margin-right: 245px; 
+
+}
+
+#content p {
+	/* border: 1px solid red; */ /* debug */
+/*    text-align: justify;*/
+	line-height: 160%;
+
+	margin: 1em 0;		
+	padding: 0;
+}
+
+#content ul, #content ol, #content dl, #content blockquote {
+	line-height: 160%; 
+}
+
+
+#content dd {
+    margin: 0;
+    margin-bottom: 10px;
+}
+
+
+/* funky titles */
+#content h2 {
+
+/*	font: bold italic 24px/100% georgia, times, serif;*/
+	font: bold 18px/100% verdana, arial, sans-serif;
+	
+	color: #069;
+		
+	margin: 0;
+	margin-bottom: 4px; /* space up for datetime */
+
+	text-transform: lowercase;
+/*	font-variant: small-caps;*/
+
+}
+
+#content p.dtm {
+
+	margin: 0; 
+	margin-bottom: 1em;
+
+	font-size: 80%;
+
+	text-transform: uppercase;
+}
+
+
+div.entry {
+
+}
+
+
+#content hr {
+    visibility: hidden;
+
+
+	padding: 0;	
+    margin: 2.5em auto;
+    
+
+}
+
+
+
+/* ...and finally we place the list of links */
+
+#sidebar{
+	float: right;
+
+/*    border: 1px solid #069;*/
+
+	margin: 0;
+    padding: 35px; 
+	
+	width: 250px; 
+	voice-family: "\"}\"";   
+	voice-family: inherit;
+	width: 180px;
+}
+
+#main>#sidebar {
+	width: 180px;
+}
+
+
+#sidebar ul {
+	list-style: none;
+	
+	margin: 0;	
+	margin-bottom: 25px;
+
+	padding: 0;	
+}
+
+
+#sidebar ul li {
+	line-height: 150%; 
+
+	margin: 0;	
+	padding: 5px 0; 
+}
+
+
+#sidebar ul#nav li {
+	line-height: 160%;  /* restore global value */
+
+	border-style: none;
+	background: none;
+		
+	margin-bottom: 10px;
+	padding: 5px 0 5px 22px; /* space for arrow gfx */		
+
+	border-top: 1px solid #ccc;	
+	border-bottom: 1px solid #ccc;
+	
+	text-transform: lowercase;
+}
+
+
+/* funky titles */
+#sidebar h3 {
+	color: #069;
+		
+	margin: 0;	
+	margin-bottom: 15px;	
+    
+	padding: 0;
+    
+    
+}
+
+
+/* styles for in-line images/photos */
+/*---------------------------------------------------*/
+#content .image img {
+	display: block;		
+	border: 1px solid #444;
+}
+
+#content .image {
+	margin: 1em auto;  /* == #content p*/
+
+	width: 360px;
+	position: relative;
+}
+
+#content .image span {
+ 	position: absolute;
+    
+	background: #069;
+	color: #fff;
+
+	padding: 4px 4px;
+
+ 	bottom: 10px;
+	left: 10px;
+  
+ 	z-index: 1;	
+
+	/* verdana looks better than arial if font is small */
+	font-family: verdana, arial, helvetica, sans-serif;  
+
+	/* @@ fix IE5 here */
+	font-size: x-small;
+}
+
+/* hyperlink */
+/*---------------------------------------------------*/
+
+a:link, a:visited, a:hover, a:active {
+	color: #099;
+	
+	text-decoration: none;
+	border-bottom: 1px solid #099;
+}
+
+a:visited {
+	color: #444;
+	border-bottom-color: #444;
+}
+
+a:hover {
+	color: #903;
+	/*border-bottom: 1px solid #903;*/
+	border-bottom: none;
+}
+
+
+#footer {
+	margin: 0; 
+	margin-top: 20px; 
+	padding: 15px 0;		
+
+/*	background: #903;*/
+
+	clear: both;	  /* float reset */
+	text-align: center;
+ 	
+
+	border-top: 1px solid #ccc;
+
+	font-size: 85%;
+}
+
+
+
+/* utilities */
+/*---------------------------------------------------*/
+
+.cut {clear: both; height: 1px;}
+.hidden {display: none;}
+
+/*---------------------------------------------------*/
+
+ul#breadcrumb {
+	list-style: none;
+
+	/* reset both on Mozilla and IE */
+	padding: 0;	
+
+	margin: 0;
+	margin-bottom: 35px;		
+}
+
+ul#breadcrumb li {
+	display: inline;
+	margin-right: 5px;
+	
+	/*text-transform: lowercase;*/
+}
+
+ul#breadcrumb li:last-child {
+	font-weight: bold;
+}
+
+/*
+#searchBtn {
+	margin-left: 5px;
+}
+
+
+*/
+/* -------------------------------------------------- */
+
+.photo {
+
+	float: left;
+	
+	margin: 5px 0;
+	margin-right: 10px;
+
+    padding: 0;
+}
+
+.photo a:link, .photo a:visited {
+    border: 1px solid #0099CC;    
+    
+    display: block;
+}
+
+.photo a:link:hover, .photo a:visited:hover {
+    border: 1px solid #903;
+}
+
+.photo img {
+    display: block;
+    
+    margin:0;
+    
+    padding: 5px;
+    background: #fff;
+}
+
+
+
+.transport {
+
+
+    width: auto;
+
+    /*border: 2px solid  #069;*/
+    text-align: center;
+    
+    padding: 5px 0;
+}
+
+
+
+#alert {
+    background: #069;
+    color: white;
+    
+    font-weight: bold;
+
+    margin-bottom: 20px;
+}
+
+
+
+#alert ul {
+    list-style: none;
+
+    padding: 0;
+    margin: 0;    
+}
+
+
+#alert ul li {
+    margin: 5px 10px;
+}
+
+
+/* @@ fix, it's ugly looking */
+.comment:target {
+    border: 1px solid #099;
+    
+}
+
+
+
+
+
+#moblog{
+    text-align: center;
+    background: #ddd;
+    border: 1px solid #999999;
+    padding: 5px;
+}
+
+
+
+#moblog {	
+	margin: 5px 0;
+    padding: 10px;
+        
+}
+
+#moblog   a:link, #moblog   a:visited {
+    border: 1px solid #0099CC;    
+    
+    display: block;
+    width: 85px;
+    
+    margin: 5px auto;
+}
+
+#moblog  a:link:hover, #moblog  a:visited:hover {
+    border: 1px solid #903;
+}
+
+#moblog  img {
+    display: block;
+    
+    margin:0;    
+    padding: 5px;
+    
+    background: #fff;
+}
+
+
+#moblog  p {
+    padding: 0;
+    margin: 0;
+
+    text-align: center;
+}

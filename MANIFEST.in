@@ -1,0 +1,26 @@
+include setup_egg.py
+include test.py
+include ChangeLog
+include LICENSE
+include zomne.c
+include formless/freeform-default.css
+include nevow/Canvas.swf
+include debian/*
+recursive-include nevow *.css *.js
+include bin/nevow-xmlgettext 
+recursive-include doc *.as *.css *.doc *.fla *.gif *.html *.jpg *.js *.png *.txt *.py *.ics *.pdf *.tac
+include doc/README
+include doc/man/*
+recursive-include examples *.css *.gif *.html *.jpg *.js *.py *.png *.tac *.mo *.po *.pot *.xml *.sql *.xul
+include examples/i18n/update-l10n
+include examples/files/words
+include examples/pastebin/data
+include examples/pastebin/static/robots.txt
+include examples/pastebin/TODO
+include examples/wsgi/README
+include extras/xhtml-nevow.rnc
+include nevow/Canvas.fla
+include nevow/canvas.as
+include win32/*
+prune */.svn 
+prune doc/html/*.html

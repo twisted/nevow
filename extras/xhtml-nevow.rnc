@@ -1,0 +1,64 @@
+#
+# To make nxml-mode use this file, put something like
+#
+# <locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+#  <typeId id="XHTML" uri="/.../xhtml-nevow.rnc"/>
+# </locatingRules>
+#
+# in a file listed in emacs
+#
+#  M-x customize-variable rng-schema-locating-files
+#
+# before the nxml-mode upstream schemas.xml one.
+#
+
+namespace nevow = "http://nevow.com/ns/nevow/0.1"
+include "/usr/share/emacs/site-lisp/nxml-mode/schema/xhtml.rnc"
+
+slot = element nevow:slot {
+   attribute name {text},
+   Block.class*,
+   Inline.class*,
+   text*,
+   invisible*
+}
+
+invisible = element nevow:invisible {
+   Nevow.attrib,
+   Block.class*,
+   Inline.class*,
+   text*,
+   invisible*,
+   slot*,
+
+   # BAH. This is just one thing I hit against.
+   # Can't use head.content here, as it would
+   # make title mandatory. Also, should probably
+   # have separate "bodyinvisible" and "headinvisible"
+   # things that enforce what's inside of them.
+   # And maybe do the same with Inline vs. Block so
+   # you can't do <span><n:invisible><p>..
+   link*
+}
+
+attr = element nevow:attr {
+   attribute name {text},
+   text*,
+   invisible*,
+   slot*
+}
+
+Nevow.attrib =
+   attribute nevow:render { text }?,
+   attribute nevow:data { text }?,
+   attribute nevow:pattern { text }?
+
+Common.attrib &= Nevow.attrib
+title.attlist &= Nevow.attrib
+
+Nevow.class = slot | invisible | attr
+
+Block.class |= Nevow.class
+Inline.class |= Nevow.class
+head.content &= Nevow.class
+link.attlist &= Nevow.class

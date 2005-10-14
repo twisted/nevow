@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<window
+    id="xul-window"
+    title="My Example"
+    orient="horizontal"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    xmlns:n="http://nevow.com/ns/nevow/0.1">
+    
+<script>
+function changeLabel(arg)
+{
+  document.getElementById("label-dyn").setAttribute("value", arg);
+}
+
+function getValue(nodeName) {
+    return window.document.getElementById(nodeName).value;
+}
+</script>
+ <vbox flex="1">
+	<description>
+		Type in some text and I'll do something for you
+	</description>
+
+   <hbox>	 
+ 	  <label value="Type Value here:" control="some-text" />
+ 	  <textbox id="some-text"/>
+ 	  <label id="label-dyn" value="" />
+   </hbox>
+
+   <hbox>
+   	<button id="add-button" label="changeLabel" default="true" n:render="btn" />
+   </hbox>
+ </vbox>
+
+ <n:invisible n:render="liveglue" />
+</window>

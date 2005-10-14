@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<n:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <p>
+    As you can see the macro has been expanded since
+    you can see this message in the template inside the main
+    div. Macros are expanded only during the first load at precompile
+    time. Expanding a macro means that each macro marked tag is
+    substituted with the result of a macro_somename call. In this case
+    the result is this text. This is particularly useful when you want
+    to create something alike MasterPage, or you want to dynamically
+    load some code for different components of a page, but only one
+    time. It may seem that macros solve the same problems that
+    Fragments do, this is true but only to a certain degree. While
+    Fragments are rendered each time, macros are only rendered
+    once and before everything else. Use macros when you
+    need to transform the main template once (or each time the
+    main template changes on disk)
+  </p>
+  <p n:render="advice" />
+  <p><a href="child">a child</a></p>
+</n:invisible>

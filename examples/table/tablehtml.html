@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<!-- xmlns:nevow="http://nevow.com/ns/nevow/0.1" is REQUIRED for the
+          template to work, if you don't put it in, Nevow can't handle
+          the 'nevow'-prefixed attributes and tags correctly and won't
+          process the template as expected. -->
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+	<head>
+		<title>This is title</title>
+	</head>
+	<body>
+		<table nevow:data="theList" nevow:render="sequence">
+                <tr nevow:pattern="header"><th id="firstHeader">First Column</th><th id="secondHeader">Second Column</th></tr>
+
+                <tr nevow:pattern="item" nevow:render="row">
+                    <td><nevow:slot name="first_column" /></td>
+                    <td><nevow:slot name="second_column" /></td>
+                </tr>
+
+                <tr nevow:pattern="divider"><td>-----</td></tr>
+                <tr nevow:pattern="empty"><td>Nothing.</td></tr>
+
+                <tr nevow:pattern="footer"><td id="firstFooter">First Footer</td><td id="secondFooter">Second Footer</td></tr>
+            </table>
+	</body>
+</html>

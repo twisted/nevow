@@ -1,0 +1,17 @@
+#: i18n.py:48
+msgid "Hello"
+msgstr ""
+
+#: i18n.py:53
+#, python-format
+msgid ""
+"%(first)d plus %(second)c equals %(result)c, or %(roman)s in roman numbers"
+msgstr ""
+
+#: hello.html:6 hello.html:18
+msgid "Greeting"
+msgstr ""
+
+#: hello.html:13
+msgid "Good morning"
+msgstr ""

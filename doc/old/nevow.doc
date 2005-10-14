@@ -1,0 +1,149 @@
+Nevow draft documentation.
+James Knight
+March 5, 2004
+
+=====================
+=== Introduction ====
+=====================
+This is a rough draft doc, I'm trying to get all the information in here in hopes that someone better at docwriting can edit it and make it look pretty. Beware! I've been typing these examples in a text editor and not testing them, so they might not work!
+
+To run any of the examples here, copy them into a .py file and put this boilerplate at the end:
+application = service.Application('example')
+webServer = internet.TCPServer(8000, appserver.NevowSite(MyPage()))
+webServer.setServiceParent(application)
+
+Then, run 'twistd -ny myfile.py' and take your web browser to http://localhost:8000/
+
+=========================
+==== Basic Rendering ====
+=========================
+
+rend.Page: Rendering a document
+-------------------------------
+
+rend.Page is the class all your pages should derive from. The docFactory attribute should be set to one of the predefined DocFactory types: stan, xmlstr, xmlfile, htmlstr, htmlfile. 
+
+- xmlstr and htmlstr take a string as an argument to render, e.g.:
+from nevow import rend
+class MyPage(rend.Page):
+    docFactory = rend.xmlstr("""
+    <html>
+      <head><title>Hello World</title></head>
+      <body>
+        <h1 style="border: 3px green">Hello World!</h1>
+      </body>
+    </html>
+    """)
+
+- xmlfile and htmlfile take a filename, and an optional 'templateDir' specifying a directory:
+
+from nevow import rend
+class MyPage(rend.Page):
+    docFactory = rend.xmlfile("index.xhtml", templateDir="/home/foom/web/stuff/")
+
+- The difference between the two html types and the two xml types is which parser they use, and how lenient it is. The xmlstr and xmlfile functions use the SAX XML parser, which absolutely requires valid XML input. htmlstr/htmlfile use the twisted microdom parser, which is less strict. However, SAX is much much faster than microdom. If microdom's default behavior is even too strict for you, you can use the optional 'beExtremelyLenient' argument, and give it any old trash HTML, e.g.:
+
+from nevow import rend
+class MyPage(rend.Page):
+    docFactory = rend.htmlstr("""
+    <html>
+      <hEAD><tITle>Hello World & Invalid Amperstands</head>
+      <body>
+        <H1>Hello World!</b>""", beExtremelyLenient=True)
+
+Note, it does clean up the code upon reading it in: this example results in an output of:
+'<html><head><title>Hello World &amp;Invalid Amperstands</title></head><body><h1>Hello World!</h1></body></html>'
+
+
+rend.Page: adding children
+--------------------------
+Okay, so now you can make one page, maybe now you want it to have children pages.  There's a few ways of doing this:
+
+- The simplest is by defining child_<pagename> attributes. child_name can be set to either another page, or a function that returns another page. This following example shows both forms.
+
+from nevow import rend
+class OtherPage(rend.Page):
+    docFactory = rend.xmlstr("""<html><head><title>Other page!</title></head>
+                                <body><h1>Hi!</h1></body></html>""")
+
+class SecondPage(rend.Page):
+    def __init__(self, num):
+        self.num = num
+        self.docFactory = rend.xmlstr("""<html><head><title>Second page!</title></head>
+                                         <body><h1>Hi num = %d!</h1></body></html>""" % num)
+
+class MyPage(rend.Page):
+    child_otherpage = OtherPage
+
+    def child_secondpage(self, request):
+	return SecondPage(5)
+
+    docFactory = rend.xmlstr("""
+    <html>
+      <head><title>Hi there</title></head>
+      <body>
+        <h1>Hi!</h1>
+        <p>
+	  <a href="otherpage">OtherPage</a>
+	  <a href="secondpage">SecondPage</a>
+        </p>
+      </body>
+    </html>
+    """)
+
+
+- Another way to add children is via putChild. You can imagine the rest of the previous example is included again here.
+
+class MyPage(rend.Page):
+    def __init__(self):
+        self.putChild("otherpage", OtherPage)
+        self.putChild("secondpage", SecondPage)
+
+- Both those methods are great when the set of pages is pretty much constant. However, what if you want to have a page whose contents are totally dynamic? Then, you may want to override the getDynamicPage method.
+
+<FIXME: add example>
+
+- The most flexible method of all (through which all these other mechanisms are called) is the locateChild method. This method lets you look at the entire upcoming path, and return an entirely new path if necessary.
+
+<FIXME: add example>
+
+
+Stan: a much nicer way to write XML
+-------------------------------------
+It's a big pain to write out XML documents as text. You always need to remember the closing tags, it's hard to manipulate programmatically and all around inconvenient. Stan is an s-expression-like syntax for producing XML fragments in pure Python syntax. Stan is not required for using nevow, but it is a very simple and powerful way to express your document.
+
+Going back to the first example, we can rewrite it as so:
+
+from nevow import rend
+from nevow.tags import *
+
+class MyPage(rend.Page):
+    docFactory = rend.stan(html[ head[ title["Hello World!"] ], 
+                                 body[
+                                   h1(style="border:3px green")["Hello World!"]
+                                 ]])
+
+
+You might ask how this can possibly be parsed by the python parser. The answer: magic. *grin*.
+
+===========================
+==== Dynamic Rendering ====
+===========================
+
+- render attribute
+
+- data attribute
+
+- context stack, remembering
+
+- sequence, mapping, pattern
+
+- slot, fillSlot
+
+- key
+
+
+==================
+==== Formless ====
+==================
+

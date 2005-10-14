@@ -1,0 +1,45 @@
+#!/usr/bin/make -f
+# -*- mode: makefile; coding: utf-8 -*-
+# Copyright © 2002,2003 Colin Walters <walters@debian.org>
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/python-distutils.mk
+
+DEB_INSTALL_DOCS_python2.3-nevow := doc/*
+DEB_INSTALL_EXAMPLES_python2.3-nevow := examples/*
+DEB_INSTALL_DOCS_python2.4-nevow := doc/*
+DEB_INSTALL_EXAMPLES_python2.4-nevow := examples/*
+DEB_DH_ALWAYS_EXCLUDE := .svn
+
+docdir = debian/$(1)/usr/share/doc/$(1)
+binary-post-install/%::
+	grep -v '^# See the file LICENSE' \
+		'$(call docdir,$*)/copyright' \
+		>'$(call docdir,$*)/copyright.tmp'
+	cat LICENSE \
+		>>'$(call docdir,$*)/copyright.tmp'
+	mv \
+		'$(call docdir,$*)/copyright.tmp' \
+		'$(call docdir,$*)/copyright'
+
+# see http://bugs.debian.org/295906
+cdbs_python_ver = $(filter-out -%,$(subst -, -,$(patsubst python%,%,$(cdbs_curpkg))))
+
+$(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/%:
+	set -e; for file in debian/$(cdbs_curpkg)/usr/bin/*; do \
+		sed '1s|.*|#!/usr/bin/python$(cdbs_python_ver)|' $$file >\
+			"$${file}$(cdbs_python_ver)";\
+		rm -- "$$file";\
+		chmod 755 "$${file}$(cdbs_python_ver)";\
+		mv "debian/$(cdbs_curpkg)/usr/share/man/man1/$$(basename "$$file").1" \
+			"debian/$(cdbs_curpkg)/usr/share/man/man1/$$(basename "$$file")$(cdbs_python_ver).1";\
+	done
+
+binary-post-install/python2.3-nevow::
+	set -e; for file in debian/$(cdbs_curpkg)/usr/bin/*;\
+		do target="$$(echo "$$file" | sed 's/$(cdbs_python_ver)$$//')";\
+		ln -s "$$(basename "$$file")" "$$target";\
+		manname="$$(basename "$$target").1.gz";\
+		ln -s "$$(basename "$$file").1.gz" \
+			"debian/$(cdbs_curpkg)/usr/share/man/man1/$$manname";\
+	done

@@ -1,0 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<n:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <ul id="pagemenu">
+    <li><a href="/admin/schoolyears" id="current">School Years</a></li>
+    <li><a href="/admin/classes">Classes</a></li>
+    <li><a href="/admin/courses">Courses</a></li>
+    <li><a href="/admin/teachers">Teachers</a></li>
+    <li><a href="/admin/students">Students</a></li>
+    <li><a href="/admin/notices">Notices</a></li>
+    <li><a href="/admin/laboratories">Laboratories</a></li>
+    <li><a href="/admin/proposals">Teaching Proposals</a></li>
+  </ul>
+  <div id="content">
+    <p>Years summary</p>
+    <table>
+      <thead>
+	<tr>
+	  <th>School Year</th>
+	  <th></th>
+	  <th></th>
+	</tr>
+      </thead>
+      <tbody n:data="years" n:render="sequence">
+	<tr n:pattern="item">
+	  <td n:render="reference_to_string" />
+	  <td n:data="storeID" n:render="link_to_remove" />
+	  <td n:data="storeID" n:render="link_to_modify" />
+	</tr>
+	<tr n:pattern="empty">
+	  <td colspan="3">No School Years</td>
+	</tr>
+      </tbody>
+    </table>
+	
+    <p>Add School Year</p>
+    <n:invisible n:render="form add" />
+  </div>
+</n:invisible> 

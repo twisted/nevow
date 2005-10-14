@@ -1,0 +1,522 @@
+2005-08-01  Matt Goodall <matt@pollenation.net>
+
+	egg-ify the distribution. "python setup.py bdist_egg" will now build
+	a .egg in dist for Python 2.3 and Python 2.4.
+
+2005-07-14  Donovan Preston <dp@divmod.org>
+
+	* It's no longer necessary to specify addSlash = True on
+	the root resource. nevow.appserver.NevowSite automatically
+	sets it on the first argument you pass to it (the root
+	resource).
+
+2005-07-12  Donovan Preston <dp@divmod.org>
+
+	* Usability improvements for formless at the expense of
+	purity of abstraction. Since the only thing anybody uses
+	formless for is rendering web forms, make it a little easier
+	to do common things. For example:
+
+	- _nevow_carryover_ does not get appended to URLs unless absolutely
+	necessary (because you return a value from an autocallable)
+
+	- TypedInterface is being deprecated in favor of using
+	IConfigurable directly, and an IConfigurable implementation
+	on Fragment/Page that is easy to use. To expose a "foo" method
+	on a page which takes a "bar" string and a "baz" integer, do this:
+
+	def bind_foo(self, ctx):
+		return [('bar', String()), ('baz', Integer())]
+
+	Previously, you would have had to create a TypedInterface,
+	declare foo and the types of the arguments in the class body,
+	declare that foo is autocallable, and declare that your Page
+	class __implements__ the interface. Now, just implement
+	bind_foo to return an IBinding or a list which can be munged
+	into one.
+
+	- It is possible to return a Page from an autocallable to have
+	that page displayed directly after posting the autocallable.
+	The URL that is used is freeform_hand, which means that the
+	Page goes into your "hand" in the session. The hand can only
+	hold one value, the most recent return result of an autocallable.
+	This isn't very back-button friendly but it makes it super
+	easy to put together a multi-step wizard interface.
+
+	See examples/tests/testformless.py and the /testformless on
+	the example server to see how to do this.
+
+	- It is possible to return a URL instance from an autocallable
+	to have the user redirected to that page after posting the
+	form successfully. This replaces and deprecates the old,
+	whacko method of setting IRedirectAfterPost on the Request.
+
+	See examples/tests/testformless.py and the /formless_redirector
+	on the example server to see how to do this.
+
+	* There is now livetest coverage of the formless examples,
+	including posting forms and checking erroneous conditions.
+
+2005-07-06  Donovan Preston <dp@divmod.org>
+
+	* Major non-backwards-compatible improvements to livepage. Changes
+	are designed to avoid an uncollectable garbage problem which was
+	inherent in the previous design.
+
+	The livepage javascript glue now includes a global object named
+	"server". This object has a "handle" method which takes at least
+	one argument, a string indicating the name of the handler to
+	invoke on the server. When called by client-side javascript,
+	LivePage.locateHandler is invoked. locateHandler should return
+	a callable which will be called with a context indicating
+	which client is invoking the method, and any additional arguments
+	which were passed to server.handle, as strings.
+
+	The default implementation of LivePage.locateHandler looks for
+	a correspondingly named "handle_*" method. Using livepage is
+	now as simple as subclassing LivePage and providing handle_*
+	methods:
+
+		class Foo(LivePage):
+			def handle_bar(self, ctx, something):
+				print "something!", something
+
+	And calling server.handle in javascript:
+
+		<a onclick="server.handle('bar', 'here is something')">Click me</a>
+
+	The previous behavior of registering closures or other callables
+	as event handlers and then embedding them in the page is still
+	available using the IClientHandle.transient method. These one-
+	shot handlers are only invokable by the client once before being
+	garbage collected on the server. This makes it possible to
+	implement temporary dialog boxes and the like.
+
+2005-04-09  Tommi Virtanen <tv@twistedmatrix.com>
+
+	* Allow remembering ILogger to specify an alternate access logging
+	method.
+
+2005-04-06  Matt Goodall <matt@pollenation.net>
+
+    * Added optional context argument to Page's renderString and
+    renderSynchronously methods. This provides a site-like context that is
+    useful when rendering multiple pages that need common remembered data.
+
+2005-3-23	Donovan Preston	<dp@divmod.org>
+
+	* Releasing 0.4.1
+
+2005-3-22	Donovan Preston	<dp@divmod.org>
+
+	* Releasing 0.4
+
+2005-02-22  Matt Goodall <matt@pollenation.net>
+
+    * Added a "data" renderer (rend.data) that replaces the tag's content
+    with the current data. i.e. <p n:data="name" n:render="data">Foo Bar</p>.
+
+2005-02-17  Matt Goodall <matt@pollenation.net>
+
+    * Added i18n - a gettext-like mechanism for marking translatable content
+    in an application's Python modules by wrapping a string in _(). Standard
+    Python gettext tools can be used to generate translation files.
+    
+    Translation happens during rendering and depends on a list of languages
+    found in the context. By default, the browser's preferred languages are
+    used. The default behaviour can be overridden by remembering the languages
+    as inevow.ILanguages in the context; allowing the language to be selected
+    from user preferences, for example.
+
+2005-02-08  Matt Goodall <matt@pollenation.net>
+
+    * Extended the IDocFactory interface's load method to accept an optional
+    context.
+    
+    The current loaders do not use the context but future loaders may, i.e. one
+    that loads a localised template based on some language in the context.
+
+2005-01-01	Donovan Preston <dp@divmod.org>
+
+	* Rewrote LivePage quoting code to be much more correct; added many unit
+	tests. Some older livepage code must be changed to use the
+	livepage.literal object instead of passing normal strings to handler or
+	the LivePage client APIs.
+
+	* Added nevow.livepage module, LivePage, and ILivePage. The name liveevil
+	is deprecated.
+
+2004-12-23	Phil Frost <indigo@bitglue.com>
+
+	* Added support for formless to return unicode objects. annotate.String
+	and subclasses (Text, Password, etc.) take a 'unicode' parameter to
+	enable unicode, like so:
+	
+	| annotate.String(unicode=True)
+
+	The coerced value will then be a unicode object.
+
+2004-12-16  Matt Goodall <matt@pollenation.net>
+
+    * Added ObjectContainer - a data directive accessor for retrieving an
+    attribute of an object. If the current data in the context (the IData) is an
+    object you can register ObjectContainer as the IContainer adapter for the
+    object's class and Nevow will automatically look inside the object to fetch
+    the attribute.
+    
+    Note: ObjectContainer is *not* registered as the adapter for all object
+    types. You must explicitly register the adapter for application classes as
+    needed.
+    
+2004-12-08  Matt Goodall <matt@pollenation.net>
+
+    * Applied the foom/mesozoic patch to make Page.remember work correctly and
+    without the hack. You can now use the method reliably to remember objects at
+    Page construction time or any other time before the PageContext is created.
+    The remembered objects can be found from the context in the usual way.
+    
+        class MyPage(rend.Page):
+        
+            def __init__(self, original):
+                # Make original available as ISomething(ctx) for later.
+                self.remember(original, ISomething)
+                rend.Page.__init__(self, original)
+    
+    * Added a similar remember method for NevowSite (and made a SiteContext
+    object the ultimate parent). You can know remember objects on the site and
+    have them available anywhere there's a context. A typical use case is making
+    some object store available to the site. This was often achieved using a
+    wrapper resource but now it's as easy as:
+    
+        store = makeStore()
+        site = NevowSite(rootResource)
+        site.remember(store, IStore)
+     
+2004-12-08  Matt Goodall <matt@pollenation.net>
+
+    * Renamed URL.fromRequest to URL.fromContext. URL.fromRequest was a little
+    confusing - the URL it returned only included the segments that had been
+    consumed so far by the locateChild process and not the whole URL as the name
+    might suggest. Eventually, fromRequest will change to return a full URL but,
+    for now, its use is deprecated.
+    
+    * Renamed URL.parent to URL.parentdir. URL.parent() was logically equivalent
+    to '..' and so removed more segments than expected. URL.parent's use is now
+    deprecated and in a future release will be changed to remove exactly one
+    segment.
+    
+    * Improve URL.click to normalise any segments of '.' or '..'. Browsers
+    normalise the URL so, according to the docstring, click should too.
+
+2004-12-04	Donovan Preston	<dp@divmod.org>
+
+	* Added macros! This is the same patch as the one I attached to my
+	"Macros in Nevow" mail, with the addition of an IMacroFactory,
+	a MacroFactory implementation on rend.Page, and macro directive
+	support. Macros are like render functions that take only the
+	context (no data parameter) and run only once during the lifetime
+	of a template loader. Here is an example of the difference between
+	a macro and a renderer:
+
+	>>> class Bumper(object):
+	...     num = 0
+	...     def bump(self):
+	...         self.num += 1
+	...         return self.num
+	... 
+	>>> staysTheSame = Bumper()
+	>>> changes = Bumper()
+	>>> from nevow import flat, tags, loaders
+	>>> document = loaders.stan([tags.invisible(macro=lambda ctx: staysTheSame.bump()), tags.invisible(render=lambda ctx, data: changes.bump())])
+	>>> flat.flatten(document)
+	'11'
+	>>> flat.flatten(document)
+	'12'
+	>>> flat.flatten(document)
+	'13'
+
+2004-12-01	Donovan Preston	<dp@divmod.org>
+
+	* Added __iter__ to nevow.stan.slot to prevent infinite loops by
+	trying to do "for x in slot('foo'): print x".
+
+	* Added an IGettable adapter for nevow.stan.slot. It is now possible
+	to specify a slot as the data for a node, so the following example
+	would work:
+
+	from nevow import rend, tags
+
+	def fillEm(ctx, data):
+		ctx.fillSlots('value', [1, 2])
+		return ctx.tag
+
+	tags.html(render=fillEm)[
+		tags.ul(data=tags.slot('value'), render=rend.sequence)[
+			tags.li(pattern='item')[
+				str ]]]
+
+2004-09-26	Donovan Preston <dp@divmod.org>
+
+	* Added nevow.inevow.IQ interface, an interface for querying the
+	stan DOM. Eventually, this interface will contain APIs for doing
+	traditional DOM introspection, such as iterating children,
+	examining tag names, and examining attributes. For now, it contains
+	only the patternGenerator, onePattern, and allPatterns APIs. These
+	APIs have been deprecated from Context.
+
+	The main benefit of this is the ability to do:
+
+		IQ(loaders.xmlfile(...)).patternGenerator(...)
+
+	which would be nice for creating "pattern library" files containing
+	common skin idioms which can then be copied and used throughout
+	the app.
+
+2004-09-25	Donovan Preston <dp@divmod.org>
+
+	* Chatola received a major facelift, bringing it from cool demo
+	up to almost a full fledged web-based chat server. The helper API
+	LiveEvil.call(...) was added, which deprecates 
+	LiveEvil.sendScript(callJS(...))
+
+2004-09-23	Tommi Virtanen	<tv@twistedmatrix.com>
+
+	* Make guard.SessionWrapper store its URL  location in all requests it
+	passes to its children. This allows the children know where to post
+	the __login__ and __logout__ forms, even deep inside the resource
+	tree (fixes issue59).
+
+	* Guard now works as a non-root resource, with help from the above
+	change. Semantics of __login__ clarified in unit tests; if your guard
+	is at /foo, posting to /foo/__login__ redirects to /foo, and posting
+	to /foo/__login__/ redirects to /foo/. The two unit tests that failed
+	earlier now pass (with that change in their __login__ URLs).
+
+	* If URL-based sessions are used, login no longer loses session
+	information due to redirect to / (fixes issue56).
+
+2004-09-20	Matt Goodall <matt@pollenation.net>
+
+	* Added URL.secure() method to make switching between http and 
+	https easier.
+
+2004-09-08	Donovan Preston	<dp@divmod.org>
+
+	* Nevow now includes a very simple proof-of-concept WSGI Application 
+	implementation, and can be used with no Twisted dependency. Nevow can 
+	also be used to write CGIs, either using a simple CGI WSGI gateway 
+	(which supports URL traversal), or by using Page.renderString (which does not).
+
+	* Two new context interfaces, ICurrentSegments and IRemainingSegments, 
+	replace the need to examine the Request prepath and postpath attributes
+	directly.
+
+	* ISerializable is deprecated, and has been replaced with a simple 
+	Flattener registry. nevow.flat.registerFlattener and 
+	nevow.flat.getFlattener have been added to support this.
+
+2004-09-06	Donovan Preston	<dp@divmod.org>
+
+	* BACKWARDS INCOMPATIBLE CHANGE. Page.configurable_ *always* returns
+	self, and a new Page.configurable_original *always* returns
+	self.original. If you were relying on Page.configurable_'s
+	introspection behavior and are now getting errors about adapting
+	to IConfigurable, change your renderForms() calls to:
+
+		renderForms('original')
+
+	This causes Page.configurable_original to be invoked and
+	introspected for form rendering.
+
+2004-08-23	Donovan Preston <dp@divmod.org>
+
+	* LivePage uses a simpler implementation strategy which requires
+	the browser to make one request per output event. As a result,
+	LivePage now works on Mozilla, Safari, and Internet Explorer Windows.
+
+2004-08-05	Donovan Preston <dp@divmod.org>
+
+	* Implemented support for IFoo(ctx) synonym syntax. It does the
+	same thing as ctx.locate(IFoo)
+
+	* Removed Resource Generators, a feature of NevowSite that nobody
+	used and wasn't really useful.
+
+	* Changed all inevow.IResource apis to take a Context object
+	where they used to take the request. Remembering objects in
+	PageContexts is now much easier, and fewer hacks are required to
+	build the context chain. The context chain now looks like:
+
+		SiteContext->RequestContext->PageContext(s)->WovenContext(s)
+
+2004-7-28	Donovan Preston <dp@divmod.org>
+
+	* Parameterize data_* methods in the same way as render_* methods.
+	Patch by k3mper.
+
+	For example, <div nevow:data="foo bar,baz" /> will cause 
+	data_foo(self, bar, baz) to be called with the strings "bar" and
+	"baz". This data method should return a callable taking ctx, data.
+	The return value of this callable will be remembered as IData at
+	this point in the context stack.
+
+	* Added list-slicing support to ListContainer. You may now use
+	list slicing syntax in a data directive in addition to a simple
+	index. For example:
+
+	def data_aList(self, ctx, data):
+		return ["Buckle", "My", "Shoe"]
+
+	<div nevow:data="aList">
+		<span nevow:data="1:-1" nevow:render="string" />
+	</div>
+
+	Will render as <div><span>My</span></div>
+
+2004-7-20	Matt Goodall <matt@pollenation.net>
+
+	* Modified sax loader to retain doctypes, comments and xmlns attributes. 
+	It's now possible to build XHTML valid pages :).
+
+	xmlns attributes are always kept but there are options to ignore the doctype
+	and comment (at the request of foom, not sure why yet). Right now, the default
+	is to retain doctypes and comments but you can use the ignoreDocType and
+	ignoreComment args to the xml loaders and flatsax parse functions. This bit
+	may change.
+
+	* Add a URL -> IResource adapter that performs a HTTP redirect. URLs can then
+	be returned from locateChild().
+
+2004-06-07	Donovan Preston <dp@divmod.org>
+
+	* Added nevow.canvas, an experimental module similar to LivePage
+	which provides a Python server-side API for drawing arbitrary lines,
+	curves, and text in the browser. The implementation is socket-based
+	and asynchronous, so the server can issue drawing commands to the
+	client at any time.
+
+	The idea is to provide a server-side API to the Python programmer 
+	and shield them from implementation details, but the current
+	implementation uses a pre-compiled Flash movie (which never changes;
+	we are not generating Flash bytecodes). An implementation using SVG
+	or Safari's Canvas (nevow.canvas was written before the Safari Canvas
+	announcement) would be possible.
+
+2004-05-26	Donovan Preston	<dp@divmod.org>
+
+	* Add URLOverlay.keep,  an API which lets you specify which query args 
+	will be carried on from the current page render into the new URL.
+
+2004-05-24	Matt Goodall <matt@pollenation.net>
+
+	* Extracted Fragment from Page. Hopefully,  it will make it more obvious 
+	that embedding an object with data_ and render_ methods in a stan tree is
+	possible without using something as "heavy" as Page which is really meant
+	to be a web resource.
+
+2004-05-23	Donovan Preston	<dp@divmod.org>
+
+	* Added some useful APIs to LiveEvil for manipulating the client-side
+	page:
+
+		- flt(stan): Flatten some stan, quoting apostrophes as
+		as appropriate for embedding in javascript
+
+		- set(what, to): Set the contents of the client-side node
+		with the id 'what' to the stan 'to'.
+
+		- append(where, what): Append the stan 'what' to the client-
+		side node with the id 'where'
+
+		- alert(what): Show an alert to the user with the text "what"
+
+2004-05-19	Jonathan Simms	<slyphon@divmod.com>
+
+	* 0.2 released.
+
+2004-05-14	Donovan Preston	<dp@divmod.org>
+
+	* nevow.url.URLPath is renamed nevow.url.URL
+
+	* URL objects are now lazier about casting things to strings; they will 
+	keep track of path segments in a list and defer to the nevow rendering 
+	machinery to do the conversion; This means you can do things like 
+	here.child(deferred) or here.child(function)
+
+	* URL objects have a better api for manipulating query arguments
+	    - add(key, value=None) adds a new query arg at the end; the value may 
+	      be None if only a query key needs to be added
+	    - replace(key, value) removes all occurrences of 'key' and inserts a 
+              new (key, value) at the same location as the previous first 
+              occurrence of key
+	    - clear() clears all args
+
+2004-05-06	Donovan Preston <dp@divmod.org>
+
+	* Merged freeform-patterned branch, a large formless/freeform refactor.
+	It is now possible to influence the rendering of forms by providing
+	"patterns" to renderForms.
+
+	* Formless is now a top-level package. Freeform has been renamed
+	formless.webform. It should be possible to use formless outside
+	the context of nevow for doing things such as validating network
+	input based on method argument type annotations.
+
+	* TypedInterface, autocallable, and all the Typed subclasses are now
+	in the formless.annotate module.
+
+2004-04-30	Donovan Preston <dp@divmod.org>
+
+	* Created nevow.blocks, a module containing helpful code for working
+	around display: inline-block bugs in Mozilla.
+
+2004-04-27	Donovan Preston <dp@divmod.org>
+
+	* IRenderer.__call__ was renamed IRenderer.rend to be more explicit.
+
+2004-04-21	Donovan Preston	<dp@divmod.org>
+
+	* Implemented nevow.flat.flatten and nevow.flat.precompile, functions
+	useful for using stan outside of the context of Page classes. Useful
+	for generating some XML or even raw text; use it any time you want
+	to convert a tree data structure into a contiguous string!
+
+        import random
+        import string
+         
+        from nevow import flat
+        
+        def letters(howMany):
+            for i in range(howMany):
+                    yield '    ', string.letters[i], '\n'
+        
+        def outline():
+            for i in range(5):
+                    yield i, '\n'
+                    yield letters(random.choice(range(7)))
+                    yield '\n'
+        
+        print flat.flatten(outline())
+
+2004-04-20	Donovan Preston	<dp@divmod.org>
+
+	* guard sessions are no longer required to use formless.
+
+2004-04-19	Donovan Preston <dp@divmod.org>
+
+	* Implemented lazy context factories. It is now possible to register
+	an adapter against various *Context classes and an interface. They
+	will be invoked if *Context.locate(interface) is called.
+
+	Implemented a lazy ISession adapter against RequestContext, making
+	it possible to do ctx.locate(ISession), which is nice.
+
+2004-04-16	Donovan Preston <dp@divmod.org>
+
+	* Added nevow.entities module, a module containing literals for all of
+	the valid XHTML entities. For example:
+
+		def render_nbsp(self, ctx, data):
+			from nevow import entities
+			return entities.nbsp
+

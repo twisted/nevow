@@ -1,0 +1,103 @@
+/* --------------------
+definition list
+---------------------*/
+
+dl {
+
+}
+
+dd {
+	margin-left: 1em;
+}
+
+dt {
+
+}
+
+/* --------------------
+phrase elements
+---------------------*/
+
+abbr, acronym
+{	
+	cursor: help; 
+    border-bottom: dotted 1px;
+}
+
+
+ins, del 
+{
+	
+}
+
+ins
+{
+	text-decoration: none; /* some UAs reder as underlined, hence reset */
+}
+
+ins:before
+{
+	/* content: '[' */
+}
+
+ins:after
+{
+	/* content: ']' */
+}
+
+
+/* --------------------
+block/inline quotations, 
+check: http://diveintomark.org/archives/2002/05/04/the_q_tag.html
+---------------------*/
+
+blockquote {
+   border-left: 4px double #6cc; 
+   
+   padding: 0;
+   padding-left: 10px; 
+   
+   margin: 0.5em 5%;
+}
+
+cite, q {
+  font-style: italic;
+}
+
+p>q, li>q, p>cite, li>cite { /* reset for mozilla, opera */
+  font-style: normal; 
+}
+
+cite, q {
+  quotes: '\201C' '\201D' '\2018' '\2019'; /* quote and quote within quote */
+}
+
+cite:before, q:before {
+  content: open-quote;
+}
+
+cite:after, q:after {
+  content: close-quote;
+}
+
+
+/* --------------------
+geeks'  markup codes
+---------------------*/
+
+pre, code {
+	font-size: 100%; /* reset size for IE */
+}
+
+
+#content>pre {
+	width: auto; /* reset value for moz, opera */
+}
+
+
+
+/* mostly used to indicate markup/language keywords*/
+code {
+	color: #6cc; 
+	font-weight: bold;
+}

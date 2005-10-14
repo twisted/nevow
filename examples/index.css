@@ -1,0 +1,76 @@
+
+
+
+body {
+    margin: 1em 1em;
+}
+ 
+blockquote {
+    background-color: #E5E5E5;
+    text-align: center;
+}
+ 
+.source {
+    padding: 0.25em 0.5em;
+    border: 1px solid #CCC;
+    background-color: #FFF9D9;
+    margin-top: 2px;
+}
+ 
+li {
+    margin-top: 20px;
+}	
+ 
+h1 {
+   background-color: #E6F4FF;
+   border-top: 2px solid #B2DDFF;
+   border-bottom: 2px solid #B2DDFF;
+   padding: 0 0.5em;
+}
+ 
+ 
+table {
+    border-bottom: 1px solid #CCC;
+}
+ 
+table td {
+    white-space: nowrap;
+    padding: 0px 5px 0px 0px;
+}
+
+
+
+
+
+.py-src-comment
+{
+  color: #1111CC
+}
+
+.py-src-keyword
+{
+  color: #3333CC;
+  font-weight: bold;
+}
+
+.py-src-parameter
+{
+  color: #000066;
+  font-weight: bold;
+}
+
+.py-src-identifier
+{
+  color: #CC0000
+}
+
+.py-src-string
+{
+  
+  color: #115511
+}
+
+.py-src-endmarker
+{
+  display: block; /* IE hack; prevents following line from being sucked into the py-listing box. */
+}

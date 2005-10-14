@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<n:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <ul id="pagemenu">
+    <li><a href="/classes/years" id="current">School Year</a></li>
+    <li><a href="/classes">All Classes</a></li>
+    <li><a href="/classes/proposals">Proposals</a></li>
+    <li><a href="/classes/laboratories">Laboratories</a></li>
+    <li><a href="/classes/timetable">Timetable</a></li>
+    <!-- <li><a href="/classi/avvisi">Avvisi</a></li>  Link duplicato nella barra principale-->
+    <li><a href="/classes/useful_material">Useful material</a></li>
+    <li><a href="/classes/teachers">Teachers</a></li>
+  </ul>
+  <div id="content">
+    <p>Elenco Anni Scolastici:</p>
+    <ul n:data="years" n:render="sequence">
+      <li n:pattern="item" n:render="reference_to_string" />
+      <li n:pattern="empty">No School Years</li>
+      <li><a href="classi.html">A.S. 1993-94</a></li>
+      <li><a href="classi.html">A.S. 1994-95</a></li>
+      <li><a href="classi.html">A.S. 1995-96</a></li>
+      <li><a href="classi.html">A.S. 1996-97</a></li>
+      <li><a href="classi.html">A.S. 1997-98</a></li>
+      <li><a href="classi.html">A.S. 1998-99</a></li>
+      <li><a href="classi.html">A.S. 1999-2000</a></li>
+      <li><a href="classi.html">A.S. 2000-2001</a></li>
+      <li><a href="classi.html">A.S. 2001-2002</a></li>       
+    </ul>
+  </div>
+</n:invisible> 

@@ -1,0 +1,55 @@
+"""A very simple test harness for running nevow tests.
+
+If twisted is installed, this will just run trial.
+
+If not, it will run the tests which can pass without twisted being installed,
+using the stdlib unittest module.
+"""
+
+import sys, os, unittest
+
+skips = []
+
+try:
+    import twisted
+    sys.exit(os.system('trial -v nevow.test formless.test'))
+except ImportError:
+    skips.extend([
+        'nevow.test.test_disktemplate',
+        'nevow.test.test_later',
+        'formless.test.test_freeform'])
+
+
+import nevow.test, formless.test
+
+def getModuleNames(mod):
+    for name in os.listdir(os.path.split(mod.__file__)[0]):
+        if not name.startswith('__') and name.endswith('.py'): yield name[:-3]
+
+names = []
+mods = [
+    nevow.test,
+    formless.test
+]
+
+for mod in mods:
+    names.extend(['.'.join([mod.__name__, x]) for x in getModuleNames(mod)])
+
+names = filter(lambda x: x not in skips, names)
+
+
+class SkipTestLoader(unittest.TestLoader):
+    def getTestCaseNames(self, testCaseClass):
+        names = unittest.TestLoader.getTestCaseNames(self, testCaseClass)
+        for n in names:
+            meth = getattr(testCaseClass, n)
+            if hasattr(meth, 'skip'): print "SKIP:", testCaseClass.__name__, n, '\n\t', meth.skip
+            elif hasattr(meth, 'todo'): print "TODO:", testCaseClass.__name__, n, '\n\t', meth.todo
+            else: yield n
+
+
+
+suite = SkipTestLoader().loadTestsFromNames(names)
+result = unittest.TextTestRunner().run(suite)
+sys.exit(not result.wasSuccessful())
+

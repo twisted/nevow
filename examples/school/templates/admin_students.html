@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<n:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <ul id="pagemenu">
+    <li><a href="/admin/schoolyears">School Years</a></li>
+    <li><a href="/admin/classes">Classes</a></li>
+    <li><a href="/admin/courses">Courses</a></li>
+    <li><a href="/admin/teachers">Teachers</a></li>
+    <li><a href="/admin/students" id="current">Students</a></li>
+    <li><a href="/admin/notices">Notices</a></li>
+    <li><a href="/admin/laboratories">Laboratories</a></li>
+    <li><a href="/admin/proposals">Teaching Proposals</a></li>
+  </ul>
+  <div id="content">
+    <p>Students summary</p>
+    <table>
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Summary</th>
+	  <th>Address</th>
+	  <th>Phone</th>
+	  <th>Fiscal Code</th>
+	  <th>Class</th>
+	  <th></th>
+	  <th></th>
+	</tr>
+      </thead>
+      <tbody n:data="students" n:render="sequence">
+	<tr n:pattern="item">
+	  <td n:data="name" n:render="string" />
+	  <td n:data="surname" n:render="string" />
+	  <td n:data="address" n:render="string" />
+	  <td n:data="phone" n:render="string" />
+	  <td n:data="fiscal_code" n:render="string" />	  
+	  <td n:data="class_" n:render="reference_to_string" />
+	  <td n:data="storeID" n:render="link_to_remove" />
+	  <td n:data="storeID" n:render="link_to_modify" />
+	</tr>
+	<tr n:pattern="empty">
+	  <td colspan="8">No students</td>
+	</tr>
+      </tbody>
+    </table>
+	
+    <p>Add Student</p>
+    <n:invisible n:render="form add" />
+  </div>
+</n:invisible> 

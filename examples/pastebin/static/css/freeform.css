@@ -1,0 +1,27 @@
+
+.freeform-typed { clear: both; }
+.freeform-property-binding { clear: both; border: 1px solid blue; padding: 0.5em; width: auto }
+.freeform-method-binding { clear: both; border: 1px solid black; padding: 0.5em; width: auto }
+.freeform-argument-binding { clear: both; border: 1px solid blue; padding: 0.5em; width: auto }
+.freeform-binding-content { border-top: 1px dashed #bdedfe; margin-top: 0.5em; padding-top: 0.5em }
+.freeform-label { float: left; width: 200px; }
+.freeform-input { float: left; width: 200px; }
+.freeform-error { color: red; }
+.freeform-description { clear: both; border-bottom: 1px dashed #bdedfe; margin-bottom: 0.5em; padding-bottom: 0.5em }
+.freeform-list-item { clear: both; width: auto }
+.freeform-form-label { color: #666666 }
+
+.freeform-textarea { width: 5in; height: 3in }
+
+.freeform-success { padding: 0.5em; border: 1px dashed green; }
+.freeform-failure { padding: 0.5em; color: red; border: 1px dashed red; }
+
+.freeform-list { border: 1px dashed #cdcdcd; }
+.freeform-dictionary { border: 1px dashed #dedede; }
+.freeform-action-group { margin: 0px }
+.freeform-action { color: green }
+.freeform-action-selection { background-color: red; height: 1em; width: 1em; }
+
+.freeform-group-binding { border: 1px dashed #efabab }
+.freeform-grouped-property-binding {}
+.freeform-grouped-method-binding {}

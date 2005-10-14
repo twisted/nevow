@@ -1,0 +1,8 @@
+Simple documentation system that supports navigation generation, 
+organizational hierarchy, internationalization, etc.
+Written by jamwt@jamwt.com.
+
+    1. Download docutils from http://docutils.sourceforge.net/.
+    2. Write simple fragment restructured text files in txt/.
+    3. Lay out heir.py to reflect the titles and hierarchy of the text fragments
+    4. cd to doc/ (the directory this README is in) and run 'python make.py'

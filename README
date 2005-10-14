@@ -1,0 +1,43 @@
+Nevow 0.4
+=========
+
+Nevow is a web application construction kit written in Python. It is designed to allow the programmer to express as much of the view logic as desired in Python, and includes a pure Python XML expression syntax named stan to facilitate this. However it also provides rich support for designer-edited templates, using a very small XML attribute language to provide bi-directional template manipulation capability.
+
+Nevow also includes formless, a declarative syntax for specifying the types of method parameters and exposing these methods to the web. Forms can be rendered automatically, and form posts will be validated and input coerced, rendering error pages if appropriate. Once a form post has validated successfully, the method will be called with the coerced values.
+
+Finally, Nevow includes LivePage, a two-way bridge between JavaScript in a browser and Python on the server. For 0.4, LivePage has been refactored to be lighter weight and allow multiple live browser windows per client; however, the Safari support has been broken and will be fixed in 0.5. LivePage supports Mozilla, Firefox, and IE Windows. The older LivePage implementation, liveevil.py, is still present in the distribution and works with Safari, although this implementation is marked for deprecation. Event handlers can be written in pure Python and JavaScript implementation details are hidden from the programmer, with Nevow taking care of routing data to and from the server using XmlHttpRequest.
+
+Installation
+------------
+
+Before installing Nevow, you should install `Twisted`_, unless you are going to write very simple CGI applications. Nevow integrates fully with the twisted.web server providing easy deployment.
+
+Nevow uses the standard distutils method of installation::
+
+    python setup.py install
+
+If you do not have Twisted installed, you can run a subset of the tests using the test.py script. If you have twisted installed, the test.py script will issue the following trial command::
+
+    trial -v nevow.test formless.test
+
+.. _`Twisted`: http://twistedmatrix.com/products/download
+
+Documentation
+-------------
+
+More detailed introductory documentation is available in the doc/ directory, along with the beginnings of a reference manual. A large number of examples are available in the examples/ directory. These examples require Twisted to run. A tac file (twisted application configuration) can be started by invoking twistd, the twisted daemon::
+
+    twistd -noy foo.tac
+
+More Information
+----------------
+
+Nevow is an active project, and many new bugfixes and features are committed to the Nevow SVN repository. Information about Nevow commits is available by subscribing to the `Nevow commits`_ mailing list. The Nevow SVN repository can be checked out using::
+
+  svn co svn://divmod.org/svn/Nevow/trunk Nevow
+
+Discussion of Nevow occurs on the `twisted.web mailing list`_. The Nevow developers are also often available for real-time help on the `#twisted.web channel`_ on irc.freenode.net.
+
+.. _`Nevow commits`: http://divmod.org/users/mailman.twistd/listinfo/nevow-commits
+.. _`twisted.web mailing list`: http://twistedmatrix.com/cgi-bin/mailman/listinfo/twisted-web
+.. _`#twisted.web channel`: irc://irc.freenode.net/#twisted.web

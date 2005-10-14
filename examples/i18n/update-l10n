@@ -1,0 +1,47 @@
+#!/bin/sh
+set -e
+
+xgettext \
+    --omit-header \
+    --output - \
+    --language=Python \
+    -- \
+    i18n.py \
+>test-stan.pot.tmp
+
+../../bin/nevow-xmlgettext hello.html \
+>test-xml.pot.tmp
+
+msgcat -o - test-stan.pot.tmp test-xml.pot.tmp \
+>test.pot.tmp
+mv test.pot.tmp test.pot
+
+rm test-stan.pot.tmp test-xml.pot.tmp
+
+for PO in locale/*/LC_MESSAGES/test.po; do
+    msgmerge --quiet "$PO" test.pot \
+	| msgattrib --no-obsolete --sort-output \
+	>"$PO.tmp"
+    mv "$PO.tmp" "$PO"
+
+    msgfmt -o "${PO%.po}.mo" "$PO"
+done
+
+tobedone() {
+    DESCRIPTION="$1"; shift
+
+    for PO in locale/*/LC_MESSAGES/test.po; do
+	msgattrib --no-obsolete "$@" "$PO"
+    done \
+	>"l10n-update.$$.tmp"
+    
+    if [ -s "l10n-update.$$.tmp" ]; then
+	echo "# $DESCRIPTION"
+	cat "l10n-update.$$.tmp"
+    fi
+    rm "l10n-update.$$.tmp"
+}
+
+tobedone 'UNTRANSLATED' --untranslated
+tobedone 'FUZZY' --only-fuzzy
+

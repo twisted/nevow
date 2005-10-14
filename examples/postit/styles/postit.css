@@ -1,0 +1,290 @@
+@import url('typo.css');
+
+
+html {
+    background: #FCFCFE url('/images/postit-bg2.png') top left repeat-x fixed;    
+
+    margin: 0;
+    padding: 0;
+    
+}
+
+
+html>body
+{
+	background: transparent url('/images/postit-bg.jpg') top left no-repeat fixed;
+	
+    margin: 0;
+	padding: 4px;
+
+    min-height: 505px;
+}
+
+
+body {
+    color: #333;
+}
+
+body, p, li, td, th, dd, dt, h1, h2, h3, h4, h5, h6  /* help browser to not forget */
+{				
+	font-family: Verdana, Helvetica, sans-serif;
+	line-height: 150%;
+
+	font-size: x-small; 
+	voice-family: "\"}\""; 
+	voice-family: inherit; 
+	font-size: small; 
+}
+
+html>body {
+	font-size: small; 
+}
+
+/* --------------------
+heading
+---------------------*/
+
+h1, h2, h3, h4, h5, h6 
+{	
+	font-size: 100%; /* reset! */
+
+    padding: 0;
+	margin: 0;
+
+	font-weight: bold;
+}
+
+
+/* the one and only page title */
+h1 {
+	font: bold 40px/100% "Times New Roman", times, serif;		
+	letter-spacing: 10px;	
+    
+    color: #eee;
+    font-variant: small-caps;
+    /*text-transform: lowercase;*/
+}
+
+h2
+{
+/*   font-size: 16px; 
+	font-weight: normal; 
+    margin: 15px 0;*/
+}
+
+h3
+{
+}
+	
+form
+{
+	margin: 0px;
+}
+
+/* --------------------
+links
+---------------------*/
+
+a:link, a:visited 
+{
+	color: #333; 
+	font-weight: bold; 
+	
+	text-decoration: none; 
+
+	padding: 0;
+	padding-bottom: 1px;
+}
+
+a:link:hover, a:visited:hover
+{		
+	border-bottom: 1px solid  #333;
+}
+
+
+.tagline a:link, .tagline a:visited 
+{
+	color: #eee; 
+	font-weight: bold; 
+	
+	text-decoration: none; 
+
+	padding: 0;
+	padding-bottom: 1px;
+}
+
+.tagline a:link:hover, .tagline a:visited:hover
+{		
+	border-bottom: 1px solid  #eee;
+}
+
+
+
+/* --------------------
+page elements
+---------------------*/
+
+#main {
+    margin: 30px 50px;    
+    margin-left: 170px;
+    padding: 0;
+    
+    width: 350px;
+
+}
+
+#header
+{
+    margin: 0;
+    margin-bottom: 25px;
+}
+
+/* search button */
+.btn {
+    margin: 0;
+    margin-left: 5px;
+    
+    font-weight: bold;
+    color: #333; 
+
+    background: #ccc;
+    
+    border-top: 2px solid #fafafa;
+    border-left: 2px solid #fafafa;
+    border-right: 2px solid #333;
+    border-bottom: 2px solid #333;
+    
+    /*padding: 2px 4px;*/
+}
+
+
+p.tagline {
+	margin: 0;
+	margin-top: 5px;
+
+    padding: 0;
+    
+    color: #eee;
+}
+
+
+#content
+{		
+    
+    
+}
+
+#content ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#content li {
+    margin: 5px 0;
+}
+
+
+
+#footer {
+	
+    
+    color: #666;
+    
+	padding: 10px;
+    
+    margin: 0;
+    margin-top: 30px;    
+    border: 1px solid  #ccc;
+
+    /*opacity: 0.85;*/
+    background: #fafafa;
+
+}
+
+
+#footer p {
+    font-size: 85%;
+    margin: 0;
+    padding: 0;
+}
+
+/* utility */
+.cut {clear: both; height: 0;}
+.hidden {display:none;}
+
+
+/* --------------------
+the post-it
+---------------------*/
+
+
+#content div.postit
+{
+    display: block;
+
+/*	background: #eee url('/images/stain.png') bottom right no-repeat;*/
+    
+	border: 1px solid  #ccc;
+
+	padding: 10px;
+    margin: 15px 0;
+
+
+    /*height: 160px;*/
+
+    background: #fafafa;
+    
+}
+
+
+#content div.postit h2 {
+    /*text-transform: uppercase;*/
+    margin: 0;
+    padding: 0;
+}
+
+#content>div.postit
+{
+    /*opacity: 0.85;*/
+    /*background: #ffc url('/images/grad.png') top left repeat-x;*/
+}
+
+#content div.postit ol
+{
+/*    list-style: inside decimal;*/
+    list-style: none;
+
+    padding: 0;
+    margin: 0;
+    margin-top: 15px;
+    
+    
+}
+
+#main>#content div.postit { /* hide from IE */
+    height: auto; /* reset value */
+    /*min-height: 190px; */
+}
+
+
+#content div.postit p {
+	margin: 5px 0;
+}
+
+
+p.datetime {
+    font-size: 85%;
+
+    padding: 0;
+    margin: 0;
+}
+
+
+
+.nav {
+    text-align: right;
+
+    padding-right: 15px; /* slight padding on the right  */
+}
+

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<feed version="0.3" xmlns="http://purl.org/atom/ns#" xml:lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <title mode="escaped">Subbacultcha</title>
+  <link rel="alternate" type="text/html" href="http://localhost:8080" />
+  <tagline mode="escaped">Subbacultcha atom</tagline>
+  <modified n:data="getFirstPost" n:render="modified">Page modified</modified>
+  <id>tag:localhost,2004:/</id>  
+  <n:invisible n:data="get_posts" n:render="sequence">
+    <entry n:pattern="item" n:render="post">
+      <title mode="escaped"><n:slot name="title">Entry Title</n:slot></title>
+      <link rel="alternate" type="text/html" href="#">
+      	<n:attr name="href"> <n:slot name="link" /> </n:attr>
+      </link>
+      <id>tag:localhost,2004:/<n:slot name="id">id</n:slot></id>
+      <issued><n:slot name="created">Date created</n:slot></issued>
+      <modified><n:slot name="modified">Date modified</n:slot></modified>
+      <author>
+        <name><n:slot name="author">Author</n:slot></name>
+      </author>
+      <content type="text/plain" mode="escaped"><n:slot name="content">Content</n:slot></content>
+    </entry>	</n:invisible>
+</feed>

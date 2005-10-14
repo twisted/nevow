@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <title nevow:render="i18n">Greeting</title>
+  </head>
+  <body>
+    <p>
+      Select you preferred language:
+      <span nevow:render="langs"/>
+    </p>
+    <p nevow:render="i18n">Good morning</p>
+
+    <p>
+      We'll repeat a translatable string, just to
+      trigger bugs:
+      <span nevow:render="i18n">Greeting</span>
+    </p>
+
+  </body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <title>Macros Example</title>
+    <style type="text/css">
+p {
+text-align: justify;
+}
+#copyright {
+border-top: 1px solid #000;
+text-align: center;
+font-size: 10px;
+}
+h3 {
+border-bottom: 1px solid #000;
+}
+    </style>
+  </head>
+  <body>
+    <h3>FooBar Inc.</h3>
+    <div id="main">
+      <n:invisible n:macro="content" />
+      <p>
+        Instead of remaining constant this is incremented at
+        each reload, this means you can use macros also to return
+        complex templates that will be rendered using the other well knows
+        ways
+      </p>
+      <p>
+        If you wanna see the number above rise, just
+        modify 'macros_html.html' file in examples/ and save it, then
+        reload the page and look at that number again.
+      </p>
+    </div>
+    <p id="copyright">Copyright by FooBar Inc. bla bla</p>
+  </body>
+</html>

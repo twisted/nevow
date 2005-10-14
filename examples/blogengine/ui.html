@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+    
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:render="starttimer">
+
+    <head>
+        <title>Subbacultcha</title>
+        <style type="text/css">@import url('/styles/site.css');</style>
+        <style type="text/css">@import url('/webform_css');</style>
+    </head>
+
+    <body>
+                
+        <div id="main">
+        
+        <div id="header">
+            <h1>Subbacultcha</h1>
+            <p>not offending anyone</p>
+        </div>
+        
+        <div id="sidebar"> 
+            <ul id="nav">        
+                <li><a id="a_home" href="/">Home</a></li>
+               <!--  <li><a id="a_archives"  title="" href="#">Archives</a></li>        -->
+                <li nevow:render="insert"><a href="#">
+                        <nevow:attr name="href"><nevow:slot name="insert" /></nevow:attr>
+                        Insert a new entry
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div id="content">        
+        <div nevow:data="getEntries" nevow:render="sequence">
+   
+            <div nevow:pattern="item" nevow:render="entries">
+                <h2><nevow:slot name="title" /></h2>                
+                            
+                <!-- <p><nevow:slot name="modification"></nevow:slot></p> -->
+                
+                <p><nevow:slot name="content"></nevow:slot></p>
+                <p>
+                    <a href="#">
+                        <nevow:attr name="href"><nevow:slot name="permaLink" /></nevow:attr>
+                        PermaLink
+                    </a>
+                    &bull;
+                    <nevow:invisible nevow:render="editer">
+                    <a href="#">
+                    <nevow:attr name="href"><nevow:slot name="editPost" /></nevow:attr>
+                    Edit
+                    </a>
+                    </nevow:invisible>
+                </p>
+                
+                <p>Posted by <nevow:slot name="author"></nevow:slot> on <nevow:slot name="modification" />, filed under <nevow:slot name="category" /></p>
+            </div>
+                    
+        </div>
+        
+        <!-- /content -->
+        <nevow:invisible nevow:render="needForms">
+            <p>Edit Entry</p>
+            <div nevow:pattern="frm" nevow:render="forms" />
+        </nevow:invisible>
+        </div>
+        
+        <div id="footer">
+            <p>Served in <span nevow:render="stoptimer" /></p>
+            <p>CSS by Andrea 'deelan' Peltrin, <a href="http://www.deelan.com/">website</a></p>
+        </div>        
+        
+        <!-- /main -->
+        </div>
+    </body>
+</html>
+

@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<!-- xmlns:nevow="http://nevow.com/ns/nevow/0.1" is REQUIRED for the
+          template to work, if you don't put it in, Nevow can't handle
+          the 'nevow'-prefixed attributes and tags correctly and won't
+          process the template as expected. -->
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+	<head>
+		<title>This is title</title>
+	</head>
+	<body>
+	   <h1 id="header">Welcome</h1>
+		<table nevow:data="theList" nevow:render="sequence">
+                <tr nevow:pattern="header"><th>First Column</th><th>Second Column</th></tr>
+
+                <tr nevow:pattern="item"><td>Stuff:</td><td><span nevow:render="string" /></td></tr>
+
+                <tr nevow:pattern="divider"><td>-----</td></tr>
+                <tr nevow:pattern="empty"><td>Nothing.</td></tr>
+
+                <tr nevow:pattern="footer"><td>First Column</td><td>Second Column</td></tr>
+            </table>
+            
+		<ul nevow:data="empty" nevow:render="sequence">
+			<li nevow:pattern="header">HEADER</li>
+			<li nevow:pattern="item">Stuff: <span nevow:render="string" />!</li>
+
+			<li nevow:pattern="divider">-----</li>
+			<li nevow:pattern="empty">Nothing.</li>
+			<li nevow:pattern="footer">FOOTER</li>
+		</ul>
+          <p nevow:render="foo">
+              This entire node, including the span tag, will be replaced by a randomly chosen node from below:
+              <span nevow:pattern="one" style="color: red">
+                  one
+              </span>
+
+              <table nevow:pattern="two">
+                  <tr><td>two</td><td>two</td><td>two</td></tr>
+              </table>
+              <ol nevow:pattern="three">
+                  <li>three</li>
+                  <li>three</li>
+
+                  <li>three</li>
+              </ol>
+          </p>
+	</body>
+</html>

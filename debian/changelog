@@ -1,0 +1,35 @@
+nevow (0.4.1-1.snapshot) unstable; urgency=low
+
+  * SVN snapshot.
+
+ -- Tommi Virtanen <tv@debian.org>  Mon, 27 Jun 2005 15:14:08 +0200
+
+nevow (0.4.1-1) unstable; urgency=low
+
+  * New upstream version.
+  * Python 2.4 support.
+  * Not using upstream tarball as it is too broken compared to
+    SVN tag; specifically it is missing nevow/Canvas.fla, which
+    is considered source code.
+
+ -- Tommi Virtanen <tv@debian.org>  Mon, 27 Jun 2005 15:35:57 +0200
+
+nevow (0.3.0-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Tommi Virtanen <tv@debian.org>  Thu, 30 Sep 2004 12:12:44 +0300
+
+nevow (0.2.0-2) unstable; urgency=low
+
+  * Build-depend on both python2.3-dev and python-dev, it seems that is
+    what cdbs wants. (Closes: #257911)
+
+ -- Tommi Virtanen <tv@debian.org>  Tue, 13 Jul 2004 16:39:17 +0300
+
+nevow (0.2.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Tommi Virtanen <tv@debian.org>  Tue, 29 Jun 2004 10:26:36 +0300
+
