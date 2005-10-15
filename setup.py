@@ -1,10 +1,11 @@
 #!/usr/bin/env python2.3
 # -*- test-case-name: "nevow.test -xformless.test" -*-
 
+import os.path
 from distutils.command import install
 from distutils.core import setup
-import nevow
 import sys
+import setupcommon
 
 # Where should our data files go?
 # They want to go in our package directory , which is under site-packages.
@@ -18,37 +19,28 @@ else:
     version = '.'.join([str(i) for i in sys.version_info[:2]])
     site_packages = 'lib/python' + version + '/site-packages/'
 
+# Turn the package_data into a data_files for 2.3 compatability
+data_files = []
+for pkg, files in setupcommon.package_data.items():
+    pkgdir = os.path.join(*pkg.split('.'))
+    files = [os.path.join(pkgdir, file) for file in files]
+    data_files.append([site_packages+pkgdir, files])
+
+# We need to list the packages explicitly.
+packages=['formless', 'formless.test', 'nevow', 'nevow.flat',
+      'nevow.scripts', 'nevow.test', 'nevow.taglibrary']
+
 setup(
-    name='Nevow',
-    version=nevow.__version__,
-    maintainer='Divmod, Inc.',
-    maintainer_email='support@divmod.org',
-    description='Web Application Construction Kit',
-    url='http://divmod.org/projects/nevow',
-    license='MIT',
-    platforms=["any"],
-    classifiers=[
-        "Intended Audience :: Developers",
-        "Programming Language :: Python",
-        "Development Status :: 4 - Beta",
-        "Topic :: Internet :: WWW/HTTP :: Dynamic Content"],
-
-    packages=['formless', 'formless.test', 'nevow', 'nevow.flat',
-              'nevow.scripts', 'nevow.test', 'nevow.taglibrary'],
-
-    scripts=['bin/nevow-xmlgettext'],
-
-    data_files=[
-        [site_packages+'formless', [
-            'formless/freeform-default.css']],
-        [site_packages+'nevow', [
-            'nevow/liveglue.js',
-            'nevow/livetest.js',
-            'nevow/livetest-postscripts.js',
-            'nevow/livetest.css',
-            'nevow/Canvas.swf']],
-        [site_packages+'nevow/taglibrary', [
-            'nevow/taglibrary/tabbedPane.js',
-            'nevow/taglibrary/tabbedPane.css',
-            'nevow/taglibrary/progressBar.js',
-            'nevow/taglibrary/progressBar.css']]])
+    name=setupcommon.name,
+    version=setupcommon.version,
+    maintainer=setupcommon.maintainer,
+    maintainer_email=setupcommon.maintainer_email,
+    description=setupcommon.description,
+    url=setupcommon.url,
+    license=setupcommon.license,
+    platforms=setupcommon.platforms,
+    classifiers=setupcommon.classifiers,
+    packages=packages,
+    scripts=setupcommon.scripts,
+    data_files=data_files,
+    )
