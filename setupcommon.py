@@ -14,20 +14,6 @@ classifiers=[
     "Development Status :: 4 - Beta",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content"]
 scripts=['bin/nevow-xmlgettext']
-package_data=[
-    ['formless', [
-        'formless/freeform-default.css']],
-    ['nevow', [
-        'nevow/liveglue.js',
-        'nevow/livetest.js',
-        'nevow/livetest-postscripts.js',
-        'nevow/livetest.css',
-        'nevow/Canvas.swf']],
-    ['nevow/taglibrary', [
-        'nevow/taglibrary/tabbedPane.js',
-        'nevow/taglibrary/tabbedPane.css',
-        'nevow/taglibrary/progressBar.js',
-        'nevow/taglibrary/progressBar.css']]]
 package_data={
         'formless': [
             'freeform-default.css'
