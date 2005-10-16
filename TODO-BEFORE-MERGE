@@ -1,5 +1,0 @@
-tests etc
-ajax-only mode (probably just needs a sane API) (?)
-go live by default
-switch to MochiKit-style namespaces in athena.js?
-fixed location for MochiKit.js et al (LivePage.__init__ should optionally take url arguments that point to these files)
