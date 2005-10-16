@@ -17,7 +17,7 @@ warnings.filterwarnings(
 from twisted.application import service, strports
 from twisted.python import util
 
-from nevow import inevow, rend, loaders, tags, appserver, static, guard
+from nevow import inevow, rend, loaders, tags, appserver, static, guard, athena
 
 import sys
 
@@ -61,6 +61,10 @@ try:
     from progress import progress
     from tests import testformless, testexamples
     from nevow import livetest
+
+    from calculator import calculator
+    from callremote import callremote
+    from callremote2 import callremote as callremote2
 except ImportError, e:
     if str(e).find('No module named') != -1:
         msg = """
@@ -166,8 +170,20 @@ class Examples(rend.Page):
         formless_redirector=testformless.Redirector(),
         formless_tests=testformless.formless_tests,
         fragments=fragments.Root(),
-        macros=macros.Root()
+        macros=macros.Root(),
         )
+
+
+    child_calculator = athena.liveLoader(calculator.Calculator)
+
+    # This method could be like child_calculator above, but it isn't so that
+    # it can demonstrate another way to create LivePages.
+    def child_callremote(self, ctx, _factory=athena.LivePageFactory(callremote.CallRemote)):
+        return _factory.clientFactory(ctx)
+
+    # See?
+    child_callremote2 = athena.liveLoader(callremote2.NewLPTest)
+
 
 application = service.Application("examples")
 strports.service("8080", appserver.NevowSite(Examples(), logPath="web.log")).setServiceParent(application)

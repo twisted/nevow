@@ -19,6 +19,8 @@ package_data={
             'freeform-default.css'
             ],
         'nevow': [
+            'athena.js',
+            'MochiKit.js',
             'liveglue.js',
             'livetest.js',
             'livetest-postscripts.js',

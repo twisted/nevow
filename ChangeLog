@@ -1,3 +1,10 @@
+2005-09-21  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py: New implementation of LivePage with a
+	data-centric API: generation of JavaScript on the server is highly
+	discouraged, instead an API for passing around simple or complex
+	data structures is provided.
+
 2005-08-01  Matt Goodall <matt@pollenation.net>
 
 	egg-ify the distribution. "python setup.py bdist_egg" will now build
