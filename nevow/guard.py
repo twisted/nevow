@@ -44,7 +44,7 @@ class GuardSession(components.Componentized):
     represent a session.
     """
     implements(inevow.ISession, inevow.IGuardSession)
-    
+
     def __init__(self, guard, uid):
         """Initialize a session with a unique ID for that session.
         """
@@ -187,15 +187,15 @@ class GuardSession(components.Componentized):
         self.checkExpired()
 
 
-def urlToChild(request, *ar, **kw):
-    u = url.URL.fromRequest(request)
+def urlToChild(ctx, *ar, **kw):
+    u = url.URL.fromContext(ctx)
     for segment in ar:
         u = u.child(stan.xml(segment))
-    if request.method == 'POST':
+    if inevow.IRequest(ctx).method == 'POST':
         u = u.clear()
     for k,v in kw.items():
         u = u.replace(k, v)
-    
+
     return u
 
 
@@ -222,7 +222,7 @@ compy.backwardsCompatImplements(Forbidden)
 class SessionWrapper:
     """SessionWrapper
 
-    
+
 
 
     The following class attributes can be modified on an instance
@@ -235,7 +235,7 @@ class SessionWrapper:
       False: cookies do not get the secure attribute.
 
     @ivar: persistentCookies: Whether to use persistent (saved to disk) cookies or not.
-      True: make cookies persistent, so they are valid for the 
+      True: make cookies persistent, so they are valid for the
         length of the sessionLifetime even if the browser window
         is closed.
 
@@ -249,7 +249,7 @@ class SessionWrapper:
 
     sessionLifetime = 3600
     sessionFactory = GuardSession
-    
+
     # The interface to cred for when logging into the portal
     credInterface = inevow.IResource
 
@@ -275,7 +275,7 @@ class SessionWrapper:
 
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
-        request.setupSession = lambda : self.createSession(request, segments=[])
+        request.setupSession = lambda : self.createSession(ctx, segments=[])
         # ctx.remember(self, ILoginManager)
 
         d = defer.maybeDeferred(self._delegate, ctx, [])
@@ -294,12 +294,12 @@ class SessionWrapper:
             cookie = request.getCookie(self.cookieKey)
         else:
             cookie = ''
-        request.setupSession = lambda : self.createSession(request, segments)
+        request.setupSession = lambda : self.createSession(ctx, segments)
 
         if path.startswith(SESSION_KEY):
             key = path[len(SESSION_KEY):]
             if key not in self.sessions:
-                return urlToChild(request, *segments[1:], **{'__start_session__':1}), ()
+                return urlToChild(ctx, *segments[1:], **{'__start_session__':1}), ()
             self.sessions[key].setLifetime(self.sessionLifetime)
             if cookie == key:
                 # /sessionized-url/${SESSION_KEY}aef9c34aecc3d9148/foo
@@ -307,7 +307,7 @@ class SessionWrapper:
                 #                  we are this getChild
                 # with a matching cookie
                 self.sessions[key].sessionJustStarted = True
-                return urlToChild(request, *segments[1:], **{'__session_just_started__':1}), ()
+                return urlToChild(ctx, *segments[1:], **{'__session_just_started__':1}), ()
             else:
                 # We attempted to negotiate the session but failed (the user
                 # probably has cookies disabled): now we're going to return the
@@ -316,7 +316,7 @@ class SessionWrapper:
                 # /sessionized-url/${SESSION_KEY}aef9c34aecc3d9148/foo
                 #                  ^ we are this getChild
                 # without a cookie (or with a mismatched cookie)
-                return self.checkLogin(request, self.sessions[key],
+                return self.checkLogin(ctx, self.sessions[key],
                                        segments[1:],
                                        sessionURL=segments[0])
         else:
@@ -341,7 +341,7 @@ class SessionWrapper:
         for sessionKey in cookie, httpAuthSessionKey:
             if sessionKey in self.sessions:
                 session = self.sessions[sessionKey]
-                return self.checkLogin(request, session, segments)
+                return self.checkLogin(ctx, session, segments)
         # without a session
 
         if userpass != ('',''):
@@ -350,16 +350,18 @@ class SessionWrapper:
             sz = self.sessions[httpAuthSessionKey] = self.sessionFactory(self, httpAuthSessionKey)
             # kick off the expiry timer.
             sz.checkExpired()
-            return self.checkLogin(request, sz, segments, None, UsernamePassword(*userpass))
+            return self.checkLogin(ctx, sz, segments, None, UsernamePassword(*userpass))
 
         # no, really, without a session
         ## Redirect to the URL with the session key in it, plus the segments of the url
-        rd = self.createSession(request, segments)
+        rd = self.createSession(ctx, segments)
         return rd, ()
 
-    def createSession(self, request, segments):
+    def createSession(self, ctx, segments):
         """Create a new session for this request, and redirect back to the path
         given by segments."""
+
+        request = inevow.IRequest(ctx)
 
         newCookie = _sessionCookie()
         if self.useCookies:
@@ -381,9 +383,9 @@ class SessionWrapper:
         sz.method = request.method
         sz.received_headers = request.received_headers
         sz.checkExpired()
-        return urlToChild(request, SESSION_KEY+newCookie, *segments)
+        return urlToChild(ctx, SESSION_KEY+newCookie, *segments)
 
-    def checkLogin(self, request, session, segments, sessionURL=None, httpAuthCredentials=None):
+    def checkLogin(self, ctx, session, segments, sessionURL=None, httpAuthCredentials=None):
         """
         Associate the given request with the given session and:
 
@@ -408,6 +410,7 @@ class SessionWrapper:
               URL minus __login__) to be passed to that resource.
 
         """
+        request = inevow.IRequest(ctx)
         session.touch()
         request.session = session
         root = url.URL.fromContext(request)
@@ -459,11 +462,11 @@ class SessionWrapper:
                 return u, ()
             return self.login(request, session, self.getCredentials(request), subSegments).addCallback(
                 unmangleURL).addErrback(
-                self.incorrectLoginError, request, subSegments, "Incorrect login."
+                self.incorrectLoginError, ctx, subSegments, "Incorrect login."
                 )
         elif authCommand == LOGOUT_AVATAR:
             self.explicitLogout(session)
-            return urlToChild(request, *segments[1:]), ()
+            return urlToChild(ctx, *segments[1:]), ()
         else:
             r = session.resourceForPortal(self.portal)
             if r:
@@ -474,7 +477,7 @@ class SessionWrapper:
                 # because the redirect loop would be infinite.  Perhaps this
                 # should be closer to the HTTP auth path?
                 return self.login(request, session, Anonymous(), segments).addErrback(
-                    self.incorrectLoginError, request, segments, 'Anonymous access not allowed.')
+                    self.incorrectLoginError, ctx, segments, 'Anonymous access not allowed.')
 
     def explicitLogout(self, session):
         """Hook to be overridden if you care about user-requested logout.
@@ -532,7 +535,7 @@ class SessionWrapper:
         session.setResourceForPortal(res, self.portal, logout)
         return res, segments
 
-    def incorrectLoginError(self, error, request, segments, loginFailure):
+    def incorrectLoginError(self, error, ctx, segments, loginFailure):
         """ Used as an errback upon failed login, returns a 2-tuple of a failure URL
         with the query argument 'login-failure' set to the parameter
         loginFailure, and an empty list of segments, to redirect to that URL.
@@ -542,12 +545,13 @@ class SessionWrapper:
         currently looking at to attempt login.  Any existing query string will
         be stripped.
         """
+        request = inevow.IRequest(ctx)
         error.trap(UnauthorizedLogin)
         referer = request.getHeader("referer")
         if referer is not None:
             u = url.URL.fromString(referer)
         else:
-            u = urlToChild(request, *segments)
+            u = urlToChild(ctx, *segments)
 
         u = u.clear()
         u = u.add('login-failure', loginFailure)
