@@ -114,6 +114,8 @@ def loadMimeTypes(mimetype_locations=['/etc/mime.types']):
             '.xul':   'application/vnd.mozilla.xul+xml',
             '.py':    'text/plain',
             '.patch': 'text/plain',
+            '.pjpeg': 'image/pjpeg',
+            '.tac':   'text/x-python',
         }
     )
     # Users can override these mime-types by loading them out configuration
