@@ -173,6 +173,10 @@ class VHostMonsterResource:
 
     This also means your private server should serve the real content at
     /foo/bar, and not at the root of the tree.
+
+    Warning: anyone who can access a VHostMonsterResource can fake the
+    host name they are contacting. This can lead to cookie stealing or
+    cross site scripting attacks. Never expose /vhost to the Internet.
     """
     implements(inevow.IResource)
 
