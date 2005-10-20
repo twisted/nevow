@@ -1,1 +1,0 @@
-username/password: pippo/pippo
