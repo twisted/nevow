@@ -1,7 +1,5 @@
-import nevow
-
 name='Nevow'
-version=nevow.__version__
+version='SVN-trunk'
 maintainer = 'Divmod, Inc.'
 maintainer_email = 'support@divmod.org'
 description = 'Web Application Construction Kit'
