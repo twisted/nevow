@@ -386,7 +386,7 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
             if old == 'content':
                 import warnings
                 warnings.warn(
-                    "[v0.5] ", """Using a Page with a 'content' pattern is
+                    """[v0.5] Using a Page with a 'content' pattern is
                                deprecated.""",
                     DeprecationWarning,
                     stacklevel=2)
