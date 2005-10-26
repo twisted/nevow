@@ -1,6 +1,6 @@
 /***
 
-MochiKit.DOM 0.90
+MochiKit.DOM 1.0
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -29,13 +29,13 @@ if (typeof(MochiKit.DOM) == 'undefined') {
 }
 
 MochiKit.DOM.NAME = "MochiKit.DOM";
-MochiKit.DOM.VERSION = "0.90";
+MochiKit.DOM.VERSION = "1.0";
 MochiKit.DOM.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
-}
+};
 MochiKit.DOM.toString = function () {
     return this.__repr__();
-}
+};
 
 MochiKit.DOM.EXPORT = [
     "registerDOMConverter",
@@ -46,6 +46,9 @@ MochiKit.DOM.EXPORT = [
     "appendChildNodes",
     "replaceChildNodes",
     "swapDOM",
+    "BUTTON",
+    "TT",
+    "PRE",
     "H1",
     "H2",
     "H3",
@@ -182,17 +185,20 @@ MochiKit.DOM.updateNodeAttributes = function (node, attrs) {
         elem = MochiKit.DOM.getElement(node);
     }
     if (attrs) {
+        var updatetree = MochiKit.Base.updatetree;
         if (MochiKit.DOM.attributeArray.compliant) {
             // not IE, good.
             for (var k in attrs) {
                 var v = attrs[k];
-                if (k.substring(0, 2) == "on") {
+                if (typeof(v) == 'object' && typeof(elem[k]) == 'object') {
+                    updatetree(elem[k], v);
+                } else if (k.substring(0, 2) == "on") {
                     if (typeof(v) == "string") {
                         v = new Function(v);
                     }
                     elem[k] = v;
                 } else {
-                    elem.setAttribute(k, attrs[k]);
+                    elem.setAttribute(k, v);
                 }
             }
         } else {
@@ -201,11 +207,13 @@ MochiKit.DOM.updateNodeAttributes = function (node, attrs) {
                 "class": "className",
                 "checked": "defaultChecked"
             };
-            for (var k in attrs) {
-                var v = attrs[k];
+            for (k in attrs) {
+                v = attrs[k];
                 var renamed = IE_IS_REALLY_AWFUL_AND_SHOULD_DIE[k];
                 if (typeof(renamed) == "string") {
                     elem[renamed] = v;
+                } else if (typeof(elem[k]) == 'object' && typeof(v) == 'object') {
+                    updatetree(elem[k], v);
                 } else if (k.substring(0, 2) == "on") {
                     if (typeof(v) == "string") {
                         v = new Function(v);
@@ -360,7 +368,7 @@ MochiKit.DOM.getElementsByTagAndClassName = function (tagName, className, /* opt
     parent = MochiKit.DOM.getElement(parent);
     var children = parent.getElementsByTagName(tagName) || document.all;
     if (typeof(className) == 'undefined' || className == null) {
-        return children;
+        return MochiKit.Base.extend(null, children);
     }
 
     var elements = [];
@@ -376,13 +384,13 @@ MochiKit.DOM.getElementsByTagAndClassName = function (tagName, className, /* opt
     }
 
     return elements;
-}
+};
 
 MochiKit.DOM.addToCallStack = function (target, path, func, once) {
     var existing = target[path];
     var regfunc = existing;
     if (!(typeof(existing) == 'function' && existing.callStack)) {
-        var regfunc = function () {
+        regfunc = function () {
             var callStack = regfunc.callStack;
             for (var i = 0; i < callStack.length; i++) {
                 if (callStack[i].apply(this, arguments) === false) {
@@ -404,7 +412,7 @@ MochiKit.DOM.addToCallStack = function (target, path, func, once) {
         target[path] = regfunc;
     }
     regfunc.callStack.push(func);
-}
+};
 
 MochiKit.DOM.addLoadEvent = function (func) {
     /***
@@ -629,7 +637,7 @@ MochiKit.DOM.emitHTML = function (dom, /* optional */lst) {
                 ]);
             }
             attributes.sort();
-            for (var i = 0; i < attributes.length; i++) {
+            for (i = 0; i < attributes.length; i++) {
                 var attrs = attributes[i];
                 for (var j = 0; j < attrs.length; j++) {
                     lst.push(attrs[j]);
@@ -641,7 +649,7 @@ MochiKit.DOM.emitHTML = function (dom, /* optional */lst) {
                 // on first
                 queue.push("</" + dom.nodeName.toLowerCase() + ">");
                 var cnodes = dom.childNodes;
-                for (var i = cnodes.length - 1; i >= 0; i--) {
+                for (i = cnodes.length - 1; i >= 0; i--) {
                     queue.push(cnodes[i]);
                 }
             } else {
@@ -749,6 +757,9 @@ MochiKit.DOM.__new__ = function () {
     this.A = createDOMFunc("a");
     this.DIV = createDOMFunc("div");
     this.IMG = createDOMFunc("img");
+    this.BUTTON = createDOMFunc("button");
+    this.TT = createDOMFunc("tt");
+    this.PRE = createDOMFunc("pre");
     this.H1 = createDOMFunc("h1");
     this.H2 = createDOMFunc("h2");
     this.H3 = createDOMFunc("h3");

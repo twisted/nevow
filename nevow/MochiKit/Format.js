@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Format 0.90
+MochiKit.Format 1.0
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -21,13 +21,115 @@ if (typeof(MochiKit.Format) == 'undefined') {
 }
 
 MochiKit.Format.NAME = "MochiKit.Format";
-MochiKit.Format.VERSION = "0.90";
+MochiKit.Format.VERSION = "1.0";
 MochiKit.Format.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
-}
+};
 MochiKit.Format.toString = function () {
     return this.__repr__();
-}
+};
+
+MochiKit.Format._numberFormatter = function (placeholder, header, footer, locale, isPercent, precision, leadingZeros, separatorAt, trailingZeros) {
+    return function (num) {
+        num = parseFloat(num);
+        if (typeof(num) == "undefined" || num == null || isNaN(num)) {
+            return placeholder;
+        }
+        var curheader = header;
+        var curfooter = footer;
+        if (num < 0) {
+            num = -num;
+        } else {
+            curheader = curheader.replace(/-/, "");
+        }
+        var me = arguments.callee;
+        var fmt = MochiKit.Format.formatLocale(locale);
+        if (isPercent) {
+            num = num * 100.0;
+            curfooter = fmt.percent + curfooter;
+        }
+        num = MochiKit.Format.roundToFixed(num, precision);
+        var parts = num.split(/\./);
+        var whole = parts[0];
+        var frac = (parts.length == 1) ? "" : parts[1];
+        var res = "";
+        while (whole.length < leadingZeros) {
+            whole = "0" + whole;
+        }
+        if (separatorAt) {
+            while (whole.length > separatorAt) {
+                var i = whole.length - separatorAt;
+                res = res + fmt.separator + whole.substring(i, whole.length);
+                whole = whole.substring(0, i);
+            }
+        }
+        res = whole + res;
+        if (precision > 0) {
+            while (frac.length < trailingZeros) {
+                frac = frac + "0";
+            }
+            res = res + fmt.decimal + frac;
+        }
+        return curheader + res + curfooter;
+    };
+};
+
+MochiKit.Format.numberFormatter = function (pattern, placeholder/* = "" */, locale/* = "default" */) {
+    // http://java.sun.com/docs/books/tutorial/i18n/format/numberpattern.html
+    // | 0 | leading or trailing zeros
+    // | # | just the number
+    // | , | separator
+    // | . | decimal separator
+    // | % | Multiply by 100 and format as percent
+    if (typeof(placeholder) == "undefined") {
+        placeholder = "";
+    }
+    var match = pattern.match(/((?:[0#]+,)?[0#]+)(?:\.([0#]+))?(%)?/);
+    if (!match) {
+        throw TypeError("Invalid pattern");
+    }
+    var header = pattern.substr(0, match.index);
+    var footer = pattern.substr(match.index + match[0].length);
+    if (header.search(/-/) == -1) {
+        header = header + "-";
+    }
+    var whole = match[1];
+    var frac = (typeof(match[2]) == "string" && match[2] != "") ? match[2] : "";
+    var isPercent = (typeof(match[3]) == "string" && match[3] != "");
+    var tmp = whole.split(/,/);
+    var separatorAt;
+    if (typeof(locale) == "undefined") {
+        locale = "default";
+    }
+    if (tmp.length == 1) {
+        separatorAt = null;
+    } else {
+        separatorAt = tmp[1].length;
+    }
+    var leadingZeros = whole.length - whole.replace(/0/g, "").length;
+    var trailingZeros = frac.length - frac.replace(/0/g, "").length;
+    var precision = frac.length;
+    return MochiKit.Format._numberFormatter(
+        placeholder, header, footer, locale, isPercent, precision,
+        leadingZeros, separatorAt, trailingZeros
+    );
+};
+
+MochiKit.Format.formatLocale = function (locale) {
+    if (typeof(locale) == "undefined" || locale == null) {
+        locale = "default";
+    }
+    if (typeof(locale) == "string") {
+        var rval = MochiKit.Format.LOCALE[locale];
+        if (typeof(rval) == "string") {
+            rval = arguments.callee(rval);
+            MochiKit.Format.LOCALE[locale] = rval;
+        }
+        return rval;
+    } else {
+        return locale;
+    }
+};
 
 MochiKit.Format.twoDigitAverage = function (numerator, denominator) {
     /***
@@ -76,6 +178,10 @@ MochiKit.Format.twoDigitFloat = function (someFloat) {
 };
 
 MochiKit.Format.lstrip = function (str, /* optional */chars) {
+    str = str + "";
+    if (typeof(str) != "string") {
+        return null;
+    }
     if (!chars) {
         return str.replace(/^\s+/, "");
     } else {
@@ -84,6 +190,10 @@ MochiKit.Format.lstrip = function (str, /* optional */chars) {
 };
 
 MochiKit.Format.rstrip = function (str, /* optional */chars) {
+    str = str + "";
+    if (typeof(str) != "string") {
+        return null;
+    }
     if (!chars) {
         return str.replace(/\s+$/, "");
     } else {
@@ -96,6 +206,22 @@ MochiKit.Format.strip = function (str, /* optional */chars) {
     return self.rstrip(self.lstrip(str, chars), chars);
 };
 
+MochiKit.Format.truncToFixed = function (aNumber, precision) {
+    aNumber = Math.floor(aNumber * Math.pow(10, precision));
+    var res = (aNumber * Math.pow(10, -precision)).toFixed(precision);
+    if (res.charAt(0) == ".") {
+        res = "0" + res;
+    }
+    return res;
+};
+
+MochiKit.Format.roundToFixed = function (aNumber, precision) {
+    return MochiKit.Format.truncToFixed(
+        aNumber + 0.5 * Math.pow(10, -precision),
+        precision
+    );
+};
+
 MochiKit.Format.percentFormat = function (someFloat) {
     /***
 
@@ -106,6 +232,10 @@ MochiKit.Format.percentFormat = function (someFloat) {
 };
 
 MochiKit.Format.EXPORT = [
+    "truncToFixed",
+    "roundToFixed",
+    "numberFormatter",
+    "formatLocale",
     "twoDigitAverage",
     "twoDigitFloat",
     "percentFormat",
@@ -113,6 +243,13 @@ MochiKit.Format.EXPORT = [
     "rstrip",
     "strip"
 ];
+
+MochiKit.Format.LOCALE = {
+    "en_US": {"separator": ",", "decimal": ".", "percent": "%"},
+    "de_DE": {"separator": ".", "decimal": ",", "percent": "%"},
+    "fr_FR": {"separator": " ", "decimal": ",", "percent": "%"},
+    "default": "en_US"
+};
 
 MochiKit.Format.EXPORT_OK = [];
 MochiKit.Format.EXPORT_TAGS = {
@@ -133,7 +270,7 @@ MochiKit.Format.__new__ = function () {
             }
         }
     }
-}
+};
 
 MochiKit.Format.__new__();
 

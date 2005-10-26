@@ -1,6 +1,6 @@
 /***
 
-MochiKit.MochiKit 0.90
+MochiKit.MochiKit 1.0
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -17,7 +17,7 @@ if (typeof(MochiKit.MochiKit) == 'undefined') {
 }
 
 MochiKit.MochiKit.NAME = "MochiKit.MochiKit";
-MochiKit.MochiKit.VERSION = "0.90";
+MochiKit.MochiKit.VERSION = "1.0";
 MochiKit.MochiKit.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -34,6 +34,7 @@ MochiKit.MochiKit.SUBMODULES = [
     "Format",
     "Async",
     "DOM",
+    "LoggingPane",
     "Visual"
 ];
 
@@ -52,6 +53,7 @@ if (typeof(JSAN) != 'undefined' || typeof(dojo) != 'undefined') {
         JSAN.use("MochiKit.Async", []);
         JSAN.use("MochiKit.DOM", []);
         JSAN.use("MochiKit.Visual", []);
+        JSAN.use("MochiKit.LoggingPane", []);
     }
     (function () {
         var extend = MochiKit.Base.extend;
@@ -60,19 +62,20 @@ if (typeof(JSAN) != 'undefined' || typeof(dojo) != 'undefined') {
         var EXPORT = [];
         var EXPORT_OK = [];
         var EXPORT_TAGS = {};
-        for (var i = 0; i < modules.length; i++) {
-            var m = MochiKit[modules[i]];
+        var i, k, m, all;
+        for (i = 0; i < modules.length; i++) {
+            m = MochiKit[modules[i]];
             extend(EXPORT, m.EXPORT);
             extend(EXPORT_OK, m.EXPORT_OK);
-            for (var k in m.EXPORT_TAGS) {
+            for (k in m.EXPORT_TAGS) {
                 EXPORT_TAGS[k] = extend(EXPORT_TAGS[k], m.EXPORT_TAGS[k]);
             }
-            var all = m.EXPORT_TAGS[":all"];
+            all = m.EXPORT_TAGS[":all"];
             if (!all) {
                 all = extend(null, m.EXPORT, m.EXPORT_OK);
             }
-            for (var i = 0; i < all.length; i++) {
-                var k = all[i];
+            for (i = 0; i < all.length; i++) {
+                k = all[i];
                 self[k] = m[k];
             }
         }
@@ -91,7 +94,8 @@ if (typeof(JSAN) != 'undefined' || typeof(dojo) != 'undefined') {
         var base = null;
         var baseElem = null;
         var allScripts = {};
-        for (var i = 0; i < scripts.length; i++) {
+        var i;
+        for (i = 0; i < scripts.length; i++) {
             var src = scripts[i].getAttribute("src");
             if (!src) {
                 continue;
@@ -107,7 +111,7 @@ if (typeof(JSAN) != 'undefined' || typeof(dojo) != 'undefined') {
         }
         var modules = MochiKit.MochiKit.SUBMODULES;
         modules.unshift("Compat");
-        for (var i = 0; i < modules.length; i++) {
+        for (i = 0; i < modules.length; i++) {
             if (MochiKit[modules[i]]) {
                 continue;
             }

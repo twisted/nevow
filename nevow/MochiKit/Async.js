@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Async 0.90
+MochiKit.Async 1.0
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -29,13 +29,13 @@ if (typeof(MochiKit.Async) == 'undefined') {
 }
 
 MochiKit.Async.NAME = "MochiKit.Async";
-MochiKit.Async.VERSION = "0.90";
+MochiKit.Async.VERSION = "1.0";
 MochiKit.Async.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
-}
+};
 MochiKit.Async.toString = function () {
     return this.__repr__();
-}
+};
 
 MochiKit.Async.AlreadyCalledError = function (deferred) {
     /***
@@ -535,8 +535,8 @@ MochiKit.Async.sendXMLHttpRequest = function (req, /* optional */ sendContent) {
                     // XXX: This seems to happen on page change
                     d.errback(err);
                 } else {
+                    // XXX: this seems to happen when the server is unreachable
                     d.errback(err);
-                    // MochiKit.Logging.logDebug("Ignoring XMLHttpRequest, undefined status");
                 }
             }
         }
@@ -555,7 +555,7 @@ MochiKit.Async.sendXMLHttpRequest = function (req, /* optional */ sendContent) {
 
     return d;
 
-}
+};
 
 MochiKit.Async.doSimpleXMLHttpRequest = function (url) {
     var req = MochiKit.Async.getXMLHttpRequest();
@@ -588,7 +588,13 @@ MochiKit.Async.wait = function (seconds, /* optional */value) {
         d.addCallback(function () { return value; });
     }
     var timeout = setTimeout(bind(d.callback, d), Math.floor(seconds * 1000));
-    d.canceller = partial(clearTimeout, timeout);
+    d.canceller = function () {
+        try {
+            clearTimeout(timeout);
+        } catch (e) {
+            // pass
+        }
+    };
     return d;
 };
 

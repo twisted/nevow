@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Logging 0.90
+MochiKit.Logging 1.0
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -29,7 +29,7 @@ if (typeof(MochiKit.Logging) == 'undefined') {
 }
 
 MochiKit.Logging.NAME = "MochiKit.Logging";
-MochiKit.Logging.VERSION = "0.90";
+MochiKit.Logging.VERSION = "1.0";
 MochiKit.Logging.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -295,8 +295,12 @@ MochiKit.Logging.Logger.prototype.getMessageText = function (howMany) {
     return '';
 };
 
-MochiKit.Logging.Logger.prototype.debuggingBookmarklet = function () {
-    alert(this.getMessageText());
+MochiKit.Logging.Logger.prototype.debuggingBookmarklet = function (inline) {
+    if (typeof(MochiKit.LoggingPane) == "undefined") {
+        alert(this.getMessageText());
+    } else {
+        MochiKit.LoggingPane.createLoggingPane(inline || false);
+    }
 };
 
 MochiKit.Logging.alertListener = function (msg) {
