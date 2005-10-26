@@ -39,15 +39,16 @@ def isDangerous(path):
 
 class Data:
     implements(inevow.IResource)
-    
+
     """
     This is a static, in-memory resource.
     """
-    
-    def __init__(self, data, type):
+
+    def __init__(self, data, type, expires=None):
         self.data = data
         self.type = type
-        
+        self.expires = expires
+
     def locateChild(self, ctx, segments):
         return appserver.NotFound
 
@@ -55,6 +56,9 @@ class Data:
         request = inevow.IRequest(ctx)
         request.setHeader("content-type", self.type)
         request.setHeader("content-length", str(len(self.data)))
+        if self.expires is not None:
+            request.setHeader("expires",
+                              http.datetimeToString(time.time() + self.expires))
         if request.method == "HEAD":
             return ''
         return self.data
