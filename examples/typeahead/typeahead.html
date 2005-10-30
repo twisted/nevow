@@ -1,0 +1,89 @@
+<html xmlns='http://www.w3.org/1999/xhtml'
+  xmlns:n='http://nevow.com/ns/nevow/0.1'>
+  <!-- vi:ft=html
+  -->
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+    <n:invisible n:render="liveglue" />
+    <title>TypeAhead Demo</title>
+    <style type='text/css'>
+      /* styles here */
+    </style>
+    <script type='text/javascript' language='javascript'>
+// <![CDATA[
+// add events in a cross-browser way
+function xbAddEvent(obj, evType, fn, useCapture){
+  if (obj.addEventListener){
+    obj.addEventListener(evType, fn, useCapture);
+    return true;
+  } else if (obj.attachEvent){
+    var r = obj.attachEvent("on"+evType, fn);
+    return r;
+  } else {
+    alert("Handler could not be attached");
+  }
+}
+
+function selectRange(ele, start, end)
+{
+    var orig = ele;
+    ele = $(ele);
+    if (ele == null)
+    {
+        alert("selectRange() can't find an element with id: " + orig + ".");
+        return;
+    }
+
+    if (ele.setSelectionRange)
+    {
+        ele.setSelectionRange(start, end);
+    }
+    else if (ele.createTextRange)
+    {
+        var range = ele.createTextRange();
+        range.moveStart("character", start);
+        range.moveEnd("character", end - ele.value.length);
+        range.select();
+    }
+
+    ele.focus();
+};
+
+// 
+function replaceDescription(result)
+{
+    var animal = result[0]; var descr = result[1];
+    $('description').innerHTML = descr;
+
+    // fill in the text field and select the portion that was guessed
+    if (animal != null)
+    {
+        var typehere = $('typehere');
+        var current = typehere.value;
+        typehere.value = animal;
+        selectRange(typehere, current.length, animal.length);
+    }
+}
+
+//
+function loadDescription(ev)
+{
+    // filter helpful keys like backspace
+    if (ev.keyCode < 32) return;
+    if (ev.keyCode >= 33 && ev.keyCode <= 46) return;
+    if (ev.keyCode >= 112 && ev.keyCode <= 123) return;
+
+    var typed = $('typehere').value;
+    var d = server.callRemote('loadDescription', typed);
+    d.addCallback(replaceDescription);
+}
+// ]]>
+    </script>
+  </head>
+  <body onload="xbAddEvent($('typehere'), 'keyup', loadDescription, 1)">
+    <h2>Start typing an animal to see the description.</h2>
+    <input type="text" id="typehere" />
+    <h3 id="description"></h3>
+  </body>
+</html>
+

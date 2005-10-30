@@ -65,6 +65,7 @@ try:
     from calculator import calculator
     from callremote import callremote
     from callremote2 import callremote as callremote2
+    from typeahead import typeahead
 except ImportError, e:
     if str(e).find('No module named') != -1:
         msg = """
@@ -171,6 +172,7 @@ class Examples(rend.Page):
         formless_tests=testformless.formless_tests,
         fragments=fragments.Root(),
         macros=macros.Root(),
+        typeahead=typeahead.DataEntry()
         )
 
 
