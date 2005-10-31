@@ -19,6 +19,7 @@ package_data={
         'nevow': [
             'athena.js',
             'MochiKit.js',
+            'MochiKitLogConsole.js',
             'liveglue.js',
             'livetest.js',
             'livetest-postscripts.js',
