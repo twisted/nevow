@@ -1,5 +1,5 @@
 name='Nevow'
-version='SVN-trunk'
+version='0.6.0'
 maintainer = 'Divmod, Inc.'
 maintainer_email = 'support@divmod.org'
 description = 'Web Application Construction Kit'

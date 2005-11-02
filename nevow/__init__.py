@@ -2,7 +2,7 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-__version_info__ = (0, 5, 0)
+__version_info__ = (0, 6, 0)
 __version__ = '.'.join([str(i) for i in __version_info__[:3]])
 if __version_info__[3:]:
     __version__ = '-'.join((__version__, '-'.join(__version_info__[3:])))
