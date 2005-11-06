@@ -43,3 +43,29 @@ binary-post-install/python2.3-nevow::
 		ln -s "$$(basename "$$file").1.gz" \
 			"debian/$(cdbs_curpkg)/usr/share/man/man1/$$manname";\
 	done
+
+clean::
+	rm -f setupcommon.pyc
+
+
+ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
+TRIAL=trial$(cdbs_python_ver)
+TOPMODULES:=nevow formless
+$(patsubst %,binary-post-install/%,$(DEB_PYTHON_REAL_LIB_PACKAGES)):: binary-post-install/%:
+	PYTHONPATH='debian/$(cdbs_curpkg)/usr/lib/python$(cdbs_python_ver)/site-packages/' \
+		'$(TRIAL)' --bwverbose -R $(TOPMODULES)
+
+	# Importing the modules generates .pyc files, and dh_python (which
+	# normally cleans them) has already been run. Remove them manually.
+	find 'debian/$(cdbs_curpkg)' -name '*.py[co]' -print0 \
+	| xargs -0 rm -f --
+endif
+
+clean::
+	rm -rf _trial_temp
+
+
+# distutils is sloppy and only cleans with the default python version,
+# leaving all the other stuff still in build
+clean::
+	rm -rf build

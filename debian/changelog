@@ -1,8 +1,29 @@
-nevow (0.4.1-1.snapshot) unstable; urgency=low
+nevow (0.6.0-1.snapshot) unstable; urgency=low
 
   * SVN snapshot.
 
- -- Tommi Virtanen <tv@debian.org>  Mon, 27 Jun 2005 15:14:08 +0200
+ -- Tommi Virtanen <tv@debian.org>  Sun,  6 Nov 2005 20:45:27 +0200
+
+nevow (0.6.0-1) unstable; urgency=low
+
+  * New upstream version. (Closes: #336027)
+  * Acknowledge NMU (Closes: #319230), but please be more careful in the
+    future; no NMU patch was sent to BTS
+  * Remove setupcommon.pyc when cleaning, or dpkg-source will see a binary
+    file content change.
+  * Run unit tests when building.
+  * Clean build tree, distutils fails to remove all of it.
+  * Change priority to extra, as twisted is extra and nevow depends on it.
+
+ -- Tommi Virtanen <tv@debian.org>  Sun,  6 Nov 2005 20:26:39 +0200
+
+nevow (0.4.1-1.1) unstable; urgency=low
+
+  * NMU
+  * Add missing build depends in python2.4-dev (Closes: #319230)
+  * lintian error: fix package description indent for list items.
+
+ -- Bastian Kleineidam <calvin@debian.org>  Sat, 13 Aug 2005 18:48:20 +0200
 
 nevow (0.4.1-1) unstable; urgency=low
 
