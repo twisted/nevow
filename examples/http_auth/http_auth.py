@@ -1,4 +1,13 @@
 
+"""
+Example of using HTTP Auth directly to require authentication before
+rendering a page for a client.
+
+This is an example of extremely low-level authentication.  Most applications
+are better served by using L{nevow.guard} instead of manually managing HTTP
+Auth.  See the C{guarded/} example for more information.
+"""
+
 try:
     from twisted.web import http
 except ImportError:
