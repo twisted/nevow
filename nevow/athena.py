@@ -66,12 +66,12 @@ class LivePageTransport(object):
         func = self.livePage.locateMethod(ctx, method)
         requestId = inevow.IRequest(ctx).getHeader('Request-Id')
         if requestId is not None:
-            result = defer.maybeDeferred(func, ctx, *args, **kw)
+            result = defer.maybeDeferred(func, *args, **kw)
             result.addErrback(self._ebCall, method, func)
             result.addBoth(self._cbCall, requestId)
         else:
             try:
-                func(ctx, *args, **kw)
+                func(*args, **kw)
             except:
                 log.msg("Unhandled error in event handler:")
                 log.err()
@@ -94,6 +94,15 @@ class LivePageFactory:
     def __init__(self, pageFactory):
         self._pageFactory = pageFactory
         self.clients = {}
+
+        self._transportQueue = {}
+        self._requestIDCounter = {}
+        self._remoteCalls = {}
+        self._transportCount = {}
+        self._noTransportsDisconnectCall = {}
+        self._didDisconnect = {}
+        self._transportTimeouts = {}
+        self._disconnectNotifications = {}
 
     def clientFactory(self, context):
         livepageId = inevow.IRequest(context).getHeader('Livepage-Id')
@@ -137,6 +146,7 @@ class LivePageFactory:
         return self.clients.values()
 
 
+
 def liveLoader(PageClass, FactoryClass=LivePageFactory):
     """
     Helper for handling Page creation for LivePage applications.
@@ -160,18 +170,33 @@ class LivePage(rend.Page):
     transportLimit = 2
     _rendered = False
 
-    factory = None
-    _transportQueue = None
-    _requestIDCounter = None
-    _remoteCalls = None
-    clientID = None
-
-    _transportCount = 0
-    _noTransportsDisconnectCall = None
-    _didDisconnect = False
-
     TRANSPORTLESS_DISCONNECT_TIMEOUT = 30
     TRANSPORT_IDLE_TIMEOUT = 300
+
+    # HAHAHA
+    def _cheat(attr, default=None):
+        def get(self):
+            return getattr(self.factory, attr).get(self.clientID, default)
+        def set(self, value):
+            getattr(self.factory, attr)[self.clientID] = value
+        return property(get, set)
+
+    _transportQueue = _cheat('_transportQueue')
+    _requestIDCounter = _cheat('_requestIDCounter')
+    _remoteCalls = _cheat('_remoteCalls')
+    _transportCount = _cheat('_transportCount', 0)
+    _noTransportsDisconnectCall = _cheat('_noTransportsDisconnectCall')
+    _didDisconnect = _cheat('_didDisconnect')
+    _transportTimeouts = _cheat('_transportTimeouts')
+    _disconnectNotifications = _cheat('_disconnectNotifications')
+
+    def __init__(self, iface, rootObject, **kw):
+        rend.Page.__init__(self, **kw)
+        self.iface = iface
+        self.rootObject = rootObject
+
+        if self.__class__.__dict__.get('factory') is None:
+            self.__class__.factory = LivePageFactory(lambda: self.__class__(iface, rootObject, **kw))
 
 #     A note on timeout/disconnect logic: whenever a live client goes from some
 #     transports to no transports, a timer starts; whenever it goes from no
@@ -188,11 +213,11 @@ class LivePage(rend.Page):
         assert not self._rendered, "Cannot render a LivePage more than once"
         assert self.factory is not None, "Cannot render a LivePage without a factory"
         self._rendered = True
+        self.clientID = self.factory.addClient(self)
         self._requestIDCounter = itertools.count().next
         self._transportQueue = defer.DeferredQueue(size=self.transportLimit)
         self._remoteCalls = {}
         self._disconnectNotifications = []
-        self.clientID = self.factory.addClient(self)
 
         self._transportTimeouts = {}
         self._noTransports()
@@ -257,6 +282,8 @@ class LivePage(rend.Page):
     def addTransport(self, req):
         neverEverCache(req)
         activeChannel(req)
+
+        self.clientID = req.getHeader('Livepage-ID')
 
         req.notifyFinish().addErrback(self._activeTransportDisconnect, req)
 
@@ -329,25 +356,10 @@ class LivePage(rend.Page):
     def child_MochiKit(self, ctx):
         return static.File(util.resource_filename('nevow', 'MochiKit'))
 
-    def child_MochiKitLogConsole(self, ctx):
-        return static.File(util.resource_filename('nevow', 'MochiKit'))
-
     def child_transport(self, ctx):
-        if self._rendered:
-            return self.transportFactory(self)
-        return rend.FourOhFour()
+        return self.transportFactory(self)
 
     def locateMethod(self, ctx, methodName):
-        return getattr(self, 'remote_' + methodName)
-
-    def remote_live(self, ctx):
-        """
-        Framework method invoked by the client when it is first
-        loaded.  This simply dispatches to goingLive().
-        """
-        self.goingLive(ctx)
-        self._onDisconnect = defer.Deferred()
-        return self._onDisconnect
-
-    def goingLive(self, ctx):
-        pass
+        if self.iface.get(methodName) is not None:
+            return getattr(self.rootObject, methodName)
+        raise AttributeError(methodName)

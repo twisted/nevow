@@ -153,8 +153,8 @@ def parseObject(tokens):
         if not first:
             accept(',', tokens)
         first = False
-            
-        name, tokens = parseIdentifier(tokens)
+
+        name, tokens = parseString(tokens)
         accept(':', tokens)
         value, tokens = parseValue(tokens)
         o[name] = value
@@ -200,7 +200,9 @@ def _serialize(obj, w, seen):
         w('{')
         for n, (k, v) in enumerate(obj.iteritems()):
             assert isinstance(k, str)
+            w('"')
             w(k)
+            w('"')
             w(':')
             _serialize(v, w, seen)
             if n != len(obj) - 1:
