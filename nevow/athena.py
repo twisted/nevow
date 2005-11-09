@@ -338,12 +338,12 @@ class LivePage(rend.Page):
               for fName in ['Base.js', 'Async.js']]
 
         return [
-            tags.script(type='text/javascript')[tags.raw("""
-                var nevow_livepageId = '%s';
-            """ % self.clientID)],
             mk,
             tags.script(type='text/javascript', src=url.here.child('MochiKitLogConsole.js')),
             tags.script(type='text/javascript', src=url.here.child("athena.js")),
+            tags.script(type='text/javascript')[tags.raw("""
+                Nevow.Athena.livepageId = '%s';
+            """ % self.clientID)],
         ]
 
     _javascript = {'mochikit.js': 'MochiKit.js',
