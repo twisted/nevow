@@ -20,9 +20,10 @@
         <script type="text/javascript">
         buttonClicked = function(symbol) {
             d = server.callRemote('buttonClicked', symbol);
+            d.addCallback(updateDisplay);
         }
-        setOutput = function(output) {
-            getElement('output').innerHTML = output;
+        updateDisplay = function(expression) {
+            getElement('output').innerHTML = expression;
         }
         </script>
     </head>
