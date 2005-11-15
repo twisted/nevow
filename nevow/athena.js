@@ -55,8 +55,9 @@ Nevow.Athena.debug = function (msg) {
     }
 };
 
-Nevow.Athena.constructActionURL = function (action, arguments) {
-    var argumentQueryArgument = MochiKit.Base.serializeJSON(arguments);
+Nevow.Athena.constructActionURL = function (action, args) {
+    var argumentQueryArgument = MochiKit.Base.serializeJSON(args);
+
     return (Nevow.Athena.baseURL()
             + '?action='
             + encodeURIComponent(action)
@@ -204,7 +205,6 @@ Nevow.Athena.XMLHttpRequestFail = function (err) {
 };
 
 Nevow.Athena.prepareRemoteAction = function (actionType, args) {
-
     var url = Nevow.Athena.constructActionURL(actionType, args);
     var req = MochiKit.Async.getXMLHttpRequest();
 
@@ -254,7 +254,7 @@ Nevow.Athena.sendNoOp = function () {
     });
 };
 
-Nevow.Athena.callRemote = function (methodName, args) {
+Nevow.Athena._callRemote = function (methodName, args) {
     var resultDeferred = new MochiKit.Async.Deferred();
     var reqD = Nevow.Athena.prepareRemoteAction('call', MochiKit.Base.extend([methodName], args));
     var requestId = 'c2s' + Nevow.Athena.remoteCallCount;
@@ -276,25 +276,33 @@ Nevow.Athena.callRemote = function (methodName, args) {
     return resultDeferred;
 };
 
-Nevow.Athena.server = {
-    /* Backwards compatibility API - you really want callRemote */
-    handle: function(handlerName /*, ... */ ) {
-        var args = [handlerName];
-        for (var idx = 1; idx < arguments.length; idx++) {
-            args.push(arguments[idx]);
-        }
-        Nevow.Athena.callRemote('handle', args).addCallback(eval);
-    },
+Nevow.Athena.RemoteReference = function(objectID) {
+    this.objectID = objectID;
+};
 
-    /* Invoke a method on the server.  Return a Deferred that fires
-     * when the method completes. */
+Nevow.Athena.RemoteReference.prototype = {
     callRemote: function(methodName /*, ... */) {
-        var args = [];
+        var args = [this.objectID];
         for (var idx = 1; idx < arguments.length; idx++) {
             args.push(arguments[idx]);
         }
-        return Nevow.Athena.callRemote(methodName, args);
+        return Nevow.Athena._callRemote(methodName, args);
     }
 };
 
+Nevow.Athena.refByDOM = function(node) {
+    var pfx = "athena_";
+    for (var n = node; n != null; n = n.parentNode) {
+	if (n.hasAttribute('id')) {
+	    var nID = n.getAttribute('id');
+	    if (nID.slice(0, pfx.length) == pfx) {
+		var refID = nID.slice(pfx.length, nID.length);
+		return new Nevow.Athena.RemoteReference(parseInt(refID));
+	    }
+	}
+    }
+    throw new Error("refByDOM passed node with no containing Athena Ref ID");
+}
+
+Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;

@@ -5,7 +5,7 @@ from zope.interface import implements
 from twisted.internet import defer, error, reactor
 from twisted.python import log
 
-from nevow import inevow, rend, url, static, json, util, tags, guard
+from nevow import inevow, rend, loaders, url, static, json, util, tags, guard
 
 class LivePageError(Exception):
     """base exception for livepage errors"""
@@ -47,7 +47,7 @@ class LivePageTransport(object):
             args = json.parse(args)
         kwargs = req.args.get('kw', [{}])[0]
         if kwargs != {}:
-            args = json.parse(kwargs)
+            kwargs = json.parse(kwargs)
         method = getattr(self, 'action_' + req.args['action'][0])
         method(ctx, *args, **kwargs)
         return d
@@ -62,8 +62,8 @@ class LivePageTransport(object):
         log.err(err)
         return err
 
-    def action_call(self, ctx, method, *args, **kw):
-        func = self.livePage.locateMethod(ctx, method)
+    def action_call(self, ctx, method, objectID, *args, **kw):
+        func = self.livePage._localObjects[objectID].locateMethod(ctx, method)
         requestId = inevow.IRequest(ctx).getHeader('Request-Id')
         if requestId is not None:
             result = defer.maybeDeferred(func, *args, **kw)
@@ -103,6 +103,8 @@ class LivePageFactory:
         self._didDisconnect = {}
         self._transportTimeouts = {}
         self._disconnectNotifications = {}
+        self._localObjects = {}
+        self._localObjectIDCounter = {}
 
     def clientFactory(self, context):
         livepageId = inevow.IRequest(context).getHeader('Livepage-Id')
@@ -190,13 +192,21 @@ class LivePage(rend.Page):
     _transportTimeouts = _cheat('_transportTimeouts')
     _disconnectNotifications = _cheat('_disconnectNotifications')
 
-    def __init__(self, iface, rootObject, **kw):
-        rend.Page.__init__(self, **kw)
-        self.iface = iface
-        self.rootObject = rootObject
+    # Mapping of Object-ID to a Python object that will accept
+    # messages from the client.
+    _localObjects = _cheat('_localObjects')
+
+    # Counter for assigning local object IDs
+    _localObjectIDCounter = _cheat('_localObjectIDCounter')
+
+    # Do this later: list of RemoteReference weakrefs with decref callbacks
+    # _remoteObjects = _cheat('_remoteObjects')
+
+    def __init__(self, *a, **kw):
+        super(LivePage, self).__init__(*a, **kw)
 
         if self.__class__.__dict__.get('factory') is None:
-            self.__class__.factory = LivePageFactory(lambda: self.__class__(iface, rootObject, **kw))
+            self.__class__.factory = LivePageFactory(lambda: self.__class__(*a, **kw))
 
 #     A note on timeout/disconnect logic: whenever a live client goes from some
 #     transports to no transports, a timer starts; whenever it goes from no
@@ -218,6 +228,11 @@ class LivePage(rend.Page):
         self._transportQueue = defer.DeferredQueue(size=self.transportLimit)
         self._remoteCalls = {}
         self._disconnectNotifications = []
+
+        self._localObjects = {}
+        self._localObjectIDCounter = itertools.count().next
+
+        self.addLocalObject(self)
 
         self._transportTimeouts = {}
         self._noTransports()
@@ -319,6 +334,11 @@ class LivePage(rend.Page):
         self._remoteCalls[requestID] = resultD
         return resultD
 
+    def addLocalObject(self, obj):
+        objID = self._localObjectIDCounter()
+        self._localObjects[objID] = obj
+        return objID
+
     def callRemote(self, methodName, *args):
         d = self.getTransport()
         d.addCallback(self._cbCallRemote, unicode(methodName, 'ascii'), args)
@@ -360,6 +380,21 @@ class LivePage(rend.Page):
         return self.transportFactory(self)
 
     def locateMethod(self, ctx, methodName):
-        if self.iface.get(methodName) is not None:
-            return getattr(self.rootObject, methodName)
+        return getattr(self, 'remote_' + methodName)
+
+class LiveFragment(rend.Fragment):
+
+    allowedMethods = {}
+
+    def rend(self, context, data):
+        myID = self.page.addLocalObject(self)
+        context.fillSlots('live-fragment-id', myID)
+        self.docFactory = loaders.stan(
+            tags.div(id='athena_' + str(myID))[
+                self.docFactory.load()])
+        return super(LiveFragment, self).rend(context, data)
+
+    def locateMethod(self, ctx, methodName):
+        if methodName in self.allowedMethods:
+            return getattr(self, methodName)
         raise AttributeError(methodName)
