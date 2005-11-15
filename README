@@ -20,7 +20,7 @@ If you do not have Twisted installed, you can run a subset of the tests using th
 
     trial -v nevow.test formless.test
 
-.. _`Twisted`: http://twistedmatrix.com/products/download
+.. _`Twisted`: http://twistedmatrix.com/
 
 Documentation
 -------------
@@ -34,7 +34,7 @@ More Information
 
 Nevow is an active project, and many new bugfixes and features are committed to the Nevow SVN repository. Information about Nevow commits is available by subscribing to the `Nevow commits`_ mailing list. The Nevow SVN repository can be checked out using::
 
-  svn co svn://divmod.org/svn/Nevow/trunk Nevow
+  svn co http://divmod.org/svn/Divmod/trunk/Nevow Nevow
 
 Discussion of Nevow occurs on the `twisted.web mailing list`_. The Nevow developers are also often available for real-time help on the `#twisted.web channel`_ on irc.freenode.net.
 
