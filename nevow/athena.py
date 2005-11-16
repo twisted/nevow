@@ -202,8 +202,11 @@ class LivePage(rend.Page):
     # Do this later: list of RemoteReference weakrefs with decref callbacks
     # _remoteObjects = _cheat('_remoteObjects')
 
-    def __init__(self, *a, **kw):
+    def __init__(self, iface, rootObject, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
+
+        self.iface = iface
+        self.rootObject = rootObject
 
         if self.__class__.__dict__.get('factory') is None:
             self.__class__.factory = LivePageFactory(lambda: self.__class__(*a, **kw))
@@ -380,7 +383,9 @@ class LivePage(rend.Page):
         return self.transportFactory(self)
 
     def locateMethod(self, ctx, methodName):
-        return getattr(self, 'remote_' + methodName)
+        if methodName in self.iface:
+            return getattr(self.rootObject, methodName)
+        raise AttributeError(methodName)
 
 class LiveFragment(rend.Fragment):
 
