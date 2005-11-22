@@ -292,7 +292,7 @@ Nevow.Athena.RemoteReference.prototype = {
 
 Nevow.Athena.refByDOM = function(node) {
     var pfx = "athena_";
-    for (var n = node; n != null; n = n.parentNode) {
+    for (var n = node; n != null && n.hasAttribute; n = n.parentNode) {
 	if (n.hasAttribute('id')) {
 	    var nID = n.getAttribute('id');
 	    if (nID.slice(0, pfx.length) == pfx) {
