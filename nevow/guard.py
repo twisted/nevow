@@ -307,7 +307,7 @@ class SessionWrapper:
                 #                  we are this getChild
                 # with a matching cookie
                 self.sessions[key].sessionJustStarted = True
-                return urlToChild(ctx, *segments[1:], **{'__session_just_started__':1}), ()
+                return urlToChild(ctx, *segments[1:]), ()
             else:
                 # We attempted to negotiate the session but failed (the user
                 # probably has cookies disabled): now we're going to return the
