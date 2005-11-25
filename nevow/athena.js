@@ -306,3 +306,7 @@ Nevow.Athena.refByDOM = function(node) {
 
 Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;
+
+MochiKit.DOM.addLoadEvent(function() {
+    Nevow.Athena.sendNoOp();
+});
