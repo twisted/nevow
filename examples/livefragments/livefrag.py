@@ -22,10 +22,14 @@ class CooperativeAthenaFragments(athena.LivePage):
         """, type="text/javascript")
 
     def render_foo(self, ctx, data):
-        return CooperativeFrag("foo", self)
+        f = CooperativeFrag("foo", self)
+        f.page = self
+        return f
 
     def render_bar(self, ctx, data):
-        return CooperativeFrag("bar", self)
+        f = CooperativeFrag("bar", self)
+        f.page = self
+        return f
 
 class CooperativeFrag(athena.LiveFragment):
     docFactory = loaders.stan(tags.div[
@@ -47,7 +51,7 @@ class Root(rend.Page):
         return url.URL.fromString('/app')
 
     def child_app(self, ctx):
-        return CooperativeAthenaFragments()
+        return CooperativeAthenaFragments(None, None)
 
 application = service.Application("Cooperative Athena Fragments")
 internet.TCPServer(8999, appserver.NevowSite(Root())).setServiceParent(application)
