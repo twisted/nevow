@@ -73,8 +73,8 @@ actions = [
     (false, lambda s: (False, s)),
     (null, lambda s: (None, s)),
     (identifier, lambda s: (IdentifierToken(s), s)),
-    (longNumber, lambda s: (long(s), s)),
     (floatNumber, lambda s: (float(s), s)),
+    (longNumber, lambda s: (long(s), s)),
 ]
 def tokenise(s):
     tokens = []
@@ -90,7 +90,7 @@ def tokenise(s):
         if tok is not WhitespaceToken:
             tokens.append(tok)
         s = s[len(tokstr):]
-    
+
     return tokens
 
 def accept(want, tokens):
@@ -179,7 +179,7 @@ def _serialize(obj, w, seen):
             w('true')
         else:
             w('false')
-    elif isinstance(obj, (int, long)):
+    elif isinstance(obj, (int, long, float)):
         w(str(obj))
     elif isinstance(obj, unicode):
         w('"')

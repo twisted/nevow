@@ -22,6 +22,7 @@ TEST_OBJECTS = [
     [None, u'one', 2],
     [True, False, u'string', 10],
     [[1, 2], [3, 4]],
+    [[1.5, 2.5], [3.5, 4.5]],
     [0, [1, 2], [u'hello'], [u'world'], [True, None, False]],
     {},
     {'foo': u'bar'},
