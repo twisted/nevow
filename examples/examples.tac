@@ -173,8 +173,8 @@ class Examples(rend.Page):
         typeahead=typeahead.DataEntry()
         )
 
-
-    child_calculator = athena.liveLoader(calculator.Calculator)
+    def child_calculator(self, ctx):
+        return calculator.CalculatorResource(calculator.ICalculator, calculator.Calculator())
 
 
 application = service.Application("examples")
