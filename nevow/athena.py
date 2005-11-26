@@ -42,12 +42,8 @@ class LivePageTransport(object):
         except defer.QueueOverflow:
             log.msg("Fast transport-close path")
             d = defer.succeed('')
-        args = req.args.get('args', [()])[0]
-        if args != ():
-            args = json.parse(args)
-        kwargs = req.args.get('kw', [{}])[0]
-        if kwargs != {}:
-            kwargs = json.parse(kwargs)
+        args, kwargs = json.parse(req.content.read())
+
         method = getattr(self, 'action_' + req.args['action'][0])
         method(ctx, *args, **kwargs)
         return d

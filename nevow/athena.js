@@ -55,14 +55,10 @@ Nevow.Athena.debug = function (msg) {
     }
 };
 
-Nevow.Athena.constructActionURL = function (action, args) {
-    var argumentQueryArgument = MochiKit.Base.serializeJSON(args);
-
+Nevow.Athena.constructActionURL = function (action) {
     return (Nevow.Athena.baseURL()
             + '?action='
-            + encodeURIComponent(action)
-            + '&args='
-            + encodeURIComponent(argumentQueryArgument));
+            + encodeURIComponent(action));
 };
 
 Nevow.Athena.failureCount = 0;
@@ -204,13 +200,12 @@ Nevow.Athena.XMLHttpRequestFail = function (err) {
     }
 };
 
-Nevow.Athena.prepareRemoteAction = function (actionType, args) {
-    var url = Nevow.Athena.constructActionURL(actionType, args);
+Nevow.Athena.prepareRemoteAction = function (actionType) {
+    var url = Nevow.Athena.constructActionURL(actionType);
     var req = MochiKit.Async.getXMLHttpRequest();
 
     try {
-        req.open('GET', url, true);
-        yes = 1;
+        req.open('POST', url, true);
     } catch (err) {
         return resultD = MochiKit.Async.fail(err);
     }
@@ -219,14 +214,21 @@ Nevow.Athena.prepareRemoteAction = function (actionType, args) {
 
     Nevow.Athena.debug("Setting livepage id " + new String(Nevow.Athena.livepageId));
     req.setRequestHeader('Livepage-Id', Nevow.Athena.livepageId);
+    req.setRequestHeader('content-type', 'text/x-json+athena')
     return resultD = MochiKit.Async.succeed(req);
 };
 
+Nevow.Athena.preparePostContent = function (args, kwargs) {
+    return MochiKit.Base.serializeJSON([args, kwargs]);
+};
+
 Nevow.Athena.respondToRemote = function (requestID, args) {
-    var reqD = Nevow.Athena.prepareRemoteAction('respond', [args]);
+    var reqD = Nevow.Athena.prepareRemoteAction('respond');
+    var argumentQueryArgument = Nevow.Athena.preparePostContent(args, {});
+
     reqD.addCallback(function(req) {
         req.setRequestHeader('Response-Id', requestID);
-        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req);
+        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, argumentQueryArgument);
         reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
         reqD2.addCallback(Nevow.Athena.XMLHttpRequestReady);
         reqD2.addErrback(Nevow.Athena.XMLHttpRequestFail);
@@ -235,11 +237,11 @@ Nevow.Athena.respondToRemote = function (requestID, args) {
 
 Nevow.Athena.sendNoOp = function () {
     Nevow.Athena.debug('Sending no-op');
-    var reqD = Nevow.Athena.prepareRemoteAction('noop', []);
+    var reqD = Nevow.Athena.prepareRemoteAction('noop');
     Nevow.Athena.debug('Prepared remote action');
     reqD.addCallback(function(req) {
         Nevow.Athena.debug('Got request');
-        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req);
+        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, Nevow.Athena.preparePostContent([], {}));
         reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
         Nevow.Athena.debug('Sent request');
         reqD2.addCallback(function(ign) {
@@ -256,8 +258,10 @@ Nevow.Athena.sendNoOp = function () {
 
 Nevow.Athena._callRemote = function (methodName, args) {
     var resultDeferred = new MochiKit.Async.Deferred();
-    var reqD = Nevow.Athena.prepareRemoteAction('call', MochiKit.Base.extend([methodName], args));
+    var reqD = Nevow.Athena.prepareRemoteAction('call');
     var requestId = 'c2s' + Nevow.Athena.remoteCallCount;
+
+    var actionArguments = Nevow.Athena.preparePostContent(MochiKit.Base.extend([methodName], args), {});
 
     Nevow.Athena.remoteCallCount++;
     Nevow.Athena.remoteCalls[requestId] = resultDeferred;
@@ -265,7 +269,7 @@ Nevow.Athena._callRemote = function (methodName, args) {
     reqD.addCallback(function(req) {
         req.setRequestHeader('Request-Id', requestId);
 
-        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req);
+        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, actionArguments);
         reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
         reqD2.addCallback(Nevow.Athena.XMLHttpRequestReady);
         return reqD2
