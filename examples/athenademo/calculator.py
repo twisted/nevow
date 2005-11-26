@@ -49,7 +49,7 @@ class CalculatorResource(athena.LivePage):
     """
     addSlash = True
     docFactory = loaders.xmlfile(
-        util.resource_filename('calculator', 'calculator.html')
+        util.resource_filename('athenademo', 'calculator.html')
         )
 
 if __name__ == '__main__':

@@ -62,10 +62,8 @@ try:
     from tests import testformless, testexamples
     from nevow import livetest
 
-    from calculator import calculator
-    from callremote import callremote
-    from callremote2 import callremote as callremote2
-    from typeahead import typeahead
+    from athenademo import calculator
+    from athenademo import typeahead
 except ImportError, e:
     if str(e).find('No module named') != -1:
         msg = """
@@ -177,14 +175,6 @@ class Examples(rend.Page):
 
 
     child_calculator = athena.liveLoader(calculator.Calculator)
-
-    # This method could be like child_calculator above, but it isn't so that
-    # it can demonstrate another way to create LivePages.
-    def child_callremote(self, ctx, _factory=athena.LivePageFactory(callremote.CallRemote)):
-        return _factory.clientFactory(ctx)
-
-    # See?
-    child_callremote2 = athena.liveLoader(callremote2.NewLPTest)
 
 
 application = service.Application("examples")
