@@ -6,13 +6,23 @@ from twisted.python import util
 animals = {u'elf' : u'Pointy ears.  Bad attitude regarding trees.',
            u'chipmunk': u'Cute.  Fuzzy.  Sings horribly.',
            u'chupacabra': u'It sucks goats.',
+           u'ninja': u'Stealthy and invisible, and technically an animal.',
            }
 
 
 class TypeAheadPage(athena.LivePage):
     _tmpl = util.sibpath(__file__, "typeahead.html")
     docFactory = loaders.xmlfile(_tmpl)
-    def remote_loadDescription(self, ctx, typed):
+    def render_typehereField(self, ctx, data):
+        frag = TypeAheadFieldFragment()
+        frag.page = self
+        return frag
+
+class TypeAheadFieldFragment(athena.LiveFragment):
+    docFactory = loaders.stan(T.input(type="text", id="typehere"))
+    allowedMethods =  { 'loadDescription' : True }
+
+    def loadDescription(self, typed):
         if typed == '':
             return None, u'--'
         matches = []
@@ -62,5 +72,6 @@ class DataEntry(rend.Page):
     def data_animals(self, ctx, data):
         return animals.keys()
 
-    child_typeahead = athena.liveLoader(TypeAheadPage)
+    def child_typeahead(self, ctx):
+        return TypeAheadPage(None, None)
 

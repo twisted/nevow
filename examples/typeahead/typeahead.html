@@ -6,9 +6,6 @@
     <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
     <n:invisible n:render="liveglue" />
     <title>TypeAhead Demo</title>
-    <style type='text/css'>
-      /* styles here */
-    </style>
     <script type='text/javascript' language='javascript'>
 // <![CDATA[
 // add events in a cross-browser way
@@ -73,8 +70,9 @@ function loadDescription(ev)
     if (ev.keyCode >= 33 && ev.keyCode <= 46) return;
     if (ev.keyCode >= 112 && ev.keyCode <= 123) return;
 
-    var typed = $('typehere').value;
-    var d = server.callRemote('loadDescription', typed);
+    var node = $('typehere');
+    var typed = node.value;
+    var d = Nevow.Athena.refByDOM(node).callRemote('loadDescription', typed);
     d.addCallback(replaceDescription);
 }
 // ]]>
@@ -82,7 +80,7 @@ function loadDescription(ev)
   </head>
   <body onload="xbAddEvent($('typehere'), 'keyup', loadDescription, 1)">
     <h2>Start typing an animal to see the description.</h2>
-    <input type="text" id="typehere" />
+    <n:invisible n:render="typehereField" />
     <h3 id="description"></h3>
   </body>
 </html>
