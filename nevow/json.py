@@ -199,10 +199,7 @@ def _serialize(obj, w, seen):
     elif isinstance(obj, dict):
         w('{')
         for n, (k, v) in enumerate(obj.iteritems()):
-            assert isinstance(k, str)
-            w('"')
-            w(k)
-            w('"')
+            _serialize(k, w, seen)
             w(':')
             _serialize(v, w, seen)
             if n != len(obj) - 1:

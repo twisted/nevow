@@ -25,11 +25,11 @@ TEST_OBJECTS = [
     [[1.5, 2.5], [3.5, 4.5]],
     [0, [1, 2], [u'hello'], [u'world'], [True, None, False]],
     {},
-    {'foo': u'bar'},
-    {'foo': None},
-    {'bar': True},
-    {'baz': [1, 2, 3]},
-    {'quux': {'bar': u'foo'}}]
+    {u'foo': u'bar'},
+    {u'foo': None},
+    {u'bar': True},
+    {u'baz': [1, 2, 3]},
+    {u'quux': {u'bar': u'foo'}}]
 
 
 class JavascriptObjectNotationTestCase(unittest.TestCase):

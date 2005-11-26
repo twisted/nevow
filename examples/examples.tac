@@ -64,6 +64,7 @@ try:
 
     from athenademo import calculator
     from athenademo import typeahead
+    from athenademo import athenatest
 except ImportError, e:
     if str(e).find('No module named') != -1:
         msg = """
@@ -170,12 +171,14 @@ class Examples(rend.Page):
         formless_tests=testformless.formless_tests,
         fragments=fragments.Root(),
         macros=macros.Root(),
-        typeahead=typeahead.DataEntry()
+        typeahead=typeahead.DataEntry(),
         )
 
     def child_calculator(self, ctx):
         return calculator.CalculatorResource(calculator.ICalculator, calculator.Calculator())
 
+    def child_athenatest(self, ctx):
+        return athenatest.AthenaTests(None, None)
 
 application = service.Application("examples")
 strports.service("8080", appserver.NevowSite(Examples(), logPath="web.log")).setServiceParent(application)
