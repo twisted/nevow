@@ -72,7 +72,11 @@ Nevow.Athena.responseDispatchTable['text/xml'] = function (d, content) {
 };
 
 Nevow.Athena.responseDispatchTable['text/json'] = function (d, content) {
-    d.callback(content);
+    if (content[0]) {
+        d.callback(content[1]);
+    } else {
+        d.errback(new Error(content[1]));
+    }
 };
 
 Nevow.Athena.XMLHttpRequestFinished = function (passthrough) {
@@ -83,10 +87,11 @@ Nevow.Athena.XMLHttpRequestFinished = function (passthrough) {
 Nevow.Athena.XMLHttpRequestReady = function (req) {
     Nevow.Athena.debug('A request is completed: ' + req.responseText);
 
-    /* The response's content is a JSON-encoded 4-array of [Response-Id,
-     * Request-Id, Content-Type, Content].  If this is a response to a
-     * previous request, responseId will not be null.  If this is a
-     * server-initiated request, requestId will not be null.
+    /* The response's content is a JSON-encoded 4-array of
+     * [Response-Id, Request-Id, Content-Type, [success, result]].  If
+     * this is a response to a previous request, responseId will not
+     * be null.  If this is a server-initiated request, requestId will
+     * not be null.
      */
 
     if (req.responseText == '') {

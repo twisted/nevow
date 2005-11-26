@@ -1,5 +1,6 @@
 
 from twisted.trial import unittest
+from twisted.internet import defer
 
 from nevow import athena, loaders, tags
 
@@ -14,18 +15,12 @@ function test_ClientToServerArgumentSerialization(node) {
     var r = Nevow.Athena.refByDOM(node);
     var L = [1, 1.5, 'Hello world'];
     var O = {'hello world': 'object value'};
-    var d = r.callRemote('test', 1, 1.5, 'Hello world', L, O);
-    d.addCallback(function(result) {
-        alert('Success.');
-    });
-    d.addErrback(function(err) {
-        alert('Failure: ' + err);
-    });
+    return r.callRemote('test', 1, 1.5, 'Hello world', L, O);
 };
 """
 
     docFactory = loaders.stan([
-        tags.form(action='#', onsubmit='test_ClientToServerArgumentSerialization(this); return false;')[
+        tags.form(action='#', onsubmit='return test(test_ClientToServerArgumentSerialization(this));')[
             tags.input(type='submit', value='Test Client To Server Argument Serialization'),
             ]])
 
@@ -42,7 +37,7 @@ function test_ClientToServerArgumentSerialization(node) {
         self.failUnless(isinstance(d.values()[0], unicode))
 
 
-class ClientToServerResultSerialization(athena.LiveFragment, unittest.TestCase):
+class ClientToServerResultSerialization(athena.LiveFragment):
     """
     Tests that the return value from a method on the server is
     properly received by the client.
@@ -62,16 +57,13 @@ function test_ClientToServerResultSerialization(node) {
         assertEquals(result[3][1], 1.5);
         assertEquals(result[3][2], 'Hello world');
         assertEquals(result[4]['hello world'], 'object value');
-        alert('Success.');
     });
-    d.addErrback(function (err) {
-        alert(err);
-    });
+    return d;
 };
 """
 
     docFactory = loaders.stan([
-        tags.form(action='#', onsubmit='test_ClientToServerResultSerialization(this); return false;')[
+        tags.form(action='#', onsubmit='return test(test_ClientToServerResultSerialization(this));')[
             tags.input(type='submit', value='Test Client To Server Result Serialization'),
             ]])
 
@@ -79,14 +71,73 @@ function test_ClientToServerResultSerialization(node) {
     def test(self, i, f, s, l, d):
         return (i, f, s, l, d)
 
+class ClientToServerExceptionResult(athena.LiveFragment):
+    """
+    Tests that when a method on the server raises an exception, the
+    client properly receives an error.
+    """
+
+    javascriptTest = """\
+function test_ClientToServerExceptionResult(node, sync) {
+    var r = Nevow.Athena.refByDOM(node);
+    var d;
+    var s = 'This exception should appear on the client.';
+    if (sync) {
+        d = r.callRemote('testSync', s);
+    } else {
+        d = r.callRemote('testAsync', s);
+    }
+    d.addCallbacks(function(result) {
+        fail('Erroneously received a result: ' + result);
+    }, function(err) {
+        var idx = (new String(err)).indexOf(s);
+        if (idx == -1) {
+            fail('Did not find expected message in error message: ' + err);
+        }
+    });
+    return d;
+}
+"""
+
+    docFactory = loaders.stan([
+        tags.form(action='#', onsubmit='return test(test_ClientToServerExceptionResult(this, true));')[
+            tags.input(type='submit', value='Test Client To Server Synchronous Exception Result'),
+            ],
+        tags.form(action='#', onsubmit='return test(test_ClientToServerExceptionResult(this, false));')[
+            tags.input(type='submit', value='Test Client To Server Asynchronous Exception Result'),
+            ]])
+
+
+    allowedMethods = {'testSync': True, 'testAsync': True}
+    def testSync(self, s):
+        raise Exception(s)
+
+    def testAsync(self, s):
+        return defer.fail(Exception(s))
+
+
 class AthenaTests(athena.LivePage):
     docFactory = loaders.stan(tags.html[
         tags.head[
             tags.invisible(render=tags.directive('liveglue')),
             tags.script(type='text/javascript')["""
+            function test(deferred) {
+                deferred.addCallback(function (result) {
+                    alert('Success!');
+                });
+                deferred.addErrback(function (err) {
+                    alert('Failure: ' + err);
+                });
+                return false;
+            }
+
+            function fail(msg) {
+                throw new Error('Test Failure: ' + msg);
+            }
+
             function assertEquals(a, b) {
                 if (!(a == b)) {
-                    throw new Error('Failure: ' + a + ' != ' + b);
+                    fail(a + ' != ' + b);
                 }
             }
             """],
@@ -99,6 +150,7 @@ class AthenaTests(athena.LivePage):
     tests = [
         ClientToServerArgumentSerialization,
         ClientToServerResultSerialization,
+        ClientToServerExceptionResult,
         ]
 
     def renderTests(self):

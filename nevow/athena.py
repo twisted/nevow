@@ -3,7 +3,7 @@ import itertools, os
 from zope.interface import implements
 
 from twisted.internet import defer, error, reactor
-from twisted.python import log
+from twisted.python import log, failure
 
 from nevow import inevow, rend, loaders, url, static, json, util, tags, guard
 
@@ -50,20 +50,20 @@ class LivePageTransport(object):
 
     def _cbCall(self, result, requestId):
         def cb((d, req)):
-            d.callback((None, unicode(requestId), u'text/json', result))
+            if isinstance(result, failure.Failure):
+                res = (False, unicode(result.getErrorMessage()))
+            else:
+                res = (True, result)
+            response = (None, unicode(requestId), u'text/json', res)
+            message = json.serialize(response)
+            d.callback(message)
         self.livePage.getTransport().addCallback(cb)
-
-    def _ebCall(self, err, method, func):
-        log.msg("Dispatching %r to %r failed unexpectedly:" % (method, func))
-        log.err(err)
-        return err
 
     def action_call(self, ctx, method, objectID, *args, **kw):
         func = self.livePage._localObjects[objectID].locateMethod(ctx, method)
         requestId = inevow.IRequest(ctx).getHeader('Request-Id')
         if requestId is not None:
             result = defer.maybeDeferred(func, *args, **kw)
-            result.addErrback(self._ebCall, method, func)
             result.addBoth(self._cbCall, requestId)
         else:
             try:
@@ -289,10 +289,6 @@ class LivePage(rend.Page):
             timeoutCall.cancel()
         self._disconnected(error)
 
-    def _ebOutput(self, err):
-        msg = u"%s: %s" % (err.type.__name__, err.getErrorMessage())
-        return 'throw new Error(%s);' % (json.serialize(msg),)
-
     def addTransport(self, req):
         neverEverCache(req)
         activeChannel(req)
@@ -309,7 +305,6 @@ class LivePage(rend.Page):
         self._newTransport(req)
 
         d = defer.Deferred()
-        d.addCallbacks(json.serialize, self._ebOutput)
         self._transportQueue.put((d, req))
         return d
 
