@@ -379,18 +379,42 @@ class LivePage(rend.Page):
         raise AttributeError(methodName)
 
 class LiveFragment(rend.Fragment):
+    """
+    Base-class for fragments of a LivePage.  When being rendered, a
+    LiveFragment has a special ID attribute added to its top-level
+    tag.  This attribute is used to dispatch calls from the client
+    onto the correct object (this one).
+
+    The C{docFactory} for a LiveFragment must provide a slot,
+    C{nevow:athena_id} which will be filled by the framework.  For
+    example, an xml template for a LiveFragment might start like this:
+
+        <div xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+            <nevow:attr name="nevow:athena_id"><nevow:slot name="nevow:athena_id" /></nevow:attr>
+
+    JavaScript handlers for elements inside this <div> can use
+    C{Nevow.Athena.refByDOM} to invoke methods on this LiveFragment
+    instance:
+
+            <form onsubmit="Nevow.Athena.refByDOM(this).callRemote('foo', bar); return false;">
+
+    By default, only methods named in the C{allowedMethods} mapping
+    may be invoked by the client.
+    """
 
     allowedMethods = {}
 
     def rend(self, context, data):
         myID = self.page.addLocalObject(self)
-        context.fillSlots('live-fragment-id', myID)
-        self.docFactory = loaders.stan(
-            tags.div(id='athena_' + str(myID))[
-                self.docFactory.load()])
+        context.fillSlots('nevow:athena_id', myID)
         return super(LiveFragment, self).rend(context, data)
 
     def locateMethod(self, ctx, methodName):
         if methodName in self.allowedMethods:
             return getattr(self, methodName)
         raise AttributeError(methodName)
+
+
+# Helper for docFactories defined with stan:
+# tags.foo(..., **liveFragmentID)
+liveFragmentID = {'nevow:athena_id': tags.slot('nevow:athena_id')}

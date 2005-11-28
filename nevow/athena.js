@@ -299,15 +299,30 @@ Nevow.Athena.RemoteReference.prototype = {
     }
 };
 
+Nevow.Athena.getAttribute = function(node, namespaceURI, namespaceIdentifier, localName) {
+    if (node.hasAttributeNS) {
+        if (node.hasAttributeNS(namespaceURI, localName)) {
+            return node.getAttributeNS(namespaceURI, localName);
+        } else if (node.hasAttributeNS(namespaceIdentifier, localName)) {
+            return node.getAttributeNS(namespaceIdentifier, localName);
+        }
+    }
+    if (node.hasAttribute) {
+        var r = namespaceURI + ':' + localName;
+        var s = namespaceIdentifier + ':' + localName;
+        if (node.hasAttribute(r)) {
+            return node.getAttribute(r);
+        } else if (node.hasAttribute(s)) {
+            return node.getAttribute(s);
+        }
+    }
+};
+
 Nevow.Athena.refByDOM = function(node) {
-    var pfx = "athena_";
-    for (var n = node; n != null && n.hasAttribute; n = n.parentNode) {
-	if (n.hasAttribute('id')) {
-	    var nID = n.getAttribute('id');
-	    if (nID.slice(0, pfx.length) == pfx) {
-		var refID = nID.slice(pfx.length, nID.length);
-		return new Nevow.Athena.RemoteReference(parseInt(refID));
-	    }
+    for (var n = node; n != null; n = n.parentNode) {
+	var nID = Nevow.Athena.getAttribute(n, 'http://nevow.com/ns/nevow/0.1', 'nevow', 'athena_id');
+        if (nID != null) {
+            return new Nevow.Athena.RemoteReference(parseInt(nID));
 	}
     }
     throw new Error("refByDOM passed node with no containing Athena Ref ID");

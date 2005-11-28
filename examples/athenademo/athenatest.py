@@ -19,10 +19,9 @@ function test_ClientToServerArgumentSerialization(node) {
 };
 """
 
-    docFactory = loaders.stan([
+    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
         tags.form(action='#', onsubmit='return test(test_ClientToServerArgumentSerialization(this));')[
-            tags.input(type='submit', value='Test Client To Server Argument Serialization'),
-            ]])
+            tags.input(type='submit', value='Test Client To Server Argument Serialization')]])
 
     allowedMethods = {'test': True}
     def test(self, i, f, s, l, d):
@@ -62,10 +61,9 @@ function test_ClientToServerResultSerialization(node) {
 };
 """
 
-    docFactory = loaders.stan([
+    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
         tags.form(action='#', onsubmit='return test(test_ClientToServerResultSerialization(this));')[
-            tags.input(type='submit', value='Test Client To Server Result Serialization'),
-            ]])
+            tags.input(type='submit', value='Test Client To Server Result Serialization')]])
 
     allowedMethods = {'test': True}
     def test(self, i, f, s, l, d):
@@ -99,13 +97,11 @@ function test_ClientToServerExceptionResult(node, sync) {
 }
 """
 
-    docFactory = loaders.stan([
+    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
         tags.form(action='#', onsubmit='return test(test_ClientToServerExceptionResult(this, true));')[
-            tags.input(type='submit', value='Test Client To Server Synchronous Exception Result'),
-            ],
+            tags.input(type='submit', value='Test Client To Server Synchronous Exception Result')],
         tags.form(action='#', onsubmit='return test(test_ClientToServerExceptionResult(this, false));')[
-            tags.input(type='submit', value='Test Client To Server Asynchronous Exception Result'),
-            ]])
+            tags.input(type='submit', value='Test Client To Server Asynchronous Exception Result')]])
 
 
     allowedMethods = {'testSync': True, 'testAsync': True}
@@ -117,33 +113,35 @@ function test_ClientToServerExceptionResult(node, sync) {
 
 
 class AthenaTests(athena.LivePage):
-    docFactory = loaders.stan(tags.html[
-        tags.head[
-            tags.invisible(render=tags.directive('liveglue')),
-            tags.script(type='text/javascript')["""
-            function test(deferred) {
-                deferred.addCallback(function (result) {
-                    alert('Success!');
-                });
-                deferred.addErrback(function (err) {
-                    alert('Failure: ' + err);
-                });
-                return false;
-            }
-
-            function fail(msg) {
-                throw new Error('Test Failure: ' + msg);
-            }
-
-            function assertEquals(a, b) {
-                if (!(a == b)) {
-                    fail(a + ' != ' + b);
+    docFactory = loaders.stan([
+        tags.xml('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'),
+        tags.html(**{'xmlns:nevow': 'http://nevow.com/ns/nevow/0.1'})[
+            tags.head[
+                tags.invisible(render=tags.directive('liveglue')),
+                tags.script(type='text/javascript')["""
+                function test(deferred) {
+                    deferred.addCallback(function (result) {
+                        alert('Success!');
+                    });
+                    deferred.addErrback(function (err) {
+                        alert('Failure: ' + err);
+                    });
+                    return false;
                 }
-            }
-            """],
-            tags.slot('methods')],
-        tags.body[
-            tags.slot('tests')]])
+
+                function fail(msg) {
+                    throw new Error('Test Failure: ' + msg);
+                }
+
+                function assertEquals(a, b) {
+                    if (!(a == b)) {
+                        fail(a + ' != ' + b);
+                    }
+                }
+                """],
+                tags.slot('methods')],
+            tags.body[
+                tags.slot('tests')]]])
 
     addSlash = True
 
