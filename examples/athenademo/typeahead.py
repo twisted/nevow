@@ -41,9 +41,10 @@ class DataEntry(rend.Page):
     addSlash = 1
 
     docFactory = loaders.stan(
-            T.html[T.body[T.p[
-                """Enter some animals as data.  Click 'Done' to test 
-                looking up these animals.""",],
+            T.html[T.body[T.h1[
+                "First, a Setup Form."],
+                T.h2["Enter some animals as data.  Click 'Done' to test looking up these animals."],
+                T.h3["The neat stuff happens when you hit 'Done'."],
                 webform.renderForms(),
                 T.ol(data=T.directive("animals"), render=rend.sequence)[
                         T.li(pattern="item", render=T.directive("string")),
