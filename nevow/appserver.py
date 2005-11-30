@@ -180,14 +180,9 @@ class NevowRequest(compy.Componentized, server.Request):
             ## Error webpage has already been rendered and finish called
             pass
         else:
-            res = inevow.IResource(html, None)
-            if res is not None:
-                pageContext = context.PageContext(tag=res, parent=ctx)
-                return self.gotPageContext(pageContext)
-            else:
-                print "html is not a string: %s on %s" % (str(html), ctx.tag)
-
-                self.finishRequest( True )
+            res = inevow.IResource(html)
+            pageContext = context.PageContext(tag=res, parent=ctx)
+            return self.gotPageContext(pageContext)
         return html
 
     _logger = None
