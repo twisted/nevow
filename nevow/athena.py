@@ -60,6 +60,9 @@ class LivePageTransport(object):
         self.livePage.getTransport().addCallback(cb)
 
     def action_call(self, ctx, method, objectID, *args, **kw):
+        """
+        Handle a remote call initiated by the client.
+        """
         func = self.livePage._localObjects[objectID].locateMethod(ctx, method)
         requestId = inevow.IRequest(ctx).getHeader('Request-Id')
         if requestId is not None:
@@ -73,6 +76,9 @@ class LivePageTransport(object):
                 log.err()
 
     def action_respond(self, ctx, *args, **kw):
+        """
+        Handle the response from the client to a call initiated by the server.
+        """
         responseId = inevow.IRequest(ctx).getHeader('Response-Id')
         if responseId is None:
             log.msg("No Response-Id given")
@@ -81,6 +87,9 @@ class LivePageTransport(object):
         self.livePage._remoteCalls.pop(responseId).callback((args, kw))
 
     def action_noop(self, ctx):
+        """
+        Handle noop, used to initialise and ping the live transport.
+        """
         pass
 
 
@@ -322,7 +331,7 @@ class LivePage(rend.Page):
     def _cbCallRemote(self, (d, req), methodName, args):
         requestID = u's2c%i' % (self._requestIDCounter(),)
         objectID = 0
-        d.callback((requestID, None, (objectID, methodName, tuple(args))))
+        d.callback(json.serialize((requestID, None, (objectID, methodName, tuple(args)))))
 
         resultD = defer.Deferred()
         self._remoteCalls[requestID] = resultD
