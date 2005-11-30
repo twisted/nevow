@@ -227,13 +227,9 @@ Nevow.Athena.preparePostContent = function (args, kwargs) {
     return MochiKit.Base.serializeJSON([args, kwargs]);
 };
 
-Nevow.Athena.respondToRemote = function (requestID, args) {
-    // Replace null args with an empty list.
-    if(args == null) {
-        args = [];
-    }
+Nevow.Athena.respondToRemote = function (requestID, response) {
     var reqD = Nevow.Athena.prepareRemoteAction('respond');
-    var argumentQueryArgument = Nevow.Athena.preparePostContent(args, {});
+    var argumentQueryArgument = Nevow.Athena.preparePostContent([response], {});
 
     reqD.addCallback(function(req) {
         req.setRequestHeader('Response-Id', requestID);

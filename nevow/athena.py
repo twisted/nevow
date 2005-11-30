@@ -75,7 +75,7 @@ class LivePageTransport(object):
                 log.msg("Unhandled error in event handler:")
                 log.err()
 
-    def action_respond(self, ctx, *args, **kw):
+    def action_respond(self, ctx, response):
         """
         Handle the response from the client to a call initiated by the server.
         """
@@ -84,7 +84,7 @@ class LivePageTransport(object):
             log.msg("No Response-Id given")
             return
 
-        self.livePage._remoteCalls.pop(responseId).callback((args, kw))
+        self.livePage._remoteCalls.pop(responseId).callback(response)
 
     def action_noop(self, ctx):
         """

@@ -112,6 +112,64 @@ function test_ClientToServerExceptionResult(node, sync) {
         return defer.fail(Exception(s))
 
 
+class ServerToClientArgumentSerialization(athena.LiveFragment):
+    """
+    Tests that a method invoked on the client by the server is passed
+    the correct arguments.
+    """
+
+    javascriptTest = """\
+function test_ServerToClientArgumentSerialization(node) {
+    return Nevow.Athena.refByDOM(node).callRemote('test');
+}
+
+function test_Reverse_ServerToClientArgumentSerialization(i, f, s, o) {
+    assertEquals(i, 1);
+    assertEquals(f, 1.5);
+    assertEquals(s, 'hello');
+    assertEquals(o['world'], 'value');
+}
+"""
+
+    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
+        tags.form(action='#', onsubmit='return test(test_ServerToClientArgumentSerialization(this));')[
+            tags.input(type='submit', value='Test Server To Client Argument Serialization')]])
+
+    allowedMethods = {'test': True}
+    def test(self):
+        return self.page.callRemote('test_Reverse_ServerToClientArgumentSerialization', 1, 1.5, u'hello', {u'world': u'value'});
+
+class ServerToClientResultSerialization(athena.LiveFragment, unittest.TestCase):
+    """
+    Tests that the result returned by a method invoked on the client
+    by the server is correct.
+    """
+
+    javascriptTest = """\
+function test_ServerToClientResultSerialization(node) {
+    return Nevow.Athena.refByDOM(node).callRemote('test');
+}
+
+function test_Reverse_ServerToClientResultSerialization(i, f, s, o) {
+    return [1, 1.5, 'hello', {'world': 'value'}];
+}
+"""
+
+    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
+        tags.form(action='#', onsubmit='return test(test_ServerToClientResultSerialization(this));')[
+            tags.input(type='submit', value='Test Server To Client Result Serialization')]])
+
+    allowedMethods = {'test': True}
+    def test(self):
+        def cbResults(result):
+            self.assertEquals(result[0], 1)
+            self.assertEquals(result[1], 1.5)
+            self.assertEquals(result[2], u'hello')
+            self.assertEquals(result[3], {u'world': u'value'})
+        d = self.page.callRemote('test_Reverse_ServerToClientResultSerialization')
+        d.addCallback(cbResults)
+        return d
+
 class AthenaTests(athena.LivePage):
     docFactory = loaders.stan([
         tags.xml('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'),
@@ -149,6 +207,8 @@ class AthenaTests(athena.LivePage):
         ClientToServerArgumentSerialization,
         ClientToServerResultSerialization,
         ClientToServerExceptionResult,
+        ServerToClientArgumentSerialization,
+        ServerToClientResultSerialization,
         ]
 
     def renderTests(self):
