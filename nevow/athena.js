@@ -228,6 +228,8 @@ Nevow.Athena.preparePostContent = function (args, kwargs) {
 };
 
 Nevow.Athena.respondToRemote = function (requestID, args) {
+    // Replace null args with an empty list.
+    if(args == null) args = [];
     var reqD = Nevow.Athena.prepareRemoteAction('respond');
     var argumentQueryArgument = Nevow.Athena.preparePostContent(args, {});
 
