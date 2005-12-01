@@ -352,7 +352,7 @@ class LivePage(rend.Page):
         self._disconnectNotifications.append(d)
         return d
 
-    def render_liveglue(self, ctx):
+    def render_liveglue(self, ctx, data):
         if True:
             mk = tags.script(type='text/javascript', src=url.here.child("mochikit.js"))
         else:
