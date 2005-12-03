@@ -47,7 +47,7 @@ class DocFactory:
     """
 
     implements(inevow.IDocFactory)
-    
+
     pattern = None
     precompiledDoc = None
 
@@ -77,9 +77,9 @@ compy.backwardsCompatImplements(DocFactory)
 
 class stan(object):
     """A stan tags document factory"""
-    
+
     implements(inevow.IDocFactory)
-    
+
     stan = None
     pattern = None
     _cache = None
@@ -116,7 +116,7 @@ class htmlstr(object):
             self.pattern = pattern
         if beExtremelyLenient is not None:
             self.beExtremelyLenient = beExtremelyLenient
-            
+
     def load(self, ctx=None):
         if self._cache is None:
             from twisted.web import microdom
@@ -132,12 +132,12 @@ class htmlfile(object):
     """A document factory for an HTML disk template"""
 
     implements(inevow.IDocFactory)
-    
+
     template = None
     pattern = None
     templateDir = ''
     beExtremelyLenient = True
-    
+
     _filename = None
     _mtime = None
     _cache = None
@@ -152,7 +152,7 @@ class htmlfile(object):
         if beExtremelyLenient is not None:
             self.beExtremelyLenient = beExtremelyLenient
         self._filename = os.path.join(self.templateDir, self.template)
-        
+
     def load(self, ctx=None):
         mtime = os.path.getmtime(self._filename)
         if mtime != self._mtime or self._cache is None:
@@ -164,18 +164,18 @@ class htmlfile(object):
             self._mtime = mtime
             self._cache = doc
         return self._cache
-compy.backwardsCompatImplements(htmlfile)        
-        
+compy.backwardsCompatImplements(htmlfile)
+
 class xmlstr(object):
 
     implements(inevow.IDocFactory)
-    
+
     template = None
     pattern = None
     ignoreDocType = None
     ignoreComment = None
     _cache = None
-    
+
     def __init__(self, template=None, pattern=None, ignoreDocType=False, ignoreComment=False):
         if template is not None:
             self.template = template
@@ -198,7 +198,7 @@ compy.backwardsCompatImplements(xmlstr)
 
 
 class xmlfile(object):
-    
+
     implements(inevow.IDocFactory)
 
     template = None
@@ -227,22 +227,32 @@ class xmlfile(object):
             self._filename = os.path.join(self.templateDir, self.template)
         else:
             self._filename = self.template
-        
+
     def load(self, ctx=None):
-        class_ = None
+        rendererFactoryClass = None
         if ctx is not None:
             r = inevow.IRendererFactory(ctx, None)
-            if r is None: class_ = r
-            else: class_ = getClass(r)
-        mtime, doc = self._cache.get((self._filename, self.pattern, class_), (None, None))
-        self._mtime = os.path.getmtime(self._filename)
-        if mtime == self._mtime:
+            if r is not None:
+                rendererFactoryClass = getClass(r)
+
+        cacheKey = (self._filename, self.pattern, rendererFactoryClass)
+
+        try:
+            cachedModified, doc = self._cache[cacheKey]
+        except KeyError:
+            cachedModified = doc = None
+        currentModified = os.path.getmtime(self._filename)
+
+        if currentModified == cachedModified:
             return doc
+
         doc = flatsax.parse(open(self._filename), self.ignoreDocType, self.ignoreComment)
         doc = flat.precompile(doc, ctx)
+
         if self.pattern is not None:
             doc = inevow.IQ(doc).onePattern(self.pattern)
-        self._cache[(self._filename, self.pattern, class_)] = self._mtime, doc
-        return doc
-compy.backwardsCompatImplements(xmlfile)        
 
+        self._mtime = currentModified
+        self._cache[cacheKey] = currentModified, doc
+        return doc
+compy.backwardsCompatImplements(xmlfile)

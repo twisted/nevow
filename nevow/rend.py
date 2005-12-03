@@ -380,16 +380,11 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
         self.docFactory.pattern = 'content'
         self.docFactory.precompiledDoc = None
         try:
-            doc = self.docFactory.load(context)
-            self.docFactory.pattern = old
-            self.docFactory.precompiledDoc = None
-            if old == 'content':
-                import warnings
-                warnings.warn(
-                    """[v0.5] Using a Page with a 'content' pattern is
-                               deprecated.""",
-                    DeprecationWarning,
-                    stacklevel=2)
+            try:
+                doc = self.docFactory.load(context)
+            finally:
+                self.docFactory.pattern = old
+                self.docFactory.precompiledDoc = None
         except CannotAdapt, e:
             # Avert your eyes now! I don't want to catch anything but IQ
             # adaption exceptions here but all I get is CannotAdapt. This whole
@@ -397,13 +392,17 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
             # matter until it's all removed. ;-).
             if 'nevow.inevow.IQ' not in str(e):
                 raise
-            self.docFactory.pattern = old
-            self.docFactory.precompiledDoc = None
             doc = self.docFactory.load(context)
         except NodeNotFound:
-            self.docFactory.pattern = old
-            self.docFactory.precompiledDoc = None
             doc = self.docFactory.load(context)
+        else:
+            if old == 'content':
+                import warnings
+                warnings.warn(
+                    """[v0.5] Using a Page with a 'content' pattern is
+                               deprecated.""",
+                    DeprecationWarning,
+                    stacklevel=2)
 
         context.tag = tags.invisible[doc]
         return context
