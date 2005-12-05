@@ -104,52 +104,24 @@ class LivePageTransport(object):
 class LivePageFactory:
     noisy = True
 
-    def __init__(self, pageFactory):
-        self._pageFactory = pageFactory
+    def __init__(self):
         self.clients = {}
 
-        self._transportQueue = {}
-        self._requestIDCounter = {}
-        self._remoteCalls = {}
-        self._transportCount = {}
-        self._noTransportsDisconnectCall = {}
-        self._didDisconnect = {}
-        self._transportTimeouts = {}
-        self._disconnectNotifications = {}
-        self._localObjects = {}
-        self._localObjectIDCounter = {}
-
-    def clientFactory(self, context):
-        livepageId = inevow.IRequest(context).getHeader('Livepage-Id')
-        if livepageId is not None:
-            livepage = self.clients.get(livepageId)
-            if livepage is not None:
-                # A returning, known client.  Give them their page.
-                return livepage
-            else:
-                # A really old, expired client.  Or maybe an evil
-                # hax0r.  Give them a fresh new page and log the
-                # occurrence.
-                if self.noisy:
-                    log.msg("Unknown Livepage-Id: %r" % (livepageId,))
-                return self._manufactureClient()
-        else:
-            # A brand new client.  Give them a brand new page!
-            return self._manufactureClient()
-
-    def _manufactureClient(self):
-        cl = self._pageFactory()
-        cl.factory = self
-        return cl
-
     def addClient(self, client):
-        id = self._newClientID()
-        self.clients[id] = client
+        clientID = self._newClientID()
+        self.clients[clientID] = client
         if self.noisy:
-            log.msg("Rendered new LivePage %r: %r" % (client, id))
-        return id
+            log.msg("Rendered new LivePage %r: %r" % (client, clientID))
+        return clientID
+
+    def getClient(self, clientID):
+        return self.clients[clientID]
 
     def removeClient(self, clientID):
+        # State-tracking bugs may make it tempting to make the next line a
+        # 'pop', but it really shouldn't be; if the Page instance with this
+        # client ID is already gone, then it should be gone, which means that
+        # this method can't be called with that argument.
         del self.clients[clientID]
         if self.noisy:
             log.msg("Disconnected old LivePage %r" % (clientID,))
@@ -157,63 +129,32 @@ class LivePageFactory:
     def _newClientID(self):
         return guard._sessionCookie()
 
-    def getClients(self):
-        return self.clients.values()
-
-
-
-def liveLoader(PageClass, FactoryClass=LivePageFactory):
-    """
-    Helper for handling Page creation for LivePage applications.
-
-    Example::
-
-        class Foo(Page):
-            child_app = liveLoader(MyLivePage)
-
-    This is an experimental convenience function.  Consider it even less
-    stable than the rest of this module.
-    """
-    fac = FactoryClass(PageClass)
-    def liveChild(self, ctx):
-        return fac.clientFactory(ctx)
-    return liveChild
 
 
 class LivePage(rend.Page):
     transportFactory = LivePageTransport
     transportLimit = 2
+    factory = LivePageFactory()
     _rendered = False
+    _noTransportsDisconnectCall = None
+    _transportCount = 0
+    _didDisconnect = False
 
+    # This is the number of seconds that is acceptable for a LivePage to be
+    # considered 'connected' without any transports still active.  In other
+    # words, if the browser cannot make requests for more than this timeout
+    # (due to network problems, blocking javascript functions, or broken
+    # proxies) then deferreds returned from notifyOnDisconnect() will be
+    # errbacked with ConnectionLost, and the LivePage will be removed from the
+    # factory's cache, and then likely garbage collected.
     TRANSPORTLESS_DISCONNECT_TIMEOUT = 30
+
+    # This is the amount of time that each 'transport' request will remain open
+    # to the server.  Although the underlying transport, i.e. the conceptual
+    # connection established by the sequence of requests, remains alive, it is
+    # necessary to periodically cancel requests to avoid browser and proxy
+    # bugs.
     TRANSPORT_IDLE_TIMEOUT = 300
-
-    # HAHAHA
-    def _cheat(attr, default=None):
-        def get(self):
-            return getattr(self.factory, attr).get(self.clientID, default)
-        def set(self, value):
-            getattr(self.factory, attr)[self.clientID] = value
-        return property(get, set)
-
-    _transportQueue = _cheat('_transportQueue')
-    _requestIDCounter = _cheat('_requestIDCounter')
-    _remoteCalls = _cheat('_remoteCalls')
-    _transportCount = _cheat('_transportCount', 0)
-    _noTransportsDisconnectCall = _cheat('_noTransportsDisconnectCall')
-    _didDisconnect = _cheat('_didDisconnect')
-    _transportTimeouts = _cheat('_transportTimeouts')
-    _disconnectNotifications = _cheat('_disconnectNotifications')
-
-    # Mapping of Object-ID to a Python object that will accept
-    # messages from the client.
-    _localObjects = _cheat('_localObjects')
-
-    # Counter for assigning local object IDs
-    _localObjectIDCounter = _cheat('_localObjectIDCounter')
-
-    # Do this later: list of RemoteReference weakrefs with decref callbacks
-    # _remoteObjects = _cheat('_remoteObjects')
 
     def __init__(self, iface, rootObject, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
@@ -221,53 +162,72 @@ class LivePage(rend.Page):
         self.iface = iface
         self.rootObject = rootObject
 
-        if self.__class__.__dict__.get('factory') is None:
-            self.__class__.factory = LivePageFactory(lambda: self.__class__(*a, **kw))
 
-#     A note on timeout/disconnect logic: whenever a live client goes from some
-#     transports to no transports, a timer starts; whenever it goes from no
-#     transports to some transports, the timer is stopped; if the timer ever
-#     expires the connection is considered lost; every time a transport is
-#     added a timer is started; when the transport is used up, the timer is
-#     stopped; if the timer ever expires, the transport has a no-op sent down
-#     it; if an idle transport is ever disconnected, the connection is
-#     considered lost; this lets the server notice clients who actively leave
-#     (closed window, browser navigates away) and network congestion/errors
-#     (unplugged ethernet cable, etc)
+    # A note on timeout/disconnect logic: whenever a live client goes from some
+    # transports to no transports, a timer starts; whenever it goes from no
+    # transports to some transports, the timer is stopped; if the timer ever
+    # expires the connection is considered lost; every time a transport is
+    # added a timer is started; when the transport is used up, the timer is
+    # stopped; if the timer ever expires, the transport has a no-op sent down
+    # it; if an idle transport is ever disconnected, the connection is
+    # considered lost; this lets the server notice clients who actively leave
+    # (closed window, browser navigates away) and network congestion/errors
+    # (unplugged ethernet cable, etc)
 
-    def renderHTTP(self, ctx):
-        assert not self._rendered, "Cannot render a LivePage more than once"
-        assert self.factory is not None, "Cannot render a LivePage without a factory"
-        self._rendered = True
+    def _becomeLive(self):
+        """
+        Assign this LivePage a clientID, associate it with a factory, and begin
+        tracking its state.  This only occurs when a LivePage is *rendered*,
+        not when it is instantiated.
+        """
         self.clientID = self.factory.addClient(self)
         self._requestIDCounter = itertools.count().next
         self._transportQueue = defer.DeferredQueue(size=self.transportLimit)
         self._remoteCalls = {}
         self._disconnectNotifications = []
 
+        # Mapping of Object-ID to a Python object that will accept messages
+        # from the client.
         self._localObjects = {}
+
+        # Counter for assigning local object IDs
         self._localObjectIDCounter = itertools.count().next
+
+        # Do this later: list of RemoteReference weakrefs with decref callbacks
+        # self._remoteObjects = ???
 
         self.addLocalObject(self)
 
         self._transportTimeouts = {}
         self._noTransports()
 
+
+    def renderHTTP(self, ctx):
+        assert not self._rendered, "Cannot render a LivePage more than once"
+        assert self.factory is not None, "Cannot render a LivePage without a factory"
+        self._rendered = True
+
+        self._becomeLive()
+
         neverEverCache(inevow.IRequest(ctx))
         return rend.Page.renderHTTP(self, ctx)
+
 
     def _noTransports(self):
         assert self._noTransportsDisconnectCall is None
         self._noTransportsDisconnectCall = reactor.callLater(
             self.TRANSPORTLESS_DISCONNECT_TIMEOUT, self._noTransportsDisconnect)
 
+
     def _someTransports(self):
         self._noTransportsDisconnectCall.cancel()
         self._noTransportsDisconnectCall = None
 
+
     def _newTransport(self, req):
         self._transportTimeouts[req] = reactor.callLater(
             self.TRANSPORT_IDLE_TIMEOUT, self._idleTransportDisconnect, req)
+
 
     def _noTransportsDisconnect(self):
         self._noTransportsDisconnectCall = None
@@ -286,6 +246,7 @@ class LivePage(rend.Page):
                 resD.errback(reason)
             self.factory.removeClient(self.clientID)
 
+
     def _idleTransportDisconnect(self, req):
         del self._transportTimeouts[req]
         # This is lame.  Queue may be the wrong way to store requests. :/
@@ -297,6 +258,7 @@ class LivePage(rend.Page):
             gotD.callback('')
         self.getTransport().addCallback(cbTransport)
 
+
     def _activeTransportDisconnect(self, error, req):
         # XXX I don't think this will ever be a KeyError... but what if someone
         # wrote a response to the request, and halfway through the socket
@@ -306,11 +268,10 @@ class LivePage(rend.Page):
             timeoutCall.cancel()
         self._disconnected(error)
 
+
     def addTransport(self, req):
         neverEverCache(req)
         activeChannel(req)
-
-        self.clientID = req.getHeader('Livepage-ID')
 
         req.notifyFinish().addErrback(self._activeTransportDisconnect, req)
 
@@ -387,8 +348,16 @@ class LivePage(rend.Page):
     def child_MochiKit(self, ctx):
         return static.File(util.resource_filename('nevow', 'MochiKit'))
 
-    def child_transport(self, ctx):
+    def newTransport(self):
         return self.transportFactory(self)
+
+    def child_transport(self, ctx):
+        req = inevow.IRequest(ctx)
+        clientID = req.getHeader('Livepage-ID')
+        client = self.factory.getClient(clientID)
+        # another instance, probably same class as me, but whatever; any
+        # athena-based live page will do
+        return client.newTransport()
 
     def locateMethod(self, ctx, methodName):
         if methodName in self.iface:

@@ -356,7 +356,7 @@ Nevow.Athena._callRemote = function(methodName, args) {
         var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, actionArguments);
         reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
         reqD2.addCallback(Nevow.Athena.XMLHttpRequestReady);
-        return reqD2
+        return reqD2;
     });
 
     reqD.addErrback(Nevow.Athena.XMLHttpRequestFail);
@@ -374,13 +374,12 @@ Nevow.Athena.getAttribute = function(node, namespaceURI, namespaceIdentifier, lo
     }
     if (node.hasAttribute) {
         var r = namespaceURI + ':' + localName;
-        var s = namespaceIdentifier + ':' + localName;
         if (node.hasAttribute(r)) {
             return node.getAttribute(r);
-        } else if (node.hasAttribute(s)) {
-            return node.getAttribute(s);
         }
     }
+    var s = namespaceIdentifier + ':' + localName;
+    return node.getAttribute(s);
 };
 
 Nevow.Athena.athenaIDFromNode = function(n) {
