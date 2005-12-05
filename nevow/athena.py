@@ -7,6 +7,8 @@ from twisted.python import log, failure
 
 from nevow import inevow, rend, loaders, url, static, json, util, tags, guard
 
+ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
+
 class LivePageError(Exception):
     """base exception for livepage errors"""
 
@@ -42,7 +44,8 @@ class LivePageTransport(object):
         except defer.QueueOverflow:
             log.msg("Fast transport-close path")
             d = defer.succeed('')
-        args, kwargs = json.parse(req.content.read())
+        requestContent = req.content.read()
+        args, kwargs = json.parse(requestContent)
 
         method = getattr(self, 'action_' + req.args['action'][0])
         method(ctx, *args, **kwargs)
@@ -84,7 +87,12 @@ class LivePageTransport(object):
             log.msg("No Response-Id given")
             return
 
-        self.livePage._remoteCalls.pop(responseId).callback(response)
+        success, result = response
+        callDeferred = self.livePage._remoteCalls.pop(responseId)
+        if success:
+            callDeferred.callback(result)
+        else:
+            callDeferred.errback(Exception(result))
 
     def action_noop(self, ctx):
         """
@@ -398,14 +406,20 @@ class LiveFragment(rend.Fragment):
     C{nevow:athena_id} which will be filled by the framework.  For
     example, an xml template for a LiveFragment might start like this:
 
-        <div xmlns:nevow="http://nevow.com/ns/nevow/0.1">
-            <nevow:attr name="nevow:athena_id"><nevow:slot name="nevow:athena_id" /></nevow:attr>
+        <div>
+            <nevow:attr name="athena:id"><nevow:slot name="athena:id" /></nevow:attr>
+
+    Since this is a lot of typing, a convenience mechanism is
+    provided.  Given an XML namespace identifier 'nevow' which refers
+    to <http://nevow.com/ns/nevow/0.1>, you can rewrite the above as:
+
+        <div nevow:render="athenaID">
 
     JavaScript handlers for elements inside this <div> can use
     C{Nevow.Athena.refByDOM} to invoke methods on this LiveFragment
     instance:
 
-            <form onsubmit="Nevow.Athena.refByDOM(this).callRemote('foo', bar); return false;">
+            <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
 
     By default, only methods named in the C{allowedMethods} mapping
     may be invoked by the client.
@@ -414,8 +428,8 @@ class LiveFragment(rend.Fragment):
     allowedMethods = {}
 
     def rend(self, context, data):
-        myID = self.page.addLocalObject(self)
-        context.fillSlots('nevow:athena_id', myID)
+        self._athenaID = self.page.addLocalObject(self)
+        context.fillSlots('athena:id', self._athenaID)
         return super(LiveFragment, self).rend(context, data)
 
     def locateMethod(self, ctx, methodName):
@@ -423,7 +437,12 @@ class LiveFragment(rend.Fragment):
             return getattr(self, methodName)
         raise AttributeError(methodName)
 
+    def render_athenaID(self, ctx, data):
+        return ctx.tag(**liveFragmentID)
+
+    def callRemote(self, methodName, *varargs):
+        return self.page.callRemote("Nevow.Athena.callByAthenaID", self._athenaID, unicode(methodName, 'ascii'), varargs)
 
 # Helper for docFactories defined with stan:
 # tags.foo(..., **liveFragmentID)
-liveFragmentID = {'nevow:athena_id': tags.slot('nevow:athena_id')}
+liveFragmentID = {'athena:id': tags.slot('athena:id'), 'xmlns:athena': ATHENA_XMLNS_URI}

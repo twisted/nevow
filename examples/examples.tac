@@ -64,6 +64,7 @@ try:
 
     from athenademo import calculator
     from athenademo import typeahead
+    from athenademo import widgets
     from athenademo import athenatest
 except ImportError, e:
     if str(e).find('No module named') != -1:
@@ -179,6 +180,9 @@ class Examples(rend.Page):
 
     def child_athenatest(self, ctx):
         return athenatest.AthenaTests(None, None)
+
+    def child_widgets(self, ctx):
+        return widgets.WidgetPage(None, None)
 
 application = service.Application("examples")
 strports.service("8080", appserver.NevowSite(Examples(), logPath="web.log")).setServiceParent(application)
