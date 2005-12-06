@@ -223,7 +223,7 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
         } catch (error) {
             result = error;
             success = false;
-        } 
+        }
         Nevow.Athena.debug('Invoked it');
 
         var isDeferred = false;
@@ -378,8 +378,11 @@ Nevow.Athena.getAttribute = function(node, namespaceURI, namespaceIdentifier, lo
             return node.getAttribute(r);
         }
     }
-    var s = namespaceIdentifier + ':' + localName;
-    return node.getAttribute(s);
+    if (node.getAttribute) {
+        var s = namespaceIdentifier + ':' + localName;
+        return node.getAttribute(s);
+    }
+    return null;
 };
 
 Nevow.Athena.athenaIDFromNode = function(n) {
@@ -428,30 +431,6 @@ Nevow.Athena.RemoteReference.prototype.callRemote = function(methodName /*, ... 
     return Nevow.Athena._callRemote(methodName, args);
 };
 
-Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass();
-Nevow.Athena.Widget.prototype.__init__ = function(widgetNode) {
-    this.node = widgetNode;
-    Nevow.Athena.Widget.upcall(this, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
-};
-
-Nevow.Athena.Widget._athenaWidgets = {};
-
-/**
- * Given any node within a Widget (the client-side representation of a
- * LiveFragment), return the instance of the Widget subclass that corresponds
- * with that node, creating that Widget subclass if necessary.
- */
-Nevow.Athena.Widget.get = function(node) {
-    var widgetNode = Nevow.Athena.nodeByDOM(node);
-    var widgetId = Nevow.Athena.athenaIDFromNode(widgetNode);
-    if (Nevow.Athena.Widget._athenaWidgets[widgetId] == null) {
-        Nevow.Athena.debug("Creating new widget from class " + this + " for node " + widgetId);
-        Nevow.Athena.Widget._athenaWidgets[widgetId] = new this(widgetNode);
-    } else {
-        Nevow.Athena.debug("Returning existing widget for node " + widgetId);
-    }
-    return Nevow.Athena.Widget._athenaWidgets[widgetId];
-};
 
 Nevow.Athena.DOMWalk = function(parent, test, memo) {
     if (memo == undefined) {
@@ -475,6 +454,12 @@ Nevow.Athena.DOMWalk = function(parent, test, memo) {
     return memo;
 };
 
+/**
+ * Given a Node, find all of its children (to any depth) with the
+ * given attribute set to the given value.  Note: you probably don't
+ * want to call this directly; instead, see
+ * C{Nevow.Athena.Widget.nodesByAttribute}.
+ */
 Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
     var result = Nevow.Athena.DOMWalk(root,
                         function(child) {
@@ -485,6 +470,13 @@ Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
     return result;
 };
 
+/**
+ * Given a Node, find the single child node (to any depth) with the
+ * given attribute set to the given value.  If there are more than one
+ * Nodes which satisfy this constraint or if there are none at all,
+ * throw an error.  Note: you probably don't want to call this
+ * directly; instead, see C{Nevow.Athena.Widget.nodeByAttribute}.
+ */
 Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
     var nodes = Nevow.Athena.NodesByAttribute(root, attrName, attrValue);
     Nevow.Athena.debug("NodeByAttribute found: " + nodes);
@@ -504,6 +496,38 @@ Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
 
 }
 
+Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass();
+Nevow.Athena.Widget.prototype.__init__ = function(widgetNode) {
+    this.node = widgetNode;
+    Nevow.Athena.Widget.upcall(this, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
+};
+
+Nevow.Athena.Widget.prototype.nodeByAttribute = function(attrName, attrValue) {
+    return Nevow.Athena.NodeByAttribute(this.node, attrName, attrValue);
+};
+
+Nevow.Athena.Widget.prototype.nodesByAttribute = function(attrName, attrValue) {
+    return Nevow.Athena.NodesByAttribute(this.node, attrName, attrValue);
+};
+
+Nevow.Athena.Widget._athenaWidgets = {};
+
+/**
+ * Given any node within a Widget (the client-side representation of a
+ * LiveFragment), return the instance of the Widget subclass that corresponds
+ * with that node, creating that Widget subclass if necessary.
+ */
+Nevow.Athena.Widget.get = function(node) {
+    var widgetNode = Nevow.Athena.nodeByDOM(node);
+    var widgetId = Nevow.Athena.athenaIDFromNode(widgetNode);
+    if (Nevow.Athena.Widget._athenaWidgets[widgetId] == null) {
+        Nevow.Athena.debug("Creating new widget from class " + this + " for node " + widgetId);
+        Nevow.Athena.Widget._athenaWidgets[widgetId] = new this(widgetNode);
+    } else {
+        Nevow.Athena.debug("Returning existing widget for node " + widgetId);
+    }
+    return Nevow.Athena.Widget._athenaWidgets[widgetId];
+};
 Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
     /* scan the whole document for a particular widgetId */
     var nodes = Nevow.Athena.DOMWalk(document.documentElement,
