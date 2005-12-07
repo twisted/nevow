@@ -583,7 +583,14 @@ Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
 Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;
 
-MochiKit.DOM.addLoadEvent(function() {
-    Nevow.Athena.sendNoOp();
-    Nevow.Athena.Widget._instantiateAll();
-});
+Nevow.Athena.initialize = function() {
+    // Delay initialization for just a moment so that Safari stops whirling
+    // its loading icon.
+    setTimeout(function() {
+        Nevow.Athena.sendNoOp();
+        Nevow.Athena.Widget._instantiateAll();
+        },
+        1);
+}
+
+MochiKit.DOM.addLoadEvent(Nevow.Athena.initialize);
