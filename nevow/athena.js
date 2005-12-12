@@ -130,6 +130,10 @@ Nevow.Athena.constructActionURL = function(action) {
             + encodeURIComponent(action));
 };
 
+Nevow.Athena.CONNECTED = 'connected';
+Nevow.Athena.DISCONNECTED = 'disconnected';
+
+Nevow.Athena.connectionState = Nevow.Athena.CONNECTED;
 Nevow.Athena.failureCount = 0;
 Nevow.Athena.remoteCallCount = 0;
 Nevow.Athena.remoteCalls = {};
@@ -153,104 +157,74 @@ Nevow.Athena.XMLHttpRequestFinished = function(passthrough) {
     return passthrough;
 };
 
-Nevow.Athena.XMLHttpRequestReady = function(req) {
-    Nevow.Athena.debug('A request is completed: ' + req.responseText);
+Nevow.Athena._actionHandlers = {
+    noop: function() {
+        /* Noop! */
+    },
 
-    /* The response's content is a JSON-encoded 4-array of
-     * [Response-Id, Request-Id, Content-Type, [success, result]].  If
-     * this is a response to a previous request, responseId will not
-     * be null.  If this is a server-initiated request, requestId will
-     * not be null.
-     */
-
-    if (req.responseText == '') {
-        /* Server timed out the transport, just re-request */
-        Nevow.Athena.debug('Empty server message, reconnecting');
-        if (Nevow.Athena.outstandingTransports == 0) {
-            Nevow.Athena.debug('No outstanding transports, sending no-op');
-            Nevow.Athena.sendNoOp();
-        }
-        return;
-    }
-
-    Nevow.Athena.debug('evaluating json in responseText');
-    var responseParts = MochiKit.Base.evalJSON(req.responseText);
-    Nevow.Athena.debug('evaluated it');
-
-    Nevow.Athena.failureCount = 0;
-
-    var responseId = responseParts[0];
-    var requestId = responseParts[1];
-
-    if (requestId != null) {
-        Nevow.Athena.debug('Got a response to a request');
-
-        var contentType = responseParts[2];
-        var contentBody = responseParts[3];
-
-        var d = Nevow.Athena.remoteCalls[requestId];
-        var handler = Nevow.Athena.responseDispatchTable[contentType];
-        delete Nevow.Athena.remoteCalls[requestId];
-
-        if (handler != null) {
-            handler(d, contentBody);
-        } else {
-            Nevow.Athena.debug("Unknown content-type: " + contentType);
-            d.errback(new Error("Unhandled content type: " + contentType));
-        }
-
-    } else if (responseId != null) {
-        Nevow.Athena.debug('Server initiated request');
-
-        var contentBody = responseParts[2];
-
-        var objectId = contentBody[0];
-        var methodName = contentBody[1];
-        var methodArgs = contentBody[2];
-
-        /*
-        var resultD = Nevow.Athena.localObjectTable[objectId].dispatch(methodName, methodArgs);
-        resultD.addCallbacks(Nevow.Athena.respondToRequest
-        */
-
-        Nevow.Athena.debug('Invoking ' + new String(methodName) + ' with arguments ' + new String(methodArgs));
-        var methodObj = Divmod.namedAny(methodName);
-        var result;
-        var success;
+    call: function(functionName, requestId, funcArgs) {
+        var funcObj = Divmod.namedAny(functionName);
+        var result = undefined;
+        var success = true;
         try {
-            result = methodObj.apply(null, methodArgs);
-            success = true;
+            result = funcObj.apply(null, funcArgs);
         } catch (error) {
             result = error;
             success = false;
         }
-        Nevow.Athena.debug('Invoked it');
 
         var isDeferred = false;
 
         if (result == undefined) {
-            Nevow.Athena.debug('it was undefined');
             result = null;
         } else {
-            /* if it quacks like a duck ...
-               this sucks!!!  */
+            /* if it quacks like a duck ...  this sucks!!!  */
             isDeferred = (result.addCallback && result.addErrback);
         }
-        Nevow.Athena.debug('Is it a deferred? ' + new String(isDeferred));
 
         if (isDeferred) {
-            Nevow.Athena.debug('It is a deferred, adding a callback');
             result.addCallbacks(function(result) {
-                    Nevow.Athena.respondToRemote(responseId, [true, result]);
+                    Nevow.Athena.respondToRemote(requestId, [true, result]);
                 }, function(err) {
-                    Nevow.Athena.respondToRemote(responseId, [false, result]);
+                    Nevow.Athena.respondToRemote(requestId, [false, result]);
                 });
         } else {
-            Nevow.Athena.debug('Responding synchronously to remote request with ID ' + new String(responseId));
-            Nevow.Athena.respondToRemote(responseId, [success, result]);
+            Nevow.Athena.respondToRemote(requestId, [success, result]);
         }
+    },
 
+    respond: function(responseId, success, result) {
+        var d = Nevow.Athena.remoteCalls[responseId];
+        delete Nevow.Athena.remoteCalls[responseId];
+
+        if (success) {
+            d.callback(result);
+        } else {
+            d.errback(new Error(result));
+        }
+    },
+
+    close: function() {
+        Nevow.Athena._connectionLost('Connection closed by remote host');
     }
+};
+
+Nevow.Athena.XMLHttpRequestReady = function(req) {
+    /* The response is a JSON-encoded 2-array of [action, arguments]
+     * where action is one of "noop", "call", "respond", or "close".
+     * The arguments are action-specific and passed on to the handler
+     * for the action.
+     */
+
+    var actionParts = MochiKit.Base.evalJSON(req.responseText);
+
+    Nevow.Athena.failureCount = 0;
+
+    var actionName = actionParts[0];
+    var actionArgs = actionParts[1];
+    var action = Nevow.Athena._actionHandlers[actionName];
+
+    action.apply(null, actionArgs);
 
     /* Client code has had a chance to run now, in response to
      * receiving the result.  If it issued a new request, we've got an
@@ -262,21 +236,21 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
     }
 };
 
-Nevow.Athena.XMLHttpRequestFail = function(err) {
-    Nevow.Athena.debug('A request failed!');
+Nevow.Athena._connectionLost = function(reason) {
+    Nevow.Athena.connectionState = Nevow.Athena.DISCONNECTED;
+    var calls = Nevow.Athena.remoteCalls;
+    Nevow.Athena.remoteCalls = {};
+    for (var k in calls) {
+        calls[k].errback(new Error("Connection lost"));
+    }
+};
 
+Nevow.Athena.XMLHttpRequestFail = function(err) {
     Nevow.Athena.failureCount++;
 
     if (Nevow.Athena.failureCount >= 3) {
-        Nevow.Athena.debug('There are too many failures!');
-        var calls = Nevow.Athena.remoteCalls;
-        Nevow.Athena.remoteCalls = {};
-        for (var k in calls) {
-            calls[k].errback(new Error("Connection lost"));
-        }
+        Nevow.Athena._connectionLost('There are too many failures!');
         return;
-    } else {
-        Nevow.Athena.debug('There are not too many failures.');
     }
 
     if (Nevow.Athena.outstandingTransports == 0) {
@@ -288,18 +262,21 @@ Nevow.Athena.prepareRemoteAction = function(actionType) {
     var url = Nevow.Athena.constructActionURL(actionType);
     var req = MochiKit.Async.getXMLHttpRequest();
 
+    if (Nevow.Athena.connectionState != Nevow.Athena.CONNECTED) {
+        return MochiKit.Async.fail(new Error("Not connected"));
+    }
+
     try {
         req.open('POST', url, true);
     } catch (err) {
-        return resultD = MochiKit.Async.fail(err);
+        return MochiKit.Async.fail(err);
     }
 
     Nevow.Athena.outstandingTransports++;
 
-    Nevow.Athena.debug("Setting livepage id " + new String(Nevow.Athena.livepageId));
     req.setRequestHeader('Livepage-Id', Nevow.Athena.livepageId);
     req.setRequestHeader('content-type', 'text/x-json+athena')
-    return resultD = MochiKit.Async.succeed(req);
+    return MochiKit.Async.succeed(req);
 };
 
 Nevow.Athena.preparePostContent = function(args, kwargs) {
@@ -320,23 +297,16 @@ Nevow.Athena.respondToRemote = function(requestID, response) {
 };
 
 Nevow.Athena.sendNoOp = function() {
-    Nevow.Athena.debug('Sending no-op');
     var reqD = Nevow.Athena.prepareRemoteAction('noop');
-    Nevow.Athena.debug('Prepared remote action');
     reqD.addCallback(function(req) {
-        Nevow.Athena.debug('Got request');
         var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, Nevow.Athena.preparePostContent([], {}));
         reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
-        Nevow.Athena.debug('Sent request');
         reqD2.addCallback(function(ign) {
-            Nevow.Athena.debug('reqD2 succeeded');
             return Nevow.Athena.XMLHttpRequestReady(req);
         });
         reqD2.addErrback(function(err) {
-            Nevow.Athena.debug('reqD2 failed');
             return Nevow.Athena.XMLHttpRequestFail(err);
         });
-        Nevow.Athena.debug('Added callback and errback');
     });
 };
 
@@ -409,17 +379,16 @@ Nevow.Athena.nodeByDOM = function(node) {
      * or any child or descendent of that node.
      */
     for (var n = node; n != null; n = n.parentNode) {
-	var nID = Nevow.Athena.athenaIDFromNode(n);
+        var nID = Nevow.Athena.athenaIDFromNode(n);
         if (nID != null) {
             return n;
-	}
+        }
     }
     throw new Error("nodeByDOM passed node with no containing Athena Ref ID");
 };
 
 Nevow.Athena.RemoteReference = Divmod.Class.subclass();
 Nevow.Athena.RemoteReference.prototype.__init__ = function(objectID) {
-    Nevow.Athena.debug("Creating a RemoteReference with objectID " + objectID);
     this.objectID = objectID;
 };
 
@@ -446,7 +415,6 @@ Nevow.Athena.DOMWalk = function(parent, test, memo) {
     for (var i = 0; i < len; i++) {
         child = parent.childNodes[i];
         if (test(child)) {
-            Nevow.Athena.debug("Pushing " + child);
             memo.push(child);
         }
         Nevow.Athena.DOMWalk(child, test, memo);
@@ -466,7 +434,6 @@ Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
                             return ((child.getAttribute != undefined) &&
                                     (child.getAttribute(attrName) == attrValue));
                         });
-    Nevow.Athena.debug("NodesByAttribute found: " + result);
     return result;
 };
 
@@ -479,7 +446,6 @@ Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
  */
 Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
     var nodes = Nevow.Athena.NodesByAttribute(root, attrName, attrValue);
-    Nevow.Athena.debug("NodeByAttribute found: " + nodes);
     if (nodes.length > 1) {
         throw new Error("Found too many " + attrValue + " " + n);
     } else if (nodes.length < 1) {
@@ -488,9 +454,7 @@ Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
                         " (programmer error).");
 
     } else {
-        Nevow.Athena.debug("NodeByAttribute - before nodes[0]");
         var result = nodes[0];
-        Nevow.Athena.debug("NodeByAttribute - after nodes[0]");
         return result;
     }
 
@@ -521,10 +485,7 @@ Nevow.Athena.Widget.get = function(node) {
     var widgetNode = Nevow.Athena.nodeByDOM(node);
     var widgetId = Nevow.Athena.athenaIDFromNode(widgetNode);
     if (Nevow.Athena.Widget._athenaWidgets[widgetId] == null) {
-        Nevow.Athena.debug("Creating new widget from class " + this + " for node " + widgetId);
         Nevow.Athena.Widget._athenaWidgets[widgetId] = new this(widgetNode);
-    } else {
-        Nevow.Athena.debug("Returning existing widget for node " + widgetId);
     }
     return Nevow.Athena.Widget._athenaWidgets[widgetId];
 };
@@ -538,9 +499,7 @@ Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
         throw new Error(nodes.length + " nodes with athena id " + widgetId);
     };
 
-    Nevow.Athena.debug("Got some nodes: " + nodes);
     n = nodes[0];
-    Nevow.Athena.debug("Returning this.get(" + n + ");");
     return this.get(n);
 };
 
@@ -575,22 +534,24 @@ Nevow.Athena.Widget._instantiateAll = function() {
 
 Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
     var widget = Nevow.Athena.Widget.fromAthenaID(athenaID);
-    Nevow.Athena.debug("Got a widget: " + widget);
-    Nevow.Athena.debug("Calling " + methodName + " on it with " + varargs);
     return widget[methodName].apply(widget, varargs);
 };
 
 Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;
 
-Nevow.Athena.initialize = function() {
+Nevow.Athena._finalize = function() {
+    Nevow.Athena._connectionLost('page unloaded');
+};
+
+Nevow.Athena._initialize = function() {
     // Delay initialization for just a moment so that Safari stops whirling
     // its loading icon.
     setTimeout(function() {
+        MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._finalize, true);
         Nevow.Athena.sendNoOp();
         Nevow.Athena.Widget._instantiateAll();
-        },
-        1);
+    }, 1);
 }
 
-MochiKit.DOM.addLoadEvent(Nevow.Athena.initialize);
+MochiKit.DOM.addLoadEvent(Nevow.Athena._initialize);

@@ -28,6 +28,15 @@ def activeChannel(request):
     request.setHeader("Connection", "close")
     request.write('')
 
+class ConnectionLostTransport(object):
+    implements(inevow.IResource)
+
+    def locateChild(self, ctx, segments):
+        return rend.NotFound
+
+    def renderHTTP(self, ctx):
+        return json.serialize((u'close', ()))
+
 class LivePageTransport(object):
     implements(inevow.IResource)
 
@@ -43,7 +52,7 @@ class LivePageTransport(object):
             d = self.livePage.addTransport(req)
         except defer.QueueOverflow:
             log.msg("Fast transport-close path")
-            d = defer.succeed('')
+            d = json.serialize((u'noop', ()))
         requestContent = req.content.read()
         args, kwargs = json.parse(requestContent)
 
@@ -53,12 +62,12 @@ class LivePageTransport(object):
 
     def _cbCall(self, result, requestId):
         def cb((d, req)):
-            if isinstance(result, failure.Failure):
-                res = (False, unicode(result.getErrorMessage()))
-            else:
-                res = (True, result)
-            response = (None, unicode(requestId), u'text/json', res)
-            message = json.serialize(response)
+            res = result
+            success = True
+            if isinstance(res, failure.Failure):
+                success = False
+                res = unicode(result.getErrorMessage())
+            message = json.serialize((u'respond', (unicode(requestId), success, res)))
             d.callback(message)
         self.livePage.getTransport().addCallback(cb)
 
@@ -299,8 +308,7 @@ class LivePage(rend.Page):
 
     def _cbCallRemote(self, (d, req), methodName, args):
         requestID = u's2c%i' % (self._requestIDCounter(),)
-        objectID = 0
-        d.callback(json.serialize((requestID, None, (objectID, methodName, tuple(args)))))
+        d.callback(json.serialize((u'call', (methodName, requestID, args))))
 
         resultD = defer.Deferred()
         self._remoteCalls[requestID] = resultD
@@ -354,10 +362,14 @@ class LivePage(rend.Page):
     def child_transport(self, ctx):
         req = inevow.IRequest(ctx)
         clientID = req.getHeader('Livepage-ID')
-        client = self.factory.getClient(clientID)
-        # another instance, probably same class as me, but whatever; any
-        # athena-based live page will do
-        return client.newTransport()
+        try:
+            client = self.factory.getClient(clientID)
+        except KeyError:
+            return ConnectionLostTransport()
+        else:
+            # another instance, probably same class as me, but whatever; any
+            # athena-based live page will do
+            return client.newTransport()
 
     def locateMethod(self, ctx, methodName):
         if methodName in self.iface:
