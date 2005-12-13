@@ -1,22 +1,131 @@
 
-if (typeof(Divmod) == 'undefined') {
+if (typeof Divmod == 'undefined') {
     Divmod = {};
 }
 
-Divmod.log = function(msg) {
+
+Divmod.log = function(kind, msg) {
     var logElement = document.getElementById('nevow-log');
     if (logElement != null) {
         var msgElement = document.createElement('div');
-        msgElement.appendChild(document.createTextNode(msg));
+        msgElement.appendChild(document.createTextNode(kind + ': ' + msg));
         logElement.appendChild(msgElement);
     }
 }
 
-Divmod.namedAny = function(name) {
-    return eval(name);
-}
+Divmod.debugging = false;
+Divmod.debug = function() {
+    if (Divmod.debugging) {
+        Divmod.log.apply(null, arguments);
+    }
+};
+
+
+Divmod.baseURL = function() {
+
+    // Use "cached" value if it exists
+    if (Divmod._baseURL != undefined) {
+        return Divmod._baseURL;
+    }
+
+    var baseURL = window.location.toString();
+    var queryParamIndex = baseURL.indexOf('?');
+
+    if (queryParamIndex != -1) {
+        baseURL = baseURL.substring(0, queryParamIndex);
+    }
+
+    if (baseURL.charAt(baseURL.length - 1) != '/') {
+        baseURL += '/';
+    }
+
+    // "Cache" and return
+    Divmod._baseURL = baseURL;
+    return Divmod._baseURL;
+};
+
+
+Divmod.load = function(moduleName) {
+    Divmod.debug("package", "Trying to load " + moduleName);
+    var loaded = false;
+    try {
+        var mod = Divmod.namedAny(moduleName, false);
+        if (mod != undefined) {
+            loaded = true;
+            Divmod.debug("package", "Found " + moduleName + " loaded already");
+        }
+    } catch (err) {
+        Divmod.debug("package", "Caught error checking " + moduleName + ": " + err.message);
+    }
+
+    if (!loaded) {
+        Divmod.debug("package", "Loading source for " + moduleName);
+        var req = MochiKit.Async.getXMLHttpRequest();
+        req.open('GET', Divmod.baseURL() + 'jsmodule/' + moduleName, false);
+        req.send('');
+        Divmod.debug("package", "Found " + req.responseText.length + " bytes of source for " + moduleName);
+        eval(req.responseText);
+
+        try {
+            mod = Divmod.namedAny(moduleName, false);
+            if (mod != undefined) {
+                loaded = true;
+                Divmod.debug("package", "*Now* found " + moduleName + " loaded.");
+            }
+        } catch (err) {
+            Divmod.debug("package", "Another error checking " + moduleName + ": " + err.message);
+        }
+
+        if (!loaded) {
+            throw new Error("Import Error: " + moduleName);
+        }
+    }
+    Divmod.debug("package", "Successfully loaded " + moduleName);
+};
+
+
+Divmod.namedAny = function(name, /* optional */ loadIfMissing) {
+    if (loadIfMissing == undefined) {
+        loadIfMissing = true;
+    }
+    Divmod.debug("package", "Looking up " + name);
+    try {
+        var pkg = eval(name);
+        Divmod.debug("package", "Found " + name);
+        return pkg;
+    } catch (firstErr) {
+        Divmod.debug("package", "Caught error looking for " + name + ": " + firstErr.message);
+        if (loadIfMissing) {
+            var packageParts = name.split('.');
+            var parentPackage = packageParts.shift();
+            while (1) {
+                try {
+                    Divmod.debug("package", "Trying to load parent: " + parentPackage);
+                    Divmod.load(parentPackage);
+                } catch (err) {
+                    /* Woops, if the import failed, we've left the
+                     * land of packages, time to give up.
+                     */
+                    break;
+                }
+                try {
+                    return Divmod.namedAny(name, false);
+                } catch (err) {
+                    /* maybe the next one... */
+                }
+                if (!packageParts) {
+                    throw firstErr;
+                }
+                parentPackage += "." + packageParts.shift();
+            }
+        }
+        throw firstErr;
+    }
+};
+
 
 Divmod._PROTOTYPE_ONLY = {};
+
 
 Divmod.Class = function(asPrototype) {
     if (asPrototype !== Divmod._PROTOTYPE_ONLY) {
@@ -24,7 +133,9 @@ Divmod.Class = function(asPrototype) {
     }
 };
 
+
 Divmod.__classDebugCounter__ = 0;
+
 
 Divmod.Class.subclass = function() {
     var superClass = this;
@@ -93,35 +204,7 @@ Nevow.Athena.toString = function() {
 Nevow.Athena.XMLNS_URI = 'http://divmod.org/ns/athena/0.7';
 
 Nevow.Athena.baseURL = function() {
-
-    // Use "cached" value if it exists
-    if (typeof(Nevow.Athena._baseURL) != "undefined") {
-        return Nevow.Athena._baseURL;
-    }
-
-    var baseURL = window.location.toString();
-    var queryParamIndex = baseURL.indexOf('?');
-
-    if (queryParamIndex != -1) {
-        baseURL = baseURL.substring(0, queryParamIndex);
-    }
-
-    if (baseURL.charAt(baseURL.length - 1) != '/') {
-        baseURL += '/';
-    }
-
-    baseURL += 'transport';
-
-    // "Cache" and return
-    Nevow.Athena._baseURL = baseURL;
-    return Nevow.Athena._baseURL;
-};
-
-Nevow.Athena.debugging = false;
-Nevow.Athena.debug = function(kind, msg) {
-    if (Nevow.Athena.debugging) {
-        Divmod.log(kind + ': ' + msg);
-    }
+    return Divmod.baseURL() + 'transport';
 };
 
 Nevow.Athena.constructActionURL = function(action) {
@@ -155,14 +238,14 @@ Nevow.Athena._numTransports = function() {
  * Ippolito about it.
  */
 Nevow.Athena.XMLHttpRequestFinished = function(reqId, passthrough) {
-    Nevow.Athena.debug('transport', 'request ' + reqId + ' completed');
+    Divmod.debug('transport', 'request ' + reqId + ' completed');
     if (!delete Nevow.Athena.outstandingTransports[reqId]) {
-        Nevow.Athena.debug("Crap failed to delete crap");
+        Divmod.debug("Crap failed to delete crap");
     }
-    Nevow.Athena.debug('transport', 'outstanding transport removed');
-    Nevow.Athena.debug('transport', 'there are ' + Nevow.Athena._numTransports() + ' transports');
+    Divmod.debug('transport', 'outstanding transport removed');
+    Divmod.debug('transport', 'there are ' + Nevow.Athena._numTransports() + ' transports');
 
-    Nevow.Athena.debug('transport', 'Passthrough returning ' + passthrough);
+    Divmod.debug('transport', 'Passthrough returning ' + passthrough);
     return passthrough;
 };
 
@@ -207,10 +290,10 @@ Nevow.Athena._actionHandlers = {
         delete Nevow.Athena.remoteCalls[responseId];
 
         if (success) {
-            Nevow.Athena.debug('object', 'Callback');
+            Divmod.debug('object', 'Callback');
             d.callback(result);
         } else {
-            Nevow.Athena.debug('object', 'Errback');
+            Divmod.debug('object', 'Errback');
             d.errback(new Error(result));
         }
     },
@@ -227,7 +310,7 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
      * for the action.
      */
 
-    Nevow.Athena.debug('request', 'Ready "' + req.responseText.replace('\\', '\\\\').replace('"', '\\"') + '"');
+    Divmod.debug('request', 'Ready "' + req.responseText.replace('\\', '\\\\').replace('"', '\\"') + '"');
 
     var actionParts = MochiKit.Base.evalJSON(req.responseText);
 
@@ -237,7 +320,7 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
     var actionArgs = actionParts[1];
     var action = Nevow.Athena._actionHandlers[actionName];
 
-    Nevow.Athena.debug('transport', 'Received ' + actionName);
+    Divmod.debug('transport', 'Received ' + actionName);
 
     action.apply(null, actionArgs);
 
@@ -252,7 +335,7 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
 };
 
 Nevow.Athena._connectionLost = function(reason) {
-    Nevow.Athena.debug('transport', 'Closed');
+    Divmod.debug('transport', 'Closed');
     Nevow.Athena.connectionState = Nevow.Athena.DISCONNECTED;
     var calls = Nevow.Athena.remoteCalls;
     Nevow.Athena.remoteCalls = {};
@@ -272,7 +355,7 @@ Nevow.Athena._connectionLost = function(reason) {
 };
 
 Nevow.Athena.XMLHttpRequestFail = function(err) {
-    Nevow.Athena.debug('request', 'Failed ' + err.message);
+    Divmod.debug('request', 'Failed ' + err.message);
 
     Nevow.Athena.failureCount++;
 
@@ -303,10 +386,10 @@ Nevow.Athena.prepareRemoteAction = function(actionType) {
     /* The values in this object aren't actually used by anything.
      */
     Nevow.Athena.outstandingTransports[++Nevow.Athena._transportCounter] = req;
-    Nevow.Athena.debug('transport', 'Added a request ' + Nevow.Athena._transportCounter + ' transport of type ' + actionType);
-    Nevow.Athena.debug('transport', 'There are ' + Nevow.Athena._numTransports() + ' transports');
+    Divmod.debug('transport', 'Added a request ' + Nevow.Athena._transportCounter + ' transport of type ' + actionType);
+    Divmod.debug('transport', 'There are ' + Nevow.Athena._numTransports() + ' transports');
 
-    Nevow.Athena.debug('transport', 'Issuing ' + actionType);
+    Divmod.debug('transport', 'Issuing ' + actionType);
 
     req.setRequestHeader('Livepage-Id', Nevow.Athena.livepageId);
     req.setRequestHeader('content-type', 'text/x-json+athena')
@@ -345,10 +428,12 @@ Nevow.Athena._noArgAction = function(actionName) {
 };
 
 Nevow.Athena.sendNoOp = function() {
+    Divmod.debug('transport', 'Sending no-op for AthenaID ' + Nevow.Athena.livepageId);
     Nevow.Athena._noArgAction('noop');
 }
 
 Nevow.Athena.sendClose = function() {
+    Divmod.debug('transport', 'Sending close for AthenaID ' + Nevow.Athena.livepageId);
     Nevow.Athena._noArgAction('close');
 }
 
@@ -373,12 +458,12 @@ Nevow.Athena._walkDOM = function(parent, test, memo) {
     return memo;
 };
 
-Nevow.Athena._callRemote = function(methodName, args) {
+Nevow.Athena._callRemote = function(methodName, args, kwargs) {
     var resultDeferred = new MochiKit.Async.Deferred();
     var reqD = Nevow.Athena.prepareRemoteAction('call');
     var requestId = 'c2s' + Nevow.Athena.remoteCallCount;
 
-    var actionArguments = Nevow.Athena.preparePostContent(MochiKit.Base.extend([methodName], args), {});
+    var actionArguments = Nevow.Athena.preparePostContent(MochiKit.Base.extend([methodName], args), kwargs);
 
     Nevow.Athena.remoteCallCount++;
     Nevow.Athena.remoteCalls[requestId] = resultDeferred;
@@ -470,7 +555,11 @@ Nevow.Athena.RemoteReference.prototype.callRemote = function(methodName /*, ... 
     for (var idx = 1; idx < arguments.length; idx++) {
         args.push(arguments[idx]);
     }
-    return Nevow.Athena._callRemote(methodName, args);
+    return Nevow.Athena._callRemote(methodName, args, {});
+};
+
+Nevow.Athena.RemoteReference.prototype.callRemoteKw = function(methodName, kwargs) {
+    return Nevow.Athena._callRemote(methodName, [this.objectID], kwargs);
 };
 
 /**
@@ -512,6 +601,17 @@ Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass();
 Nevow.Athena.Widget.prototype.__init__ = function(widgetNode) {
     this.node = widgetNode;
     Nevow.Athena.Widget.upcall(this, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
+};
+
+Nevow.Athena.Widget.prototype.visitNodes = function(visitor) {
+    Nevow.Athena._walkDOM(this.node, function(node) {
+        var result = visitor(node);
+        if (result || result == undefined) {
+            return true;
+        } else {
+            return false;
+        }
+    });
 };
 
 Nevow.Athena.Widget.prototype.nodeByAttribute = function(attrName, attrValue) {
@@ -568,9 +668,12 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
     var visitor = function(n) {
         var cls = Nevow.Athena.athenaClassFromNode(n);
         if (cls) {
+            Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
             var inst = cls.get(n);
+            Divmod.debug("widget", "Widget class " + cls + " instantiated.");
             if (inst.loaded != undefined) {
                 inst.loaded();
+                Divmod.debug("widget", "Widget class " + cls + " loaded.");
             }
         }
     }
@@ -579,7 +682,7 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
 
 Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
     var widget = Nevow.Athena.Widget.fromAthenaID(athenaID);
-    Nevow.Athena.debug('widget', 'Invoking ' + methodName + ' on ' + widget + '(' + widget[methodName] + ')');
+    Divmod.debug('widget', 'Invoking ' + methodName + ' on ' + widget + '(' + widget[methodName] + ')');
     return widget[methodName].apply(widget, varargs);
 };
 
@@ -600,7 +703,9 @@ Nevow.Athena._initialize = function() {
     setTimeout(function() {
         MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._finalize, true);
         Nevow.Athena.sendNoOp();
+        Divmod.debug("widget", "Instantiating live widgets");
         Nevow.Athena.Widget._instantiateWidgets();
+        Divmod.debug("widget", "Finished instantiating live widgets");
     }, 1);
 }
 

@@ -54,10 +54,14 @@ class LivePageTransport(object):
             log.msg("Fast transport-close path")
             d = json.serialize((u'noop', ()))
         requestContent = req.content.read()
+
         args, kwargs = json.parse(requestContent)
+        asciiKwargs = {}
+        for (k, v) in kwargs.iteritems():
+            asciiKwargs[k.encode('ascii')] = v
 
         method = getattr(self, 'action_' + req.args['action'][0])
-        method(ctx, *args, **kwargs)
+        method(ctx, *args, **asciiKwargs)
         return d
 
     def _cbCall(self, result, requestId):
@@ -424,3 +428,29 @@ class LiveFragment(rend.Fragment):
 # Helper for docFactories defined with stan:
 # tags.foo(..., **liveFragmentID)
 liveFragmentID = {'athena:id': tags.slot('athena:id'), 'xmlns:athena': ATHENA_XMLNS_URI}
+
+class JSModules(object):
+    """
+    Serve implementation files for a JavaScript module system.
+
+    @ivar mapping: A C{dict} mapping JavaScript module names (eg,
+    'Nevow.Athena') to C{twisted.python.filepath.FilePath} instances
+    which contain JavaScript source implementing those modules.
+    """
+    implements(inevow.IResource)
+
+    def __init__(self, mapping):
+        self.mapping = mapping
+
+    def renderHTTP(self, ctx):
+        return rend.FourOhFour()
+
+    def locateChild(self, ctx, segments):
+        if len(segments) != 1:
+            return rend.NotFound
+        try:
+            impl = self.mapping[segments[0]]
+        except KeyError:
+            return rend.NotFound
+        else:
+            return static.File(impl.path), []
