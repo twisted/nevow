@@ -1,6 +1,6 @@
 /***
 
-MochiKit.LoggingPane 1.0
+MochiKit.LoggingPane 1.1
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -31,7 +31,7 @@ if (typeof(MochiKit.LoggingPane) == 'undefined') {
 }
 
 MochiKit.LoggingPane.NAME = "MochiKit.LoggingPane";
-MochiKit.LoggingPane.VERSION = "1.0";
+MochiKit.LoggingPane.VERSION = "1.1";
 MochiKit.LoggingPane.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -56,25 +56,42 @@ MochiKit.LoggingPane.createLoggingPane = function (inline/* = false */) {
 MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = MochiKit.Logging.logger */) {
     /* Use a div if inline, pop up a window if not */
     /* Create the elements */
-    var doc = document;
     if (typeof(logger) == "undefined" || logger == null) {
-        MochiKit.Logging.logger;
+        logger = MochiKit.Logging.logger;
     }
+    this.logger = logger;
     var update = MochiKit.Base.update;
     var updatetree = MochiKit.Base.updatetree;
     var bind = MochiKit.Base.bind;
     var clone = MochiKit.Base.clone;
-    var win;
+    var win = window;
+    if (typeof(MochiKit.DOM) != "undefined") {
+        win = MochiKit.DOM.currentWindow();
+    }
     if (!inline) {
-        win = window.open("", "", "dependent,resizable,height=200");
+        // name the popup with the base URL for uniqueness
+        var url = win.location.href.split("?")[0];
+        var name = "MochiKit.LoggingPane." + url;
+        win = win.open("", name, "dependent,resizable,height=200");
         if (!win) {
             alert("Not able to open debugging window due to pop-up blocking.");
             return;
         }
-        doc = win.document;
     }
+    var doc = win.document;
     this.doc = doc;
-    var debugPane = doc.createElement("div");
+    
+    // Connect to the debug pane if it already exists (i.e. in a window orphaned by the page being refreshed)
+    var debugPane = doc.getElementById("_debugPane");
+    if(debugPane && typeof(debugPane.loggingPane) != "undefined") {
+        debugPane.loggingPane.logger = this.logger;
+        debugPane.loggingPane.buildAndApplyFilter();
+        return debugPane.loggingPane;
+    }
+    
+    debugPane = doc.createElement("div");
+    debugPane.id = "_debugPane";
+    debugPane.loggingPane = this;
     var levelFilterField = doc.createElement("input");
     var infoFilterField = doc.createElement("input");
     var filterButton = doc.createElement("button");
@@ -163,7 +180,9 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
         if (MochiKit.LoggingPane._loggingPane == this) {
             MochiKit.LoggingPane._loggingPane = null;
         }
-        logger.removeListener(listenerId);
+        this.logger.removeListener(listenerId);
+
+        debugPane.loggingPane = null;
 
         if (inline) {
             debugPane.parentNode.removeChild(debugPane);
@@ -183,18 +202,18 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
         }
     };
 
-    var buildAndApplyFilter = function () {
+    this.buildAndApplyFilter = function () {
         messageFilter = buildMessageFilter();
 
         filterMessages();
 
-        logger.removeListener(listenerId);
-        logger.addListener(listenerId, messageFilter, addMessage);
+        this.logger.removeListener(listenerId);
+        this.logger.addListener(listenerId, messageFilter, addMessage);
     };
 
 
     var loadMessages = function () {
-        messages = logger.getMessages();
+        messages = this.logger.getMessages();
         filterMessages();
     };
 
@@ -202,7 +221,7 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
         event = event || window.event;
         key = event.which || event.keyCode;
         if (key == 13) {
-            buildAndApplyFilter();
+            this.buildAndApplyFilter();
         }
     };
 
@@ -246,7 +265,7 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
     style = {"width": "8%", "display": "inline", "font": this.logFont};
 
     filterButton.appendChild(doc.createTextNode("Filter"));
-    filterButton.onclick = buildAndApplyFilter;
+    filterButton.onclick = this.buildAndApplyFilter;
     update(filterButton.style, style);
     debugPane.appendChild(filterButton);
 
@@ -276,10 +295,14 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
     logPaneArea.appendChild(logPane);
     debugPane.appendChild(logPaneArea);
 
-    buildAndApplyFilter();
+    this.buildAndApplyFilter();
     loadMessages();
 
-    this.win = win;
+    if (inline) {
+        this.win = undefined;
+    } else {
+        this.win = win;
+    }
     this.inline = inline;
     this.closePane = closePane;
     this.closed = false;
@@ -319,12 +342,4 @@ MochiKit.LoggingPane.__new__ = function () {
 
 MochiKit.LoggingPane.__new__();
 
-if ((typeof(JSAN) == 'undefined' && typeof(dojo) == 'undefined')
-    || (typeof(MochiKit.__compat__) == 'boolean' && MochiKit.__compat__)) {
-    (function (self) {
-            var all = self.EXPORT_TAGS[":all"];
-            for (var i = 0; i < all.length; i++) {
-                this[all[i]] = self[all[i]];
-            }
-        })(MochiKit.LoggingPane);
-}
+MochiKit.Base._exportSymbols(this, MochiKit.LoggingPane);

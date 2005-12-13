@@ -118,9 +118,9 @@ Nevow.Athena.baseURL = function() {
 };
 
 Nevow.Athena.debugging = false;
-Nevow.Athena.debug = function(msg) {
+Nevow.Athena.debug = function(kind, msg) {
     if (Nevow.Athena.debugging) {
-        Divmod.log(msg);
+        Divmod.log(kind + ': ' + msg);
     }
 };
 
@@ -137,23 +137,32 @@ Nevow.Athena.connectionState = Nevow.Athena.CONNECTED;
 Nevow.Athena.failureCount = 0;
 Nevow.Athena.remoteCallCount = 0;
 Nevow.Athena.remoteCalls = {};
-Nevow.Athena.outstandingTransports = 0;
-Nevow.Athena.responseDispatchTable = new Object();
+Nevow.Athena._transportCounter = 0;
+Nevow.Athena.outstandingTransports = {};
 
-Nevow.Athena.responseDispatchTable['text/xml'] = function(d, content) {
-    d.callback(TEH_XML_PARSER(content));
-};
-
-Nevow.Athena.responseDispatchTable['text/json'] = function(d, content) {
-    if (content[0]) {
-        d.callback(content[1]);
-    } else {
-        d.errback(new Error(content[1]));
+Nevow.Athena._numTransports = function() {
+    /* XXX UGGG */
+    var num = 0;
+    var e = null;
+    for (e in Nevow.Athena.outstandingTransports) {
+        num += 1;
     }
+    return num;
 };
 
-Nevow.Athena.XMLHttpRequestFinished = function(passthrough) {
-    Nevow.Athena.outstandingTransports--;
+/**
+ * Notice the unusual ordering of arguments here.  Please ask Bob
+ * Ippolito about it.
+ */
+Nevow.Athena.XMLHttpRequestFinished = function(reqId, passthrough) {
+    Nevow.Athena.debug('transport', 'request ' + reqId + ' completed');
+    if (!delete Nevow.Athena.outstandingTransports[reqId]) {
+        Nevow.Athena.debug("Crap failed to delete crap");
+    }
+    Nevow.Athena.debug('transport', 'outstanding transport removed');
+    Nevow.Athena.debug('transport', 'there are ' + Nevow.Athena._numTransports() + ' transports');
+
+    Nevow.Athena.debug('transport', 'Passthrough returning ' + passthrough);
     return passthrough;
 };
 
@@ -198,8 +207,10 @@ Nevow.Athena._actionHandlers = {
         delete Nevow.Athena.remoteCalls[responseId];
 
         if (success) {
+            Nevow.Athena.debug('object', 'Callback');
             d.callback(result);
         } else {
+            Nevow.Athena.debug('object', 'Errback');
             d.errback(new Error(result));
         }
     },
@@ -216,6 +227,8 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
      * for the action.
      */
 
+    Nevow.Athena.debug('request', 'Ready "' + req.responseText.replace('\\', '\\\\').replace('"', '\\"') + '"');
+
     var actionParts = MochiKit.Base.evalJSON(req.responseText);
 
     Nevow.Athena.failureCount = 0;
@@ -224,6 +237,8 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
     var actionArgs = actionParts[1];
     var action = Nevow.Athena._actionHandlers[actionName];
 
+    Nevow.Athena.debug('transport', 'Received ' + actionName);
+
     action.apply(null, actionArgs);
 
     /* Client code has had a chance to run now, in response to
@@ -231,21 +246,34 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
      * output channel already.  If it didn't, though, we might not
      * have one.  In that case, issue a no-op to the server so it can
      * send us things if it needs to. */
-    if (Nevow.Athena.outstandingTransports == 0) {
+    if (Nevow.Athena._numTransports() == 0) {
         Nevow.Athena.sendNoOp();
     }
 };
 
 Nevow.Athena._connectionLost = function(reason) {
+    Nevow.Athena.debug('transport', 'Closed');
     Nevow.Athena.connectionState = Nevow.Athena.DISCONNECTED;
     var calls = Nevow.Athena.remoteCalls;
     Nevow.Athena.remoteCalls = {};
     for (var k in calls) {
         calls[k].errback(new Error("Connection lost"));
     }
+    /* IE doesn't close outstanding requests when a user navigates
+     * away from the page that spawned them.  Also, we may have lost
+     * the connection without navigating away from the page.  So,
+     * clean up any outstanding requests right here.
+     */
+    var cancelledTransports = Nevow.Athena.outstandingTransports;
+    Nevow.Athena.outstandingTransports = {};
+    for (var reqId in cancelledTransports) {
+        cancelledTransports[reqId].abort();
+    }
 };
 
 Nevow.Athena.XMLHttpRequestFail = function(err) {
+    Nevow.Athena.debug('request', 'Failed ' + err.message);
+
     Nevow.Athena.failureCount++;
 
     if (Nevow.Athena.failureCount >= 3) {
@@ -253,7 +281,7 @@ Nevow.Athena.XMLHttpRequestFail = function(err) {
         return;
     }
 
-    if (Nevow.Athena.outstandingTransports == 0) {
+    if (Nevow.Athena._numTransports() == 0) {
         Nevow.Athena.sendNoOp();
     }
 };
@@ -272,7 +300,13 @@ Nevow.Athena.prepareRemoteAction = function(actionType) {
         return MochiKit.Async.fail(err);
     }
 
-    Nevow.Athena.outstandingTransports++;
+    /* The values in this object aren't actually used by anything.
+     */
+    Nevow.Athena.outstandingTransports[++Nevow.Athena._transportCounter] = req;
+    Nevow.Athena.debug('transport', 'Added a request ' + Nevow.Athena._transportCounter + ' transport of type ' + actionType);
+    Nevow.Athena.debug('transport', 'There are ' + Nevow.Athena._numTransports() + ' transports');
+
+    Nevow.Athena.debug('transport', 'Issuing ' + actionType);
 
     req.setRequestHeader('Livepage-Id', Nevow.Athena.livepageId);
     req.setRequestHeader('content-type', 'text/x-json+athena')
@@ -290,17 +324,17 @@ Nevow.Athena.respondToRemote = function(requestID, response) {
     reqD.addCallback(function(req) {
         req.setRequestHeader('Response-Id', requestID);
         var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, argumentQueryArgument);
-        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
+        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished, Nevow.Athena._transportCounter);
         reqD2.addCallback(Nevow.Athena.XMLHttpRequestReady);
         reqD2.addErrback(Nevow.Athena.XMLHttpRequestFail);
     });
 };
 
-Nevow.Athena.sendNoOp = function() {
-    var reqD = Nevow.Athena.prepareRemoteAction('noop');
+Nevow.Athena._noArgAction = function(actionName) {
+    var reqD = Nevow.Athena.prepareRemoteAction(actionName);
     reqD.addCallback(function(req) {
         var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, Nevow.Athena.preparePostContent([], {}));
-        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
+        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished, Nevow.Athena._transportCounter);
         reqD2.addCallback(function(ign) {
             return Nevow.Athena.XMLHttpRequestReady(req);
         });
@@ -309,6 +343,15 @@ Nevow.Athena.sendNoOp = function() {
         });
     });
 };
+
+Nevow.Athena.sendNoOp = function() {
+    Nevow.Athena._noArgAction('noop');
+}
+
+Nevow.Athena.sendClose = function() {
+    Nevow.Athena._noArgAction('close');
+}
+
 
 Nevow.Athena._callRemote = function(methodName, args) {
     var resultDeferred = new MochiKit.Async.Deferred();
@@ -324,7 +367,7 @@ Nevow.Athena._callRemote = function(methodName, args) {
         req.setRequestHeader('Request-Id', requestId);
 
         var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, actionArguments);
-        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished);
+        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished, Nevow.Athena._transportCounter);
         reqD2.addCallback(Nevow.Athena.XMLHttpRequestReady);
         return reqD2;
     });
@@ -400,28 +443,6 @@ Nevow.Athena.RemoteReference.prototype.callRemote = function(methodName /*, ... 
     return Nevow.Athena._callRemote(methodName, args);
 };
 
-
-Nevow.Athena.DOMWalk = function(parent, test, memo) {
-    if (memo == undefined) {
-        memo = [];
-    }
-    /* alert(parent); */
-    if ((parent == undefined) ||
-        (parent.childNodes == undefined)) {
-        return;
-    }
-    var child;
-    var len = parent.childNodes.length;
-    for (var i = 0; i < len; i++) {
-        child = parent.childNodes[i];
-        if (test(child)) {
-            memo.push(child);
-        }
-        Nevow.Athena.DOMWalk(child, test, memo);
-    }
-    return memo;
-};
-
 /**
  * Given a Node, find all of its children (to any depth) with the
  * given attribute set to the given value.  Note: you probably don't
@@ -429,12 +450,9 @@ Nevow.Athena.DOMWalk = function(parent, test, memo) {
  * C{Nevow.Athena.Widget.nodesByAttribute}.
  */
 Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
-    var result = Nevow.Athena.DOMWalk(root,
-                        function(child) {
-                            return ((child.getAttribute != undefined) &&
-                                    (child.getAttribute(attrName) == attrValue));
-                        });
-    return result;
+    return MochiKit.Base.filter(function(node) {
+        return (attrValue == MochiKit.DOM.getNodeAttribute(node, attrName));
+    }, MochiKit.DOM.getElementsByTagAndClassName(null, null, root));
 };
 
 /**
@@ -457,7 +475,6 @@ Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
         var result = nodes[0];
         return result;
     }
-
 }
 
 Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass();
@@ -491,16 +508,15 @@ Nevow.Athena.Widget.get = function(node) {
 };
 Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
     /* scan the whole document for a particular widgetId */
-    var nodes = Nevow.Athena.DOMWalk(document.documentElement,
-                                 function(nodeToTest) {
-                                     return (Nevow.Athena.athenaIDFromNode(nodeToTest) == widgetId);
-                                 });
+    var nodes = MochiKit.Base.filter(function(nodeToTest) {
+        return (Nevow.Athena.athenaIDFromNode(nodeToTest) == widgetId);
+    }, MochiKit.DOM.getElementsByTagAndClassName(null, null, document.documentElement));
+
     if (nodes.length != 1) {
         throw new Error(nodes.length + " nodes with athena id " + widgetId);
     };
 
-    n = nodes[0];
-    return this.get(n);
+    return Nevow.Athena.Widget.get(nodes[0]);
 };
 
 Nevow.Athena.refByDOM = function() {
@@ -509,31 +525,26 @@ Nevow.Athena.refByDOM = function() {
     return Nevow.Athena.Widget.get.apply(Nevow.Athena.Widget, arguments);
 };
 
-
 /*
  * Walk the document.  Find things with a athena:class attribute
  * and instantiate them.
  */
-Nevow.Athena.Widget._instantiateAll = function() {
-    var tw = document.createTreeWalker(document,
-                                       NodeFilter.SHOW_ELEMENT,
-                                       function(n) {
-                                           var cls = Nevow.Athena.athenaClassFromNode(n);
-                                           if (cls) {
-                                               var inst = cls.get(n);
-                                               if (inst.loaded != undefined) {
-                                                   inst.loaded();
-                                               }
-                                           }
-                                           return NodeFilter.FILTER_ACCEPT;
-                                       },
-                                       false);
-    var n;
-    while ((n = tw.nextNode()) != null) {};
-};
+Nevow.Athena.Widget._instantiateWidgets = function() {
+   visitor = function(n) {
+       var cls = Nevow.Athena.athenaClassFromNode(n);
+       if (cls) {
+           var inst = cls.get(n);
+           if (inst.loaded != undefined) {
+               inst.loaded();
+           }
+       }
+   }
+   MochiKit.Iter.forEach(MochiKit.DOM.getElementsByTagAndClassName(null, null), visitor);
+}
 
 Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
     var widget = Nevow.Athena.Widget.fromAthenaID(athenaID);
+    Nevow.Athena.debug('widget', 'Invoking ' + methodName + ' on ' + widget + '(' + widget[methodName] + ')');
     return widget[methodName].apply(widget, varargs);
 };
 
@@ -541,16 +552,20 @@ Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;
 
 Nevow.Athena._finalize = function() {
+    Nevow.Athena.sendClose();
     Nevow.Athena._connectionLost('page unloaded');
 };
 
+/* Instantiate Athena Widgets, make initial server connection, and set up
+ * listener for "onunload" event to do finalization.
+ */
 Nevow.Athena._initialize = function() {
     // Delay initialization for just a moment so that Safari stops whirling
     // its loading icon.
     setTimeout(function() {
         MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._finalize, true);
         Nevow.Athena.sendNoOp();
-        Nevow.Athena.Widget._instantiateAll();
+        Nevow.Athena.Widget._instantiateWidgets();
     }, 1);
 }
 

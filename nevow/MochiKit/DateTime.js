@@ -1,6 +1,6 @@
 /***
 
-MochiKit.DateTime 1.0
+MochiKit.DateTime 1.1
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -21,7 +21,7 @@ if (typeof(MochiKit.DateTime) == 'undefined') {
 }
 
 MochiKit.DateTime.NAME = "MochiKit.DateTime";
-MochiKit.DateTime.VERSION = "1.0";
+MochiKit.DateTime.VERSION = "1.1";
 MochiKit.DateTime.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -92,9 +92,9 @@ MochiKit.DateTime.isoTimestamp = function (str) {
     }
     var ofs;
     if (typeof(res[9]) != "undefined" && res[9] != "") {
-        ofs = parseInt(res[10], 10) * 3600;
+        ofs = parseInt(res[10], 10) * 3600000;
         if (typeof(res[11]) != "undefined" && res[11] != "") {
-            ofs += parseInt(res[11], 10) * 60;
+            ofs += parseInt(res[11], 10) * 60000;
         }
         if (res[9] == "-") {
             ofs = -ofs;
@@ -102,10 +102,10 @@ MochiKit.DateTime.isoTimestamp = function (str) {
     } else {
         ofs = 0;
     }
-    return new Date(Date.UTC(year, month, day, hour, min, sec, msec) + ofs);
+    return new Date(Date.UTC(year, month, day, hour, min, sec, msec) - ofs);
 };
 
-MochiKit.DateTime.toISOTime = function (date) {
+MochiKit.DateTime.toISOTime = function (date, realISO/* = false */) {
     /***
 
         Get the hh:mm:ss from the given Date object.
@@ -114,15 +114,18 @@ MochiKit.DateTime.toISOTime = function (date) {
     if (typeof(date) == "undefined" || date == null) {
         return null;
     }
-    var _padTwo = MochiKit.DateTime._padTwo;
     var hh = date.getHours();
     var mm = date.getMinutes();
     var ss = date.getSeconds();
-    var lst = [hh, ((mm < 10) ? "0" + mm : mm), ((ss < 10) ? "0" + ss : ss)];
+    var lst = [
+        ((realISO && (hh < 10)) ? "0" + hh : hh),
+        ((mm < 10) ? "0" + mm : mm),
+        ((ss < 10) ? "0" + ss : ss)
+    ];
     return lst.join(":");
 };
 
-MochiKit.DateTime.toISOTimestamp = function (date, realISO) {
+MochiKit.DateTime.toISOTimestamp = function (date, realISO/* = false*/) {
     /***
 
         Convert a Date object to something that's ALMOST but not quite an
@@ -146,7 +149,7 @@ MochiKit.DateTime.toISOTimestamp = function (date, realISO) {
     if (realISO) {
         date = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
     }
-    return MochiKit.DateTime.toISODate(date) + sep + MochiKit.DateTime.toISOTime(date) + foot;
+    return MochiKit.DateTime.toISODate(date) + sep + MochiKit.DateTime.toISOTime(date, realISO) + foot;
 };
 
 MochiKit.DateTime.toISODate = function (date) {
@@ -247,12 +250,13 @@ MochiKit.DateTime.__new__ = function () {
 
 MochiKit.DateTime.__new__();
 
-if ((typeof(JSAN) == 'undefined' && typeof(dojo) == 'undefined')
-    || (typeof(MochiKit.__compat__) == 'boolean' && MochiKit.__compat__)) {
-    (function (self) {
-            var all = self.EXPORT_TAGS[":all"];
-            for (var i = 0; i < all.length; i++) {
-                this[all[i]] = self[all[i]];
-            }
-        })(MochiKit.DateTime);
-}
+//MochiKit.Base._exportSymbols(this, MochiKit.DateTime);
+(function (globals, module) {
+    if ((typeof(JSAN) == 'undefined' && typeof(dojo) == 'undefined')
+        || (typeof(MochiKit.__compat__) == 'boolean' && MochiKit.__compat__)) {
+        var all = module.EXPORT_TAGS[":all"];
+        for (var i = 0; i < all.length; i++) {
+            globals[all[i]] = module[all[i]]; 
+        }
+    }   
+})(this, MochiKit.DateTime);  

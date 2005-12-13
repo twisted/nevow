@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Format 1.0
+MochiKit.Format 1.1
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -21,7 +21,7 @@ if (typeof(MochiKit.Format) == 'undefined') {
 }
 
 MochiKit.Format.NAME = "MochiKit.Format";
-MochiKit.Format.VERSION = "1.0";
+MochiKit.Format.VERSION = "1.1";
 MochiKit.Format.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -59,7 +59,8 @@ MochiKit.Format._numberFormatter = function (placeholder, header, footer, locale
         if (separatorAt) {
             while (whole.length > separatorAt) {
                 var i = whole.length - separatorAt;
-                res = res + fmt.separator + whole.substring(i, whole.length);
+                //res = res + fmt.separator + whole.substring(i, whole.length);
+                res = fmt.separator + whole.substring(i, whole.length) + res;
                 whole = whole.substring(0, i);
             }
         }
@@ -274,12 +275,13 @@ MochiKit.Format.__new__ = function () {
 
 MochiKit.Format.__new__();
 
-if ((typeof(JSAN) == 'undefined' && typeof(dojo) == 'undefined')
-    || (typeof(MochiKit.__compat__) == 'boolean' && MochiKit.__compat__)) {
-    (function (self) {
-            var all = self.EXPORT_TAGS[":all"];
-            for (var i = 0; i < all.length; i++) {
-                this[all[i]] = self[all[i]];
-            }
-        })(MochiKit.Format);
-}
+//MochiKit.Base._exportSymbols(this, MochiKit.Format);
+(function (globals, module) {
+    if ((typeof(JSAN) == 'undefined' && typeof(dojo) == 'undefined')
+        || (typeof(MochiKit.__compat__) == 'boolean' && MochiKit.__compat__)) {
+        var all = module.EXPORT_TAGS[":all"];
+        for (var i = 0; i < all.length; i++) {
+            globals[all[i]] = module[all[i]]; 
+        }
+    }   
+})(this, MochiKit.Format);  

@@ -88,7 +88,7 @@ function test_ClientToServerExceptionResult(node, sync) {
     d.addCallbacks(function(result) {
         fail('Erroneously received a result: ' + result);
     }, function(err) {
-        var idx = (new String(err)).indexOf(s);
+        var idx = err.message.indexOf(s);
         if (idx == -1) {
             fail('Did not find expected message in error message: ' + err);
         }
@@ -182,7 +182,7 @@ class AthenaTests(athena.LivePage):
                         alert('Success!');
                     });
                     deferred.addErrback(function (err) {
-                        alert('Failure: ' + err);
+                        alert('Failure: ' + err.message);
                     });
                     return false;
                 }
@@ -199,7 +199,7 @@ class AthenaTests(athena.LivePage):
                 """],
                 tags.slot('methods')],
             tags.body[
-                tags.slot('tests')]]])
+                tags.slot('tests'), tags.div(id='nevow-log')]]])
 
     addSlash = True
 

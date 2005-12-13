@@ -261,10 +261,7 @@ class LivePage(rend.Page):
         # This is lame.  Queue may be the wrong way to store requests. :/
         def cbTransport((gotD, gotReq)):
             assert req is gotReq
-            # We aren't actually sending a no-op here, just closing the
-            # connection.  That's probably okay though.  The client will just
-            # reconnect.
-            gotD.callback('')
+            gotD.callback(json.serialize((u'noop', ())))
         self.getTransport().addCallback(cbTransport)
 
 

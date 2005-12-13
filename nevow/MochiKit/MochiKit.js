@@ -1,6 +1,6 @@
 /***
 
-MochiKit.MochiKit 1.0
+MochiKit.MochiKit 1.1
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -17,7 +17,7 @@ if (typeof(MochiKit.MochiKit) == 'undefined') {
 }
 
 MochiKit.MochiKit.NAME = "MochiKit.MochiKit";
-MochiKit.MochiKit.VERSION = "1.0";
+MochiKit.MochiKit.VERSION = "1.1";
 MochiKit.MochiKit.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -35,6 +35,7 @@ MochiKit.MochiKit.SUBMODULES = [
     "Async",
     "DOM",
     "LoggingPane",
+    "Color",
     "Visual"
 ];
 
@@ -52,8 +53,9 @@ if (typeof(JSAN) != 'undefined' || typeof(dojo) != 'undefined') {
         JSAN.use("MochiKit.Format", []);
         JSAN.use("MochiKit.Async", []);
         JSAN.use("MochiKit.DOM", []);
-        JSAN.use("MochiKit.Visual", []);
         JSAN.use("MochiKit.LoggingPane", []);
+        JSAN.use("MochiKit.Color", []);
+        JSAN.use("MochiKit.Visual", []);
     }
     (function () {
         var extend = MochiKit.Base.extend;
@@ -110,7 +112,6 @@ if (typeof(JSAN) != 'undefined' || typeof(dojo) != 'undefined') {
             return;
         }
         var modules = MochiKit.MochiKit.SUBMODULES;
-        modules.unshift("Compat");
         for (i = 0; i < modules.length; i++) {
             if (MochiKit[modules[i]]) {
                 continue;
