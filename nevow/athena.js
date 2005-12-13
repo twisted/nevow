@@ -393,7 +393,17 @@ Nevow.Athena.getAttribute = function(node, namespaceURI, namespaceIdentifier, lo
     }
     if (node.getAttribute) {
         var s = namespaceIdentifier + ':' + localName;
-        return node.getAttribute(s);
+        try {
+            return node.getAttribute(s);
+        } catch(err) {
+            // IE has a stupid bug where getAttribute throws an error ... on
+            // TABLE elements and perhaps other elememnt types!
+            // Resort to looking in the attributes.
+            var value = node.attributes[s];
+            if(value != null) {
+                return value.nodeValue;
+            }
+        }
     }
     return null;
 };

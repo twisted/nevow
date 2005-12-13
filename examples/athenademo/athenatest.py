@@ -170,6 +170,64 @@ function test_Reverse_ServerToClientResultSerialization(i, f, s, o) {
         d.addCallback(cbResults)
         return d
 
+class WidgetInATable(athena.LiveFragment):
+    template = """
+    <table xmlns:n="http://nevow.com/ns/nevow/0.1" xmlns:athena="http://divmod.org/ns/athena/0.7">
+      <tbody>
+        <tr>
+          <td>
+            <n:attr name="athena:id"><n:slot name="athena:id"/></n:attr>
+            <n:attr name="athena:class">WidgetInATable</n:attr>
+            <button onclick="test_WidgetInATable(this)">Test Widget In A Table</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    """
+    javascriptTest = """
+    test_WidgetInATable = function(node) {
+        try {
+            Nevow.Athena.Widget.get(node).test();
+            alert("Success!");
+        } catch(err) {
+            alert("Failure: " + err.message);
+        }
+    }
+    WidgetInATable = Nevow.Athena.Widget.subclass();
+    WidgetInATable.prototype.test = function() {
+    }
+    """
+    docFactory = loaders.xmlstr(template)
+
+class WidgetIsATable(athena.LiveFragment):
+    template = """
+    <table xmlns:n="http://nevow.com/ns/nevow/0.1" xmlns:athena="http://divmod.org/ns/athena/0.7">
+      <n:attr name="athena:id"><n:slot name="athena:id"/></n:attr>
+      <n:attr name="athena:class">WidgetIsATable</n:attr>
+      <tbody>
+        <tr>
+          <td>
+            <button onclick="test_WidgetIsATable(this)">Test Widget Is A Table</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    """
+    javascriptTest = """
+    test_WidgetIsATable = function(node) {
+        try {
+            Nevow.Athena.Widget.get(node).test();
+            alert("Success!");
+        } catch(err) {
+            alert("Failure: " + err.message);
+        }
+    }
+    WidgetIsATable = Nevow.Athena.Widget.subclass();
+    WidgetIsATable.prototype.test = function() {
+    }
+    """
+    docFactory = loaders.xmlstr(template)
+
 class AthenaTests(athena.LivePage):
     docFactory = loaders.stan([
         tags.xml('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'),
@@ -209,6 +267,8 @@ class AthenaTests(athena.LivePage):
         ClientToServerExceptionResult,
         ServerToClientArgumentSerialization,
         ServerToClientResultSerialization,
+        WidgetInATable,
+        WidgetIsATable,
         ]
 
     def renderTests(self):
