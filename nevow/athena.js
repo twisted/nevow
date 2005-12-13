@@ -352,6 +352,26 @@ Nevow.Athena.sendClose = function() {
     Nevow.Athena._noArgAction('close');
 }
 
+Nevow.Athena._walkDOM = function(parent, test, memo) {
+    if (memo == undefined) {
+        memo = [];
+    }
+    /* alert(parent); */
+    if ((parent == undefined) ||
+        (parent.childNodes == undefined)) {
+        return;
+    }
+    var child;
+    var len = parent.childNodes.length;
+    for (var i = 0; i < len; i++) {
+        child = parent.childNodes[i];
+        if (test(child)) {
+            memo.push(child);
+        }
+        Nevow.Athena._walkDOM(child, test, memo);
+    }
+    return memo;
+};
 
 Nevow.Athena._callRemote = function(methodName, args) {
     var resultDeferred = new MochiKit.Async.Deferred();
@@ -460,9 +480,10 @@ Nevow.Athena.RemoteReference.prototype.callRemote = function(methodName /*, ... 
  * C{Nevow.Athena.Widget.nodesByAttribute}.
  */
 Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
-    return MochiKit.Base.filter(function(node) {
+    var visitor = function(node) {
         return (attrValue == MochiKit.DOM.getNodeAttribute(node, attrName));
-    }, MochiKit.DOM.getElementsByTagAndClassName(null, null, root));
+    }
+    return Nevow.Athena._walkDOM(root, visitor);
 };
 
 /**
@@ -516,11 +537,15 @@ Nevow.Athena.Widget.get = function(node) {
     }
     return Nevow.Athena.Widget._athenaWidgets[widgetId];
 };
+
+/**
+ * Search the whole document for a particular widget id.
+ */
 Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
-    /* scan the whole document for a particular widgetId */
-    var nodes = MochiKit.Base.filter(function(nodeToTest) {
-        return (Nevow.Athena.athenaIDFromNode(nodeToTest) == widgetId);
-    }, MochiKit.DOM.getElementsByTagAndClassName(null, null, document.documentElement));
+    var visitor = function(node) {
+        return (Nevow.Athena.athenaIDFromNode(node) == widgetId);
+    }
+    var nodes = Nevow.Athena._walkDOM(document, visitor);
 
     if (nodes.length != 1) {
         throw new Error(nodes.length + " nodes with athena id " + widgetId);
@@ -549,7 +574,7 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
             }
         }
     }
-    MochiKit.Iter.forEach(MochiKit.DOM.getElementsByTagAndClassName(null, null), visitor);
+    Nevow.Athena._walkDOM(document, visitor);
 }
 
 Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
