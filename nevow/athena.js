@@ -530,16 +530,16 @@ Nevow.Athena.refByDOM = function() {
  * and instantiate them.
  */
 Nevow.Athena.Widget._instantiateWidgets = function() {
-   visitor = function(n) {
-       var cls = Nevow.Athena.athenaClassFromNode(n);
-       if (cls) {
-           var inst = cls.get(n);
-           if (inst.loaded != undefined) {
-               inst.loaded();
-           }
-       }
-   }
-   MochiKit.Iter.forEach(MochiKit.DOM.getElementsByTagAndClassName(null, null), visitor);
+    visitor = function(n) {
+        var cls = Nevow.Athena.athenaClassFromNode(n);
+        if (cls) {
+            var inst = cls.get(n);
+            if (inst.loaded != undefined) {
+                inst.loaded();
+            }
+        }
+    }
+    MochiKit.Iter.forEach(MochiKit.DOM.getElementsByTagAndClassName(null, null), visitor);
 }
 
 Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
