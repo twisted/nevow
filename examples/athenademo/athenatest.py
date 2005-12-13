@@ -12,7 +12,7 @@ class ClientToServerArgumentSerialization(athena.LiveFragment, unittest.TestCase
 
     javascriptTest = """\
 function test_ClientToServerArgumentSerialization(node) {
-    var r = Nevow.Athena.refByDOM(node);
+    var r = Nevow.Athena.Widget.get(node);
     var L = [1, 1.5, 'Hello world'];
     var O = {'hello world': 'object value'};
     return r.callRemote('test', 1, 1.5, 'Hello world', L, O);
@@ -44,7 +44,7 @@ class ClientToServerResultSerialization(athena.LiveFragment):
 
     javascriptTest = """\
 function test_ClientToServerResultSerialization(node) {
-    var r = Nevow.Athena.refByDOM(node);
+    var r = Nevow.Athena.Widget.get(node);
     var L = [1, 1.5, 'Hello world'];
     var O = {'hello world': 'object value'};
     var d = r.callRemote('test', 1, 1.5, 'Hello world', L, O);
@@ -77,7 +77,7 @@ class ClientToServerExceptionResult(athena.LiveFragment):
 
     javascriptTest = """\
 function test_ClientToServerExceptionResult(node, sync) {
-    var r = Nevow.Athena.refByDOM(node);
+    var r = Nevow.Athena.Widget.get(node);
     var d;
     var s = 'This exception should appear on the client.';
     if (sync) {
@@ -120,7 +120,7 @@ class ServerToClientArgumentSerialization(athena.LiveFragment):
 
     javascriptTest = """\
 function test_ServerToClientArgumentSerialization(node) {
-    return Nevow.Athena.refByDOM(node).callRemote('test');
+    return Nevow.Athena.Widget.get(node).callRemote('test');
 }
 
 function test_Reverse_ServerToClientArgumentSerialization(i, f, s, o) {
@@ -147,7 +147,7 @@ class ServerToClientResultSerialization(athena.LiveFragment, unittest.TestCase):
 
     javascriptTest = """\
 function test_ServerToClientResultSerialization(node) {
-    return Nevow.Athena.refByDOM(node).callRemote('test');
+    return Nevow.Athena.Widget.get(node).callRemote('test');
 }
 
 function test_Reverse_ServerToClientResultSerialization(i, f, s, o) {

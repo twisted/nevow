@@ -654,12 +654,6 @@ Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
     return Nevow.Athena.Widget.get(nodes[0]);
 };
 
-Nevow.Athena.refByDOM = function() {
-    /* This API is deprecated.  Use Nevow.Athena.Widget.get()
-     */
-    return Nevow.Athena.Widget.get.apply(Nevow.Athena.Widget, arguments);
-};
-
 /*
  * Walk the document.  Find things with a athena:class attribute
  * and instantiate them.

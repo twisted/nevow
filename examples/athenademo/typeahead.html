@@ -72,7 +72,7 @@ function loadDescription(ev)
 
     var node = $('typehere');
     var typed = node.value;
-    var d = Nevow.Athena.refByDOM(node).callRemote('loadDescription', typed);
+    var d = Nevow.Athena.Widget.get(node).callRemote('loadDescription', typed);
     d.addCallback(replaceDescription);
 }
 // ]]>
