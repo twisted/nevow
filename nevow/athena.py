@@ -398,7 +398,7 @@ class LiveFragment(rend.Fragment):
         <div nevow:render="athenaID">
 
     JavaScript handlers for elements inside this <div> can use
-    C{Nevow.Athena.refByDOM} to invoke methods on this LiveFragment
+    C{Nevow.Athena.Widget.get(this)} to invoke methods on this LiveFragment
     instance:
 
             <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
