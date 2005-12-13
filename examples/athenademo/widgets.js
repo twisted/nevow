@@ -13,9 +13,9 @@ WidgetDemo.Clock.prototype.stop = function() {
 };
 
 WidgetDemo.Clock.prototype.setTime = function(toWhat) {
-    Nevow.Athena.debug("Setting time " + toWhat);
+    Divmod.debug("Setting time " + toWhat);
     var time = Nevow.Athena.NodeByAttribute(this.node, "class", "clock-time");
-    Nevow.Athena.debug("On " + time);
+    Divmod.debug("On " + time);
     time.innerHTML = toWhat;
-    Nevow.Athena.debug("Hooray");
+    Divmod.debug("Hooray");
 };
