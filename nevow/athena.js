@@ -530,7 +530,7 @@ Nevow.Athena.refByDOM = function() {
  * and instantiate them.
  */
 Nevow.Athena.Widget._instantiateWidgets = function() {
-    visitor = function(n) {
+    var visitor = function(n) {
         var cls = Nevow.Athena.athenaClassFromNode(n);
         if (cls) {
             var inst = cls.get(n);
