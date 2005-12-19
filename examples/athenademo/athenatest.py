@@ -2,7 +2,7 @@
 from twisted.trial import unittest
 from twisted.internet import defer
 
-from nevow import athena, loaders, tags
+from nevow import athena, loaders, tags, util
 
 class ClientToServerArgumentSerialization(athena.LiveFragment, unittest.TestCase):
     """
@@ -19,7 +19,7 @@ function test_ClientToServerArgumentSerialization(node) {
 };
 """
 
-    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
         tags.form(action='#', onsubmit='return test(test_ClientToServerArgumentSerialization(this));')[
             tags.input(type='submit', value='Test Client To Server Argument Serialization')]])
 
@@ -61,7 +61,7 @@ function test_ClientToServerResultSerialization(node) {
 };
 """
 
-    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
         tags.form(action='#', onsubmit='return test(test_ClientToServerResultSerialization(this));')[
             tags.input(type='submit', value='Test Client To Server Result Serialization')]])
 
@@ -97,7 +97,7 @@ function test_ClientToServerExceptionResult(node, sync) {
 }
 """
 
-    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
         tags.form(action='#', onsubmit='return test(test_ClientToServerExceptionResult(this, true));')[
             tags.input(type='submit', value='Test Client To Server Synchronous Exception Result')],
         tags.form(action='#', onsubmit='return test(test_ClientToServerExceptionResult(this, false));')[
@@ -131,7 +131,7 @@ function test_Reverse_ServerToClientArgumentSerialization(i, f, s, o) {
 }
 """
 
-    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
         tags.form(action='#', onsubmit='return test(test_ServerToClientArgumentSerialization(this));')[
             tags.input(type='submit', value='Test Server To Client Argument Serialization')]])
 
@@ -155,7 +155,7 @@ function test_Reverse_ServerToClientResultSerialization(i, f, s, o) {
 }
 """
 
-    docFactory = loaders.stan(tags.div(**athena.liveFragmentID)[
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
         tags.form(action='#', onsubmit='return test(test_ServerToClientResultSerialization(this));')[
             tags.input(type='submit', value='Test Server To Client Result Serialization')]])
 
@@ -170,20 +170,29 @@ function test_Reverse_ServerToClientResultSerialization(i, f, s, o) {
         d.addCallback(cbResults)
         return d
 
-class WidgetInATable(athena.LiveFragment):
+
+
+class AthenaTestMixin:
+    jsModules = {
+        u'AthenaTest': util.resource_filename('athenademo', 'athenatest.js')}
+
+
+
+class WidgetInATable(AthenaTestMixin, athena.LiveFragment):
+    jsClass = u"AthenaTest.WidgetInATable"
+
     template = """
-    <table xmlns:n="http://nevow.com/ns/nevow/0.1" xmlns:athena="http://divmod.org/ns/athena/0.7">
+    <table xmlns:n="http://nevow.com/ns/nevow/0.1">
       <tbody>
         <tr>
-          <td>
-            <n:attr name="athena:id"><n:slot name="athena:id"/></n:attr>
-            <n:attr name="athena:class">WidgetInATable</n:attr>
+          <td n:render="liveFragment">
             <button onclick="test_WidgetInATable(this)">Test Widget In A Table</button>
           </td>
         </tr>
       </tbody>
     </table>
     """
+
     javascriptTest = """
     test_WidgetInATable = function(node) {
         try {
@@ -193,17 +202,16 @@ class WidgetInATable(athena.LiveFragment):
             alert("Failure: " + err.message);
         }
     }
-    WidgetInATable = Nevow.Athena.Widget.subclass();
-    WidgetInATable.prototype.test = function() {
-    }
     """
     docFactory = loaders.xmlstr(template)
 
-class WidgetIsATable(athena.LiveFragment):
+
+
+class WidgetIsATable(AthenaTestMixin, athena.LiveFragment):
+    jsClass = u"AthenaTest.WidgetIsATable"
+
     template = """
-    <table xmlns:n="http://nevow.com/ns/nevow/0.1" xmlns:athena="http://divmod.org/ns/athena/0.7">
-      <n:attr name="athena:id"><n:slot name="athena:id"/></n:attr>
-      <n:attr name="athena:class">WidgetIsATable</n:attr>
+    <table xmlns:n="http://nevow.com/ns/nevow/0.1" n:render="liveFragment">
       <tbody>
         <tr>
           <td>
@@ -213,6 +221,7 @@ class WidgetIsATable(athena.LiveFragment):
       </tbody>
     </table>
     """
+
     javascriptTest = """
     test_WidgetIsATable = function(node) {
         try {
@@ -222,11 +231,21 @@ class WidgetIsATable(athena.LiveFragment):
             alert("Failure: " + err.message);
         }
     }
-    WidgetIsATable = Nevow.Athena.Widget.subclass();
-    WidgetIsATable.prototype.test = function() {
-    }
     """
     docFactory = loaders.xmlstr(template)
+
+
+
+class AutomaticClass(AthenaTestMixin, athena.LiveFragment):
+    jsClass = u'AthenaTest.AutomaticClass'
+
+    javascriptTest = ''
+
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
+        tags.button(onclick='test(Nevow.Athena.Widget.get(this).clicked())')[
+            'Automatic athena:class attribute']])
+
+
 
 class AthenaTests(athena.LivePage):
     docFactory = loaders.stan([
@@ -236,6 +255,10 @@ class AthenaTests(athena.LivePage):
                 tags.invisible(render=tags.directive('liveglue')),
                 tags.script(type='text/javascript')["""
                 function test(deferred) {
+                    if (!deferred.addCallback || !deferred.addErrback) {
+                        deferred = new MochiKit.Async.succeed(deferred);
+                    }
+
                     deferred.addCallback(function (result) {
                         alert('Success!');
                     });
@@ -269,17 +292,22 @@ class AthenaTests(athena.LivePage):
         ServerToClientResultSerialization,
         WidgetInATable,
         WidgetIsATable,
+        AutomaticClass,
         ]
+
 
     def renderTests(self):
         for frgClass in self.tests:
             frg = frgClass()
+            self.jsModules.mapping.update(frg.jsModules or {})
             frg.page = self
             yield frg
+
 
     def renderMethods(self):
         for frgClass in self.tests:
             yield tags.script(type='text/javascript')[frgClass.javascriptTest]
+
 
     def beforeRender(self, ctx):
         ctx.fillSlots('tests', self.renderTests())

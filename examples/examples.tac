@@ -17,7 +17,7 @@ warnings.filterwarnings(
 from twisted.application import service, strports
 from twisted.python import util
 
-from nevow import inevow, rend, loaders, tags, appserver, static, guard, athena
+from nevow import inevow, rend, loaders, url, tags, appserver, static, guard, athena
 
 import sys
 
@@ -179,10 +179,12 @@ class Examples(rend.Page):
         return calculator.CalculatorResource(calculator.ICalculator, calculator.Calculator())
 
     def child_athenatest(self, ctx):
-        return athenatest.AthenaTests(None, None)
+        here = url.URL.fromContext(ctx).child('athenatest')
+        modules = here.child('jsmodule')
+        return athenatest.AthenaTests(jsModuleRoot=modules)
 
     def child_widgets(self, ctx):
         return widgets.WidgetPage(None, None)
 
 application = service.Application("examples")
-strports.service("8080", appserver.NevowSite(Examples(), logPath="web.log")).setServiceParent(application)
+strports.service("8080", appserver.NevowSite(Examples())).setServiceParent(application)

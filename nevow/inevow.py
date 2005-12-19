@@ -5,7 +5,7 @@
 """Nevow interface definitions.
 """
 
-from zope.interface import Attribute
+from zope.interface import Interface, Attribute
 from nevow import compy
 
 
@@ -555,3 +555,15 @@ class ILogger(compy.Interface):
     def log(self, ctx):
         """Write a log entry for this request."""
         pass
+
+class IJavascriptPackage(Interface):
+    """
+    Represents information about the filesystem layout of a set of
+    JavaScript modules.
+
+    @ivar mapping: A C{dict} mapping C{str} to C{str}.  The keys in
+    this dictionary are JavaScript module names which can be imported by
+    JavaScript files server by C{nevow.athena.LivePage}.  The values give
+    locations in the filesystem where the implementation of each module can
+    be found.
+    """

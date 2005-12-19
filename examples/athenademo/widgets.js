@@ -1,4 +1,6 @@
 
+// import Nevow.Athena
+
 if (typeof WidgetDemo == 'undefined') {
     WidgetDemo = {};
 }
@@ -13,9 +15,9 @@ WidgetDemo.Clock.prototype.stop = function() {
 };
 
 WidgetDemo.Clock.prototype.setTime = function(toWhat) {
-    Divmod.debug("Setting time " + toWhat);
+    Divmod.debug("clock", "Setting time " + toWhat);
     var time = Nevow.Athena.NodeByAttribute(this.node, "class", "clock-time");
-    Divmod.debug("On " + time);
+    Divmod.debug("clock", "On " + time);
     time.innerHTML = toWhat;
-    Divmod.debug("Hooray");
+    Divmod.debug("clock", "Hooray");
 };

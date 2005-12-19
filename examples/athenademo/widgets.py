@@ -1,17 +1,17 @@
 
-import time
+import time, os
 
 from twisted.internet import task
-from twisted.python import log, filepath
+from twisted.python import log, util
 
 from nevow import athena, loaders, static
 
 class Clock(athena.LiveFragment):
+    jsClass = u"WidgetDemo.Clock"
+
     docFactory = loaders.xmlstr("""\
 <div xmlns:nevow="http://nevow.com/ns/nevow/0.1"
-     xmlns:athena="xxx"
-     nevow:render="athenaID"
-     athena:class="WidgetDemo.Clock">
+     nevow:render="liveFragment">
     <div>
         <a href="" onclick="WidgetDemo.Clock.get(this).start(); return false;">
             Start
@@ -54,7 +54,6 @@ class WidgetPage(athena.LivePage):
 <html xmlns:nevow="http://nevow.com/ns/nevow/0.1">
     <head>
         <nevow:invisible nevow:render="liveglue" />
-        <script type="text/javascript" src="widgets.js" />
     </head>
     <body>
         <div nevow:render="clock">
@@ -70,10 +69,16 @@ class WidgetPage(athena.LivePage):
 
     addSlash = True
 
+    def __init__(self, *a, **kw):
+        super(WidgetPage, self).__init__(*a, **kw)
+        self.jsModules.mapping[u'WidgetDemo'] = util.sibpath(__file__, 'widgets.js')
+
     def childFactory(self, ctx, name):
         ch = super(WidgetPage, self).childFactory(ctx, name)
         if ch is None:
-            ch = static.File(filepath.FilePath(__file__).parent().child(name).path)
+            p = util.sibpath(__file__, name)
+            if os.path.exists(p):
+                ch = static.File(file(p))
         return ch
 
     def render_clock(self, ctx, data):

@@ -1,16 +1,21 @@
-import itertools, os
+# -*- test-case-name: nevow.test.test_athena -*-
+
+import itertools, os, re
 
 from zope.interface import implements
 
 from twisted.internet import defer, error, reactor
 from twisted.python import log, failure
+from twisted import plugin
 
-from nevow import inevow, rend, loaders, url, static, json, util, tags, guard
+from nevow import inevow, plugins, stan
+from nevow import rend, loaders, url, static, json, util, tags, guard
 
 ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
 
 class LivePageError(Exception):
     """base exception for livepage errors"""
+
 
 def neverEverCache(request):
     """
@@ -20,6 +25,7 @@ def neverEverCache(request):
     request.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
     request.setHeader('Pragma', 'no-cache')
 
+
 def activeChannel(request):
     """
     Mark this connection as a 'live' channel by setting the
@@ -27,6 +33,166 @@ def activeChannel(request):
     """
     request.setHeader("Connection", "close")
     request.write('')
+
+
+
+class JSModules(object):
+    """
+    Serve implementation files for a JavaScript module system.
+
+    @ivar mapping: A C{dict} mapping JavaScript module names (eg,
+    'Nevow.Athena') to C{str} instances which name files containing
+    JavaScript source implementing those modules.
+    """
+    implements(inevow.IResource)
+
+    def __init__(self, mapping):
+        self.mapping = mapping
+
+    def renderHTTP(self, ctx):
+        return rend.FourOhFour()
+
+    def locateChild(self, ctx, segments):
+        if len(segments) != 1:
+            return rend.NotFound
+        try:
+            impl = self.mapping[segments[0]]
+        except KeyError:
+            return rend.NotFound
+        else:
+            return static.File(impl), []
+
+
+
+# XXX Next two functions copied out of Mantissa/xmantissa/signup.py
+def _insertDep(dependent, ordered):
+    for dependency in dependent.dependencies():
+        _insertDep(dependency, ordered)
+    if dependent not in ordered:
+        ordered.append(dependent)
+
+
+
+def dependencyOrdered(coll):
+    ordered = []
+    for dependent in coll:
+        _insertDep(dependent, ordered)
+    return ordered
+
+
+
+class JSModule(object):
+    _modules = {}
+
+    lastModified = 0
+    deps = None
+
+    def getOrCreate(cls, name, mapping):
+        # XXX This implementation of getOrCreate precludes the
+        # simultaneous co-existence of several different package
+        # namespaces.
+        if name in cls._modules:
+            return cls._modules[name]
+        mod = cls._modules[name] = cls(name, mapping)
+        return mod
+    getOrCreate = classmethod(getOrCreate)
+
+
+    def __init__(self, name, mapping):
+        self.name = name
+        self.mapping = mapping
+
+
+    _importExpression = re.compile('^// import (.+)$', re.MULTILINE)
+    def _extractImports(self, fileObj):
+        s = fileObj.read()
+        for m in self._importExpression.finditer(s):
+            yield self.getOrCreate(m.group(1), self.mapping)
+
+
+    def dependencies(self):
+        jsFile = self.mapping[self.name]
+        if jsFile is None:
+            return iter(())
+        mtime = os.path.getmtime(jsFile)
+        if mtime >= self.lastModified:
+            self.deps = set(self._extractImports(file(jsFile, 'r')))
+            self.lastModified = mtime
+        return self.deps
+
+
+    def allDependencies(self):
+        if self.mapping[self.name] is None:
+            return []
+        else:
+            mods = [self]
+            return dependencyOrdered(mods)
+
+
+
+class JSPackage(object):
+    implements(plugin.IPlugin, inevow.IJavascriptPackage)
+
+    def __init__(self, mapping):
+        """
+        @param mapping: A C{dict} mapping JS module names to C{str}
+        representing filesystem paths containing their
+        implementations.
+        """
+        self.mapping = mapping
+
+
+
+def allJavascriptPackages():
+    """
+    Return a dictionary mapping JavaScript module names to local filenames
+    which implement those modules.  This mapping is constructed from all the
+    C{IJavascriptPackage} plugins available on the system.  It also includes
+    C{Nevow.Athena} as a special case.
+    """
+    d = {u'Nevow.Athena': util.resource_filename('nevow', 'widget.js')}
+    for p in plugin.getPlugins(inevow.IJavascriptPackage, plugins):
+        d.update(p.mapping)
+    return d
+
+
+
+class JSDependencies(object):
+    """
+    Keeps track of which JavaScript files depend on which other
+    JavaScript files (because JavaScript is a very poor language and
+    cannot do this itself).
+    """
+
+    _loadPlugins = False
+
+    def __init__(self, mapping=None):
+        if mapping is None:
+            self.mapping = {}
+            self._loadPlugins = True
+        else:
+            self.mapping = mapping
+
+
+    def getModuleForClass(self, className):
+        if self._loadPlugins:
+            self.mapping.update(allJavascriptPackages())
+            self._loadPlugins = False
+
+        jsMod = className
+        while jsMod:
+            try:
+                jsFile = self.mapping[jsMod]
+            except KeyError:
+                if '.' not in jsMod:
+                    break
+                jsMod = jsMod.rsplit('.', 1)[0]
+            else:
+                return JSModule.getOrCreate(jsMod, self.mapping)
+        raise RuntimeError("Unknown class: %r" % (className,))
+jsDeps = JSDependencies()
+
+
 
 class ConnectionLostTransport(object):
     implements(inevow.IResource)
@@ -37,14 +203,18 @@ class ConnectionLostTransport(object):
     def renderHTTP(self, ctx):
         return json.serialize((u'close', ()))
 
+
+
 class LivePageTransport(object):
     implements(inevow.IResource)
 
     def __init__(self, livePage):
         self.livePage = livePage
 
+
     def locateChild(self, ctx, segments):
         return rend.NotFound
+
 
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
@@ -64,16 +234,18 @@ class LivePageTransport(object):
         method(ctx, *args, **asciiKwargs)
         return d
 
+
     def _cbCall(self, result, requestId):
         def cb((d, req)):
             res = result
             success = True
             if isinstance(res, failure.Failure):
                 success = False
-                res = unicode(result.getErrorMessage())
+                res = (unicode(result.type.__name__, 'ascii'), unicode(result.getErrorMessage(), 'ascii'))
             message = json.serialize((u'respond', (unicode(requestId), success, res)))
             d.callback(message)
         self.livePage.getTransport().addCallback(cb)
+
 
     def action_call(self, ctx, method, objectID, *args, **kw):
         """
@@ -91,6 +263,7 @@ class LivePageTransport(object):
                 log.msg("Unhandled error in event handler:")
                 log.err()
 
+
     def action_respond(self, ctx, response):
         """
         Handle the response from the client to a call initiated by the server.
@@ -107,11 +280,12 @@ class LivePageTransport(object):
         else:
             callDeferred.errback(Exception(result))
 
+
     def action_noop(self, ctx):
         """
         Handle noop, used to initialise and ping the live transport.
         """
-        pass
+
 
 
 class LivePageFactory:
@@ -169,11 +343,37 @@ class LivePage(rend.Page):
     # bugs.
     TRANSPORT_IDLE_TIMEOUT = 300
 
-    def __init__(self, iface, rootObject, *a, **kw):
+    def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
 
         self.iface = iface
         self.rootObject = rootObject
+        if jsModules is None:
+            jsModules = JSPackage(jsDeps.mapping)
+        self.jsModules = jsModules
+        self.jsModuleRoot = jsModuleRoot
+        self._includedModules = []
+
+
+    def _shouldInclude(self, moduleName):
+        if moduleName not in self._includedModules:
+            self._includedModules.append(moduleName)
+            return True
+        return False
+
+
+    # Child lookup may be dependent on the application state
+    # represented by a LivePage.  In this case, it is preferable to
+    # dispatch child lookup on the same LivePage instance as performed
+    # the initial rendering of the page.  Override the default
+    # implementation of locateChild to do this where appropriate.
+    def locateChild(self, ctx, segments):
+        try:
+            client = self.factory.getClient(segments[0])
+        except KeyError:
+            return super(LivePage, self).locateChild(ctx, segments)
+        else:
+            return client, segments[1:]
 
 
     # A note on timeout/disconnect logic: whenever a live client goes from some
@@ -186,7 +386,6 @@ class LivePage(rend.Page):
     # considered lost; this lets the server notice clients who actively leave
     # (closed window, browser navigates away) and network congestion/errors
     # (unplugged ethernet cable, etc)
-
     def _becomeLive(self):
         """
         Assign this LivePage a clientID, associate it with a factory, and begin
@@ -194,6 +393,10 @@ class LivePage(rend.Page):
         not when it is instantiated.
         """
         self.clientID = self.factory.addClient(self)
+
+        if self.jsModuleRoot is None:
+            self.jsModuleRoot = url.here.child(self.clientID).child('jsmodule')
+
         self._requestIDCounter = itertools.count().next
         self._transportQueue = defer.DeferredQueue(size=self.transportLimit)
         self._remoteCalls = {}
@@ -360,22 +563,18 @@ class LivePage(rend.Page):
     def newTransport(self):
         return self.transportFactory(self)
 
+    def child_jsmodule(self, ctx):
+        return JSModules(self.jsModules.mapping)
+
     def child_transport(self, ctx):
-        req = inevow.IRequest(ctx)
-        clientID = req.getHeader('Livepage-ID')
-        try:
-            client = self.factory.getClient(clientID)
-        except KeyError:
-            return ConnectionLostTransport()
-        else:
-            # another instance, probably same class as me, but whatever; any
-            # athena-based live page will do
-            return client.newTransport()
+        return self.newTransport()
 
     def locateMethod(self, ctx, methodName):
         if methodName in self.iface:
             return getattr(self.rootObject, methodName)
         raise AttributeError(methodName)
+
+
 
 class LiveFragment(rend.Fragment):
     """
@@ -384,73 +583,77 @@ class LiveFragment(rend.Fragment):
     tag.  This attribute is used to dispatch calls from the client
     onto the correct object (this one).
 
-    The C{docFactory} for a LiveFragment must provide a slot,
-    C{nevow:athena_id} which will be filled by the framework.  For
-    example, an xml template for a LiveFragment might start like this:
+    A LiveFragment must use the `liveFragment' renderer somewhere in
+    its document template.  The node given this renderer will be the
+    node used to construct a Widget instance in the browser (where it
+    will be saved as the `node' property on the widget object).
 
-        <div>
-            <nevow:attr name="athena:id"><nevow:slot name="athena:id" /></nevow:attr>
+    JavaScript handlers for elements inside this node can use
+    C{Nevow.Athena.Widget.get} to retrieve the widget associated with
+    this LiveFragment.  For example:
 
-    Since this is a lot of typing, a convenience mechanism is
-    provided.  Given an XML namespace identifier 'nevow' which refers
-    to <http://nevow.com/ns/nevow/0.1>, you can rewrite the above as:
+        <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
 
-        <div nevow:render="athenaID">
+    The C{jsClass} attribute of a LiveFragment instance determines the
+    JavaScript class used to construct its corresponding Widget.  This
+    appears as the 'athena:class' attribute.
 
-    JavaScript handlers for elements inside this <div> can use
-    C{Nevow.Athena.Widget.get(this)} to invoke methods on this LiveFragment
-    instance:
+    JavaScript modules may import other JavaScript modules by using a
+    special comment which Athena recognizes:
 
-            <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
+        // import Module.Name
 
-    By default, only methods named in the C{allowedMethods} mapping
-    may be invoked by the client.
+    Different imports must be placed on different lines.  No other
+    comment style is supported for these directives.  Only one space
+    character must appear between the string 'import' and the name of
+    the module to be imported.  No trailing whitespace or
+    non-whitespace is allowed.  There must be exactly one space
+    between '//' and 'import'.  There must be no preceeding whitespace
+    on the line.
+
+    Methods defined on this class which are named in the
+    C{allowedMethods} mapping may be invoked by the client using
+    C{Nevow.Athena.Widget.callRemote}.  Similarly, calling
+    C{callRemote} on the LiveFragment will invoke a method defined on
+    the Widget class in the browser.
     """
 
     allowedMethods = {}
 
+    jsClass = u'Nevow.Athena.Widget'
+
     def rend(self, context, data):
         self._athenaID = self.page.addLocalObject(self)
-        context.fillSlots('athena:id', self._athenaID)
         return super(LiveFragment, self).rend(context, data)
+
+
+    def _getModuleForClass(self):
+        return jsDeps.getModuleForClass(self.jsClass)
+
+
+    def render_liveFragment(self, ctx, data):
+        modules = (dep.name for dep in self._getModuleForClass().allDependencies())
+
+        return ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
+                          'athena:id': self._athenaID,
+                          'athena:class': self.jsClass})[
+            [tags.script(type='text/javascript', src=self.getJSModuleURL(mod))
+             for mod in modules if self.page._shouldInclude(mod)]]
+
+
+    def getJSModuleURL(self, moduleName):
+        return self.page.jsModuleRoot.child(moduleName)
+
 
     def locateMethod(self, ctx, methodName):
         if methodName in self.allowedMethods:
             return getattr(self, methodName)
         raise AttributeError(methodName)
 
-    def render_athenaID(self, ctx, data):
-        return ctx.tag(**liveFragmentID)
 
     def callRemote(self, methodName, *varargs):
-        return self.page.callRemote("Nevow.Athena.callByAthenaID", self._athenaID, unicode(methodName, 'ascii'), varargs)
-
-# Helper for docFactories defined with stan:
-# tags.foo(..., **liveFragmentID)
-liveFragmentID = {'athena:id': tags.slot('athena:id'), 'xmlns:athena': ATHENA_XMLNS_URI}
-
-class JSModules(object):
-    """
-    Serve implementation files for a JavaScript module system.
-
-    @ivar mapping: A C{dict} mapping JavaScript module names (eg,
-    'Nevow.Athena') to C{twisted.python.filepath.FilePath} instances
-    which contain JavaScript source implementing those modules.
-    """
-    implements(inevow.IResource)
-
-    def __init__(self, mapping):
-        self.mapping = mapping
-
-    def renderHTTP(self, ctx):
-        return rend.FourOhFour()
-
-    def locateChild(self, ctx, segments):
-        if len(segments) != 1:
-            return rend.NotFound
-        try:
-            impl = self.mapping[segments[0]]
-        except KeyError:
-            return rend.NotFound
-        else:
-            return static.File(impl.path), []
+        return self.page.callRemote(
+            "Nevow.Athena.callByAthenaID",
+            self._athenaID,
+            unicode(methodName, 'ascii'),
+            varargs)

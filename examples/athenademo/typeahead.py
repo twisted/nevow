@@ -19,7 +19,7 @@ class TypeAheadPage(athena.LivePage):
         return frag
 
 class TypeAheadFieldFragment(athena.LiveFragment):
-    docFactory = loaders.stan(T.input(type="text", id="typehere", **athena.liveFragmentID))
+    docFactory = loaders.stan(T.input(type="text", id="typehere", render=T.directive('liveFragment')))
     allowedMethods =  { 'loadDescription' : True }
 
     def loadDescription(self, typed):

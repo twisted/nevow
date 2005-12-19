@@ -19,7 +19,7 @@ function assert (cond, err) {
     }
 }
 
-function test() {
+function testClass() {
     var Eater = Divmod.Class.subclass();
 
     Eater.prototype.__init__ = function (foodFactory) {
@@ -61,5 +61,14 @@ function test() {
     assert(BetterEater.classCounter == 2, 'classmethod fuckup');
 }
 
-test();
+function testUtil() {
+    /* Divmod.namedAny
+     */
+    assert(Divmod.namedAny('not.a.real.package.or.name') == undefined);
+    assert(Divmod.namedAny('Divmod') == Divmod);
+    assert(Divmod.namedAny('Divmod.namedAny') == Divmod.namedAny);
+}
+
+testClass();
+testUtil();
 print("SUCCESS");

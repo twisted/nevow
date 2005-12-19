@@ -39,88 +39,49 @@ Divmod.baseURL = function() {
         baseURL += '/';
     }
 
+    baseURL += Nevow.Athena.livepageId + '/';
+
     // "Cache" and return
     Divmod._baseURL = baseURL;
     return Divmod._baseURL;
 };
 
-
-Divmod.load = function(moduleName) {
-    Divmod.debug("package", "Trying to load " + moduleName);
-    var loaded = false;
-    try {
-        var mod = Divmod.namedAny(moduleName, false);
-        if (mod != undefined) {
-            loaded = true;
-            Divmod.debug("package", "Found " + moduleName + " loaded already");
-        }
-    } catch (err) {
-        Divmod.debug("package", "Caught error checking " + moduleName + ": " + err.message);
-    }
-
-    if (!loaded) {
-        Divmod.debug("package", "Loading source for " + moduleName);
-        var req = MochiKit.Async.getXMLHttpRequest();
-        req.open('GET', Divmod.baseURL() + 'jsmodule/' + moduleName, false);
-        req.send('');
-        Divmod.debug("package", "Found " + req.responseText.length + " bytes of source for " + moduleName);
-        eval(req.responseText);
-
-        try {
-            mod = Divmod.namedAny(moduleName, false);
-            if (mod != undefined) {
-                loaded = true;
-                Divmod.debug("package", "*Now* found " + moduleName + " loaded.");
-            }
-        } catch (err) {
-            Divmod.debug("package", "Another error checking " + moduleName + ": " + err.message);
-        }
-
-        if (!loaded) {
-            throw new Error("Import Error: " + moduleName);
-        }
-    }
-    Divmod.debug("package", "Successfully loaded " + moduleName);
+Divmod.importURL = function(moduleName) {
+    return Divmod.baseURL() + 'jsmodule/' + moduleName;
 };
 
 
-Divmod.namedAny = function(name, /* optional */ loadIfMissing) {
-    if (loadIfMissing == undefined) {
-        loadIfMissing = true;
-    }
-    Divmod.debug("package", "Looking up " + name);
+Divmod.namedAny = function(name) {
+    var namedParts = name.split('.');
     try {
-        var pkg = eval(name);
-        Divmod.debug("package", "Found " + name);
-        return pkg;
-    } catch (firstErr) {
-        Divmod.debug("package", "Caught error looking for " + name + ": " + firstErr.message);
-        if (loadIfMissing) {
-            var packageParts = name.split('.');
-            var parentPackage = packageParts.shift();
-            while (1) {
-                try {
-                    Divmod.debug("package", "Trying to load parent: " + parentPackage);
-                    Divmod.load(parentPackage);
-                } catch (err) {
-                    /* Woops, if the import failed, we've left the
-                     * land of packages, time to give up.
-                     */
-                    break;
-                }
-                try {
-                    return Divmod.namedAny(name, false);
-                } catch (err) {
-                    /* maybe the next one... */
-                }
-                if (!packageParts) {
-                    throw firstErr;
-                }
-                parentPackage += "." + packageParts.shift();
-            }
+        Divmod.debug('import', 'namedAny(' + name + ')');
+        var obj = eval(namedParts.shift());
+    } catch (err) {
+        /**
+         * Firefox 1.0.7 and 1.5 both throw ReferenceError when an
+         * undefined variable is referenced.
+         */
+        if (err instanceof ReferenceError) {
+            return undefined;
         }
-        throw firstErr;
+
+        /**
+         * Internet Explorer 6.0 throws a TypeError.
+         */
+        if (err instanceof TypeError) {
+            return undefined;
+        }
+
+        Divmod.debug('import', 'Unexpected error: ' + err.name + ' ' + err.message);
+        throw err;
     }
+    for (var p in namedParts) {
+        obj = obj[namedParts[p]];
+        if (obj == undefined) {
+            break;
+        }
+    }
+    return obj;
 };
 
 
@@ -145,8 +106,9 @@ Divmod.Class.subclass = function() {
     subClass.prototype = new superClass(Divmod._PROTOTYPE_ONLY);
     subClass.subclass = Divmod.Class.subclass;
 
-    /* Copy class methods and attributes, so that you can do polymorphism on
-     * class methods (needed for Nevow.Athena.Widget.get below).
+    /* Copy class methods and attributes, so that you can do
+     * polymorphism on class methods (useful for things like
+     * Nevow.Athena.Widget.get in widgets.js).
      */
 
     for (var varname in superClass) {
@@ -294,7 +256,7 @@ Nevow.Athena._actionHandlers = {
             d.callback(result);
         } else {
             Divmod.debug('object', 'Errback');
-            d.errback(new Error(result));
+            d.errback(new Error(result[0] + ': ' + result[1]));
         }
     },
 
@@ -302,6 +264,7 @@ Nevow.Athena._actionHandlers = {
         Nevow.Athena._connectionLost('Connection closed by remote host');
     }
 };
+
 
 Nevow.Athena.XMLHttpRequestReady = function(req) {
     /* The response is a JSON-encoded 2-array of [action, arguments]
@@ -525,7 +488,12 @@ Nevow.Athena.athenaIDFromNode = function(n) {
 Nevow.Athena.athenaClassFromNode = function(n) {
     var athenaClass = Nevow.Athena.getAttribute(n, Nevow.Athena.XMLNS_URI, 'athena', 'class');
     if (athenaClass != null) {
-        return Divmod.namedAny(athenaClass);
+        var cls = Divmod.namedAny(athenaClass);
+        if (cls == undefined) {
+            throw new Error('NameError: ' + athenaClass);
+        } else {
+            return cls;
+        }
     } else {
         return null;
     }
@@ -597,110 +565,35 @@ Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
     }
 }
 
-Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass();
-Nevow.Athena.Widget.prototype.__init__ = function(widgetNode) {
-    this.node = widgetNode;
-    Nevow.Athena.Widget.upcall(this, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
-};
-
-Nevow.Athena.Widget.prototype.visitNodes = function(visitor) {
-    Nevow.Athena._walkDOM(this.node, function(node) {
-        var result = visitor(node);
-        if (result || result == undefined) {
-            return true;
-        } else {
-            return false;
-        }
-    });
-};
-
-Nevow.Athena.Widget.prototype.nodeByAttribute = function(attrName, attrValue) {
-    return Nevow.Athena.NodeByAttribute(this.node, attrName, attrValue);
-};
-
-Nevow.Athena.Widget.prototype.nodesByAttribute = function(attrName, attrValue) {
-    return Nevow.Athena.NodesByAttribute(this.node, attrName, attrValue);
-};
-
-Nevow.Athena.Widget._athenaWidgets = {};
-
-/**
- * Given any node within a Widget (the client-side representation of a
- * LiveFragment), return the instance of the Widget subclass that corresponds
- * with that node, creating that Widget subclass if necessary.
- */
-Nevow.Athena.Widget.get = function(node) {
-    var widgetNode = Nevow.Athena.nodeByDOM(node);
-    var widgetId = Nevow.Athena.athenaIDFromNode(widgetNode);
-    if (Nevow.Athena.Widget._athenaWidgets[widgetId] == null) {
-        Nevow.Athena.Widget._athenaWidgets[widgetId] = new this(widgetNode);
-    }
-    return Nevow.Athena.Widget._athenaWidgets[widgetId];
-};
-
-/**
- * Search the whole document for a particular widget id.
- */
-Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
-    var visitor = function(node) {
-        return (Nevow.Athena.athenaIDFromNode(node) == widgetId);
-    }
-    var nodes = Nevow.Athena._walkDOM(document, visitor);
-
-    if (nodes.length != 1) {
-        throw new Error(nodes.length + " nodes with athena id " + widgetId);
-    };
-
-    return Nevow.Athena.Widget.get(nodes[0]);
-};
-
-/*
- * Walk the document.  Find things with a athena:class attribute
- * and instantiate them.
- */
-Nevow.Athena.Widget._instantiateWidgets = function() {
-    var visitor = function(n) {
-        var cls = Nevow.Athena.athenaClassFromNode(n);
-        if (cls) {
-            Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
-            var inst = cls.get(n);
-            Divmod.debug("widget", "Widget class " + cls + " instantiated.");
-            if (inst.loaded != undefined) {
-                inst.loaded();
-                Divmod.debug("widget", "Widget class " + cls + " loaded.");
-            }
-        }
-    }
-    Nevow.Athena._walkDOM(document, visitor);
-}
-
-Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
-    var widget = Nevow.Athena.Widget.fromAthenaID(athenaID);
-    Divmod.debug('widget', 'Invoking ' + methodName + ' on ' + widget + '(' + widget[methodName] + ')');
-    return widget[methodName].apply(widget, varargs);
-};
-
 Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;
 
+/**
+ * Inform the server that we no longer wish to exchange data, then
+ * abort all outstanding requests (Hey, is there a race here?
+ * Probably.) and set the local state to reflect that we are no longer
+ * connected.
+ */
 Nevow.Athena._finalize = function() {
     Nevow.Athena.sendClose();
     Nevow.Athena._connectionLost('page unloaded');
 };
 
-/* Instantiate Athena Widgets, make initial server connection, and set up
- * listener for "onunload" event to do finalization.
+/**
+ *
  */
 Nevow.Athena._initialize = function() {
-    // Delay initialization for just a moment so that Safari stops whirling
-    // its loading icon.
+    MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._finalize, true);
+
+    /**
+     * Delay initialization for just a moment so that Safari stops whirling
+     * its loading icon.
+     */
     setTimeout(function() {
-        MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._finalize, true);
+        Divmod.debug("transport", "starting up");
         Nevow.Athena.sendNoOp();
-        Divmod.debug("widget", "Instantiating live widgets");
-        Nevow.Athena.Widget._instantiateWidgets();
-        Divmod.debug("widget", "Finished instantiating live widgets");
+        Divmod.debug("transport", "started up");
     }, 1);
-}
+};
 
 MochiKit.DOM.addLoadEvent(Nevow.Athena._initialize);
