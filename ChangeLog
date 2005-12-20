@@ -1,3 +1,72 @@
+2005-12-18  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py: Server-side processing of .js files to allow for
+	an import directive.  Imported JavaScript modules are inserted into
+	the page during the render process in dependency order.
+
+	* nevow/widget.js: Athena Widgets class and support code definitions
+	moved here.
+
+2005-12-13  Matt Goodall <matt@pollenation.net>
+
+	* nevow/athena.js: Improved IE compatibility.
+
+2005-12-05  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.js: Added Divmod.Class object which provides a
+	class-based object model for JavaScript programs.  Added
+	Nevow.Athena.Widget, a base class for "Live Widgets" - JavaScript
+	classes which can control a particular section of a LivePage and can
+	communicate with corresponding LiveFragment instances on the server.
+
+	* nevow/athena.py: Added a callRemote method to LiveFragment - this
+	allows the server to invoke methods on particular Widgets on the
+	client.
+
+2005-12-03  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/rend.py: Fixed a bug in xmlfile caching which could lead to
+	a corrupt loader cache.
+
+2005-11-29  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/appserver.py: Removed "support" (which consisted of logging
+	an error message and continuing) for returning objects which do not
+	provide IResource.
+
+2005-11-26  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py, nevow/athena.js: Use POST for the LivePage
+	transport, rather than GET.
+
+	* nevow/json.py: Fix a bug in JSON support for floating points.
+
+2005-11-25  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.js: Go live by default.
+
+2005-11-22  Glyph Lefkowitz <glyph@divmod.com>
+
+	* nevow/guard.py: Removed __session_just_startd__.
+
+2005-11-15  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py: Added LiveFragment - base class for Fragments
+	which may cooperatively share a single LivePage connection.
+
+
+2005-11-09  Jp Calderone <exarkun@divmod.com>
+
+	* Athena JavaScript API unified into a pseudo-namespace hierarchy.
+
+2005-11-07  Jp Calderone <exarkun@divmod.com>
+
+	* JSON serializer now quotes dict/object keys.
+
+2005-11-02  Jp Calderone <exarkun@divmod.com>
+
+	* Nevow 0.6.0 released
+
 2005-09-21  Jp Calderone <exarkun@divmod.com>
 
 	* nevow/athena.py: New implementation of LivePage with a
