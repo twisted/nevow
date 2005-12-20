@@ -299,7 +299,7 @@ class AthenaTests(athena.LivePage):
     def renderTests(self):
         for frgClass in self.tests:
             frg = frgClass()
-            self.jsModules.mapping.update(frg.jsModules or {})
+            self.jsModules.mapping.update(getattr(frg, 'jsModules', {}))
             frg.page = self
             yield frg
 
