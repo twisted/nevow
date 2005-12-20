@@ -1,5 +1,5 @@
 name='Nevow'
-version='0.6.0'
+version='0.7.0'
 maintainer = 'Divmod, Inc.'
 maintainer_email = 'support@divmod.org'
 description = 'Web Application Construction Kit'
@@ -26,8 +26,6 @@ package_data={
             'livetest-postscripts.js',
             'livetest.css',
             'Canvas.swf',
-            ],
-        'nevow.plugins': [
             ],
         'nevow.taglibrary': [
             'tabbedPane.js',

@@ -27,8 +27,10 @@ for pkg, files in setupcommon.package_data.items():
     data_files.append([site_packages+pkgdir, files])
 
 # We need to list the packages explicitly.
-packages=['formless', 'formless.test', 'nevow', 'nevow.flat',
-      'nevow.scripts', 'nevow.test', 'nevow.taglibrary']
+packages = [
+    'formless', 'formless.test', 'nevow', 'nevow.flat',
+    'nevow.scripts', 'nevow.test', 'nevow.taglibrary',
+    'nevow.plugins']
 
 setup(
     name=setupcommon.name,
