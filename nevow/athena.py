@@ -624,6 +624,7 @@ class LiveFragment(rend.Fragment):
 
     def rend(self, context, data):
         self._athenaID = self.page.addLocalObject(self)
+        ctx.fillSlots('athena:id', self._athenaID)
         return super(LiveFragment, self).rend(context, data)
 
 
