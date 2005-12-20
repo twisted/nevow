@@ -18,6 +18,7 @@ package_data={
             ],
         'nevow': [
             'athena.js',
+            'widget.js',
             'MochiKit.js',
             'MochiKitLogConsole.js',
             'liveglue.js',
@@ -25,6 +26,8 @@ package_data={
             'livetest-postscripts.js',
             'livetest.css',
             'Canvas.swf',
+            ],
+        'nevow.plugins': [
             ],
         'nevow.taglibrary': [
             'tabbedPane.js',
