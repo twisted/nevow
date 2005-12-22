@@ -116,7 +116,8 @@ class JSModule(object):
             return iter(())
         mtime = os.path.getmtime(jsFile)
         if mtime >= self.lastModified:
-            self.deps = set(self._extractImports(file(jsFile, 'r')))
+            depgen = self._extractImports(file(jsFile, 'r'))
+            self.deps = dict.fromkeys(depgen).keys()
             self.lastModified = mtime
         return self.deps
 
@@ -186,7 +187,7 @@ class JSDependencies(object):
             except KeyError:
                 if '.' not in jsMod:
                     break
-                jsMod = jsMod.rsplit('.', 1)[0]
+                jsMod = '.'.join(jsMod.split('.')[:-1])
             else:
                 return JSModule.getOrCreate(jsMod, self.mapping)
         raise RuntimeError("Unknown class: %r" % (className,))
@@ -633,7 +634,7 @@ class LiveFragment(rend.Fragment):
 
 
     def render_liveFragment(self, ctx, data):
-        modules = (dep.name for dep in self._getModuleForClass().allDependencies())
+        modules = [dep.name for dep in self._getModuleForClass().allDependencies()]
 
         return ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
                           'athena:id': self._athenaID,
