@@ -310,6 +310,15 @@ class TestPage(unittest.TestCase):
         self.failIf("'foo' was not found" in result)
         self.failIf("'after' was not found" in result)
 
+    # Current behaviour: missing renderers etc. cause a textual
+    # warning in the web page.
+    #
+    # Wanted behaviour: missing renderers etc. raise an exception,
+    # with some helpful hints on where to locate the typo.
+    #
+    # Feel free to replace test_renderer_not_found{,_parametrized}
+    # with unit tests for the exception raising behaviour, if you do
+    # implement it.
     def test_renderer_not_found(self):
         class Page(rend.Page):
             docFactory = loaders.stan(html(render=directive("notfound")))
