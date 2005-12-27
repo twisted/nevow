@@ -1,3 +1,14 @@
+2005-12-26  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py: Added athena.js and MochiKit.js to the dictionary
+	returned by allJavascriptModules(), allowing them to be referenced
+	using the JS import mechanism, in turn allowing them both to be
+	served from a single site-wide URL, rather than once per page.
+
+2005-12-22  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py: Remove Python 2.4 dependencies.
+
 2005-12-21  Jp Calderone <exarkun@divmod.com>
 
 	* Nevow 0.7.0 released

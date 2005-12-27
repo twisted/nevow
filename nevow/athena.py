@@ -151,7 +151,9 @@ def allJavascriptPackages():
     C{IJavascriptPackage} plugins available on the system.  It also includes
     C{Nevow.Athena} as a special case.
     """
-    d = {u'Nevow.Athena': util.resource_filename('nevow', 'widget.js')}
+    d = {u'Divmod': util.resource_filename('nevow', 'athena.js'),
+         u'Nevow.Athena': util.resource_filename('nevow', 'widget.js'),
+         u'MochiKit': util.resource_filename('nevow', 'MochiKit.js')}
     for p in plugin.getPlugins(inevow.IJavascriptPackage, plugins):
         d.update(p.mapping)
     return d
@@ -534,32 +536,17 @@ class LivePage(rend.Page):
         self._disconnectNotifications.append(d)
         return d
 
-    def render_liveglue(self, ctx, data):
-        if True:
-            mk = tags.script(type='text/javascript', src=url.here.child("mochikit.js"))
-        else:
-            mk = [
-              tags.script(type='text/javascript', src=url.here.child('MochiKit').child(fName))
-              for fName in ['Base.js', 'Async.js']]
+    def getJSModuleURL(self, moduleName):
+        return self.jsModuleRoot.child(moduleName)
 
+    def render_liveglue(self, ctx, data):
         return [
-            mk,
-            tags.script(type='text/javascript', src=url.here.child('MochiKitLogConsole.js')),
-            tags.script(type='text/javascript', src=url.here.child("athena.js")),
+            tags.script(type='text/javascript', src=self.getJSModuleURL('MochiKit')),
+            tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod')),
             tags.script(type='text/javascript')[tags.raw("""
                 Nevow.Athena.livepageId = '%s';
             """ % self.clientID)],
         ]
-
-    _javascript = {'mochikit.js': 'MochiKit.js',
-                   'athena.js': 'athena.js',
-                   'MochiKitLogConsole.js': 'MochiKitLogConsole.js'}
-    def childFactory(self, ctx, name):
-        if name in self._javascript:
-            return static.File(util.resource_filename('nevow', self._javascript[name]))
-
-    def child_MochiKit(self, ctx):
-        return static.File(util.resource_filename('nevow', 'MochiKit'))
 
     def newTransport(self):
         return self.transportFactory(self)
@@ -644,7 +631,7 @@ class LiveFragment(rend.Fragment):
 
 
     def getJSModuleURL(self, moduleName):
-        return self.page.jsModuleRoot.child(moduleName)
+        return self.page.getJSModuleURL(moduleName)
 
 
     def locateMethod(self, ctx, methodName):
