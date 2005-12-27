@@ -151,9 +151,7 @@ def allJavascriptPackages():
     C{IJavascriptPackage} plugins available on the system.  It also includes
     C{Nevow.Athena} as a special case.
     """
-    d = {u'Divmod': util.resource_filename('nevow', 'athena.js'),
-         u'Nevow.Athena': util.resource_filename('nevow', 'widget.js'),
-         u'MochiKit': util.resource_filename('nevow', 'MochiKit.js')}
+    d = {}
     for p in plugin.getPlugins(inevow.IJavascriptPackage, plugins):
         d.update(p.mapping)
     return d
@@ -171,7 +169,10 @@ class JSDependencies(object):
 
     def __init__(self, mapping=None):
         if mapping is None:
-            self.mapping = {}
+            self.mapping = {
+                u'Divmod': util.resource_filename('nevow', 'athena.js'),
+                u'Nevow.Athena': util.resource_filename('nevow', 'widget.js'),
+                u'MochiKit': util.resource_filename('nevow', 'MochiKit.js')}
             self._loadPlugins = True
         else:
             self.mapping = mapping
@@ -543,6 +544,7 @@ class LivePage(rend.Page):
         return [
             tags.script(type='text/javascript', src=self.getJSModuleURL('MochiKit')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod')),
+            tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow.Athena')),
             tags.script(type='text/javascript')[tags.raw("""
                 Nevow.Athena.livepageId = '%s';
             """ % self.clientID)],
