@@ -48,7 +48,7 @@ class RenderFactory(object):
 
         callable = getattr(self, 'render_%s' % name, None)
         if callable is None:
-            callable = lambda context, data: context.tag[
+            callable = lambda *a, **kw: context.tag[
                 "The renderer named '%s' was not found in %r." % (name, self)]
 
         if args:

@@ -310,6 +310,25 @@ class TestPage(unittest.TestCase):
         self.failIf("'foo' was not found" in result)
         self.failIf("'after' was not found" in result)
 
+    def test_renderer_not_found(self):
+        class Page(rend.Page):
+            docFactory = loaders.stan(html(render=directive("notfound")))
+        page = Page()
+        result = page.renderSynchronously()
+        self.assertEquals(
+            result,
+            "<html>The renderer named 'notfound' was not found in %s.</html>"
+            % util.escapeToXML(repr(page)))
+
+    def test_renderer_not_found_parametrized(self):
+        class Page(rend.Page):
+            docFactory = loaders.stan(html(render=directive("notfound dummy")))
+        page = Page()
+        result = page.renderSynchronously()
+        self.assertEquals(
+            result,
+            "<html>The renderer named 'notfound' was not found in %s.</html>"
+            % util.escapeToXML(repr(page)))
 
 class TestFragment(unittest.TestCase):
 
