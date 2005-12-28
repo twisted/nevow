@@ -356,7 +356,7 @@ class LivePage(rend.Page):
             jsModules = JSPackage(jsDeps.mapping)
         self.jsModules = jsModules
         self.jsModuleRoot = jsModuleRoot
-        self._includedModules = []
+        self._includedModules = ['MochiKit', 'Divmod', 'Nevow.Athena']
 
 
     def _shouldInclude(self, moduleName):
