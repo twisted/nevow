@@ -72,16 +72,26 @@ Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
  */
 Nevow.Athena.Widget._instantiateWidgets = function() {
     var visitor = function(n) {
-        var cls = Nevow.Athena.athenaClassFromNode(n);
-        if (cls) {
-            Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
-            var inst = cls.get(n);
-            Divmod.debug("widget", "Widget class " + cls + " instantiated.");
-            if (inst.loaded != undefined) {
-                inst.loaded();
-                Divmod.debug("widget", "Widget class " + cls + " loaded.");
+        try {
+            var cls = Nevow.Athena.athenaClassFromNode(n);
+            if (cls) {
+                Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
+                var inst = cls.get(n);
+                Divmod.debug("widget", "Widget class " + cls + " instantiated.");
+                if (inst.loaded != undefined) {
+                    inst.loaded();
+                    Divmod.debug("widget", "Widget class " + cls + " loaded.");
+                }
             }
+        } catch (e) {
+            Divmod.debug('widget', '==================================================');
+            Divmod.debug('widget', 'Error instantiating widget on tag ' + n.tagName);
+            for (var i in n.attributes) {
+                Divmod.debug('widget', i + ': ' + n.attributes[i].value);
+            }
+            Divmod.debug('widget', '==================================================');
         }
+
     }
     Nevow.Athena._walkDOM(document, visitor);
 }
