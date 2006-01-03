@@ -40,3 +40,8 @@ class InitializationBenchmark(athena.LiveFragment):
     def __init__(self, page):
         super(InitializationBenchmark, self).__init__()
         self.page = page
+
+
+    allowedMethods = {'activate': True}
+    def activate(self):
+        pass

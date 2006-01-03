@@ -188,7 +188,7 @@ class Examples(rend.Page):
         return widgets.WidgetPage(None, None)
 
     def child_benchmark(self, ctx):
-        return benchmark.Benchmark(10, 10)
+        return benchmark.Benchmark(400, 20)
 
 
 application = service.Application("examples")
