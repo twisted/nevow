@@ -66,6 +66,7 @@ try:
     from athenademo import typeahead
     from athenademo import widgets
     from athenademo import athenatest
+    from athenademo import benchmark
 except ImportError, e:
     if str(e).find('No module named') != -1:
         msg = """
@@ -185,6 +186,10 @@ class Examples(rend.Page):
 
     def child_widgets(self, ctx):
         return widgets.WidgetPage(None, None)
+
+    def child_benchmark(self, ctx):
+        return benchmark.Benchmark(10, 10)
+
 
 application = service.Application("examples")
 strports.service("8080", appserver.NevowSite(Examples())).setServiceParent(application)
