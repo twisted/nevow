@@ -625,12 +625,12 @@ class LiveFragment(rend.Fragment):
     def render_liveFragment(self, ctx, data):
         modules = [dep.name for dep in self._getModuleForClass().allDependencies()]
 
-        return ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
+        return ([tags.script(type='text/javascript',
+                             src=self.getJSModuleURL(mod))
+                 for mod in modules if self.page._shouldInclude(mod)],
+                ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
                           'athena:id': self._athenaID,
-                          'athena:class': self.jsClass})[
-            [tags.script(type='text/javascript', src=self.getJSModuleURL(mod))
-             for mod in modules if self.page._shouldInclude(mod)]]
-
+                          'athena:class': self.jsClass}))
 
     def getJSModuleURL(self, moduleName):
         return self.page.getJSModuleURL(moduleName)
@@ -639,7 +639,7 @@ class LiveFragment(rend.Fragment):
     def locateMethod(self, ctx, methodName):
         if methodName in self.allowedMethods:
             return getattr(self, methodName)
-        raise AttributeError(methodName)
+        raise AttributeError(self, methodName)
 
 
     def callRemote(self, methodName, *varargs):

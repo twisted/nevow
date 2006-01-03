@@ -186,7 +186,7 @@ class WidgetInATable(AthenaTestMixin, athena.LiveFragment):
       <tbody>
         <tr>
           <td n:render="liveFragment">
-            <button onclick="test_WidgetInATable(this)">Test Widget In A Table</button>
+            <button onclick="test(test_WidgetInATable(this))">Test Widget In A Table</button>
           </td>
         </tr>
       </tbody>
@@ -195,12 +195,7 @@ class WidgetInATable(AthenaTestMixin, athena.LiveFragment):
 
     javascriptTest = """
     test_WidgetInATable = function(node) {
-        try {
-            Nevow.Athena.Widget.get(node).test();
-            alert("Success!");
-        } catch(err) {
-            alert("Failure: " + err.message);
-        }
+        Nevow.Athena.Widget.get(node).test();
     }
     """
     docFactory = loaders.xmlstr(template)
@@ -215,7 +210,7 @@ class WidgetIsATable(AthenaTestMixin, athena.LiveFragment):
       <tbody>
         <tr>
           <td>
-            <button onclick="test_WidgetIsATable(this)">Test Widget Is A Table</button>
+            <button onclick="test(test_WidgetIsATable(this))">Test Widget Is A Table</button>
           </td>
         </tr>
       </tbody>
@@ -224,12 +219,7 @@ class WidgetIsATable(AthenaTestMixin, athena.LiveFragment):
 
     javascriptTest = """
     test_WidgetIsATable = function(node) {
-        try {
-            Nevow.Athena.Widget.get(node).test();
-            alert("Success!");
-        } catch(err) {
-            alert("Failure: " + err.message);
-        }
+        Nevow.Athena.Widget.get(node).test();
     }
     """
     docFactory = loaders.xmlstr(template)
@@ -245,6 +235,35 @@ class AutomaticClass(AthenaTestMixin, athena.LiveFragment):
         tags.button(onclick='test(Nevow.Athena.Widget.get(this).clicked())')[
             'Automatic athena:class attribute']])
 
+class ImportBeforeLiteralJavascript(AthenaTestMixin, athena.LiveFragment):
+
+    template = """
+    <p xmlns:n="http://nevow.com/ns/nevow/0.1">
+      <button onclick="test(test_ImportBeforeLiteralJavascript())">Test Import Before Literal Javascript</button>
+      <div n:render="liveFragment">
+        <script type="text/javascript">
+          var ibljResult;
+          if (typeof Nevow.Athena.Widget == undefined) {
+              ibljResult = 0;
+          } else {
+              ibljResult = 1;
+          }
+        </script>
+      </div>
+    </p>
+    """
+
+    javascriptTest = """
+    test_ImportBeforeLiteralJavascript = function() {
+        if (ibljResult) {
+            return MochiKit.Async.succeed(null);
+        } else {
+            return MochiKit.Async.fail(null);
+        }
+    }
+    """
+
+    docFactory = loaders.xmlstr(template)
 
 
 class AthenaTests(athena.LivePage):
@@ -255,15 +274,15 @@ class AthenaTests(athena.LivePage):
                 tags.invisible(render=tags.directive('liveglue')),
                 tags.script(type='text/javascript')["""
                 function test(deferred) {
-                    if (!deferred.addCallback || !deferred.addErrback) {
+                    if (deferred == undefined || !deferred.addCallback || !deferred.addErrback) {
                         deferred = new MochiKit.Async.succeed(deferred);
                     }
 
                     deferred.addCallback(function (result) {
-                        alert('Success!');
+                        Divmod.log('test', 'Success!');
                     });
                     deferred.addErrback(function (err) {
-                        alert('Failure: ' + err.message);
+                        Divmod.log('test', 'Failure: ' + err.message);
                     });
                     return false;
                 }
@@ -285,6 +304,9 @@ class AthenaTests(athena.LivePage):
     addSlash = True
 
     tests = [
+        # ImportBeforeLiteralJavascript _must_ be the first test.
+        ImportBeforeLiteralJavascript,
+
         ClientToServerArgumentSerialization,
         ClientToServerResultSerialization,
         ClientToServerExceptionResult,
