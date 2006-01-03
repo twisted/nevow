@@ -69,6 +69,19 @@ function testUtil() {
     assert(Divmod.namedAny('Divmod.namedAny') == Divmod.namedAny);
 }
 
+function testMethod() {
+    var MethodClassTest = Divmod.Class.subclass();
+    MethodClassTest.method(
+	"foo", function(self) {
+	    return function () {
+		return self;
+	    };
+	});
+    var mct = new MethodClassTest();
+    assert(mct.foo()() === mct);
+}
+
 testClass();
 testUtil();
+testMethod();
 print("SUCCESS");

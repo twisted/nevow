@@ -128,6 +128,14 @@ Divmod.Class.subclass = function() {
         return superResult;
     };
 
+    subClass.method = function(methodName, methodFunction) {
+	subClass.prototype[methodName] = function() {
+	    var args = Array.apply(null, arguments);
+	    args.unshift(this);
+	    return methodFunction.apply(this, args);
+	};
+    };
+
     /**
        Not quite sure what to do with this...
     **/
@@ -143,7 +151,8 @@ Divmod.Class.subclass = function() {
 };
 
 Divmod.Class.prototype.__init__ = function() {
-    throw new Error("If you ever hit this code path something has gone horribly wrong");
+    /* throw new Error("If you ever hit this code path something has gone horribly wrong");
+     */
 };
 
 if (typeof(Nevow) == 'undefined') {
