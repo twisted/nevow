@@ -176,17 +176,19 @@ class AthenaTestMixin:
     jsModules = {
         u'AthenaTest': util.resource_filename('athenademo', 'athenatest.js')}
 
+    javascriptTest = ''
+
 
 
 class WidgetInATable(AthenaTestMixin, athena.LiveFragment):
     jsClass = u"AthenaTest.WidgetInATable"
 
     template = """
-    <table xmlns:n="http://nevow.com/ns/nevow/0.1">
+    <table xmlns:n='http://nevow.com/ns/nevow/0.1'>
       <tbody>
         <tr>
-          <td n:render="liveFragment">
-            <button onclick="test(test_WidgetInATable(this))">Test Widget In A Table</button>
+          <td n:render='liveFragment'>
+            <button onclick='test(test_WidgetInATable(this))'>Test Widget In A Table</button>
           </td>
         </tr>
       </tbody>
@@ -223,6 +225,56 @@ class WidgetIsATable(AthenaTestMixin, athena.LiveFragment):
     }
     """
     docFactory = loaders.xmlstr(template)
+
+
+
+class ParentChildRelationshipTest(AthenaTestMixin, athena.LiveFragment):
+    jsClass = u"AthenaTest.ChildParent"
+
+    template = """
+    <div xmlns:n='http://nevow.com/ns/nevow/0.1' n:render='liveFragment'>
+        <button onclick='test(Nevow.Athena.Widget.get(this).test())'>
+        Test Parent Child Relationships
+        </button>
+        <div n:render='childrenWidgets' />
+    </div>
+    """
+
+    docFactory = loaders.xmlstr(template)
+
+    def render_childrenWidgets(self, ctx, data):
+        for i in xrange(3):
+            yield ChildFragment(self.page, i)
+
+
+    allowedMethods = {'getChildCount': True}
+    def getChildCount(self):
+        return 3
+
+
+
+class ChildFragment(athena.LiveFragment):
+    jsClass = u'AthenaTest.ChildParent'
+
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
+        tags.div(render=tags.directive('childrenWidgets')),
+        'child'])
+
+    def __init__(self, page, childCount):
+        super(ChildFragment, self).__init__()
+        self.page = page
+        self.childCount = childCount
+
+
+    def render_childrenWidgets(self, ctx, data):
+        # yield tags.div['There are ', self.childCount, 'children']
+        for i in xrange(self.childCount):
+            yield ChildFragment(self.page, self.childCount - 1)
+
+
+    allowedMethods = {'getChildCount': True}
+    def getChildCount(self):
+        return self.childCount
 
 
 
@@ -315,6 +367,7 @@ class AthenaTests(athena.LivePage):
         WidgetInATable,
         WidgetIsATable,
         AutomaticClass,
+        ParentChildRelationshipTest,
         ]
 
 

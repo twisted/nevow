@@ -347,6 +347,8 @@ class LivePage(rend.Page):
     # bugs.
     TRANSPORT_IDLE_TIMEOUT = 300
 
+    page = property(lambda self: self)
+
     def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
 
@@ -356,6 +358,7 @@ class LivePage(rend.Page):
             jsModules = JSPackage(jsDeps.mapping)
         self.jsModules = jsModules
         self.jsModuleRoot = jsModuleRoot
+        self.liveFragmentChildren = []
         self._includedModules = ['MochiKit', 'Divmod', 'Nevow.Athena']
 
 
@@ -612,10 +615,41 @@ class LiveFragment(rend.Fragment):
 
     jsClass = u'Nevow.Athena.Widget'
 
+    def __init__(self, *a, **k):
+        super(LiveFragment, self).__init__(*a, **k)
+        self.liveFragmentChildren = []
+
     def rend(self, context, data):
         self._athenaID = self.page.addLocalObject(self)
         context.fillSlots('athena:id', self._athenaID)
         return super(LiveFragment, self).rend(context, data)
+
+
+    def setFragmentParent(self, fragmentParent):
+        """
+        Sets the L{LiveFragment} (or L{LivePage}) which is the logical parent
+        of this fragment.  This should parallel the client-side hierarchy.
+
+        All LiveFragments must have setFragmentParent called on them before
+        they are rendered for the client; otherwise, they will be unable to
+        properly hook up to the page.
+
+        LiveFragments should have their own setFragmentParent called before
+        calling setFragmentParent on any of their own children.  The normal way
+        to accomplish this is to instantiate your fragment children during the
+        render pass.
+
+        If that isn't feasible, instead override setFragmentParent and
+        instantiate your children there.
+
+        This architecture might seem contorted, but what it allows that is
+        interesting is adaptation of foreign objects to LiveFragment.  Anywhere
+        you adapt to LiveFragment, setFragmentParent is the next thing that
+        should be called.
+        """
+        self.fragmentParent = fragmentParent
+        self.page = fragmentParent.page
+        fragmentParent.liveFragmentChildren.append(self)
 
 
     def _getModuleForClass(self):

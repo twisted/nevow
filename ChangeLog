@@ -1,3 +1,11 @@
+2006-01-04  Glyph Lefkowitz  <glyph@twistedmatrix.com>
+
+	* nevow/athena.py: Added fragment and widget nesting.  On the
+	server side, this documents and provides a supported way of
+	setting the magical required "page" attribute.  On the client
+	side, this provides a convenient hook for multiple widgets within
+	a page to communicate with each other.
+
 2005-12-26  Jp Calderone <exarkun@divmod.com>
 
 	* nevow/athena.py: Added athena.js and MochiKit.js to the dictionary

@@ -68,3 +68,27 @@ the end
                 # All dependencies should be loaded before the module
                 # that depends upon them.
                 self.failUnless(allDeps.index(d) < allDeps.index(m))
+
+class TestFragment(athena.LiveFragment):
+    pass
+
+class Nesting(unittest.TestCase):
+
+    def testFragmentNesting(self):
+        lp = athena.LivePage()
+        tf1 = TestFragment()
+        tf2 = TestFragment()
+
+        tf1.setFragmentParent(lp)
+        tf2.setFragmentParent(tf1)
+
+        self.assertEquals(lp.liveFragmentChildren, [tf1])
+        self.assertEquals(tf1.liveFragmentChildren, [tf2])
+        self.assertEquals(tf2.liveFragmentChildren, [])
+        self.assertEquals(tf2.fragmentParent, tf1)
+        self.assertEquals(tf1.fragmentParent, lp)
+
+        self.assertEquals(tf2.page, lp)
+        self.assertEquals(tf1.page, lp)
+
+

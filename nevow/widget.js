@@ -10,10 +10,26 @@
  */
 
 Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass();
+
 Nevow.Athena.Widget.prototype.__init__ = function(widgetNode) {
     this.node = widgetNode;
+    this.childWidgets = [];
+    this.widgetParent = null;
     Nevow.Athena.Widget.upcall(this, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
 };
+
+Nevow.Athena.Widget.method(
+    'addChildWidget',
+    function(self, newChild) {
+        self.childWidgets.push(newChild);
+        newChild.setWidgetParent(self);
+    });
+
+Nevow.Athena.Widget.method(
+    'setWidgetParent',
+    function(self, widgetParent) {
+        self.widgetParent = widgetParent;
+    });
 
 Nevow.Athena.Widget.prototype.visitNodes = function(visitor) {
     Nevow.Athena._walkDOM(this.node, function(node) {
@@ -78,6 +94,13 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
                 Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
                 var inst = cls.get(n);
                 Divmod.debug("widget", "Widget class " + cls + " instantiated.");
+                try {
+                    var widgetParent = Nevow.Athena.Widget.get(n.parentNode);
+                    widgetParent.addChildWidget(inst);
+                } catch (noParent) {
+                    // Right now we're going to do nothing here.
+                    Divmod.debug("widget", "No parent found for widget " + inst);
+                }
                 if (inst.loaded != undefined) {
                     inst.loaded();
                     Divmod.debug("widget", "Widget class " + cls + " loaded.");

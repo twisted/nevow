@@ -3,14 +3,18 @@ if (typeof Divmod == 'undefined') {
     Divmod = {};
 }
 
+Divmod.logNodeId = 'nevow-log';
 
 Divmod.log = function(kind, msg) {
-    var logElement = document.getElementById('nevow-log');
-    if (logElement != null) {
-        var msgElement = document.createElement('div');
-        msgElement.appendChild(document.createTextNode(kind + ': ' + msg));
-        logElement.appendChild(msgElement);
+    var logElement = document.getElementById(Divmod.logNodeId);
+    if (!logElement) {
+        logElement = document.createElement('div');
+        logElement.setAttribute('id', Divmod.logNodeId);
+        document.getElementsByTagName('body')[0].appendChild(logElement);
     }
+    var msgElement = document.createElement('div');
+    msgElement.appendChild(document.createTextNode(kind + ': ' + msg));
+    logElement.appendChild(msgElement);
 }
 
 Divmod.debugging = false;
@@ -495,7 +499,8 @@ Nevow.Athena.athenaIDFromNode = function(n) {
 };
 
 Nevow.Athena.athenaClassFromNode = function(n) {
-    var athenaClass = Nevow.Athena.getAttribute(n, Nevow.Athena.XMLNS_URI, 'athena', 'class');
+    var athenaClass = Nevow.Athena.getAttribute(
+        n, Nevow.Athena.XMLNS_URI, 'athena', 'class');
     if (athenaClass != null) {
         var cls = Divmod.namedAny(athenaClass);
         if (cls == undefined) {
@@ -562,7 +567,7 @@ Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
 Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
     var nodes = Nevow.Athena.NodesByAttribute(root, attrName, attrValue);
     if (nodes.length > 1) {
-        throw new Error("Found too many " + attrValue + " " + n);
+        throw new Error("Found too many " + attrName + " = " + attrValue);
     } else if (nodes.length < 1) {
         throw new Error("Failed to discover node with class value " +
                         attrValue + " beneath " + root +
