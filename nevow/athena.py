@@ -544,7 +544,7 @@ class LivePage(rend.Page):
         return self.jsModuleRoot.child(moduleName)
 
     def render_liveglue(self, ctx, data):
-        return [
+        return ctx.tag[
             tags.script(type='text/javascript', src=self.getJSModuleURL('MochiKit')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow.Athena')),
