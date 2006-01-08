@@ -110,6 +110,10 @@ class htmlstr(object):
     _cache = None
 
     def __init__(self, template=None, pattern=None, beExtremelyLenient=None):
+        warnings.warn(
+            "[v0.8] htmlstr is deprecated because it's buggy. Please start using xmlfile and/or xmlstr.",
+            DeprecationWarning,
+            stacklevel=2)
         if template is not None:
             self.template = template
         if pattern is not None:
@@ -143,6 +147,10 @@ class htmlfile(object):
     _cache = None
 
     def __init__(self, template=None, pattern=None, templateDir=None, beExtremelyLenient=None):
+        warnings.warn(
+            "[v0.8] htmlfile is deprecated because it's buggy. Please start using xmlfile and/or xmlstr.",
+            DeprecationWarning,
+            stacklevel=2)
         if template is not None:
             self.template = template
         if pattern is not None:

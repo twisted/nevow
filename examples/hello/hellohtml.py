@@ -8,5 +8,5 @@ class Page(rend.Page):
     """Example of using an HTML template to render a page.
     """
     addSlash = True
-    docFactory = loaders.htmlfile(util.sibpath(__file__, 'hellohtml.html'))
+    docFactory = loaders.xmlfile(util.sibpath(__file__, 'hellohtml.html'))
 
