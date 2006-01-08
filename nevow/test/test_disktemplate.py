@@ -3,6 +3,8 @@
 
 from __future__ import generators
 
+from twisted.internet import defer
+
 from nevow import context
 from nevow import flat
 from nevow import rend
@@ -31,7 +33,7 @@ def deferredRender(res):
     d = res.renderHTTP(context.PageContext(tag=res, parent=context.RequestContext(tag=defres)))
     def accumulated(result, req):
         return req.accumulator
-    return util.deferredResult(d.addCallback(accumulated, defres), timeout=1)
+    return d.addCallback(accumulated, defres)
 
 
 class TestHTMLRenderer(testutil.TestCase):
@@ -42,15 +44,15 @@ class TestHTMLRenderer(testutil.TestCase):
 
     def test_stringTemplate(self):
         r = rend.Page(docFactory=loaders.htmlstr(self.xhtml))
-        result = deferredRender(r)
-        self.assertEquals(result, self.xhtml)
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, self.xhtml))
 
     def test_diskTemplate(self):
         temp = self.mktemp()
         open(temp, 'w').write(self.xhtml)
         r = rend.Page(docFactory=loaders.htmlfile(temp))
-        result = deferredRender(r)
-        self.assertEquals(result, self.xhtml)
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, self.xhtml))
 
 
 class TestStandardRenderers(testutil.TestCase):
@@ -97,11 +99,11 @@ class TestStandardRenderers(testutil.TestCase):
 
         tr = TemplateRenderer(docFactory=loaders.htmlfile(temp))
 
-        result = deferredRender(tr)
-        self.assertEquals(
-            result, 
+        return deferredRender(tr).addCallback(
+            lambda result: self.assertEquals(
+            result,
             '<html><head><title>THE TITLE</title></head><body><h3>THE HEADER</h3>SOME DUMMY TEXT</body></html>'
-        )
+            ))
 
     def test_sequence(self):
         """Test case provided by mg
@@ -115,11 +117,12 @@ class TestStandardRenderers(testutil.TestCase):
 
         tr = TemplateRenderer(docFactory=loaders.htmlfile(temp))
 
-        result = deferredRender(tr)
-        self.assertEquals(
+        return deferredRender(tr).addCallback(
+            lambda result:
+            self.assertEquals(
             result, '<ol><li>one</li><li>two</li><li>three</li></ol>',
             "Whoops. We didn't get what we expected!"
-        )
+            ))
 
     def test_sequence2(self):
         """Test case provided by radix
@@ -133,11 +136,12 @@ class TestStandardRenderers(testutil.TestCase):
 
         tr = TemplateRenderer(docFactory=loaders.htmlfile(temp))
 
-        result = deferredRender(tr)
-        self.assertEquals(
+        return deferredRender(tr).addCallback(
+            lambda result:
+            self.assertEquals(
             result, '<ol><li><span>one</span></li><li><span>two</span></li><li><span>three</span></li></ol>',
             "Whoops. We didn't get what we expected!"
-        )
+            ))
 
 
     def test_slots(self):
@@ -158,11 +162,12 @@ class TestStandardRenderers(testutil.TestCase):
                     context.fillSlots(name, value)
                 return context.tag
 
-        result = deferredRender(Renderer(docFactory=loaders.htmlfile(temp)))
-        self.assertEquals(
+        return deferredRender(Renderer(docFactory=loaders.htmlfile(temp))).addCallback(
+            lambda result:
+            self.assertEquals(
             result,
             "<table><tr><td>one</td><td>two</td></tr><tr><td>three</td><td>four</td></tr></table>",
-            "Whoops. We didn't get what we expected!")
+            "Whoops. We didn't get what we expected!"))
 
     def test_patterns(self):
         temp = self.mktemp()
@@ -176,13 +181,15 @@ class TestStandardRenderers(testutil.TestCase):
             def render_foo(self, context, data):
                 return context.tag.allPatterns(data)
 
-        result = deferredRender(Mine("one", docFactory=loaders.htmlfile(temp)))
-        self.assertEquals(result, '<span>ONE</span>')
-        result = deferredRender(Mine("two", docFactory=loaders.htmlfile(temp)))
-        self.assertEquals(result, '<span>TWO</span>')
-        result = deferredRender(Mine("three", docFactory=loaders.htmlfile(temp)))
-        self.assertEquals(result, '<span>THREE</span>')
-        
+        return defer.DeferredList([
+            deferredRender(Mine("one", docFactory=loaders.htmlfile(temp))).addCallback(
+            lambda result: self.assertEquals(result, '<span>ONE</span>')),
+            deferredRender(Mine("two", docFactory=loaders.htmlfile(temp))).addCallback(
+            lambda result: self.assertEquals(result, '<span>TWO</span>')),
+            deferredRender(Mine("three", docFactory=loaders.htmlfile(temp))).addCallback(
+            lambda result: self.assertEquals(result, '<span>THREE</span>'))
+            ], fireOnOneErrback=True)
+
 
 
 class TestSubclassAsRenderAndDataFactory(testutil.TestCase):
@@ -203,12 +210,13 @@ class TestSubclassAsRenderAndDataFactory(testutil.TestCase):
                 return "world"
 
         sr = Subclass()
-        result = deferredRender(sr)
-        self.assertSubstring('hello', result)
-        self.assertSubstring('world', result)
-        self.assertEquals(result,
-            "<html><div>hello</div>world</html>"
-        )
+        D = deferredRender(sr)
+        def after(result):
+            self.assertSubstring('hello', result)
+            self.assertSubstring('world', result)
+            self.assertEquals(result,
+                              "<html><div>hello</div>world</html>")
+        return D.addCallback(after)
 
 
 class TestXmlFileWithSlots(testutil.TestCase):

@@ -432,7 +432,7 @@ class Serialization(TestCase):
             (r'/foo/', '%2Ffoo%2F'),
             (r'c:\foo\bar bar', 'c%3A%5Cfoo%5Cbar%20bar'),
             (r'&<>', '%26%3C%3E'),
-            (r'!"£$%^&*()_+', '!%22%C2%A3%24%25%5E%26*()_%2B'),
+            (u'!"\N{POUND SIGN}$%^&*()_+'.encode('utf-8'), '!%22%C2%A3%24%25%5E%26*()_%2B'),
             )
         for test, result in tests:
             u = url.URL.fromString(base).child(test)
@@ -479,37 +479,51 @@ class Serialization(TestCase):
             #print link
             self.failUnlessEqual(result, flatten(base.click(link)))
     test_rfc1808.todo = 'Many of these fail miserably at the moment; often with a / where there shouldn\'t be'
-    
-    
+
+
 class RedirectResource(TestCase):
     """Test the url redirect resource adapters.
     """
-    
+
     def renderResource(self, u):
         request = FakeRequest()
         ctx = context.RequestContext(tag=request)
-        r = unittest.deferredResult(util.maybeDeferred(inevow.IResource(u).renderHTTP, ctx))
-        return r, request.redirected_to
-    
+        return util.maybeDeferred(inevow.IResource(u).renderHTTP, ctx).addCallback(
+            lambda r: (r, request.redirected_to))
+
+
     def test_urlRedirect(self):
         u = "http://localhost/"
-        html, redirected_to = self.renderResource(url.URL.fromString(u))
-        self.assertIn(u, html)
-        self.assertEquals(u, redirected_to)
-        
+        D = self.renderResource(url.URL.fromString(u))
+        def after((html, redirected_to)):
+            self.assertIn(u, html)
+            self.assertEquals(u, redirected_to)
+        return D.addCallback(after)
+
+
     def test_urlRedirectWithParams(self):
-        html, redirected_to = self.renderResource(url.URL.fromString("http://localhost/").child('child').add('foo', 'bar'))
-        self.assertIn("http://localhost/child?foo=bar", html)
-        self.assertEquals("http://localhost/child?foo=bar", redirected_to)
-        
+        D = self.renderResource(url.URL.fromString("http://localhost/").child('child').add('foo', 'bar'))
+        def after((html, redirected_to)):
+            self.assertIn("http://localhost/child?foo=bar", html)
+            self.assertEquals("http://localhost/child?foo=bar", redirected_to)
+        return D.addCallback(after)
+
+
     def test_deferredURLParam(self):
-        html, redirected_to = self.renderResource(url.URL.fromString("http://localhost/").child(util.succeed('child')).add('foo',util.succeed('bar')))
-        self.assertIn("http://localhost/child?foo=bar", html)
-        self.assertEquals("http://localhost/child?foo=bar", redirected_to)
+        D = self.renderResource(
+            url.URL.fromString("http://localhost/")
+            .child(util.succeed('child')).add('foo',util.succeed('bar'))
+            )
+        def after((html, redirected_to)):
+            self.assertIn("http://localhost/child?foo=bar", html)
+            self.assertEquals("http://localhost/child?foo=bar", redirected_to)
+        return D.addCallback(after)
+
 
     def test_deferredURLOverlayParam(self):
-        html, redirected_to = self.renderResource(url.here.child(util.succeed('child')).add('foo',util.succeed('bar')))
-        self.assertIn("http://localhost/child?foo=bar", html)
-        self.assertEquals("http://localhost/child?foo=bar", redirected_to)
+        D = self.renderResource(url.here.child(util.succeed('child')).add('foo',util.succeed('bar')))
+        def after((html, redirected_to)):
+            self.assertIn("http://localhost/child?foo=bar", html)
+            self.assertEquals("http://localhost/child?foo=bar", redirected_to)
+        return D.addCallback(after)
 
-    

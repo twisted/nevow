@@ -56,7 +56,7 @@ def deferredRender(res):
         defres.d.callback(defres.accumulator)
         return result
     d.addCallback(done)
-    return unittest.deferredResult(defres.d, 1)
+    return defres.d
 
 
 class TestPage(unittest.TestCase):
@@ -64,16 +64,16 @@ class TestPage(unittest.TestCase):
     def test_simple(self):
         xhtml = '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'
         r = rend.Page(docFactory=loaders.htmlstr(xhtml))
-        result = deferredRender(r)
-        self.assertEquals(result, xhtml)
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, xhtml))
 
     def test_extend(self):
         xhtml = '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'
         class R(rend.Page):
             docFactory = loaders.htmlstr(xhtml)
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, xhtml)
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, xhtml))
 
     def test_data(self):
 
@@ -84,8 +84,10 @@ class TestPage(unittest.TestCase):
             def data_numbers(self, context, data):
                 return ['one', 'two', 'three']
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>')
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(
+            result,
+            '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'))
 
     def test_noData(self):
         """Test when data is missing, i.e. self.original is None and no data
@@ -95,8 +97,8 @@ class TestPage(unittest.TestCase):
             def render_foo(self, ctx, data):
                 return ctx.tag.clear()[data]
         r = R()
-        result = deferredRender(r)
-        self.assertIn('None', result)
+        return deferredRender(r).addCallback(
+            lambda result: self.assertIn('None', result))
 
     def test_render(self):
 
@@ -108,8 +110,8 @@ class TestPage(unittest.TestCase):
                 return context.tag.clear()['abc']
 
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, '<span>abc</span>')
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, '<span>abc</span>'))
 
     def test_dataAndRender(self):
 
@@ -134,8 +136,8 @@ class TestPage(unittest.TestCase):
                 return context.tag
 
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, '<table><tr><th>English</th><th>French</th></tr><tr><td>one</td><td>un/une</td></tr><tr><td>two</td><td>deux</td></tr><tr><td>three</td><td>trois</td></tr></table>')
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, '<table><tr><th>English</th><th>French</th></tr><tr><td>one</td><td>un/une</td></tr><tr><td>two</td><td>deux</td></tr><tr><td>three</td><td>trois</td></tr></table>'))
 
     def test_stanData(self):
 
@@ -148,8 +150,8 @@ class TestPage(unittest.TestCase):
             docFactory = loaders.stan(tags)
 
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, '<ul><li>one</li><li>two</li><li>three</li></ul>')
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, '<ul><li>one</li><li>two</li><li>three</li></ul>'))
 
     def test_stanRender(self):
 
@@ -161,8 +163,8 @@ class TestPage(unittest.TestCase):
             docFactory = loaders.stan(tags)
 
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, '<span>abc</span>')
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, '<span>abc</span>'))
 
     def test_stanDataAndRender(self):
 
@@ -188,8 +190,8 @@ class TestPage(unittest.TestCase):
             docFactory = loaders.stan(tags)
 
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, '<table><tr><th>English</th><th>French</th></tr><tr><td>one</td><td>un/une</td></tr><tr><td>two</td><td>deux</td></tr><tr><td>three</td><td>trois</td></tr></table>')
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, '<table><tr><th>English</th><th>French</th></tr><tr><td>one</td><td>un/une</td></tr><tr><td>two</td><td>deux</td></tr><tr><td>three</td><td>trois</td></tr></table>'))
 
     def test_composite(self):
 
@@ -204,8 +206,8 @@ class TestPage(unittest.TestCase):
                     ]
                 )
         r = R()
-        result = deferredRender(r)
-        self.assertEquals(result, '<div id="outer"><div id="inner"></div></div>')
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, '<div id="outer"><div id="inner"></div></div>'))
 
     def test_docFactoryInStanTree(self):
 
@@ -226,16 +228,22 @@ class TestPage(unittest.TestCase):
         f.write(doc)
         f.close()
 
-        result = deferredRender(Page(loaders.stan(p['fee'])))
-        self.assertEquals(result, '<div><p>fee</p></div>')
-        result = deferredRender(Page(loaders.htmlstr('<p>fi</p>')))
-        self.assertEquals(result, '<div><p>fi</p></div>')
-        result = deferredRender(Page(loaders.xmlstr('<p>fo</p>')))
-        self.assertEquals(result, '<div><p>fo</p></div>')
-        result = deferredRender(Page(loaders.htmlfile(temp)))
-        self.assertEquals(result, '<div><p>fum</p></div>')
-        result = deferredRender(Page(loaders.xmlfile(temp)))
-        self.assertEquals(result, '<div><p>fum</p></div>')
+        return defer.DeferredList([
+            deferredRender(Page(loaders.stan(p['fee']))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fee</p></div>')),
+
+            deferredRender(Page(loaders.htmlstr('<p>fi</p>'))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fi</p></div>')),
+
+            deferredRender(Page(loaders.xmlstr('<p>fo</p>'))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fo</p></div>')),
+
+            deferredRender(Page(loaders.htmlfile(temp))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fum</p></div>')),
+
+            deferredRender(Page(loaders.xmlfile(temp))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fum</p></div>'))],
+                                  fireOnOneErrback=True)
 
 
     def test_buffered(self):
@@ -245,8 +253,9 @@ class TestPage(unittest.TestCase):
             docFactory = loaders.stan(html[head[title['test']]])
 
         p = Page()
-        result = deferredRender(p)
-        self.assertEquals(result, '<html><head><title>test</title></head></html>')
+        return deferredRender(p).addCallback(
+            lambda result:
+            self.assertEquals(result, '<html><head><title>test</title></head></html>'))
 
     def test_component(self):
         """
@@ -272,8 +281,9 @@ class TestPage(unittest.TestCase):
             docFactory = loaders.stan(div[Component(Data())])
 
         page = Page()
-        result = deferredRender(page)
-        self.assertEquals(result, '<div><p><strong>foo</strong> bar</p></div>')
+        return deferredRender(page).addCallback(
+            lambda result:
+            self.assertEquals(result, '<div><p><strong>foo</strong> bar</p></div>'))
 
     def test_fragmentContext(self):
         # A fragment is remembered as the IRendererFactory. It must create a new context
@@ -306,7 +316,7 @@ class TestPage(unittest.TestCase):
                 return context.tag["after"]
 
         result = Page().renderSynchronously()
-        print result
+        # print result
         self.failIf("'foo' was not found" in result)
         self.failIf("'after' was not found" in result)
 
@@ -349,10 +359,8 @@ class TestFragment(unittest.TestCase):
         class Page(rend.Page):
             docFactory = loaders.stan(Fragment())
 
-        try:
-            result = deferredRender(Page())
-        except:
-            self.fail('Fragment pattern abuse is probably broken again.')
+        # If this fails, fragment pattern abuse is probably broken again.
+        return deferredRender(Page())
 
 
 class TestRenderFactory(unittest.TestCase):
@@ -378,7 +386,7 @@ class TestLocateConfigurable(unittest.TestCase):
             docFactory = loaders.stan(html[freeform.renderForms()])
 
         page = Page()
-        result = deferredRender(page)
+        return deferredRender(page)
 
     def test_onSelfOriginal(self):
 
@@ -386,7 +394,7 @@ class TestLocateConfigurable(unittest.TestCase):
             docFactory = loaders.stan(html[freeform.renderForms('original')])
 
         page = Page(Thing())
-        result = deferredRender(page)
+        return deferredRender(page)
 
     def test_onKeyedConfigurable(self):
 
@@ -402,7 +410,7 @@ class TestLocateConfigurable(unittest.TestCase):
             docFactory = loaders.stan(html[freeform.renderForms('thing')])
 
         page = Page()
-        result = deferredRender(page)
+        return deferredRender(page)
 
 
 class TestDeferredDefaultValue(unittest.TestCase):
@@ -417,20 +425,16 @@ class TestDeferredDefaultValue(unittest.TestCase):
             implements(IDeferredProperty)
             d = deferred
 
-        result = deferredRender(rend.Page(Implementation(), docFactory=loaders.stan(html[freeform.renderForms('original')])))
-
-        self.assertIn('value="the default value"', result)
+        return deferredRender(rend.Page(Implementation(), docFactory=loaders.stan(html[freeform.renderForms('original')]))).addCallback(
+            lambda result: self.assertIn('value="the default value"', result))
 
 
 class TestRenderString(unittest.TestCase):
 
     def test_simple(self):
-
         doc = div[p['foo'],p['bar']]
-        result = unittest.deferredResult(
-            rend.Page(docFactory=loaders.stan(doc)).renderString()
-            )
-        self.assertEquals(result, '<div><p>foo</p><p>bar</p></div>')
+        return rend.Page(docFactory=loaders.stan(doc)).renderString().addCallback(
+            lambda result: self.assertEquals(result, '<div><p>foo</p><p>bar</p></div>'))
 
     def test_parentCtx(self):
         class IFoo(compy.Interface):
@@ -441,10 +445,12 @@ class TestRenderString(unittest.TestCase):
             def render_foo(self, ctx, data):
                 return IFoo(ctx)
             docFactory = loaders.stan(p[render_foo])
-        self.assertEquals(
-            unittest.deferredResult(Page().renderString(ctx)),
+        return Page().renderString(ctx).addCallback(
+            lambda result:
+            self.assertEquals(
+            result,
             '<p>Hello!</p>'
-            )
+            ))
 
     def test_remembers(self):
 
@@ -461,8 +467,8 @@ class TestRenderString(unittest.TestCase):
             def render_bar(self, ctx, data):
                 return ctx.tag.clear()[data+'bar']
 
-        result = unittest.deferredResult(Page().renderString())
-        self.assertEquals(result, '<html><body><p>foobar</p></body></html>')
+        return Page().renderString().addCallback(
+            lambda result: self.assertEquals(result, '<html><body><p>foobar</p></body></html>'))
 
 
 class TestRenderSynchronously(unittest.TestCase):
@@ -486,11 +492,9 @@ class TestRenderSynchronously(unittest.TestCase):
 
 
 def getResource(root, path):
-    return unittest.deferredResult(
-        appserver.NevowSite(root).getPageContextForRequestContext(
+    return appserver.NevowSite(root).getPageContextForRequestContext(
             context.RequestContext(
                 tag=testutil.FakeRequest(uri=path)))
-    )
 
 
 class TestLocateChild(unittest.TestCase):
@@ -502,8 +506,8 @@ class TestLocateChild(unittest.TestCase):
             pass
         p = Parent()
         p.putChild('child', Child())
-        r = getResource(p, '/child')
-        self.failUnless(inevow.IResource.providedBy(r.tag))
+        return getResource(p, '/child').addCallback(
+            lambda r: self.failUnless(inevow.IResource.providedBy(r.tag)))
 
     def test_resourceAttr(self):
         class Child(rend.Page):
@@ -511,8 +515,8 @@ class TestLocateChild(unittest.TestCase):
         class Parent(rend.Page):
             child_child = Child()
         p = Parent()
-        r = getResource(p, '/child')
-        self.failUnless(inevow.IResource.providedBy(r.tag))
+        return getResource(p, '/child').addCallback(
+            lambda r: self.failUnless(inevow.IResource.providedBy(r.tag)))
 
     def test_methodAttr(self):
         class Child(rend.Page):
@@ -523,13 +527,18 @@ class TestLocateChild(unittest.TestCase):
             def child_defer(self, request):
                 return defer.succeed(None).addCallback(lambda x: Child())
         p = Parent()
-        r = getResource(p, '/now')
+        return self._dotestparent(p)
 
-        self.failUnless(inevow.IResource.providedBy(r.tag))
+    def _dotestparent(self, p):
 
-        r = getResource(p, '/defer')
+        return defer.DeferredList([
+            getResource(p, '/now').addCallback(
+            lambda r: self.failUnless(inevow.IResource.providedBy(r.tag))),
 
-        self.failUnless(inevow.IResource.providedBy(r.tag))
+            getResource(p, '/defer').addCallback(
+
+            lambda r: self.failUnless(inevow.IResource.providedBy(r.tag)))],
+                                  fireOnOneErrback=True)
 
     def test_childFactory(self):
         class Child(rend.Page):
@@ -541,19 +550,15 @@ class TestLocateChild(unittest.TestCase):
                 if name == 'defer':
                     return defer.succeed(None).addCallback(lambda x: Child())
         p = Parent()
-        r = getResource(p, '/now')
-        self.failUnless(inevow.IResource.providedBy(r.tag))
-
-        r = getResource(p, '/defer')
-        self.failUnless(inevow.IResource.providedBy(r.tag))
+        return self._dotestparent(p)
 
     def test_oldResource(self):
         from twisted.web import twcgi
         class Parent(rend.Page):
             child_child = twcgi.CGIScript('abc.cgi')
         p = Parent()
-        r = getResource(p, '/child')
-        self.failUnless(inevow.IResource.providedBy(r.tag))
+        return getResource(p, '/child').addCallback(
+            lambda r: self.failUnless(inevow.IResource.providedBy(r.tag)))
 
     def test_noneChild(self):
         class Parent(rend.Page):
@@ -562,11 +567,15 @@ class TestLocateChild(unittest.TestCase):
             def geyDynamicChild(self, name, request):
                 return None
         p = Parent()
-        r = getResource(p, '/child')
-        self.failUnless(isinstance(r.tag, rend.FourOhFour))
 
-        r = getResource(p, '/other')
-        self.failUnless(isinstance(r.tag, rend.FourOhFour))
+        return defer.DeferredList([
+            getResource(p, '/child').addCallback(
+            lambda r: self.failUnless(isinstance(r.tag, rend.FourOhFour))),
+
+            getResource(p, '/other').addCallback(
+            lambda r: self.failUnless(isinstance(r.tag, rend.FourOhFour))
+            )],
+                                  fireOnOneErrback=True)
 
     def test_missingRemembrances(self):
 
@@ -585,8 +594,8 @@ class TestLocateChild(unittest.TestCase):
             docFactory = loaders.stan(html[render_it])
 
         page = Page()
-        r = getResource(page, '/child')
-        self.failUnless(inevow.IResource.providedBy(r.tag))
+        return getResource(page, '/child').addCallback(
+            lambda r: self.failUnless(inevow.IResource.providedBy(r.tag)))
 
     def test_redirectToURL(self):
         redirectTarget = "http://example.com/bar"
@@ -595,32 +604,32 @@ class TestLocateChild(unittest.TestCase):
                 return url.URL.fromString(redirectTarget), ()
 
         page = RedirectingPage()
-        r = getResource(page, '/url')
-        ## Render the redirect.
-        r.tag.renderHTTP(r)
-        req = inevow.IRequest(r)
-        self.assertEquals(req.redirected_to, redirectTarget)
+        def doAssert(r):
+            ## Render the redirect.
+            r.tag.renderHTTP(r)
+            req = inevow.IRequest(r)
+            self.assertEquals(req.redirected_to, redirectTarget)
 
-    def test_redirectQuoting(self):
+        return getResource(page, '/url').addCallback(doAssert)
+
+    def _testRedirecting(self,uchr):
         class RedirectingPage(rend.Page):
             def locateChild(self, ctx, segments):
                 return url.URL.fromString(self.original), ()
 
-        def doRedirect(url):
-            page = RedirectingPage(url)
-            r = getResource(page, '/url')
+        page = RedirectingPage(uchr)
+
+        def dotest(r):
             r.tag.renderHTTP(r)
-            return inevow.IRequest(r).redirected_to
+            self.assertEquals(uchr,
+                              inevow.IRequest(r).redirected_to)
 
-        funkyCharacters = 'http://example.com/foo!!bar'
-        self.assertEquals(
-            doRedirect(funkyCharacters),
-            funkyCharacters)
+        return getResource(page, '/url').addCallback(dotest)
 
-        queryParam = 'http://example.com/foo!%40%24bar?b!%40z=123'
-        self.assertEquals(
-            doRedirect(queryParam),
-            queryParam)
+
+    def test_redirectQuoting(self):
+        return self._testRedirecting('http://example.com/foo!!bar').addCallback(
+            lambda ign: self._testRedirecting('http://example.com/foo!%40%24bar?b!%40z=123'))
 
     def test_stringChild(self):
         theString = "<html>Hello, world</html>"
@@ -628,8 +637,10 @@ class TestLocateChild(unittest.TestCase):
             def child_foo(self, ctx):
                 return theString
         page = StringChildPage()
-        c = getResource(page, '/foo')
-        self.assertEquals(deferredRender(c.tag), theString)
+
+        return getResource(page, '/foo').addCallback(
+            lambda c: deferredRender(c.tag).addCallback(
+            lambda result: self.assertEquals(result, theString)))
 
     def test_freeformChildMixin_nonTrue(self):
         """Configurables that have c.__nonzero__()==False are accepted."""
@@ -644,18 +655,33 @@ class TestLocateChild(unittest.TestCase):
                 return SimpleConf()
         page = FormPage()
 
-        r = getResource(page, '/foo')
-        self.failUnless(isinstance(r.tag, rend.FourOhFour))
+        D = getResource(page, '/foo')
+        def x1(r):
+            self.failUnless(isinstance(r.tag, rend.FourOhFour))
+        D.addCallback(x1)
 
-        r = getResource(page, '/freeform_post!!foo')
-        self.failIf(isinstance(r.tag, rend.FourOhFour))
-        self.assertEquals(deferredRender(r.tag), 'You posted a form to foo')
+        def x2(ign):
+            D2 = getResource(page, '/freeform_post!!foo')
+            def x3(r):
+                self.failIf(isinstance(r.tag, rend.FourOhFour))
+                return deferredRender(r.tag).addCallback(
+                    lambda result: self.assertEquals(result, 'You posted a form to foo'))
+            D2.addCallback(x3)
+            return D2
+        D.addCallback(x2)
 
-        SimpleConf.__nonzero__ = lambda x: False
+        def x4(ign):
+            SimpleConf.__nonzero__ = lambda x: False
 
-        r = getResource(page, '/freeform_post!!foo')
-        self.failIf(isinstance(r.tag, rend.FourOhFour))
-        self.assertEquals(deferredRender(r.tag), 'You posted a form to foo')
+            D3 = getResource(page, '/freeform_post!!foo')
+            def x5(r):
+                self.failIf(isinstance(r.tag, rend.FourOhFour))
+                return deferredRender(r.tag).addCallback(
+                    lambda result:
+                    self.assertEquals(result, 'You posted a form to foo'))
+            return D3.addCallback(x5)
+        D.addCallback(x4)
+        return D
 
 
 class TestStandardRenderers(unittest.TestCase):

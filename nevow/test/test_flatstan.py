@@ -17,6 +17,9 @@ from nevow import rend
 from nevow import compy
 from nevow.testutil import FakeRequest, TestCase
 
+from twisted.trial import util
+from nevow.flat import twist
+
 proto = stan.Proto('hello')
 
 
@@ -33,21 +36,19 @@ class Base(TestCase):
         ctx = context.WovenContext(parent=ctx, precompile=precompile)
         return ctx
 
-    def render(self, tag, precompile=False, data=None, setupRequest=lambda r: r, setupContext=lambda c:c):
+    def render(self, tag, precompile=False, data=None, setupRequest=lambda r: r, setupContext=lambda c:c, wantDeferred=False):
         ctx = self.setupContext(precompile, setupRequest)
         ctx = setupContext(ctx)
         if precompile:
             return flat.precompile(tag, ctx)
         else:
-            try:
-                from twisted.trial import util
-                from nevow.flat import twist
-            except ImportError:
-                return flat.flatten(tag, ctx)
-            else:
+            if wantDeferred:
                 L = []
-                util.deferredResult(twist.deferflatten(tag, ctx, L.append))
-                return ''.join(L)
+                D = twist.deferflatten(tag, ctx, L.append)
+                D.addCallback(lambda igresult: ''.join(L))
+                return D
+            else:
+                return flat.flatten(tag, ctx)
 
 
 class TestSimpleSerialization(Base):
@@ -359,14 +360,16 @@ class TestComplexSerialization(Base):
         def locateIt(ctx, data):
             return IFoo(ctx)
         tag = tags.invisible(render=rememberIt)[tags.invisible(render=locateIt)]
-        self.assertEquals(self.render(tag), "bar")
+        self.render(tag, wantDeferred=True).addCallback(
+            lambda result: self.assertEquals(result, "bar"))
 
     def test_deferredFromNestedFunc(self):
         def outer(ctx, data):
             def inner(ctx, data):
                 return defer.succeed(tags.p['Hello'])
             return inner
-        self.assertEquals(self.render(tags.invisible(render=outer)), '<p>Hello</p>')
+        self.render(tags.invisible(render=outer), wantDeferred=True).addCallback(
+            lambda result: self.assertEquals(result, '<p>Hello</p>'))
 
     def test_dataContextCreation(self):
         data = {'foo':'oof', 'bar':'rab'}
@@ -443,8 +446,9 @@ class TestNoneAttribute(Base):
     test_deepSlot.skip = "Attribute name flattening must happen later for this to work"
 
     def test_deferredSlot(self):
-        val = self.render(tags.html().fillSlots('bar', defer.succeed(None))(foo=tags.slot('bar'))["Bar"])
-        self.assertEquals(val, "<html>Bar</html>")
+        self.render(tags.html().fillSlots('bar', defer.succeed(None))(foo=tags.slot('bar'))["Bar"],
+                    wantDeferred=True).addCallback(
+            lambda val: self.assertEquals(val, "<html>Bar</html>"))
     test_deferredSlot.skip = "Attribute name flattening must happen later for this to work"
 
 

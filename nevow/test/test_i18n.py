@@ -172,21 +172,19 @@ class Render(unittest.TestCase):
         def finisher(result):
             return io.getvalue()
 
-        d = page.flattenFactory(doc, ctx, writer, finisher)
-        r = unittest.deferredResult(d, 1)
-        return r
+        return page.flattenFactory(doc, ctx, writer, finisher)
 
     def test_empty(self):
-        r = self.makePage([''])
-        self.assertEquals(r, 'MOCK()[]')
+        return self.makePage(['']).addCallback(
+            lambda r: self.assertEquals(r, 'MOCK()[]'))
 
     def test_simple(self):
-        r = self.makePage(['foo'])
-        self.assertEquals(r, 'MOCK()[foo]')
+        return self.makePage(['foo']).addCallback(
+            lambda r: self.assertEquals(r, 'MOCK()[foo]'))
 
     def test_stan(self):
-        r = self.makePage([tags.p['You should really avoid tags in i18n input.']])
-        self.assertEquals(r, 'MOCK()[<p>You should really avoid tags in i18n input.</p>]')
+        return self.makePage([tags.p['You should really avoid tags in i18n input.']]).addCallback(
+            lambda r: self.assertEquals(r, 'MOCK()[<p>You should really avoid tags in i18n input.</p>]'))
 
 class InterpolateTests:
     def test_mod_string(self):

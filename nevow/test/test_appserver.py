@@ -30,15 +30,13 @@ class TestLookup(testutil.TestCase):
         self.request = r
         r.postpath = url.split('/')
         ctx = context.RequestContext(tag=self.request)
-        deferred = util.maybeDeferred(appserver.NevowSite(root).getPageContextForRequestContext, ctx)
-        return util.deferredResult(
-            deferred
-        )
+        return util.maybeDeferred(
+            appserver.NevowSite(root).getPageContextForRequestContext, ctx)
 
     def test_leafIsRoot(self):
         root = Render()
-        result = self.getResourceFor(root, 'foo/bar/baz')
-        self.assertIdentical(result.tag, root)
+        self.getResourceFor(root, 'foo/bar/baz').addCallback(
+            lambda result: self.assertIdentical(result.tag, root))
 
     def test_children(self):
         class FirstTwo(Render):
@@ -49,15 +47,15 @@ class TestLookup(testutil.TestCase):
             def locateChild(self, context, segs):
                 return Render(), segs[1:]
 
-        result = self.getResourceFor(FirstTwo(), 'foo/bar/baz')
-        self.assertIdentical(result.tag.__class__, Render)
+        return self.getResourceFor(FirstTwo(), 'foo/bar/baz').addCallback(
+            lambda result: self.assertIdentical(result.tag.__class__, Render))
 
     def test_oldresource(self):
         from twisted.web import resource
         r = resource.Resource()
         r.putChild('foo', r)
-        result = self.getResourceFor(r, 'foo')
-        self.assertIdentical(r, result.tag.original)
+        return self.getResourceFor(r, 'foo').addCallback(
+            lambda result: self.assertIdentical(r, result.tag.original))
 
     def test_deferredChild(self):
         class Deferreder(Render):
@@ -66,9 +64,9 @@ class TestLookup(testutil.TestCase):
                 return d
 
         r = Deferreder()
-        result = self.getResourceFor(r, 'foo')
-        self.assertIdentical(r, result.tag)
-        
+        return self.getResourceFor(r, 'foo').addCallback(
+            lambda result: self.assertIdentical(r, result.tag))
+
     def test_cycle(self):
         class Resource(object):
             implements(inevow.IResource)
@@ -77,8 +75,13 @@ class TestLookup(testutil.TestCase):
                     return self, segments
                 return self, segments[1:]
         root = Resource()
-        self.assertRaises(AssertionError, self.getResourceFor, root, 'self')
-        self.getResourceFor(root, 'notself')
+
+        def asserterr(f):
+            f.trap(AssertionError)
+            return self.getResourceFor(root, 'notself')
+        self.getResourceFor(root, 'self').addCallbacks(
+            lambda : self.fail(),
+            asserterr)
 
 
 class TestSiteAndRequest(testutil.TestCase):
@@ -86,36 +89,35 @@ class TestSiteAndRequest(testutil.TestCase):
         s = appserver.NevowSite(resource)
         r = appserver.NevowRequest(testutil.FakeChannel(s), True)
         r.path = path
-        D = r.process()
-        return util.deferredResult(D)
+        return r.process()
 
     def test_deferredRender(self):
         class Deferreder(Render):
             def renderHTTP(self, context):
                 return util.succeed("hello")
 
-        result = self.renderResource(Deferreder(), 'foo')
-        self.assertEquals(result, "hello")
+        return self.renderResource(Deferreder(), 'foo').addCallback(
+            lambda result: self.assertEquals(result, "hello"))
 
     def test_regularRender(self):
         class Regular(Render):
             def renderHTTP(self, context):
                 return "world"
 
-        result = self.renderResource(Regular(), 'bar')
-        self.assertEquals(result, 'world')
+        return self.renderResource(Regular(), 'bar').addCallback(
+            lambda result: self.assertEquals(result, 'world'))
 
     def test_returnsResource(self):
         class Res2(Render):
             def renderHTTP(self, ctx):
                 return "world"
-            
+
         class Res1(Render):
             def renderHTTP(self, ctx):
                 return Res2()
 
-        result = self.renderResource(Res1(), 'bar')
-        self.assertEquals(result, 'world')
+        return self.renderResource(Res1(), 'bar').addCallback(
+            lambda result: self.assertEquals(result, 'world'))
 
 from twisted.internet import protocol, address
 
@@ -168,7 +170,7 @@ class Logging(testutil.TestCase):
         proto = self.renderResource('/foo')
         logLines = proto.site.logFile.getvalue().splitlines()
         self.assertEquals(len(logLines), 1)
-        print proto.transport.data.getvalue()
+        # print proto.transport.data.getvalue()
         self.assertEquals(logLines,
                           ['fakeaddress2 - - faketime "GET /foo HTTP/1.0" 200 6 "fakerefer" "fakeagent"'])
 

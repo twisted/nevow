@@ -33,7 +33,8 @@ class Base(test_flatstan.Base):
 
     def render(self, tag, setupContext=lambda c:c):
         return test_flatstan.Base.render(
-            self, tag, setupContext=setupContext)
+            self, tag, setupContext=setupContext,
+            wantDeferred=True)
 
     def renderForms(self, configurable, ctx=None, *args, **kwargs):
         self.conf = configurable
@@ -47,19 +48,19 @@ class Base(test_flatstan.Base):
     def postForm(self, ctx, obj, bindingName, args):
         self.conf = obj
         ctx.remember(self, iformless.IConfigurableFactory)
-        try:
-            posted = util.maybeDeferred(self.locateConfigurable,obj).addCallback(lambda x: x.postForm(
-                ctx, bindingName, args
-            ))
-            if isinstance(posted, util.Deferred):
-                posted = util.deferredResult(posted, 1)
-        except formless.ValidateError, e:
+
+        def trapValidate(f):
+            f.trap(formless.ValidateError)
+            e = f.value
             errors = ctx.locate(iformless.IFormErrors)
             ## Set the overall error for this form
             errors.setError(bindingName, e.formErrorMessage)
             errors.updateErrors(bindingName, e.errors)
             ctx.locate(iformless.IFormDefaults).getAllDefaults(bindingName).update(e.partialForm)
-            return e
+
+        return util.maybeDeferred(self.locateConfigurable,obj).addCallback(lambda x: x.postForm(
+            ctx, bindingName, args
+            )).addErrback(trapValidate)
 
 
 class Complete(Base):
@@ -76,11 +77,12 @@ class Complete(Base):
 
         dumb = StupidThing()
 
-        val = self.renderForms(dumb)
-        self.assertSubstring('freeform_post!!foo', val)
-        self.assertSubstring('foo', val)
-        self.assertSubstring('type="text"', val)
-        self.assertSubstring('<input type="submit"', val)
+        def doasserts(val):
+            self.assertSubstring('freeform_post!!foo', val)
+            self.assertSubstring('foo', val)
+            self.assertSubstring('type="text"', val)
+            self.assertSubstring('<input type="submit"', val)
+        return self.renderForms(dumb).addCallback(doasserts)
 
 
     def test_configureMethod(self):
@@ -97,10 +99,11 @@ class Complete(Base):
 
         stupid = DumbThing(1)
 
-        val = self.renderForms(stupid)
-        self.assertSubstring('freeform_post!!foo', val)
-        self.assertSubstring('foo', val)
-        self.assertSubstring('bar', val)
+        def doasserts(val):
+            self.assertSubstring('freeform_post!!foo', val)
+            self.assertSubstring('foo', val)
+            self.assertSubstring('bar', val)
+        return self.renderForms(stupid).addCallback(doasserts)
 
 
 class BuildingBlocksTest(Base):
@@ -112,18 +115,17 @@ class BuildingBlocksTest(Base):
         ## Look up a renderer specific to the type of our binding, typedValue;
         renderer = iformless.ITypedRenderer(
             binding.typedValue, None, persist=False)
-        
+
         ## But render the binding itself with this renderer
         ## The binding has the ".name" attribute we need
-        val = self.render(tags.invisible(data=binding, render=renderer))
+        def later(val):
+            self.assertSubstring('hello', val)
+            self.assertSubstring('Hello', val)
+            self.assertSubstring('Hello, world.', val)
+            self.failIfSubstring('</form>', val)
+            self.failIfSubstring('<input type="submit"', val)
+        return self.render(tags.invisible(data=binding, render=renderer)).addCallback(later)
 
-        self.assertSubstring('hello', val)
-        self.assertSubstring('Hello', val)
-        self.assertSubstring('Hello, world.', val)
-        self.failIfSubstring('</form>', val)
-        self.failIfSubstring('<input type="submit"', val)
-        
-        #print val
     test_1_renderTyped.todo = "Render binding"
 
     def test_2_renderPropertyBinding(self):
@@ -133,15 +135,13 @@ class BuildingBlocksTest(Base):
 
         # Look up an IBindingRenderer, which will render the form and the typed
         renderer = iformless.IBindingRenderer(binding)
-        val = self.render(tags.invisible(data=binding, render=renderer))
-        
-        self.assertSubstring('<form ', val)
-        self.assertSubstring('<input type="submit"', val)
-        self.assertSubstring('name="goodbye"', val)
-        self.assertSubstring('Goodbye', val)
-        self.assertSubstring('Goodbye cruel world', val)
-        
-        #print val
+        def later(val):
+            self.assertSubstring('<form ', val)
+            self.assertSubstring('<input type="submit"', val)
+            self.assertSubstring('name="goodbye"', val)
+            self.assertSubstring('Goodbye', val)
+            self.assertSubstring('Goodbye cruel world', val)
+        return self.render(tags.invisible(data=binding, render=renderer)).addCallback(later)
 
     def test_3_renderMethodBinding(self):
         binding = formless.MethodBinding('doit', formless.Method(
@@ -151,14 +151,14 @@ class BuildingBlocksTest(Base):
             description="Do it to 'em all"))
 
         renderer = iformless.IBindingRenderer(binding)
-        val = self.render(tags.invisible(data=binding, render=renderer))
 
-        self.assertSubstring('<form ', val)
-        self.assertSubstring('Do It', val)
-        self.assertSubstring("Do it to 'em all", val)
-        self.assertSubstring("Foo", val)
-        self.assertSubstring('name="foo"', val)
-        #print val
+        def later(val):
+            self.assertSubstring('<form ', val)
+            self.assertSubstring('Do It', val)
+            self.assertSubstring("Do it to 'em all", val)
+            self.assertSubstring("Foo", val)
+            self.assertSubstring('name="foo"', val)
+        return self.render(tags.invisible(data=binding, render=renderer)).addCallback(later)
 
 
 class TestDefaults(Base):
@@ -173,9 +173,11 @@ class TestDefaults(Base):
             return ctx
 
         renderer = iformless.IBindingRenderer(binding)
-        val = self.render(tags.invisible(data=binding, render=renderer), setupContext=setupCtx)
-        self.failIfSubstring('0', val)
-        self.assertSubstring('15', val)
+        def later(val):
+            self.failIfSubstring('0', val)
+            self.assertSubstring('15', val)
+        return self.render(tags.invisible(data=binding, render=renderer), setupContext=setupCtx).addCallback(
+            later)
 
     def test_2_renderWithObjectPropertyValues(self):
         class IDefaultProperty(formless.TypedInterface):
@@ -185,9 +187,10 @@ class TestDefaults(Base):
             implements(IDefaultProperty)
             default = 54
 
-        val = self.renderForms(Foo(None))
-        self.failIfSubstring('2', val)
-        self.assertSubstring('54', val)
+        def later(val):
+            self.failIfSubstring('2', val)
+            self.assertSubstring('54', val)
+        return self.renderForms(Foo(None)).addCallback(later)
 
     def test_3_renderWithAdapteeAttributeValues(self):
         class IDefaultProperty(formless.TypedInterface):
@@ -199,9 +202,10 @@ class TestDefaults(Base):
         class Bar(configurable.Configurable):
             implements(IDefaultProperty)
 
-        val = self.renderForms(Bar(Adaptee()))
-        self.failIfSubstring('2', val)
-        self.assertSubstring('69', val)
+        def later(val):
+            self.failIfSubstring('2', val)
+            self.assertSubstring('69', val)
+        return self.renderForms(Bar(Adaptee())).addCallback(later)
 
     def test_4_testBindingDefaults(self):
         class IBindingDefaults(formless.TypedInterface):
@@ -214,10 +218,10 @@ class TestDefaults(Base):
         class Implements(configurable.Configurable):
             implements(IBindingDefaults)
 
-        val = self.renderForms(Implements(None))
-
-        self.assertSubstring("The foo", val)
-        self.assertSubstring("The property", val)
+        def later(val):
+            self.assertSubstring("The foo", val)
+            self.assertSubstring("The property", val)
+        return self.renderForms(Implements(None)).addCallback(later)
 
     def test_5_testDynamicDefaults(self):
         class IDynamicDefaults(formless.TypedInterface):
@@ -231,15 +235,15 @@ class TestDefaults(Base):
         class Implements(configurable.Configurable):
             implements(IDynamicDefaults)
 
-        val = self.renderForms(Implements(None), bindingDefaults={
+        def later(val):
+            self.assertSubstring("YESFOO", val)
+            self.assertSubstring("YESBAR", val)
+            self.assertNotSubstring("NOTFOO", val)
+            self.assertNotSubstring("NOTBAR", val)
+
+        return self.renderForms(Implements(None), bindingDefaults={
                 'aMethod': {'foo': 'YESFOO'},
-                'bMethod': {'foo': 'YESBAR'}})
-
-        self.assertSubstring("YESFOO", val)
-        self.assertSubstring("YESBAR", val)
-        self.assertNotSubstring("NOTFOO", val)
-        self.assertNotSubstring("NOTBAR", val)
-
+                'bMethod': {'foo': 'YESBAR'}}).addCallback(later)
 
 
 class TestNonConfigurableSubclass(Base):
@@ -253,9 +257,11 @@ class TestNonConfigurableSubclass(Base):
         class ANonConfigurable(object): # Not subclassing Configurable
             implements(ISimpleTypedInterface) # But implements a TypedInterface
 
-        val = self.renderForms(ANonConfigurable())
-        self.assertSubstring('anInt', val)
-        self.assertSubstring('aMethod', val)
+        def later(val):
+            self.assertSubstring('anInt', val)
+            self.assertSubstring('aMethod', val)
+
+        return self.renderForms(ANonConfigurable()).addCallback(later)
 
 
 
@@ -276,14 +282,14 @@ class TestPostAForm(Base):
         theObj = APasswordImplementation()
         ctx = self.setupContext()
 
-        result = self.postForm(ctx, theObj, "password", {"pword": ["these passwords"], "pword____2": ["don't match"], 'integer': ['Not integer']})
-
-        self.assertEquals(theObj.matched, False)
-
-        val = self.renderForms(theObj, ctx)
-
-        self.assertSubstring("Passwords do not match. Please reenter.", val)
-        self.assertSubstring('value="Not integer"', val)
+        D = self.postForm(ctx, theObj, "password", {"pword": ["these passwords"], "pword____2": ["don't match"], 'integer': ['Not integer']})
+        def after(result):
+            self.assertEquals(theObj.matched, False)
+            def later(val):
+                self.assertSubstring("Passwords do not match. Please reenter.", val)
+                self.assertSubstring('value="Not integer"', val)
+            return self.renderForms(theObj, ctx).addCallback(later)
+        return D.addCallback(after)
 
     def test_2_propertyFailed(self):
         class IAProperty(formless.TypedInterface):
@@ -295,10 +301,12 @@ class TestPostAForm(Base):
 
         theObj = Impl()
         ctx = self.setupContext()
-        result = self.postForm(ctx, theObj, 'prop', {'prop': ['bad']})
-        val = self.renderForms(theObj, ctx)
-
-        self.assertSubstring('value="bad"', val)
+        D = self.postForm(ctx, theObj, 'prop', {'prop': ['bad']})
+        def after(result):
+            def later(val):
+                self.assertSubstring('value="bad"', val)
+            return self.renderForms(theObj, ctx).addCallback(later)
+        return D.addCallback(after)
 
 
 class TestRenderPropertyGroup(Base):
@@ -329,27 +337,31 @@ class TestRenderPropertyGroup(Base):
 
         impl = Implementation()
         ctx = self.setupContext()
-        val = self.renderForms(impl)
 
-        self.postForm(ctx, impl, "Inner", {'one': ['Not an integer'], 'two': ['22']})
+        def later(val):
+            D = self.postForm(ctx, impl, "Inner", {'one': ['Not an integer'], 'two': ['22']})
 
-        self.assertEquals(impl.one, 1)
-        self.assertEquals(impl.two, 2)
-        self.assertEquals(impl.buckled, False)
-        self.assertEquals(impl.buried, False)
+            def after(result):
 
-        val = self.renderForms(impl, ctx)
-        self.assertSubstring("is not an integer", val)
-        # TODO: Get default values for property groups displaying properly.
-        #self.assertSubstring('value="Not an integer"', val)
+                self.assertEquals(impl.one, 1)
+                self.assertEquals(impl.two, 2)
+                self.assertEquals(impl.buckled, False)
+                self.assertEquals(impl.buried, False)
 
-        self.postForm(ctx, impl, "Inner", {'one': ['11'], 'two': ['22']})
-
-        self.assertEquals(impl.one, 11)
-        self.assertEquals(impl.two, 22)
-        self.assertEquals(impl.buckled, True)
-        self.assertEquals(impl.buried, True)
-
+                def evenlater(moreval):
+                    self.assertSubstring("is not an integer", moreval)
+                    # TODO: Get default values for property groups displaying properly.
+                    #self.assertSubstring('value="Not an integer"', moreval)
+                    DD = self.postForm(ctx, impl, "Inner", {'one': ['11'], 'two': ['22']})
+                    def afterafter(ign):
+                        self.assertEquals(impl.one, 11)
+                        self.assertEquals(impl.two, 22)
+                        self.assertEquals(impl.buckled, True)
+                        self.assertEquals(impl.buried, True)
+                    return DD.addCallback(afterafter)
+                return self.renderForms(impl, ctx).addCallback(evenlater)
+            return D.addCallback(after)
+        return self.renderForms(impl).addCallback(later)
 
 class TestRenderMethod(Base):
 
@@ -363,9 +375,11 @@ class TestRenderMethod(Base):
         class Impl:
             implements(IFoo)
 
-        val = self.renderForms(Impl(), bindingNames=['foo'])
-        self.assertSubstring('value="Foo"', val)
-        self.assertSubstring('name="abc"', val)
+        def later(val):
+            self.assertSubstring('value="Foo"', val)
+            self.assertSubstring('name="abc"', val)
+        return self.renderForms(Impl(), bindingNames=['foo']).addCallback(later)
+
 
     def testActionLabel(self):
 
@@ -377,9 +391,10 @@ class TestRenderMethod(Base):
         class Impl:
             implements(IFoo)
 
-        val = self.renderForms(Impl(), bindingNames=['foo'])
-        self.assertSubstring('value="FooFooFoo"', val)
-        self.assertSubstring('name="abc"', val)
+        def later(val):
+            self.assertSubstring('value="FooFooFoo"', val)
+            self.assertSubstring('name="abc"', val)
+        return self.renderForms(Impl(), bindingNames=['foo']).addCallback(later)
 
     def testOneSigMultiCallables(self):
 
@@ -392,11 +407,12 @@ class TestRenderMethod(Base):
         class Impl:
             implements(IFoo)
 
-        val = self.renderForms(Impl(), bindingNames=['foo'])
-        self.assertSubstring('value="Foo"', val)
-        val = self.renderForms(Impl(), bindingNames=['bar'])
-        self.assertSubstring('value="FooFooFoo"', val)
-
+        def later1(val):
+            self.assertSubstring('value="Foo"', val)
+            def later2(val):
+                self.assertSubstring('value="FooFooFoo"', val)
+            return self.renderForms(Impl(), bindingNames=['bar']).addCallback(later2)
+        return self.renderForms(Impl(), bindingNames=['foo']).addCallback(later1)
     testOneSigMultiCallables.todo = 'autocallable should not set attributes directly on the callable'
 
 
@@ -425,12 +441,12 @@ class TestCustomTyped(Base):
 
         inst = Implementation()
         ctx = self.setupContext()
-        self.postForm(ctx, inst, 'theFunc', {'test': ['a test value']})
-        
-        self.assertEquals(typedinst.passed, True)
-        self.assertEquals(typedinst.wasBoundTo, inst)
-
-        self.assertEquals(inst.called, True)
+        D = self.postForm(ctx, inst, 'theFunc', {'test': ['a test value']})
+        def after(result):
+            self.assertEquals(typedinst.passed, True)
+            self.assertEquals(typedinst.wasBoundTo, inst)
+            self.assertEquals(inst.called, True)
+        return D.addCallback(after)
 
 
 class TestUneditableProperties(Base):
@@ -440,14 +456,15 @@ class TestUneditableProperties(Base):
 
         class Impl(object):
             implements(Uneditable)
-            
+
             aProp = property(lambda self: "HELLO")
 
         inst = Impl()
 
-        val = self.renderForms(inst)
-        self.assertSubstring('HELLO', val)
-        self.failIfSubstring('type="text"', val)
+        def later(val):
+            self.assertSubstring('HELLO', val)
+            self.failIfSubstring('type="text"', val)
+        return self.renderForms(inst).addCallback(later)
 
 
 class TestAfterValidation(Base):
@@ -465,10 +482,14 @@ class TestAfterValidation(Base):
 
         inst = Thing()
         ctx = self.setupContext()
-        self.postForm(ctx, inst, 'foo', {'foo': ['abc']})
-
-        val = self.renderForms(inst, ctx)
-        self.assertSubstring('value="abc"', val)
+        D = self.postForm(ctx, inst, 'foo', {'foo': ['abc']})
+        def after(result):
+            def later(val):
+                def morelater(noval):
+                    self.assertSubstring('value="abc"', val)
+                return self.renderForms(inst, ctx).addCallback(morelater)
+            return self.renderForms(inst)
+        return D.addCallback(after)
 
 
 class TestHandAndStatus(Base):
@@ -489,9 +510,11 @@ class TestHandAndStatus(Base):
 
         inst = Method()
         ctx = self.setupContext()
-        self.postForm(ctx, inst, 'foo', {})
-        self.assertEquals(ctx.locate(inevow.IHand), returnResult)
-        self.assertEquals(ctx.locate(inevow.IStatusMessage), "'foo' success.")
+        D = self.postForm(ctx, inst, 'foo', {})
+        def after(result):
+            self.assertEquals(ctx.locate(inevow.IHand), returnResult)
+            self.assertEquals(ctx.locate(inevow.IStatusMessage), "'foo' success.")
+        return D.addCallback(after)
 
     def test_handFactory(self):
         """Test that the hand and status message are available after redirecting the post
@@ -521,9 +544,10 @@ class TestCharsetDetectionSupport(Base):
 
         impl = Impl()
         ctx = self.setupContext()
-        val = self.renderForms(impl, ctx)
-        self.assertIn('<input type="hidden" name="_charset_" />', val)
-        self.assertIn('accept-charset="utf-8"', val)
+        def later(val):
+            self.assertIn('<input type="hidden" name="_charset_" />', val)
+            self.assertIn('accept-charset="utf-8"', val)
+        return self.renderForms(impl, ctx).addCallback(later)
 
 
     def test_group(self):
@@ -537,9 +561,11 @@ class TestCharsetDetectionSupport(Base):
 
         impl = Impl()
         ctx = self.setupContext()
-        val = self.renderForms(impl, ctx)
-        self.assertIn('<input type="hidden" name="_charset_" />', val)
-        self.assertIn('accept-charset="utf-8"', val)
+        def later(val):
+            self.assertIn('<input type="hidden" name="_charset_" />', val)
+            self.assertIn('accept-charset="utf-8"', val)
+        return self.renderForms(impl, ctx).addCallback(later)
+
 
     def test_method(self):
 
@@ -553,26 +579,27 @@ class TestCharsetDetectionSupport(Base):
 
         impl = Impl()
         ctx = self.setupContext()
-        val = self.renderForms(impl, ctx)
-        self.assertIn('<input type="hidden" name="_charset_" />', val)
-        self.assertIn('accept-charset="utf-8"', val)
-        
-        
+        def later(val):
+            self.assertIn('<input type="hidden" name="_charset_" />', val)
+            self.assertIn('accept-charset="utf-8"', val)
+        return self.renderForms(impl, ctx).addCallback(later)
+
+
 class TestUnicode(Base):
-    
+
     def test_property(self):
-        
+
         class IThing(formless.TypedInterface):
             aString = formless.String(unicode=True)
-            
+
         class Impl(object):
             implements(IThing)
             aString = None
-            
+
         inst = Impl()
         ctx = self.setupContext()
-        self.postForm(ctx, inst, 'aString', {'aString':['\xc2\xa3']})
-        self.assertEquals(inst.aString, u'\xa3')
+        D = self.postForm(ctx, inst, 'aString', {'aString':['\xc2\xa3']})
+        return D.addCallback(lambda result: self.assertEquals(inst.aString, u'\xa3'))
 
 class TestChoice(Base):
     """Test various behaviors of submitting values to a Choice Typed.
@@ -596,8 +623,8 @@ class TestChoice(Base):
 
         inst = Impl()
         ctx = self.setupContext()
-        self.postForm(ctx, inst, 'choiceyFunc', {})
-        self.assertEquals(self.called, [])
+        D = self.postForm(ctx, inst, 'choiceyFunc', {})
+        return D.addCallback(lambda result: self.assertEquals(self.called, []))
 
 
 class mg(Base):
@@ -620,10 +647,10 @@ class mg(Base):
 
         impl = Impl()
         ctx = self.setupContext()
-        val = self.renderForms(
-            impl,
-            ctx)
-        self.assertEquals(val.count('fooFOOfoo'), 1)
+        def later(val):
+            self.assertEquals(val.count('fooFOOfoo'), 1)
+        return self.renderForms(impl, ctx)
+
 
 # What the *hell* is this?!?
 

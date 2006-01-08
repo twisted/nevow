@@ -131,25 +131,8 @@ try:
     from twisted.internet.defer import Deferred, succeed, maybeDeferred, DeferredList
     from twisted.python import failure
     from twisted.python.failure import Failure
-    from twisted.trial.unittest import deferredError
     from twisted.python import log
 
-    try:
-        # work with twisted before retrial
-        from twisted.trial.util import _getDeferredResult
-    except ImportError:
-        # and after retrial
-        from twisted.trial.util import wait as deferredResult
-    else:
-        def deferredResult(d, timeout=None):
-            """Waits for a Deferred to arrive, then returns or throws an exception,
-            based on the result.
-            """
-            result = _getDeferredResult(d, timeout)
-            if isinstance(result, failure.Failure):
-                raise result.value
-            else:
-                return result
 except ImportError:
     class Deferred(object): pass
     class Failure(object):
@@ -176,27 +159,6 @@ except ImportError:
                 print >> sys.stderr, "%s: %s" % (k, v)
 
     log = Logger()
-
-try:
-    # work with twisted before retrial
-    from twisted.trial.util import _getDeferredResult
-except ImportError:
-    # and after retrial
-    try:
-        from twisted.trial.util import wait as deferredResult
-    except ImportError:
-        # and with no twisted at all
-        def deferredResult(x): return x
-else:
-    def deferredResult(d, timeout=None):
-        """Waits for a Deferred to arrive, then returns or throws an exception,
-        based on the result.
-        """
-        result = _getDeferredResult(d, timeout)
-        if isinstance(result, failure.Failure):
-            raise result.value
-        else:
-            return result
 
 ## The tests rely on these, but they should be removed ASAP
 def remainingSegmentsFactory(ctx):
