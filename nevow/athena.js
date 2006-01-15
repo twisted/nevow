@@ -3,40 +3,20 @@ if (typeof Divmod == 'undefined') {
     Divmod = {};
 }
 
-Divmod.logNodeId = 'nevow-log';
-
-Divmod.log = function(kind, msg) {
-    var logElement = document.getElementById(Divmod.logNodeId);
-    if (!logElement) {
-        logElement = document.createElement('div');
-        logElement.setAttribute('id', Divmod.logNodeId);
-        document.getElementsByTagName('body')[0].appendChild(logElement);
-    }
-    var msgElement = document.createElement('div');
-    msgElement.appendChild(document.createTextNode(kind + ': ' + msg));
-    logElement.appendChild(msgElement);
-}
-
-Divmod.debugging = false;
-Divmod.debug = function() {
-    if (Divmod.debugging) {
-        Divmod.log.apply(null, arguments);
-    }
-};
-
-
 Divmod.baseURL = function() {
 
     // Use "cached" value if it exists
     if (Divmod._baseURL != undefined) {
         return Divmod._baseURL;
     }
+    var baseURL = Divmod._location;
+    if (baseURL == undefined) {
+        window.location.toString();
+        var queryParamIndex = baseURL.indexOf('?');
 
-    var baseURL = window.location.toString();
-    var queryParamIndex = baseURL.indexOf('?');
-
-    if (queryParamIndex != -1) {
-        baseURL = baseURL.substring(0, queryParamIndex);
+        if (queryParamIndex != -1) {
+            baseURL = baseURL.substring(0, queryParamIndex);
+        }
     }
 
     if (baseURL.charAt(baseURL.length - 1) != '/') {
@@ -55,30 +35,11 @@ Divmod.importURL = function(moduleName) {
 };
 
 
+Divmod._global = this;
+
 Divmod.namedAny = function(name) {
     var namedParts = name.split('.');
-    try {
-        Divmod.debug('import', 'namedAny(' + name + ')');
-        var obj = eval(namedParts.shift());
-    } catch (err) {
-        /**
-         * Firefox 1.0.7 and 1.5 both throw ReferenceError when an
-         * undefined variable is referenced.
-         */
-        if (err instanceof ReferenceError) {
-            return undefined;
-        }
-
-        /**
-         * Internet Explorer 6.0 throws a TypeError.
-         */
-        if (err instanceof TypeError) {
-            return undefined;
-        }
-
-        Divmod.debug('import', 'Unexpected error: ' + err.name + ' ' + err.message);
-        throw err;
-    }
+    var obj = Divmod._global;
     for (var p in namedParts) {
         obj = obj[namedParts[p]];
         if (obj == undefined) {
@@ -102,7 +63,7 @@ Divmod.Class = function(asPrototype) {
 Divmod.__classDebugCounter__ = 0;
 
 
-Divmod.Class.subclass = function() {
+Divmod.Class.subclass = function(/* optional */ className) {
     var superClass = this;
     var subClass = function() {
         return Divmod.Class.apply(this, arguments)
@@ -133,6 +94,13 @@ Divmod.Class.subclass = function() {
     };
 
     subClass.method = function(methodName, methodFunction) {
+        if (methodFunction != undefined) {
+            Divmod.debug('deprecation', 'method() just takes a function now (called with name = ' + methodName +').');
+        } else {
+            methodFunction = methodName;
+            methodName = methodFunction.name;
+        }
+
 	subClass.prototype[methodName] = function() {
 	    var args = Array.apply(null, arguments);
 	    args.unshift(this);
@@ -146,10 +114,18 @@ Divmod.Class.subclass = function() {
     Divmod.__classDebugCounter__ += 1;
     subClass.__classDebugCounter__ = Divmod.__classDebugCounter__;
     subClass.toString = function() {
-        return '<Class #' + subClass.__classDebugCounter__ + '>';
+        if (className == undefined) {
+            return '<Class #' + subClass.__classDebugCounter__ + '>';
+        } else {
+            return '<Class ' + className + '>';
+        }
     };
     subClass.prototype.toString = function() {
-        return '<"Instance" of #' + subClass.__classDebugCounter__ + '>';
+        if (className == undefined) {
+            return '<"Instance" of #' + subClass.__classDebugCounter__ + '>';
+        } else {
+            return '<"Instance" of ' + className + '>';
+        }
     };
     return subClass;
 };
@@ -158,6 +134,84 @@ Divmod.Class.prototype.__init__ = function() {
     /* throw new Error("If you ever hit this code path something has gone horribly wrong");
      */
 };
+
+
+Divmod.Logger = Divmod.Class.subclass('Divmod.Logger');
+Divmod.Logger.method(
+    function __init__(self) {
+        self.observers = [];
+    });
+
+Divmod.Logger.method(
+    function addObserver(self, observer) {
+        self.observers.push(observer);
+        return function() {
+            self._removeObserver(observer);
+        };
+    });
+
+Divmod.Logger.method(
+    function _removeObserver(self, observer) {
+        for (var i = 0; i < self.observers.length; ++i) {
+            if (observer === self.observers[i]) {
+                self.observers.splice(i, 1);
+                return;
+            }
+        }
+    });
+
+Divmod.Logger.method(
+    function _emit(self, event) {
+        var errors = [];
+        var obs = self.observers.slice();
+        for (var i = 0; i < obs.length; ++i) {
+            try {
+                obs[i](event);
+            } catch (e) {
+                self._removeObserver(obs[i]);
+                errors.push([e, "Log observer caused error, removing."]);
+            }
+        }
+        return errors;
+    });
+
+Divmod.Logger.method(
+    function emit(self, event) {
+        var errors = self._emit(event);
+        while (errors.length) {
+            var moreErrors = [];
+            for (var i = 0; i < errors.length; ++i) {
+                var e = self._emit({'isError': true, 'error': errors[i][0], 'message': errors[i][1]});
+                for (var j = 0; j < e.length; ++j) {
+                    moreErrors.push(e[j]);
+                }
+            }
+            errors = moreErrors;
+        }
+    });
+
+Divmod.Logger.method(
+    function err(self, error, /* optional */ message) {
+        var event = {'isError': true, 'error': error};
+        if (message != undefined) {
+            event['message'] = message;
+        }
+        self.emit(event);
+    });
+
+Divmod.Logger.method(
+    function msg(self, message) {
+        var event = {'isError': false, 'message': message};
+        self.emit(event);
+    });
+
+Divmod.logger = new Divmod.Logger();
+Divmod.msg = function() { return Divmod.logger.msg.apply(Divmod.logger, arguments); };
+Divmod.err = function() { return Divmod.logger.err.apply(Divmod.logger, arguments); };
+Divmod.debug = function(kind, msg) {
+    Divmod.logger.emit({'isError': false, 'message': msg, 'debug': true, 'channel': kind});
+};
+Divmod.log = Divmod.debug;
 
 if (typeof(Nevow) == 'undefined') {
     Nevow = {};
@@ -406,12 +460,12 @@ Nevow.Athena._noArgAction = function(actionName) {
 Nevow.Athena.sendNoOp = function() {
     Divmod.debug('transport', 'Sending no-op for AthenaID ' + Nevow.Athena.livepageId);
     Nevow.Athena._noArgAction('noop');
-}
+};
 
 Nevow.Athena.sendClose = function() {
     Divmod.debug('transport', 'Sending close for AthenaID ' + Nevow.Athena.livepageId);
     Nevow.Athena._noArgAction('close');
-}
+};
 
 Nevow.Athena._walkDOM = function(parent, test, memo) {
     if (memo == undefined) {
@@ -577,7 +631,7 @@ Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
         var result = nodes[0];
         return result;
     }
-}
+};
 
 Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;

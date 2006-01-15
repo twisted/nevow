@@ -351,7 +351,8 @@ class AthenaTests(athena.LivePage):
                 """],
                 tags.slot('methods')],
             tags.body[
-                tags.slot('tests'), tags.div(id='nevow-log')]]])
+                tags.slot('tests'),
+                tags.invisible(render=tags.directive('introspection'))]]])
 
     addSlash = True
 
@@ -387,3 +388,9 @@ class AthenaTests(athena.LivePage):
     def beforeRender(self, ctx):
         ctx.fillSlots('tests', self.renderTests())
         ctx.fillSlots('methods', self.renderMethods())
+
+
+    def render_introspection(self, ctx, data):
+        f = athena.IntrospectionFragment()
+        f.setFragmentParent(self)
+        return ctx.tag[f]

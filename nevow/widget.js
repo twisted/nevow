@@ -19,15 +19,13 @@ Nevow.Athena.Widget.prototype.__init__ = function(widgetNode) {
 };
 
 Nevow.Athena.Widget.method(
-    'addChildWidget',
-    function(self, newChild) {
+    function addChildWidget(self, newChild) {
         self.childWidgets.push(newChild);
         newChild.setWidgetParent(self);
     });
 
 Nevow.Athena.Widget.method(
-    'setWidgetParent',
-    function(self, widgetParent) {
+    function setWidgetParent(self, widgetParent) {
         self.widgetParent = widgetParent;
     });
 
@@ -124,6 +122,135 @@ Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
     Divmod.debug('widget', 'Invoking ' + methodName + ' on ' + widget + '(' + widget[methodName] + ')');
     return widget[methodName].apply(widget, varargs);
 };
+
+
+Nevow.Athena.IntrospectionWidget = Nevow.Athena.Widget.subclass('Nevow.Athena.IntrospectionWidget');
+
+Nevow.Athena.IntrospectionWidget.method(
+    function __init__(self, node) {
+        Nevow.Athena.IntrospectionWidget.upcall(self, '__init__', node);
+
+        self.infoNodes = {
+            'toggleDebugging': self.nodeByAttribute('class', 'toggle-debug'),
+        };
+
+        self.infoNodes['toggleDebugging'].onclick = function() { return self.toggleDebugging(); };
+
+        self.setDebuggingDisplayStyle();
+
+        self.events = [];
+        self.eventLimit = 1000;
+
+        self._logWindow = null;
+        self._logNode = null;
+
+        Divmod.logger.addObserver(function(event) { self.observe(event); });
+    });
+
+Nevow.Athena.IntrospectionWidget.method(
+    function observe(self, event) {
+        self.events.push(event);
+        if (self.events.length > self.eventLimit) {
+            self.events.shift();
+        }
+        if (self._logNode != null) {
+            try { self._addEvent(self._logNode, event); }
+            catch (e) { alert(e); }
+        }
+    });
+
+Nevow.Athena.IntrospectionWidget.method(
+    function _addEvent(self, node, event) {
+        var div = document.createElement('div');
+        if (event['isError']) {
+            div.setAttribute('class', 'log-message-error');
+        } else if (event['channel']) {
+            div.setAttribute('class', 'log-message-' + event['channel']);
+        }
+        div.appendChild(document.createTextNode(event['message']));
+        node.appendChild(div);
+        div.scrollIntoView(false);
+    });
+
+Nevow.Athena.consoleDoc = (
+    '<html>' +
+    '  <head>' +
+    '    <title>Log Console</title>' +
+    '    <style type="text/css">' +
+    '    body {' +
+    '      background-color: #fff;' +
+    '      color: #333;' +
+    '      font-size: 8pt;' +
+    '      margin: 0;' +
+    '      padding: 0;' +
+    '    }' +
+    '    #clear {' +
+    '      position: absolute;' +
+    '      right: 1em;' +
+    '      color: #900;' +
+    '    }' +
+    '    #console {' +
+    '      position: absolute;' +
+    '      top: 3em;' +
+    '      bottom: 0;' +
+    '      left: 0;' +
+    '      right: 0;' +
+    '      overflow: scroll;' +
+    '      font-family: monospace;' +
+    '      padding: 0 0.5em;' +
+    '    }' +
+    '    .log-message-error {' +
+    '      margin: 0 0 0 0;' +
+    '      padding: 0;' +
+    '      border-bottom: 1px dashed #ccf;' +
+    '      color: red;' +
+    '    }' +
+    '    .timestamp {' +
+    '      display: block;' +
+    '      font-weight: bold;' +
+    '      color: #999;' +
+    '    }' +
+    '    </style>' +
+    '  </head>' +
+    '  <body>' +
+    '    <div id="console" />' +
+    '  </body>' +
+    '</html>');
+
+Nevow.Athena.IntrospectionWidget.method(
+    function _openLogWindow(self) {
+        self._logWindow = window.open('', 'Nevow Athena Log Window', 'dependent=yes,height=640,width=480,resizable=yes');
+        self._logWindow.document.write(Nevow.Athena.consoleDoc);
+        self._logWindow.document.close();
+        self._logNode = self._logWindow.document.getElementById('console');
+    });
+
+Nevow.Athena.IntrospectionWidget.method(
+    function _closeLogWindow(self) {
+        if (self._logWindow) {
+            self._logWindow.close();
+            self._logWindow = null;
+            self._logNode = null;
+        }
+    });
+
+Nevow.Athena.IntrospectionWidget.method(
+    function toggleDebugging(self) {
+        Divmod.debugging ^= 1;
+        self.setDebuggingDisplayStyle();
+    });
+
+Nevow.Athena.IntrospectionWidget.method(
+    function setDebuggingDisplayStyle(self) {
+        if (Divmod.debugging) {
+            self.infoNodes['toggleDebugging'].setAttribute('class', 'nevow-athena-debugging-enabled');
+            self._openLogWindow();
+        } else {
+            self.infoNodes['toggleDebugging'].setAttribute('class', 'nevow-athena-debugging-disabled');
+            self._closeLogWindow();
+        }
+    });
+
 
 /**
  * Instantiate Athena Widgets, make initial server connection, and set

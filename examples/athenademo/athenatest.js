@@ -23,15 +23,12 @@ AthenaTest.WidgetInATable.prototype.test = function() {
 
 AthenaTest.ChildParent = Nevow.Athena.Widget.subclass();
 AthenaTest.ChildParent.method(
-    'checkParent',
-    function(self, proposedParent) {
+    function checkParent(self, proposedParent) {
         assertEquals(self.widgetParent, proposedParent);
     });
 
 AthenaTest.ChildParent.method(
-    'test',
-    function(self) {
-
+    function test(self) {
         var deferredList = function(finalDeferred, counter) {
             if (counter == 0) {
                 finalDeferred.callback(null);

@@ -15,7 +15,7 @@ load("../athena.js");
 
 function assert (cond, err) {
     if (!cond) {
-        throw new Error("Test Failure: "+err);
+        throw new Error("Test Failure: " + err);
     }
 }
 
@@ -71,17 +71,87 @@ function testUtil() {
 
 function testMethod() {
     var MethodClassTest = Divmod.Class.subclass();
+
+    /* Backwards compatibility test - this usage is deprecated
+     */
     MethodClassTest.method(
 	"foo", function(self) {
 	    return function () {
 		return self;
 	    };
 	});
+
+    /* This is the real way to do it
+     */
+    MethodClassTest.method(function bar(self) {
+        return function() {
+            return self;
+        };
+    });
+
     var mct = new MethodClassTest();
+
     assert(mct.foo()() === mct);
+    assert(mct.bar()() === mct);
 }
 
-testClass();
-testUtil();
-testMethod();
+function testLogger() {
+    var logEvents = [];
+
+    var removeObserver = Divmod.logger.addObserver(function(event) { logEvents.push(event); });
+
+    var logmsg = "(logging system test error) Hello, world";
+    Divmod.msg(logmsg);
+
+    assert(logEvents.length == 1);
+    assert(logEvents[0].isError == false);
+    assert(logEvents[0].message == logmsg);
+
+    logEvents = [];
+
+    var logerr = "(logging system test error) Doom, world.";
+    Divmod.err(new Error(logerr), logmsg);
+
+    assert(logEvents.length == 1);
+    assert(logEvents[0].isError == true);
+    assert(logEvents[0].error instanceof Error);
+    assert(logEvents[0].error.message == logerr);
+    assert(logEvents[0].message == logmsg);
+
+    removeObserver();
+    logEvents = [];
+    Divmod.msg(logmsg);
+    assert(logEvents.length == 0);
+
+    var observererr = "(logging system test error) Observer had a bug.";
+    Divmod.logger.addObserver(function(event) { throw new Error(observererr); });
+    Divmod.logger.addObserver(function(event) { logEvents.push(event); });
+
+    Divmod.msg(logmsg);
+    Divmod.msg(logerr);
+    assert(logEvents.length == 3, "Incorrect number of events logged");
+    assert(logEvents[0].isError == false, "First event should not have been an error");
+    assert(logEvents[0].message == logmsg, "First event had wrong message");
+    assert(logEvents[1].isError == true, "Second event should have been an error");
+    assert(logEvents[1].error.message == observererr, "Second event had wrong message");
+    assert(logEvents[2].isError == false, "Third event should not have been an error");
+    assert(logEvents[2].message == logerr, "Third event had wrong message");
+
+}
+
+Divmod.logger.addObserver(function(event) {
+    if (event['isError']) {
+        print(event['error']);
+    }
+});
+
+var testFunctions = [
+    testClass,
+    testUtil,
+    testMethod,
+    testLogger];
+
+for (var i = 0; i < testFunctions.length; ++i) {
+    testFunctions[i]();
+}
 print("SUCCESS");

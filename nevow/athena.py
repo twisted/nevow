@@ -8,7 +8,7 @@ from twisted.internet import defer, error, reactor
 from twisted.python import log, failure
 from twisted import plugin
 
-from nevow import inevow, plugins, stan
+from nevow import inevow, plugins, stan, flat
 from nevow import rend, loaders, url, static, json, util, tags, guard
 
 ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
@@ -349,7 +349,7 @@ class LivePage(rend.Page):
 
     page = property(lambda self: self)
 
-    def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, *a, **kw):
+    def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, transportRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
 
         self.iface = iface
@@ -358,6 +358,9 @@ class LivePage(rend.Page):
             jsModules = JSPackage(jsDeps.mapping)
         self.jsModules = jsModules
         self.jsModuleRoot = jsModuleRoot
+        if transportRoot is None:
+            transportRoot = url.here
+        self.transportRoot = transportRoot
         self.liveFragmentChildren = []
         self._includedModules = ['MochiKit', 'Divmod', 'Nevow.Athena']
 
@@ -549,8 +552,9 @@ class LivePage(rend.Page):
             tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow.Athena')),
             tags.script(type='text/javascript')[tags.raw("""
-                Nevow.Athena.livepageId = '%s';
-            """ % self.clientID)],
+                Divmod._location = '%(baseURL)s';
+                Nevow.Athena.livepageId = '%(clientID)s';
+            """ % {'clientID': self.clientID, 'baseURL': flat.flatten(self.transportRoot, ctx)})]
         ]
 
     def newTransport(self):
@@ -682,3 +686,17 @@ class LiveFragment(rend.Fragment):
             self._athenaID,
             unicode(methodName, 'ascii'),
             varargs)
+
+
+
+class IntrospectionFragment(LiveFragment):
+    """
+    Utility for developers which provides detailed information about
+    the state of a live page.
+    """
+
+    jsClass = u'Nevow.Athena.IntrospectionWidget'
+
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
+        tags.button(class_='toggle-debug')["Toggle Debugging"],
+        ])

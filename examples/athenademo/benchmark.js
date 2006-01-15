@@ -14,16 +14,14 @@ document.documentElement.insertBefore(
 
 Nevow.Benchmarks.InitializationBenchmark = Nevow.Athena.Widget.subclass();
 Nevow.Benchmarks.InitializationBenchmark.method(
-    '__init__',
-    function(self, node) {
+    function __init__(self, node) {
 	Nevow.Benchmarks.InitializationBenchmark.upcall(self, '__init__', node);
 	self.stamptime();
 	self.colorize('yellow');
     });
 
 Nevow.Benchmarks.InitializationBenchmark.method(
-    'loaded',
-    function(self) {
+    function loaded(self) {
 	self.stamptime();
 	self.colorize('purple');
 	var d = self.callRemote('activate');
@@ -32,13 +30,11 @@ Nevow.Benchmarks.InitializationBenchmark.method(
     });
 
 Nevow.Benchmarks.InitializationBenchmark.method(
-    'stamptime',
-    function(self) {
+    function stamptime(self) {
 	self.node.appendChild(document.createTextNode(' ' + timer()));
     });
 
 Nevow.Benchmarks.InitializationBenchmark.method(
-    'colorize',
-    function(self, color) {
+    function colorize(self, color) {
 	self.node.style.color = color;
     });
