@@ -4,7 +4,6 @@ if (typeof Divmod == 'undefined') {
 }
 
 Divmod.baseURL = function() {
-
     // Use "cached" value if it exists
     if (Divmod._baseURL != undefined) {
         return Divmod._baseURL;
@@ -99,6 +98,13 @@ Divmod.Class.subclass = function(/* optional */ className) {
         } else {
             methodFunction = methodName;
             methodName = methodFunction.name;
+        }
+
+        if (methodName == undefined) {
+            /* Sorry (IE).
+             */
+            var methodSource = methodFunction.toString();
+            methodName = methodSource.slice(methodSource.indexOf(' ') + 1, methodSource.indexOf('('));
         }
 
 	subClass.prototype[methodName] = function() {

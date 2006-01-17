@@ -107,7 +107,7 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
         } catch (e) {
             Divmod.debug('widget', '==================================================');
             Divmod.debug('widget', 'Error instantiating widget on tag ' + n.tagName);
-            for (var i in n.attributes) {
+            for (var i = 0; i < n.attributes.length; ++i) {
                 Divmod.debug('widget', i + ': ' + n.attributes[i].value);
             }
             Divmod.debug('widget', '==================================================');
@@ -131,7 +131,7 @@ Nevow.Athena.IntrospectionWidget.method(
         Nevow.Athena.IntrospectionWidget.upcall(self, '__init__', node);
 
         self.infoNodes = {
-            'toggleDebugging': self.nodeByAttribute('class', 'toggle-debug'),
+            'toggleDebugging': self.nodeByAttribute('class', 'toggle-debug')
         };
 
         self.infoNodes['toggleDebugging'].onclick = function() { return self.toggleDebugging(); };
@@ -154,8 +154,7 @@ Nevow.Athena.IntrospectionWidget.method(
             self.events.shift();
         }
         if (self._logNode != null) {
-            try { self._addEvent(self._logNode, event); }
-            catch (e) { alert(e); }
+            self._addEvent(self._logNode, event);
         }
     });
 
@@ -219,7 +218,7 @@ Nevow.Athena.consoleDoc = (
 
 Nevow.Athena.IntrospectionWidget.method(
     function _openLogWindow(self) {
-        self._logWindow = window.open('', 'Nevow Athena Log Window', 'dependent=yes,height=640,width=480,resizable=yes');
+        self._logWindow = window.open('', 'Nevow_Athena_Log_Window', 'width=640,height=480');
         self._logWindow.document.write(Nevow.Athena.consoleDoc);
         self._logWindow.document.close();
         self._logNode = self._logWindow.document.getElementById('console');
