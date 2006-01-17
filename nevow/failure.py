@@ -293,7 +293,7 @@ def formatFailure(myFailure):
         for name, var in localVars:
             if name == 'self' and hasattr(var, '__dict__'):
                 usedVars = [ (key, value) for (key, value) in var.__dict__.items()
-                             if re.search(r'\W'+'self.'+key+r'\W', textSnippet) ]
+                             if re.search(r'\Wself.%s\W' % (re.escape(key),), textSnippet) ]
                 if usedVars:
                     frame[
                         div(_class="variables")[
@@ -306,7 +306,7 @@ def formatFailure(myFailure):
         # Local and global vars
         for nm, varList in ('Locals', localVars), ('Globals', globalVars):
             usedVars = [ (name, var) for (name, var) in varList
-                         if re.search(r'\W'+name+r'\W', textSnippet) ]
+                         if re.search(r'\W%s\W' % (re.escape(name),), textSnippet) ]
             if usedVars:
                 frame[
                     div(_class="variables")[ strong(_class="variableClass")[ nm ] ],
