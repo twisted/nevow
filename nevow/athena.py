@@ -152,7 +152,7 @@ def allJavascriptPackages():
     C{Nevow.Athena} as a special case.
     """
     d = {}
-    for p in plugin.getPlugins(inevow.IJavascriptPackage, plugins):
+    for p in plugin.getPlugIns(inevow.IJavascriptPackage, plugins):
         d.update(p.mapping)
     return d
 
