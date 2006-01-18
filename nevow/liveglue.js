@@ -184,7 +184,11 @@ function nevow_setNode(node, to) {
 
 function nevow_appendNode(node, what) {
     var oldnode = document.getElementById(node);
-    oldnode.innerHTML += what;
+    var newspan = document.createElement('span');
+    newspan.innerHTML = what;
+    for (i=0; i<newspan.childNodes.length; i++) {
+        oldnode.appendChild(newspan.childNodes[i]);
+    }
 }
 
 function nevow_prependNode(node, what) {
