@@ -108,8 +108,9 @@ Divmod.Class.subclass = function(/* optional */ className) {
         }
 
 	subClass.prototype[methodName] = function() {
-	    var args = Array.apply(null, arguments);
-	    args.unshift(this);
+            var args = [this];
+            for(var i = 0; i < arguments.length; ++i)
+                args.push(arguments[i]);
 	    return methodFunction.apply(this, args);
 	};
     };
