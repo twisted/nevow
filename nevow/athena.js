@@ -48,6 +48,23 @@ Divmod.namedAny = function(name) {
     return obj;
 };
 
+Divmod.vars = function(obj) {
+    var L = [];
+    for (var i in o) {
+        L.push([i, obj[i]]);
+    }
+    return L;
+};
+
+
+Divmod.dir = function(obj) {
+    var L = [];
+    for (var i in o) {
+        L.push(i);
+    }
+    return L;
+};
+
 
 Divmod._PROTOTYPE_ONLY = {};
 
@@ -109,8 +126,9 @@ Divmod.Class.subclass = function(/* optional */ className) {
 
         subClass.prototype[methodName] = function() {
             var args = [this];
-            for(var i = 0; i < arguments.length; ++i)
+            for (var i = 0; i < arguments.length; ++i) {
                 args.push(arguments[i]);
+            }
             return methodFunction.apply(this, args);
         };
     };
@@ -141,6 +159,13 @@ Divmod.Class.prototype.__init__ = function() {
     /* throw new Error("If you ever hit this code path something has gone horribly wrong");
      */
 };
+
+
+Divmod.Module = Divmod.Class.subclass('Divmod.Module');
+Divmod.Module.method(
+    function __init__(self, name) {
+        self.name = name;
+    });
 
 
 Divmod.Logger = Divmod.Class.subclass('Divmod.Logger');

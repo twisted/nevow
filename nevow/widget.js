@@ -59,7 +59,8 @@ Nevow.Athena.Widget.get = function(node) {
     var widgetNode = Nevow.Athena.nodeByDOM(node);
     var widgetId = Nevow.Athena.athenaIDFromNode(widgetNode);
     if (Nevow.Athena.Widget._athenaWidgets[widgetId] == null) {
-        Nevow.Athena.Widget._athenaWidgets[widgetId] = new this(widgetNode);
+        var widgetClass = Nevow.Athena.athenaClassFromNode(widgetNode);
+        Nevow.Athena.Widget._athenaWidgets[widgetId] = new widgetClass(widgetNode);
     }
     return Nevow.Athena.Widget._athenaWidgets[widgetId];
 };
@@ -80,47 +81,15 @@ Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
     return Nevow.Athena.Widget.get(nodes[0]);
 };
 
-/*
- * Walk the document.  Find things with a athena:class attribute
- * and instantiate them.
- */
-Nevow.Athena.Widget._instantiateWidgets = function() {
-    var visitor = function(n) {
-        try {
-            var cls = Nevow.Athena.athenaClassFromNode(n);
-            if (cls) {
-                Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
-                var inst = cls.get(n);
-                Divmod.debug("widget", "Widget class " + cls + " instantiated.");
-                try {
-                    var widgetParent = Nevow.Athena.Widget.get(n.parentNode);
-                    widgetParent.addChildWidget(inst);
-                } catch (noParent) {
-                    // Right now we're going to do nothing here.
-                    Divmod.debug("widget", "No parent found for widget " + inst);
-                }
-                if (inst.loaded != undefined) {
-                    inst.loaded();
-                    Divmod.debug("widget", "Widget class " + cls + " loaded.");
-                }
-            }
-        } catch (e) {
-            Divmod.debug('widget', '==================================================');
-            Divmod.debug('widget', 'Error instantiating widget on tag ' + n.tagName);
-            for (var i = 0; i < n.attributes.length; ++i) {
-                Divmod.debug('widget', i + ': ' + n.attributes[i].value);
-            }
-            Divmod.debug('widget', '==================================================');
-        }
-
-    }
-    Nevow.Athena._walkDOM(document, visitor);
-}
 
 Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
     var widget = Nevow.Athena.Widget.fromAthenaID(athenaID);
+    var method = widget[methodName];
     Divmod.debug('widget', 'Invoking ' + methodName + ' on ' + widget + '(' + widget[methodName] + ')');
-    return widget[methodName].apply(widget, varargs);
+    if (method == undefined) {
+        throw new Error(widget + ' has no method ' + methodName);
+    }
+    return method.apply(widget, varargs);
 };
 
 
@@ -252,11 +221,59 @@ Nevow.Athena.IntrospectionWidget.method(
 
 
 /**
- * Instantiate Athena Widgets, make initial server connection, and set
- * up listener for "onunload" event to do finalization.
+ * Instantiate Athena Widgets.
  */
+Nevow.Athena.Widget._instantiateOneWidget = function(cls, node) {
+    Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
+    var inst = cls.get(node);
+    Divmod.debug("widget", "Widget class " + cls + " instantiated.");
+    try {
+        var widgetParent = Nevow.Athena.Widget.get(node.parentNode);
+        widgetParent.addChildWidget(inst);
+    } catch (noParent) {
+        // Right now we're going to do nothing here.
+        Divmod.debug("widget", "No parent found for widget " + inst);
+    }
+    if (inst.loaded != undefined) {
+        inst.loaded();
+        Divmod.debug("widget", "Widget class " + cls + " loaded.");
+    }
+};
+
+Nevow.Athena.Widget._pageLoaded = false;
+Nevow.Athena.Widget._waitingWidgets = {};
+Nevow.Athena.Widget._widgetNodeAdded = function(nodeId) {
+    Nevow.Athena.Widget._waitingWidgets[nodeId] = null;
+    if (Nevow.Athena.Widget._pageLoaded) {
+        if (Nevow.Athena.Widget._instantiationTimer == null) {
+            Nevow.Athena.Widget._instantiationTimer = setTimeout(Nevow.Athena.Widget._instantiateWidgets, 1);
+        }
+    }
+};
+
+Nevow.Athena.Widget._instantiateWidgets = function() {
+    var widgetIds = Nevow.Athena.Widget._waitingWidgets;
+    Nevow.Athena.Widget._waitingWidgets = {};
+
+    Nevow.Athena.Widget._instantiationTimer = null;
+
+    Nevow.Athena._walkDOM(
+        document.documentElement,
+        function(node) {
+            var cls = Nevow.Athena.athenaClassFromNode(node);
+            if (cls) {
+                var widgetId = Nevow.Athena.athenaIDFromNode(node);
+                if (widgetId != null && widgetId in widgetIds) {
+                    Nevow.Athena.Widget._instantiateOneWidget(cls, node);
+                }
+            }
+            return false;
+        });
+};
+
 Nevow.Athena.Widget._initialize = function() {
     Divmod.debug("widget", "Instantiating live widgets");
+    Nevow.Athena.Widget._pageLoaded = true;
     Nevow.Athena.Widget._instantiateWidgets();
     Divmod.debug("widget", "Finished instantiating live widgets");
 }

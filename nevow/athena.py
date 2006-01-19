@@ -171,6 +171,8 @@ class JSDependencies(object):
         if mapping is None:
             self.mapping = {
                 u'Divmod': util.resource_filename('nevow', 'athena.js'),
+                u'Divmod.Runtime': util.resource_filename('nevow', 'runtime.js'),
+                u'Divmod.XML': util.resource_filename('nevow', 'xml.js'),
                 u'Nevow.Athena': util.resource_filename('nevow', 'widget.js'),
                 u'MochiKit': util.resource_filename('nevow', 'MochiKit.js')}
             self._loadPlugins = True
@@ -663,12 +665,26 @@ class LiveFragment(rend.Fragment):
     def render_liveFragment(self, ctx, data):
         modules = [dep.name for dep in self._getModuleForClass().allDependencies()]
 
-        return ([tags.script(type='text/javascript',
-                             src=self.getJSModuleURL(mod))
-                 for mod in modules if self.page._shouldInclude(mod)],
-                ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
-                          'athena:id': self._athenaID,
-                          'athena:class': self.jsClass}))
+        return (
+
+            # Import stuff
+            [tags.script(type='text/javascript',
+                         src=self.getJSModuleURL(mod))
+             for mod in modules if self.page._shouldInclude(mod)],
+
+            # Arrange to be instantiated
+            tags.script(type='text/javascript')[
+                """
+                Nevow.Athena.Widget._widgetNodeAdded(%(athenaID)d);
+                """ % {'athenaID': self._athenaID}],
+
+            # Okay, application stuff, plus metadata
+            ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
+                       'athena:id': self._athenaID,
+                       'athena:class': self.jsClass}),
+
+            )
+
 
     def getJSModuleURL(self, moduleName):
         return self.page.getJSModuleURL(moduleName)
