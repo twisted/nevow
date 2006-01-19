@@ -107,12 +107,12 @@ Divmod.Class.subclass = function(/* optional */ className) {
             methodName = methodSource.slice(methodSource.indexOf(' ') + 1, methodSource.indexOf('('));
         }
 
-	subClass.prototype[methodName] = function() {
+        subClass.prototype[methodName] = function() {
             var args = [this];
             for(var i = 0; i < arguments.length; ++i)
                 args.push(arguments[i]);
-	    return methodFunction.apply(this, args);
-	};
+            return methodFunction.apply(this, args);
+        };
     };
 
     /**
