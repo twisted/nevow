@@ -173,6 +173,20 @@ def parse(s):
 class CycleError(Exception):
     pass
 
+def unicodeEscapePlusBackslashFix(obj):
+    # Required for Python 2.4 and earlier.
+    return obj.replace('\\', '\\\\').replace('"', '\\"').encode('unicode-escape')
+
+def unicodeEscapeWithoutBackslashFix(obj):
+    # Required for Python 2.4.2+ on dapper (screw you guys) and Python 2.5.
+    return obj.encode('unicode-escape').replace('"', '\\"')
+
+if u'\\'.encode('unicode-escape') == '\\\\':
+    unicodeEscape = unicodeEscapeWithoutBackslashFix
+else:
+    unicodeEscape = unicodeEscapePlusBackslashFix
+
+
 def _serialize(obj, w, seen):
     if isinstance(obj, types.BooleanType):
         if obj:
@@ -183,7 +197,7 @@ def _serialize(obj, w, seen):
         w(str(obj))
     elif isinstance(obj, unicode):
         w('"')
-        w(obj.replace('\\', '\\\\').replace('"', '\\"').encode('unicode-escape'))
+        w(unicodeEscape(obj))
         w('"')
     elif isinstance(obj, types.NoneType):
         w('null')
