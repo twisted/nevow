@@ -76,7 +76,7 @@ Divmod.Runtime.Firefox.method(
     });
 
 Divmod.Runtime.Firefox.method(
-    function makeHTML(element) {
+    function makeHTML(self, element) {
         throw new Error("This sucks don't use it");
 
         var HTML_ELEMENT;
