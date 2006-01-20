@@ -109,14 +109,7 @@ Nevow.Athena.consoleDoc = (
     '      color: #900;' +
     '    }' +
     '    #console {' +
-    '      position: absolute;' +
-    '      top: 3em;' +
-    '      bottom: 0;' +
-    '      left: 0;' +
-    '      right: 0;' +
-    '      overflow: scroll;' +
     '      font-family: monospace;' +
-    '      padding: 0 0.5em;' +
     '    }' +
     '    .log-message-error {' +
     '      margin: 0 0 0 0;' +
@@ -145,7 +138,7 @@ Nevow.Athena.IntrospectionWidget.methods(
             'toggleDebugging': self.nodeByAttribute('class', 'toggle-debug')
         };
 
-        self.infoNodes['toggleDebugging'].onclick = function() { return self.toggleDebugging(); };
+        self.infoNodes['toggleDebugging'].onclick = function() { self.toggleDebugging(); return false; };
 
         self.setDebuggingDisplayStyle();
 
@@ -159,20 +152,19 @@ Nevow.Athena.IntrospectionWidget.methods(
     },
 
     function observe(self, event) {
-        var channel = event['channel'];
-        if (channel != 'transport' && channel != 'request' && channel != 'object') {
-            self.callRemote('log', event);
-        }
         self.events.push(event);
         if (self.events.length > self.eventLimit) {
             self.events.shift();
         }
         if (self._logNode != null) {
-            self._addEvent(self._logNode, event);
+            self._addEvent(event);
         }
     },
 
-    function _addEvent(self, node, event) {
+    function _addEvent(self, event) {
+        var node = self._logNode;
+        var document = self._logWindow.document;
+
         var div = document.createElement('div');
         if (event['isError']) {
             div.setAttribute('class', 'log-message-error');
@@ -185,10 +177,14 @@ Nevow.Athena.IntrospectionWidget.methods(
     },
 
     function _openLogWindow(self) {
-        self._logWindow = window.open('', 'Nevow_Athena_Log_Window', 'width=640,height=480');
+        self._logWindow = window.open('', 'Nevow_Athena_Log_Window', 'width=640,height=480,scrollbars');
         self._logWindow.document.write(Nevow.Athena.consoleDoc);
         self._logWindow.document.close();
         self._logNode = self._logWindow.document.getElementById('console');
+        self._logWindow.document.title = 'Mantissa Debug Log Viewer';
+        for (var i = 0; i < self.events.length; i++) {
+            self.observe(self.events[i]);
+        }
     },
 
     function _closeLogWindow(self) {

@@ -713,11 +713,10 @@ class IntrospectionFragment(LiveFragment):
 
     jsClass = u'Nevow.Athena.IntrospectionWidget'
 
-    docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
-        tags.button(class_='toggle-debug')["Toggle Debugging"],
-        ])
+    docFactory = loaders.stan(
+        tags.span(render=tags.directive('liveFragment'))[
+        tags.a(
+        href="#DEBUG_ME",
+        class_='toggle-debug')["Debug"]])
 
-    allowedMethods = ['log']
-    def log(self, event):
-        print 'Client logging: ', event
 
