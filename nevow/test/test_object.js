@@ -89,10 +89,21 @@ function testMethod() {
         };
     });
 
+    MethodClassTest.methods(
+        function quux(self) {
+            return function() { return self; };
+        },
+        function corge(self) {
+            return function() { return self; };
+        }
+    );
+
     var mct = new MethodClassTest();
 
     assert(mct.foo()() === mct);
     assert(mct.bar()() === mct);
+    assert(mct.quux()() === mct);
+    assert(mct.corge()() === mct);
 }
 
 function testLogger() {

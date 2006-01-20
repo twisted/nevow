@@ -133,6 +133,12 @@ Divmod.Class.subclass = function(/* optional */ className) {
         };
     };
 
+    subClass.methods = function() {
+        for (var i = 0; i < arguments.length; ++i) {
+            subClass.method(arguments[i]);
+        }
+    };
+
     /**
        Not quite sure what to do with this...
     **/
