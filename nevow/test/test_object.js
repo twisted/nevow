@@ -20,11 +20,16 @@ function assert (cond, err) {
 }
 
 function testClass() {
-    var Eater = Divmod.Class.subclass();
+    var Eater = Divmod.Class.subclass('Eater');
 
-    Eater.prototype.__init__ = function (foodFactory) {
-        this.food = foodFactory();
-    };
+    Eater.methods(
+        function __init__(self, foodFactory) {
+            self.food = foodFactory();
+        },
+
+        function doEat(self) {
+            return self.food + 1;
+        });
 
     Eater.classCounter = 0;
 
@@ -32,16 +37,13 @@ function testClass() {
         this.classCounter += 1;
     };
 
-    Eater.prototype.doEat = function() {
-        return this.food + 1;
-    };
+    var BetterEater = Eater.subclass('BetterEater');
 
-    var BetterEater = Eater.subclass();
-
-    BetterEater.prototype.__init__ = function(foodFactory) {
-        BetterEater.upcall(this, "__init__", foodFactory);
-        this.food += 10;
-    };
+    BetterEater.methods(
+        function __init__(self, foodFactory) {
+            BetterEater.upcall(self, "__init__", foodFactory);
+            self.food += 10;
+        });
 
     var makeFood = function() {
         return 100;
@@ -70,7 +72,7 @@ function testUtil() {
 }
 
 function testMethod() {
-    var MethodClassTest = Divmod.Class.subclass();
+    var MethodClassTest = Divmod.Class.subclass('MethodClassTest');
 
     /* Backwards compatibility test - this usage is deprecated
      */

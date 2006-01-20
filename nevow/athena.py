@@ -716,3 +716,8 @@ class IntrospectionFragment(LiveFragment):
     docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
         tags.button(class_='toggle-debug')["Toggle Debugging"],
         ])
+
+    allowedMethods = ['log']
+    def log(self, event):
+        print 'Client logging: ', event
+

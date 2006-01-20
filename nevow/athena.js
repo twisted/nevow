@@ -175,20 +175,18 @@ Divmod.Module.method(
 
 
 Divmod.Logger = Divmod.Class.subclass('Divmod.Logger');
-Divmod.Logger.method(
+Divmod.Logger.methods(
     function __init__(self) {
         self.observers = [];
-    });
+    },
 
-Divmod.Logger.method(
     function addObserver(self, observer) {
         self.observers.push(observer);
         return function() {
             self._removeObserver(observer);
         };
-    });
+    },
 
-Divmod.Logger.method(
     function _removeObserver(self, observer) {
         for (var i = 0; i < self.observers.length; ++i) {
             if (observer === self.observers[i]) {
@@ -196,9 +194,8 @@ Divmod.Logger.method(
                 return;
             }
         }
-    });
+    },
 
-Divmod.Logger.method(
     function _emit(self, event) {
         var errors = [];
         var obs = self.observers.slice();
@@ -211,9 +208,8 @@ Divmod.Logger.method(
             }
         }
         return errors;
-    });
+    },
 
-Divmod.Logger.method(
     function emit(self, event) {
         var errors = self._emit(event);
         while (errors.length) {
@@ -226,18 +222,16 @@ Divmod.Logger.method(
             }
             errors = moreErrors;
         }
-    });
+    },
 
-Divmod.Logger.method(
     function err(self, error, /* optional */ message) {
         var event = {'isError': true, 'error': error};
         if (message != undefined) {
             event['message'] = message;
         }
         self.emit(event);
-    });
+    },
 
-Divmod.Logger.method(
     function msg(self, message) {
         var event = {'isError': false, 'message': message};
         self.emit(event);
@@ -619,22 +613,23 @@ Nevow.Athena.nodeByDOM = function(node) {
     throw new Error("nodeByDOM passed node with no containing Athena Ref ID");
 };
 
-Nevow.Athena.RemoteReference = Divmod.Class.subclass();
-Nevow.Athena.RemoteReference.prototype.__init__ = function(objectID) {
-    this.objectID = objectID;
-};
+Nevow.Athena.RemoteReference = Divmod.Class.subclass('Nevow.Athena.RemoteReference');
+Nevow.Athena.RemoteReference.methods(
+    function __init__(self, objectID) {
+        self.objectID = objectID;
+    },
 
-Nevow.Athena.RemoteReference.prototype.callRemote = function(methodName /*, ... */) {
-    var args = [this.objectID];
-    for (var idx = 1; idx < arguments.length; idx++) {
-        args.push(arguments[idx]);
-    }
-    return Nevow.Athena._callRemote(methodName, args, {});
-};
+    function callRemote(self, methodName /*, ... */) {
+        var args = [self.objectID];
+        for (var idx = 2; idx < arguments.length; idx++) {
+            args.push(arguments[idx]);
+        }
+        return Nevow.Athena._callRemote(methodName, args, {});
+    },
 
-Nevow.Athena.RemoteReference.prototype.callRemoteKw = function(methodName, kwargs) {
-    return Nevow.Athena._callRemote(methodName, [this.objectID], kwargs);
-};
+    function callRemoteKw(self, methodName, kwargs) {
+        return Nevow.Athena._callRemote(methodName, [self.objectID], kwargs);
+    });
 
 /**
  * Given a Node, find all of its children (to any depth) with the

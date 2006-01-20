@@ -5,19 +5,20 @@ if (typeof WidgetDemo == 'undefined') {
     WidgetDemo = {};
 }
 
-WidgetDemo.Clock = Nevow.Athena.Widget.subclass();
-WidgetDemo.Clock.prototype.start = function() {
-    this.callRemote('start');
-};
+WidgetDemo.Clock = Nevow.Athena.Widget.subclass('WidgetDemo.Clock');
+WidgetDemo.Clock.methods(
+    function start(self) {
+        self.callRemote('start');
+    },
 
-WidgetDemo.Clock.prototype.stop = function() {
-    this.callRemote('stop');
-};
+    function stop(self) {
+        self.callRemote('stop');
+    },
 
-WidgetDemo.Clock.prototype.setTime = function(toWhat) {
-    Divmod.debug("clock", "Setting time " + toWhat);
-    var time = Nevow.Athena.NodeByAttribute(this.node, "class", "clock-time");
-    Divmod.debug("clock", "On " + time);
-    time.innerHTML = toWhat;
-    Divmod.debug("clock", "Hooray");
-};
+    function setTime(self, toWhat) {
+        Divmod.debug("clock", "Setting time " + toWhat);
+        var time = Nevow.Athena.NodeByAttribute(self.node, "class", "clock-time");
+        Divmod.debug("clock", "On " + time);
+        time.innerHTML = toWhat;
+        Divmod.debug("clock", "Hooray");
+    });
