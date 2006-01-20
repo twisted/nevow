@@ -17,8 +17,12 @@ AthenaTest.TestCase.methods(
 
     function test(self) {
         var res;
+        var subargs = [];
+        for (var i = 1; i < arguments.length; ++i) {
+            subargs.push(arguments[i]);
+        }
         try {
-            res = self._test.apply(self, arguments);
+            res = self._test.apply(self, subargs);
         } catch (e) {
             res = MochiKit.Async.fail(e);
         }
