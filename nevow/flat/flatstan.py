@@ -4,6 +4,8 @@
 from __future__ import generators
 import urllib
 
+from twisted.python import log, failure
+
 from nevow import util
 from nevow.stan import directive, Unset, invisible
 from nevow.inevow import ICanHandleException, IData, IMacroFactory, IRenderer, IRendererFactory
@@ -276,12 +278,13 @@ def ContextSerializer(original, context):
     originalContext.chain(context)
     try:
         return TagSerializer(originalContext.tag, originalContext, contextIsMine=True)
-    except Exception, e:
+    except:
+        f = failure.Failure()
         handler = context.locate(ICanHandleException)
         if handler:
-            return handler.renderInlineError(context, util.Failure(e))
+            return handler.renderInlineError(context, f)
         else:
-            util.log.err(e)
+            log.err(f)
             return """<div style="border: 1px dashed red; color: red; clear: both">[[ERROR]]</div>"""
 
 

@@ -82,10 +82,10 @@ def processingFailed(reason, request, ctx):
     try:
         handler = inevow.ICanHandleException(ctx)
         handler.renderHTTP_exception(ctx, reason)
-    except Exception, e:
+    except:
         request.setResponseCode(http.INTERNAL_SERVER_ERROR)
         log.msg("Exception rendering error page:", isErr=1)
-        log.err(e)
+        log.err()
         log.err("Original exception:", isErr=1)
         log.err(reason)
         request.write("<html><head><title>Internal Server Error</title></head>")

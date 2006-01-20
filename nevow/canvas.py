@@ -314,7 +314,7 @@ class CanvasSocket(GroupBase):
             self.delegate = _hookup[self.cookie]
             self.delegate.onload(self)
             del _hookup[self.cookie]
-        except Exception, e:
+        except:
             log.err()
         return self.d
 
