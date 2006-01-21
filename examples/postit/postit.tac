@@ -3,7 +3,7 @@ from nevow import appserver
 
 import postit, store
 
-application = service.Application('blogengine')
-db = store.initialize('db','fs')
-site = appserver.NevowSite(resource = postit.Main(db))
+application = service.Application('postit')
+db = store.initialize()
+site = appserver.NevowSite(postit.Main(db))
 strports.service("8080", site).setServiceParent(application)

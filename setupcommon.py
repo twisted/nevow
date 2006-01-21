@@ -18,8 +18,8 @@ package_data={
             ],
         'nevow': [
             'athena.js',
-            'runtimes.js',
-            'xml.js'
+            'runtime.js',
+            'xml.js',
             'widget.js',
             'MochiKit.js',
             'MochiKitLogConsole.js',
