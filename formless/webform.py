@@ -457,32 +457,34 @@ def renderForms(configurableKey='', bindingNames=None, bindingDefaults=None):
 
             formDefaults = iformless.IFormDefaults(context)
 
-            available = configurable.getBindingNames(context)
-            bindings = []
+	    if bindingDefaults is None:
+		available = configurable.getBindingNames(context)
+	    else:
+		available = bindingDefaults.iterkeys()
 
-            default_binding_pattern = None
-
-            for name in available:
-                if bindingDefaults is not None:
-                    if name not in bindingDefaults:
-                        continue
-                    defs = formDefaults.getAllDefaults(name)
-                    defs.update(bindingDefaults[name])
-
-                bnd = configurable.getBinding(context, name)
-                renderer = iformless.IBindingRenderer(bnd, defaultBindingRenderer)
+	    def _callback(binding):
+                renderer = iformless.IBindingRenderer(binding, defaultBindingRenderer)
                 try:
                     binding_pattern = tag.patternGenerator( 'freeform-form!!%s' % name )
                 except NodeNotFound:
-                    if default_binding_pattern is None:
-                        try:
-                            default_binding_pattern = tag.patternGenerator( 'freeform-form' )
-                        except NodeNotFound:
-                            default_binding_pattern = freeformDefaultForm
-                    binding_pattern = default_binding_pattern
+                    try:
+                        binding_pattern = tag.patternGenerator( 'freeform-form' )
+                    except NodeNotFound:
+                        binding_pattern = freeformDefaultForm
+                        
                 if binding_pattern is freeformDefaultForm:
                     renderer.needsSkin = True
-                yield binding_pattern(data = bnd, render = renderer, key = name)
+		return binding_pattern(data=binding, render=renderer, key=name)
+
+	    for name in available:
+		if bindingDefaults is not None:
+                    defs = formDefaults.getAllDefaults(name)
+                    defs.update(bindingDefaults[name])
+
+                d = util.maybeDeferred(configurable.getBinding, context, name)
+		d.addCallback(_callback)
+		yield d
+
         return _innerFormRenderIt
     return invisible(render=formRenderer)
 

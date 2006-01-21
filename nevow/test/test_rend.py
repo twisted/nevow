@@ -5,6 +5,7 @@ from zope.interface import implements
 
 from twisted.internet import defer
 from twisted.trial import unittest
+from twisted.trial import assertions
 
 from nevow import appserver
 from nevow import compy
@@ -21,6 +22,7 @@ from nevow import util
 
 import formless
 from formless import webform as freeform
+from formless import annotate
 from formless import iformless
 
 
@@ -370,6 +372,87 @@ class TestRenderFactory(unittest.TestCase):
         ctx.remember(rend.RenderFactory(), inevow.IRendererFactory)
         self.assertEquals(flat.flatten(p(data='foo', render=directive('data')), ctx), '<p>foo</p>')
 
+class TestConfigurableMixin(unittest.TestCase):
+    def test_formRender(self):
+        class FormPage(rend.Page):
+            bind_test1 = [('foo', annotate.String()), ('bar', annotate.Integer())]
+            bind_test2 = annotate.MethodBinding('test2', annotate.Method(
+                arguments=[annotate.Argument('foo', annotate.String())]))
+
+            bind_test3 = annotate.Property('test3', annotate.Integer())
+            
+            def bind_test4(self, ctx):
+                return ([('foo', annotate.String()), ('bar', annotate.Integer())])
+            
+            def bind_test5(self, ctx):
+                return annotate.MethodBinding('test5', annotate.Method(
+                    arguments=[annotate.Argument('foo', annotate.String()),
+                               annotate.Argument('bar', annotate.Integer())]))
+
+            docFactory = loaders.stan(html[freeform.renderForms()])
+        return deferredRender(FormPage())
+    
+    def test_formRenderDeferred(self):
+        class FormPage(rend.Page):
+            bind_test1 = defer.succeed([('foo', annotate.String()),
+                                        ('bar', annotate.Integer())])
+            bind_test2 = defer.succeed(annotate.MethodBinding('test2', annotate.Method(
+                arguments=[annotate.Argument('foo', annotate.String())])))
+
+            bind_test3 = defer.succeed(annotate.Property('test3', annotate.Integer()))
+            
+            def bind_test4(self, ctx):
+                return defer.succeed([('foo', annotate.String()),
+                                       ('bar', annotate.Integer())])
+            
+            def bind_test5(self, ctx):
+                return defer.succeed(annotate.MethodBinding('test5', annotate.Method(
+                    arguments=[annotate.Argument('foo', annotate.String()),
+                               annotate.Argument('bar', annotate.Integer())])))
+
+            docFactory = loaders.stan(html[freeform.renderForms()])
+        return deferredRender(FormPage())
+
+
+    def test_formPost(self):
+        class FormPage(rend.Page):
+            bind_test1 = ([('foo', annotate.Integer())])
+            def test1(self, foo):
+                return foo
+
+        ctx = context.WovenContext()
+        result = FormPage().postForm(ctx, 'test1', {'foo': ['42']})
+        return result.addCallback(lambda result: self.assertEquals(result, 42))
+
+    def test_formPostDeferred(self):
+        class FormPage(rend.Page):
+            bind_test1 = defer.succeed(([('foo', annotate.Integer())]))
+            def test1(self, foo):
+                return foo
+
+        ctx = context.WovenContext()
+        result = FormPage().postForm(ctx, 'test1', {'foo': ['42']})
+        return result.addCallback(lambda result: self.assertEquals(result, 42))
+
+    def test_formPostFailure(self):
+        class FormPage(rend.Page):
+            bind_test1 = ([('foo', annotate.Integer())])
+            def test1(self, foo):
+                return foo
+
+        ctx = context.WovenContext()
+        result = FormPage().postForm(ctx, 'test1', {'foo': ['hello, world!']})
+        return assertions.failUnlessFailure(result, annotate.ValidateError)
+
+    def test_formPostFailureDeferred(self):
+        class FormPage(rend.Page):
+            bind_test1 = defer.succeed(([('foo', annotate.Integer())]))
+            def test1(self, foo):
+                return foo
+
+        ctx = context.WovenContext()
+        result = FormPage().postForm(ctx, 'test1', {'foo': ['hello, world!']})
+        return assertions.failUnlessFailure(result, annotate.ValidateError)
 
 class IThing(formless.TypedInterface):
     foo = formless.String()

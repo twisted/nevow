@@ -186,17 +186,21 @@ class ConfigurableMixin(object):
         which will be massaged into a MethodBinding as
         described in the ConfigurableMixin class docstring.
         """
-        binding = getattr(self, 'bind_%s' % name)
-        if callable(binding):
-            binding = binding(ctx)
+        def _get_binding(binding):
+            if callable(binding):
+                binding = util.maybeDeferred(binding, ctx)
+            return binding
 
-        if isinstance(binding, list):
-            binding = annotate.MethodBinding(
-                name, annotate.Method(arguments=[
-                    annotate.Argument(name, value, value.id)
-                    for (name, value) in binding]))
+        def _convert_list(binding):
+            if isinstance(binding, list):
+                binding = annotate.MethodBinding(
+                    name, annotate.Method(arguments=[
+                    annotate.Argument(n, v, v.id)
+                    for (n, v) in binding]))
+            return binding
 
-        return binding
+        binding = util.maybeDeferred(getattr, self, 'bind_%s' % name)
+        return binding.addCallback(_get_binding).addCallback(_convert_list)
 
     def getDefault(self, forBinding):
         """Get a default value for a given binding. If the
@@ -220,14 +224,15 @@ class ConfigurableMixin(object):
         been called. If it fails, a ValidateError exception
         will be raised.
         """
-        binding = self.getBinding(ctx, bindingName)
-        ctx.remember(binding, iformless.IBinding)
-        ctx.remember(self, iformless.IConfigurable)
-
-        rv = iformless.IInputProcessor(binding).process(ctx, self, args)
-        ctx.remember(rv, inevow.IHand)
-        ctx.remember('%r success.' % bindingName, inevow.IStatusMessage)
-        return rv
+	def _callback(binding):
+	    ctx.remember(binding, iformless.IBinding)
+	    ctx.remember(self, iformless.IConfigurable)
+	    rv = iformless.IInputProcessor(binding).process(ctx, self, args)
+	    ctx.remember(rv, inevow.IHand)
+	    ctx.remember('%r success.' % bindingName, inevow.IStatusMessage)
+	    return rv
+        return util.maybeDeferred(self.getBinding, ctx, 
+				  bindingName).addCallback(_callback)
 compy.backwardsCompatImplements(ConfigurableMixin)
 
 
