@@ -8,11 +8,11 @@ A toy email server.
 from zope.interface import implements
 
 from twisted.internet import defer
-from twisted.protocols import smtp
+from twisted.mail import smtp
 
-from atop.store import transacted
+from axiom.item import transacted
 
-from store import Post
+from axiomstore import Post
 from iblogengine import IBlog
 
 
@@ -97,15 +97,21 @@ class BlogMessage:
                 return defer.fail(None) 
         if post.has_key('id'):
             oldpost = IBlog(self.store).getOne(int(post['id']))
-            oldpost.author = post['author']
-            oldpost.title = post['title']
-            oldpost.category = post['category']
-            oldpost.content = post['content']
+            oldpost.author = unicode(post['author'])
+            oldpost.title = unicode(post['title'])
+            oldpost.category = unicode(post['category'])
+            oldpost.content = unicode(post['content'])
+            oldpost.setModified()
             action = 'modified'
             id = post['id']
         else:
             newid = IBlog(self.store).getNextId()
-            newPost = Post(self.store, newid, post['author'], post['title'], post['category'], post['content'])
+            newPost = Post(store=self.store,
+                           id=newid,
+                           author=unicode(post['author']),
+                           title=unicode(post['title']),
+                           category=unicode(post['category']),
+                           content=unicode(post['content']))
             IBlog(self.store).addNewPost(newPost)
             action = 'added'
             id = newid

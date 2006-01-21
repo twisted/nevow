@@ -4,18 +4,17 @@ from zope.interface import implements
 
 from twisted.web import xmlrpc
 
-from atop.store import Store
 from nevow import rend, loaders, url, static
 from nevow import tags as t, inevow, compy
 from formless import annotate, iformless, webform
 
-from store import Post
+from axiomstore import Post
 from iblogengine import IStore, IBlog
 
 def pptime(tt):
-    return time.strftime('%Y-%m-%d @ %H:%M %Z', tt)
+    return tt.asHumanly()+" UTC"
 def atompptime(tt):
-    return time.strftime('%Y-%m-%dT%H:%M:%S%z', tt)
+    return tt.asISO8601TimeAndDate()
 class ITimer(compy.Interface): pass
 
 #####################################
@@ -41,7 +40,7 @@ class IInsert(annotate.TypedInterface):
 class BaseUI(rend.Page):
     addSlash = True
     def renderHTTP(self, ctx):
-        IStore(ctx).transact(rend.Page.renderHTTP, self, ctx)
+        return IStore(ctx).transact(rend.Page.renderHTTP, self, ctx)
         
     def locateChild(self, ctx, segments):
         return IStore(ctx).transact(rend.Page.locateChild, self, ctx, segments)
@@ -74,7 +73,7 @@ class UI(BaseUI):
         return IBlog(IStore(ctx)).getPosts(int(num))
 
     def render_entries(self, ctx, data):
-        ctx.tag.fillSlots('modification', pptime(data.last_mod))
+        ctx.tag.fillSlots('modification', pptime(data.modified))
         ctx.tag.fillSlots('category', data.category)
         ctx.tag.fillSlots('author', data.author)
         ctx.tag.fillSlots('title', data.title)
@@ -131,7 +130,12 @@ class NewEntry(BaseUI):
         return webform.renderForms()
 
     def insert(self, ctx, id, title, author, category, content):
-        newPost = Post(IStore(ctx), int(id), author, title, category, content)
+        newPost = Post(store=IStore(ctx),
+                       id=int(id),
+                       author=unicode(author),
+                       title=unicode(title),
+                       category=unicode(category),
+                       content=unicode(content))
         IBlog(IStore(ctx)).addNewPost(newPost)
         inevow.IRequest(ctx).setComponent(iformless.IRedirectAfterPost, '/thx')
 
@@ -161,10 +165,10 @@ class Entry(UI):
         return webform.renderForms()
 
     def insert(self, ctx, id, title, author, category, content):
-        self.original.author = author
-        self.original.title = title
-        self.original.category = category
-        self.original.content = content
+        self.original.author = unicode(author)
+        self.original.title = unicode(title)
+        self.original.category = unicode(category)
+        self.original.content = unicode(content)
         inevow.IRequest(ctx).setComponent(iformless.IRedirectAfterPost, '/thx')
 
 #####################################
@@ -179,24 +183,25 @@ class Atom(BaseUI):
             return post
 
     def render_modified(self, ctx, data): 
-        return ctx.tag.clear()[atompptime(data.last_mod)]
+        return ctx.tag.clear()[atompptime(data.modified)]
     
     def data_get_posts(self, ctx, data):
         return IBlog(IStore(ctx)).getPosts(15)
         
     def render_post(self, ctx, data):
-        id = data.poolToUID[IBlog(IStore(ctx)).postsPool]
+        #id = data.poolToUID[IBlog(IStore(ctx)).postsPool]
+        # mkp: ...I don't know what that means or what it's for.
         ctx.tag.fillSlots('title', data.title)
-        ctx.tag.fillSlots('link', url.root.child(id))
-        ctx.tag.fillSlots('id', id)
-        ctx.tag.fillSlots('created', atompptime(data.dateCreated))
-        ctx.tag.fillSlots('modified', atompptime(data.last_mod))        
+        ctx.tag.fillSlots('link', url.root.child(data.id))
+        ctx.tag.fillSlots('id', data.id)
+        ctx.tag.fillSlots('created', atompptime(data.created))
+        ctx.tag.fillSlots('modified', atompptime(data.modified))        
         ctx.tag.fillSlots('author', data.author)
         ctx.tag.fillSlots('content', data.content)
         return ctx.tag
 
 #####################################
-from atop.store import transacted
+from axiom.item import transacted
 class BlogRPC(xmlrpc.XMLRPC):
     """Publishes stuff"""
 
@@ -206,7 +211,12 @@ class BlogRPC(xmlrpc.XMLRPC):
     
     def xmlrpc_publish(self, author, title, category, content):
         newid = IBlog(self.store).getNextId()
-        newPost = Post(self.store, newid, author, title, category, content)
+        newPost = Post(store=self.store,
+                       id=newid,
+                       author=unicode(author),
+                       title=unicode(title),
+                       category=unicode(category),
+                       content=unicode(content))
         IBlog(self.store).addNewPost(newPost)
         return 'Successfully added post number %s' % newid
     xmlrpc_publish = transacted(xmlrpc_publish)
@@ -217,6 +227,7 @@ class BlogRPC(xmlrpc.XMLRPC):
         post.title = title
         post.category = category
         post.content = content
+        post.setModified()
         return 'Successfully modified post number %s' % id
     xmlrpc_edit = transacted(xmlrpc_edit)
         
