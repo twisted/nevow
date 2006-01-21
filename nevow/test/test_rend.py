@@ -5,7 +5,6 @@ from zope.interface import implements
 
 from twisted.internet import defer
 from twisted.trial import unittest
-from twisted.trial import assertions
 
 from nevow import appserver
 from nevow import compy
@@ -442,7 +441,7 @@ class TestConfigurableMixin(unittest.TestCase):
 
         ctx = context.WovenContext()
         result = FormPage().postForm(ctx, 'test1', {'foo': ['hello, world!']})
-        return assertions.failUnlessFailure(result, annotate.ValidateError)
+        return self.assertFailure(result, annotate.ValidateError)
 
     def test_formPostFailureDeferred(self):
         class FormPage(rend.Page):
@@ -452,7 +451,7 @@ class TestConfigurableMixin(unittest.TestCase):
 
         ctx = context.WovenContext()
         result = FormPage().postForm(ctx, 'test1', {'foo': ['hello, world!']})
-        return assertions.failUnlessFailure(result, annotate.ValidateError)
+        return self.assertFailure(result, annotate.ValidateError)
 
 class IThing(formless.TypedInterface):
     foo = formless.String()
