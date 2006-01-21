@@ -62,6 +62,11 @@ def TagSerializer(original, context, contextIsMine=False):
         ## the actual parentage hierarchy.
         nestedcontext = WovenContext(precompile=context.precompile, isAttrib=context.isAttrib)
         
+        # If necessary, remember the MacroFactory onto the new context chain.
+        macroFactory = IMacroFactory(context, default=None)
+        if macroFactory is not None:
+            nestedcontext.remember(macroFactory, IMacroFactory)
+
         original = original.clone(deep=False)
         if not contextIsMine:
             context = WovenContext(context, original)

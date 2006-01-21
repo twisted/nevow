@@ -747,3 +747,42 @@ class TestMacro(unittest.TestCase):
 
         self.assertNotEquals(p1_str, p2_str)
 
+    def test_macroInsideSpecialScope(self):
+        """http://divmod.org/trac/ticket/490
+        """
+        class Base(rend.Page):
+            def macro_content(self, ctx):
+                return p["content"]
+        
+        class Page1(Base):
+            docFactory = loaders.stan(
+                html[
+                    body(render=directive('foo'))[
+                        p(macro=directive('content'))
+                    ]
+                ])
+                
+            def render_foo(self, ctx, data):
+                return ctx.tag
+
+        class Page2(Base):
+            docFactory = loaders.stan(
+                html[
+                    body[
+                        p(macro=directive('content'))
+                    ]
+                ])
+            
+        p1 = Page1()
+        p2 = Page2()
+
+        ctx1 = context.WovenContext()
+        ctx2 = context.WovenContext()
+
+        ctx1.remember(p1, inevow.IRendererFactory)
+        ctx2.remember(p2, inevow.IRendererFactory)
+
+        p1_str = p1.renderSynchronously(ctx1)
+        p2_str = p2.renderSynchronously(ctx2)
+
+        self.assertEquals(p1_str, p2_str)
