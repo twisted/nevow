@@ -1,2 +1,0 @@
-import store
-store.populate()
