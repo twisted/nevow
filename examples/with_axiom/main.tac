@@ -35,6 +35,6 @@ class LibraryPage(rend.Page):
 # starting the database
 s = pups.initialize("store")
 site = appserver.NevowSite(resource = LibraryPage(s))
-application = service.Application("Nevow_and_Atop")
+application = service.Application("Nevow_and_Axiom")
 webserver = strports.service("8080", site)
 webserver.setServiceParent(application)
