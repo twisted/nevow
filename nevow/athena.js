@@ -42,6 +42,7 @@ Divmod.namedAny = function(name) {
     for (var p in namedParts) {
         obj = obj[namedParts[p]];
         if (obj == undefined) {
+            Divmod.debug('widget', 'Failed in namedAny for ' + name + 'at ' + namedParts[p]);
             break;
         }
     }
