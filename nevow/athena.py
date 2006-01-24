@@ -246,6 +246,8 @@ class LivePageTransport(object):
             res = result
             success = True
             if isinstance(res, failure.Failure):
+                log.msg("Sending error to browser:")
+                log.err(res)
                 success = False
                 res = (unicode(result.type.__name__, 'ascii'), unicode(result.getErrorMessage(), 'ascii'))
             message = json.serialize((u'respond', (unicode(requestId), success, res)))
