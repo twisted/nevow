@@ -621,6 +621,9 @@ Nevow.Athena.RemoteReference.methods(
     },
 
     function callRemote(self, methodName /*, ... */) {
+        if (self.objectID == undefined) {
+            throw new Error("Cannot callRemote without an objectID");
+        }
         var args = [self.objectID];
         for (var idx = 2; idx < arguments.length; idx++) {
             args.push(arguments[idx]);
