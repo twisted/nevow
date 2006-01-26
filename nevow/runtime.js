@@ -106,6 +106,7 @@ Divmod.Runtime.Firefox.method(
         if (doc.documentElement.namespaceURI != "http://www.w3.org/1999/xhtml") {
             throw new Error("Unknown namespace used with parseXHTMLString - only XHTML 1.0 is supported.");
         }
+        return doc;
     });
 
 Divmod.Runtime.Firefox.method(
