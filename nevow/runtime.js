@@ -102,7 +102,10 @@ Divmod.Runtime.Firefox.method(
 
 Divmod.Runtime.Firefox.method(
     function parseXHTMLString(self, s) {
-        return self.dp.parseFromString(s, "application/xml");
+        var doc = self.dp.parseFromString(s, "application/xml");
+        if (doc.documentElement.namespaceURI != "http://www.w3.org/1999/xhtml") {
+            throw new Error("Unknown namespace used with parseXHTMLString - only XHTML 1.0 is supported.");
+        }
     });
 
 Divmod.Runtime.Firefox.method(
