@@ -39,7 +39,38 @@ openBrace = re.compile(r'{')
 closeBrace = re.compile(r'}')
 openSquare = re.compile(r'\[')
 closeSquare = re.compile(r'\]')
-string = re.compile(r'(?<!\\)"([^"]+|\\")*(?<!\\)"')
+
+class StringTokeniser(object):
+    """
+    because r'(?<!\\)"([^"]+|\\")*(?<!\\)"'
+    """
+
+    def match(self, s):
+        if not s.startswith('"'):
+            return None
+
+        bits = []
+
+        SLASH = "\\"
+
+        bit, s = s[:1], s[1:]
+        bits = [bit]
+        while s:
+            if s.startswith(SLASH):
+                bit, s = s[:2], s[2:]
+            else:
+                bit, s = s[:1], s[1:]
+            bits.append(bit)
+            if bit == '"':
+                self.matched = ''.join(bits)
+                return self
+
+        return None
+
+    def group(self, num):
+        return self.matched
+        
+string = StringTokeniser()
 identifier = re.compile(r'[A-Za-z_][A-Za-z_0-9]*')
 colon = re.compile(r':')
 comma = re.compile(r',')

@@ -15,6 +15,7 @@ TEST_OBJECTS = [
     u"string with 'embedded' single-quotes",
     u'string with \\"escaped embedded\\" quotes',
     u"string with \\'escaped embedded\\' single-quotes",
+    u"string with backslashes\\\\",
     [],
     [0],
     [0, 1, 2],
