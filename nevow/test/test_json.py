@@ -46,3 +46,7 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
                 unstruct, struct,
                 "Failed to roundtrip %r: %r (through %r)" % (
                     struct, unstruct, bytes))
+
+    def testScientificNotation(self):
+        self.assertEquals(json.parse('1e10'), 10**10)
+        self.assertEquals(json.parse('1e0'), 1)

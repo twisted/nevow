@@ -58,6 +58,13 @@ class IdentifierToken(str):
 class WhitespaceToken(object):
     pass
 
+def jsonlong(s):
+    if 'e' in s:
+        m, e = map(long, s.split('e', 1))
+    else:
+        m, e = long(s), 0
+    return m * 10 ** e
+
 # list of tuples, the first element is a compiled regular expression the second
 # element returns a token and the original string.
 actions = [
@@ -74,7 +81,7 @@ actions = [
     (null, lambda s: (None, s)),
     (identifier, lambda s: (IdentifierToken(s), s)),
     (floatNumber, lambda s: (float(s), s)),
-    (longNumber, lambda s: (long(s), s)),
+    (longNumber, lambda s: (jsonlong(s), s)),
 ]
 def tokenise(s):
     tokens = []
