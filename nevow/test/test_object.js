@@ -63,6 +63,14 @@ function testClass() {
     assert(BetterEater.classCounter == 2, 'classmethod fuckup');
 }
 
+function testUtil() {
+    /* Divmod.namedAny
+     */
+    assert(Divmod.namedAny('not.a.real.package.or.name') == undefined);
+    assert(Divmod.namedAny('Divmod') == Divmod);
+    assert(Divmod.namedAny('Divmod.namedAny') == Divmod.namedAny);
+}
+
 function testMethod() {
     var MethodClassTest = Divmod.Class.subclass('MethodClassTest');
 
@@ -98,14 +106,6 @@ function testMethod() {
     assert(mct.bar()() === mct);
     assert(mct.quux()() === mct);
     assert(mct.corge()() === mct);
-}
-
-function testUtil() {
-    /* Divmod.namedAny
-     */
-    assert(Divmod.namedAny('not.a.real.package.or.name') == undefined);
-    assert(Divmod.namedAny('Divmod') == Divmod);
-    assert(Divmod.namedAny('Divmod.namedAny') == Divmod.namedAny);
 }
 
 function testLogger() {
