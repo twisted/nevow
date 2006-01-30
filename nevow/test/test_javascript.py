@@ -30,13 +30,13 @@ class JavaScriptTestSuite(unittest.TestCase):
 
     javascriptInterpreter = None
 
-    def testAllJavaScript(self):
+    def _testJavaScript(self, filename):
         p = _JavaScriptTestSuiteProtocol()
         d = p.finished = defer.Deferred()
         reactor.spawnProcess(
             p,
             self.javascriptInterpreter,
-            ("js", filepath.FilePath(__file__).parent().child('test_object.js').path),
+            ("js", filepath.FilePath(__file__).parent().child(filename).path),
             path=filepath.FilePath(__file__).parent().path)
 
         def finished(output):
@@ -45,6 +45,17 @@ class JavaScriptTestSuite(unittest.TestCase):
 
         return d.addCallback(finished)
 
+
+    def testUtilities(self):
+        return self._testJavaScript('test_logging.js')
+
+
+    def testClassModel(self):
+        return self._testJavaScript('test_classes.js')
+
+
+    def testLogging(self):
+        return self._testJavaScript('test_logging.js')
 
 
 _jsInterps = procutils.which('smjs')
