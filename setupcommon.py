@@ -34,5 +34,6 @@ package_data={
             'tabbedPane.css',
             'progressBar.js',
             'progressBar.css',
+            'taglibrary.js',
             ]
         }
