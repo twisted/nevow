@@ -174,7 +174,9 @@ class JSDependencies(object):
                 u'Divmod.Runtime': util.resource_filename('nevow', 'runtime.js'),
                 u'Divmod.XML': util.resource_filename('nevow', 'xml.js'),
                 u'Nevow.Athena': util.resource_filename('nevow', 'widget.js'),
-                u'MochiKit': util.resource_filename('nevow', 'MochiKit.js')}
+                u'MochiKit': util.resource_filename('nevow', 'MochiKit.js'),
+                u'Nevow.TagLibrary': util.resource_filename('nevow.taglibrary', 'taglibrary.js'),
+                u'Nevow.TagLibrary.TabbedPane': util.resource_filename('nevow.taglibrary', 'tabbedPane.js')}
             self._loadPlugins = True
         else:
             self.mapping = mapping
