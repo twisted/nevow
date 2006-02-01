@@ -1,258 +1,9 @@
+// -*- test-case-name: nevow.test.test_javascript -*-
 
-if (typeof Divmod == 'undefined') {
-    Divmod = {};
-}
+// import Divmod
+// import Nevow
 
-Divmod.baseURL = function() {
-    // Use "cached" value if it exists
-    if (Divmod._baseURL != undefined) {
-        return Divmod._baseURL;
-    }
-    var baseURL = Divmod._location;
-    if (baseURL == undefined) {
-        window.location.toString();
-        var queryParamIndex = baseURL.indexOf('?');
-
-        if (queryParamIndex != -1) {
-            baseURL = baseURL.substring(0, queryParamIndex);
-        }
-    }
-
-    if (baseURL.charAt(baseURL.length - 1) != '/') {
-        baseURL += '/';
-    }
-
-    baseURL += Nevow.Athena.livepageId + '/';
-
-    // "Cache" and return
-    Divmod._baseURL = baseURL;
-    return Divmod._baseURL;
-};
-
-Divmod.importURL = function(moduleName) {
-    return Divmod.baseURL() + 'jsmodule/' + moduleName;
-};
-
-
-Divmod._global = this;
-
-Divmod.namedAny = function(name) {
-    var namedParts = name.split('.');
-    var obj = Divmod._global;
-    for (var p in namedParts) {
-        obj = obj[namedParts[p]];
-        if (obj == undefined) {
-            Divmod.debug('widget', 'Failed in namedAny for ' + name + 'at ' + namedParts[p]);
-            break;
-        }
-    }
-    return obj;
-};
-
-Divmod.vars = function(obj) {
-    var L = [];
-    for (var i in o) {
-        L.push([i, obj[i]]);
-    }
-    return L;
-};
-
-
-Divmod.dir = function(obj) {
-    var L = [];
-    for (var i in o) {
-        L.push(i);
-    }
-    return L;
-};
-
-
-Divmod._PROTOTYPE_ONLY = {};
-
-
-Divmod.Class = function(asPrototype) {
-    if (asPrototype !== Divmod._PROTOTYPE_ONLY) {
-        this.__init__.apply(this, arguments);
-    }
-};
-
-
-Divmod.__classDebugCounter__ = 0;
-
-
-Divmod.Class.subclass = function(/* optional */ className) {
-    var superClass = this;
-    var subClass = function() {
-        return Divmod.Class.apply(this, arguments)
-    };
-    subClass.prototype = new superClass(Divmod._PROTOTYPE_ONLY);
-    subClass.subclass = Divmod.Class.subclass;
-
-    /* Copy class methods and attributes, so that you can do
-     * polymorphism on class methods (useful for things like
-     * Nevow.Athena.Widget.get in widgets.js).
-     */
-
-    for (var varname in superClass) {
-        if ((varname != 'prototype') &&
-            (varname != 'constructor') &&
-            (superClass[varname] != undefined)) {
-            subClass[varname] = superClass[varname];
-        }
-    }
-
-    subClass.upcall = function(otherThis, methodName) {
-        var funcArgs = [];
-        for (var i = 2; i < arguments.length; ++i) {
-            funcArgs.push(arguments[i]);
-        }
-        var superResult = superClass.prototype[methodName].apply(otherThis, funcArgs);
-        return superResult;
-    };
-
-    subClass.method = function(methodName, methodFunction) {
-        if (methodFunction != undefined) {
-            Divmod.debug('deprecation', 'method() just takes a function now (called with name = ' + methodName +').');
-        } else {
-            methodFunction = methodName;
-            methodName = methodFunction.name;
-        }
-
-        if (methodName == undefined) {
-            /* Sorry (IE).
-             */
-            var methodSource = methodFunction.toString();
-            methodName = methodSource.slice(methodSource.indexOf(' ') + 1, methodSource.indexOf('('));
-        }
-
-        subClass.prototype[methodName] = function() {
-            var args = [this];
-            for (var i = 0; i < arguments.length; ++i) {
-                args.push(arguments[i]);
-            }
-            return methodFunction.apply(this, args);
-        };
-    };
-
-    subClass.methods = function() {
-        for (var i = 0; i < arguments.length; ++i) {
-            subClass.method(arguments[i]);
-        }
-    };
-
-    /**
-       Not quite sure what to do with this...
-    **/
-    Divmod.__classDebugCounter__ += 1;
-    subClass.__classDebugCounter__ = Divmod.__classDebugCounter__;
-    subClass.toString = function() {
-        if (className == undefined) {
-            return '<Class #' + subClass.__classDebugCounter__ + '>';
-        } else {
-            return '<Class ' + className + '>';
-        }
-    };
-    subClass.prototype.toString = function() {
-        if (className == undefined) {
-            return '<"Instance" of #' + subClass.__classDebugCounter__ + '>';
-        } else {
-            return '<"Instance" of ' + className + '>';
-        }
-    };
-    return subClass;
-};
-
-Divmod.Class.prototype.__init__ = function() {
-    /* throw new Error("If you ever hit this code path something has gone horribly wrong");
-     */
-};
-
-
-Divmod.Module = Divmod.Class.subclass('Divmod.Module');
-Divmod.Module.method(
-    function __init__(self, name) {
-        self.name = name;
-    });
-
-
-Divmod.Logger = Divmod.Class.subclass('Divmod.Logger');
-Divmod.Logger.methods(
-    function __init__(self) {
-        self.observers = [];
-    },
-
-    function addObserver(self, observer) {
-        self.observers.push(observer);
-        return function() {
-            self._removeObserver(observer);
-        };
-    },
-
-    function _removeObserver(self, observer) {
-        for (var i = 0; i < self.observers.length; ++i) {
-            if (observer === self.observers[i]) {
-                self.observers.splice(i, 1);
-                return;
-            }
-        }
-    },
-
-    function _emit(self, event) {
-        var errors = [];
-        var obs = self.observers.slice();
-        for (var i = 0; i < obs.length; ++i) {
-            try {
-                obs[i](event);
-            } catch (e) {
-                self._removeObserver(obs[i]);
-                errors.push([e, "Log observer caused error, removing."]);
-            }
-        }
-        return errors;
-    },
-
-    function emit(self, event) {
-        var errors = self._emit(event);
-        while (errors.length) {
-            var moreErrors = [];
-            for (var i = 0; i < errors.length; ++i) {
-                var e = self._emit({'isError': true, 'error': errors[i][0], 'message': errors[i][1]});
-                for (var j = 0; j < e.length; ++j) {
-                    moreErrors.push(e[j]);
-                }
-            }
-            errors = moreErrors;
-        }
-    },
-
-    function err(self, error, /* optional */ message) {
-        var event = {'isError': true, 'error': error};
-        if (message != undefined) {
-            event['message'] = message;
-        }
-        self.emit(event);
-    },
-
-    function msg(self, message) {
-        var event = {'isError': false, 'message': message};
-        self.emit(event);
-    });
-
-Divmod.logger = new Divmod.Logger();
-Divmod.msg = function() { return Divmod.logger.msg.apply(Divmod.logger, arguments); };
-Divmod.err = function() { return Divmod.logger.err.apply(Divmod.logger, arguments); };
-Divmod.debug = function(kind, msg) {
-    Divmod.logger.emit({'isError': false, 'message': msg, 'debug': true, 'channel': kind});
-};
-Divmod.log = Divmod.debug;
-
-if (typeof(Nevow) == 'undefined') {
-    Nevow = {};
-}
-
-if (typeof(Nevow.Athena) == 'undefined') {
-    Nevow.Athena = {};
-}
+Nevow.Athena = {};
 
 Nevow.Athena.NAME = 'Nevow.Athena';
 Nevow.Athena.__repr__ = function() {
@@ -701,4 +452,277 @@ Nevow.Athena._initialize = function() {
     }, 1);
 };
 
+
+/**
+ * Athena Widgets
+ *
+ * This module defines a base class useful for adding behaviors to
+ * discrete portions of a page.  These widgets can be independent of
+ * other content on the same page, allowing separately developed
+ * widgets to be combined, or multiple instances of a single widget to
+ * appear repeatedly on the same page.
+ */
+
+Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass('Nevow.Athena.Widget');
+Nevow.Athena.Widget.methods(
+    function __init__(self, widgetNode) {
+        self.node = widgetNode;
+        self.childWidgets = [];
+        self.widgetParent = null;
+        Nevow.Athena.Widget.upcall(self, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
+    },
+
+    function addChildWidget(self, newChild) {
+        self.childWidgets.push(newChild);
+        newChild.setWidgetParent(self);
+    },
+
+    function setWidgetParent(self, widgetParent) {
+        self.widgetParent = widgetParent;
+    },
+
+    function visitNodes(self, visitor) {
+        Nevow.Athena._walkDOM(self.node, function(node) {
+            var result = visitor(node);
+            if (result || result == undefined) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+    },
+
+    function nodeByAttribute(self, attrName, attrValue) {
+        return Nevow.Athena.NodeByAttribute(self.node, attrName, attrValue);
+    },
+
+
+    function nodesByAttribute(self, attrName, attrValue) {
+        return Nevow.Athena.NodesByAttribute(self.node, attrName, attrValue);
+    });
+
+Nevow.Athena.Widget._athenaWidgets = {};
+
+/**
+ * Given any node within a Widget (the client-side representation of a
+ * LiveFragment), return the instance of the Widget subclass that corresponds
+ * with that node, creating that Widget subclass if necessary.
+ */
+Nevow.Athena.Widget.get = function(node) {
+    var widgetNode = Nevow.Athena.nodeByDOM(node);
+    var widgetId = Nevow.Athena.athenaIDFromNode(widgetNode);
+    if (Nevow.Athena.Widget._athenaWidgets[widgetId] == null) {
+        var widgetClass = Nevow.Athena.athenaClassFromNode(widgetNode);
+        Nevow.Athena.Widget._athenaWidgets[widgetId] = new widgetClass(widgetNode);
+    }
+    return Nevow.Athena.Widget._athenaWidgets[widgetId];
+};
+
+/**
+ * Search the whole document for a particular widget id.
+ */
+Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
+    var visitor = function(node) {
+        return (Nevow.Athena.athenaIDFromNode(node) == widgetId);
+    }
+    var nodes = Nevow.Athena._walkDOM(document, visitor);
+
+    if (nodes.length != 1) {
+        throw new Error(nodes.length + " nodes with athena id " + widgetId);
+    };
+
+    return Nevow.Athena.Widget.get(nodes[0]);
+};
+
+
+Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
+    var widget = Nevow.Athena.Widget.fromAthenaID(athenaID);
+    var method = widget[methodName];
+    Divmod.debug('widget', 'Invoking ' + methodName + ' on ' + widget + '(' + widget[methodName] + ')');
+    if (method == undefined) {
+        throw new Error(widget + ' has no method ' + methodName);
+    }
+    return method.apply(widget, varargs);
+};
+
+Nevow.Athena.consoleDoc = (
+    '<html>' +
+    '  <head>' +
+    '    <title>Log Console</title>' +
+    '    <style type="text/css">' +
+    '    body {' +
+    '      background-color: #fff;' +
+    '      color: #333;' +
+    '      font-size: 8pt;' +
+    '      margin: 0;' +
+    '      padding: 0;' +
+    '    }' +
+    '    #clear {' +
+    '      position: absolute;' +
+    '      right: 1em;' +
+    '      color: #900;' +
+    '    }' +
+    '    #console {' +
+    '      font-family: monospace;' +
+    '    }' +
+    '    .log-message-error {' +
+    '      margin: 0 0 0 0;' +
+    '      padding: 0;' +
+    '      border-bottom: 1px dashed #ccf;' +
+    '      color: red;' +
+    '    }' +
+    '    .timestamp {' +
+    '      display: block;' +
+    '      font-weight: bold;' +
+    '      color: #999;' +
+    '    }' +
+    '    </style>' +
+    '  </head>' +
+    '  <body>' +
+    '    <div id="console" />' +
+    '  </body>' +
+    '</html>');
+
+Nevow.Athena.IntrospectionWidget = Nevow.Athena.Widget.subclass('Nevow.Athena.IntrospectionWidget');
+Nevow.Athena.IntrospectionWidget.methods(
+    function __init__(self, node) {
+        Nevow.Athena.IntrospectionWidget.upcall(self, '__init__', node);
+
+        self.infoNodes = {
+            'toggleDebugging': self.nodeByAttribute('class', 'toggle-debug')
+        };
+
+        self.infoNodes['toggleDebugging'].onclick = function() { self.toggleDebugging(); return false; };
+
+        self.setDebuggingDisplayStyle();
+
+        self.events = [];
+        self.eventLimit = 1000;
+
+        self._logWindow = null;
+        self._logNode = null;
+
+        Divmod.logger.addObserver(function(event) { self.observe(event); });
+    },
+
+    function observe(self, event) {
+        self.events.push(event);
+        if (self.events.length > self.eventLimit) {
+            self.events.shift();
+        }
+        if (self._logNode != null) {
+            self._addEvent(event);
+        }
+    },
+
+    function _addEvent(self, event) {
+        var node = self._logNode;
+        var document = self._logWindow.document;
+
+        var div = document.createElement('div');
+        if (event['isError']) {
+            div.setAttribute('class', 'log-message-error');
+        } else if (event['channel']) {
+            div.setAttribute('class', 'log-message-' + event['channel']);
+        }
+        div.appendChild(document.createTextNode(event['message']));
+        node.appendChild(div);
+        div.scrollIntoView(false);
+    },
+
+    function _openLogWindow(self) {
+        self._logWindow = window.open('', 'Nevow_Athena_Log_Window', 'width=640,height=480,scrollbars');
+        self._logWindow.document.write(Nevow.Athena.consoleDoc);
+        self._logWindow.document.close();
+        self._logNode = self._logWindow.document.getElementById('console');
+        self._logWindow.document.title = 'Mantissa Debug Log Viewer';
+        for (var i = 0; i < self.events.length; i++) {
+            self.observe(self.events[i]);
+        }
+    },
+
+    function _closeLogWindow(self) {
+        if (self._logWindow) {
+            self._logWindow.close();
+            self._logWindow = null;
+            self._logNode = null;
+        }
+    },
+
+    function toggleDebugging(self) {
+        Divmod.debugging ^= 1;
+        self.setDebuggingDisplayStyle();
+    },
+
+    function setDebuggingDisplayStyle(self) {
+        if (Divmod.debugging) {
+            self.infoNodes['toggleDebugging'].setAttribute('class', 'nevow-athena-debugging-enabled');
+            self._openLogWindow();
+        } else {
+            self.infoNodes['toggleDebugging'].setAttribute('class', 'nevow-athena-debugging-disabled');
+            self._closeLogWindow();
+        }
+    });
+
+
+/**
+ * Instantiate Athena Widgets.
+ */
+Nevow.Athena.Widget._instantiateOneWidget = function(cls, node) {
+    Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
+    var inst = cls.get(node);
+    Divmod.debug("widget", "Widget class " + cls + " instantiated.");
+    try {
+        var widgetParent = Nevow.Athena.Widget.get(node.parentNode);
+        widgetParent.addChildWidget(inst);
+    } catch (noParent) {
+        // Right now we're going to do nothing here.
+        Divmod.debug("widget", "No parent found for widget " + inst);
+    }
+    if (inst.loaded != undefined) {
+        inst.loaded();
+        Divmod.debug("widget", "Widget class " + cls + " loaded.");
+    }
+};
+
+Nevow.Athena.Widget._pageLoaded = false;
+Nevow.Athena.Widget._waitingWidgets = {};
+Nevow.Athena.Widget._widgetNodeAdded = function(nodeId) {
+    Nevow.Athena.Widget._waitingWidgets[nodeId] = null;
+    if (Nevow.Athena.Widget._pageLoaded) {
+        if (Nevow.Athena.Widget._instantiationTimer == null) {
+            Nevow.Athena.Widget._instantiationTimer = setTimeout(Nevow.Athena.Widget._instantiateWidgets, 1);
+        }
+    }
+};
+
+Nevow.Athena.Widget._instantiateWidgets = function() {
+    var widgetIds = Nevow.Athena.Widget._waitingWidgets;
+    Nevow.Athena.Widget._waitingWidgets = {};
+
+    Nevow.Athena.Widget._instantiationTimer = null;
+
+    Nevow.Athena._walkDOM(
+        document.documentElement,
+        function(node) {
+            var cls = Nevow.Athena.athenaClassFromNode(node);
+            if (cls) {
+                var widgetId = Nevow.Athena.athenaIDFromNode(node);
+                if (widgetId != null && widgetId in widgetIds) {
+                    Nevow.Athena.Widget._instantiateOneWidget(cls, node);
+                }
+            }
+            return false;
+        });
+};
+
+Nevow.Athena.Widget._initialize = function() {
+    Divmod.debug("widget", "Instantiating live widgets");
+    Nevow.Athena.Widget._pageLoaded = true;
+    Nevow.Athena.Widget._instantiateWidgets();
+    Divmod.debug("widget", "Finished instantiating live widgets");
+}
+
 MochiKit.DOM.addLoadEvent(Nevow.Athena._initialize);
+MochiKit.DOM.addLoadEvent(Nevow.Athena.Widget._initialize);
+

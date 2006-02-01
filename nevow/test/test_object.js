@@ -1,23 +1,16 @@
 #!/usr/bin/smjs
 
+load("testsupport.js");
+
+// import Nevow.Athena
+// import Divmod
+
 /*
  *  Unit tests.
  * These don't work in any browser yet
  *on account of the smjs 'print' and 'load'
  builtins
  */
-
-load("../MochiKit/Base.js");
-load("../MochiKit/Async.js");
-MochiKit.DOM = {};
-MochiKit.DOM.addLoadEvent = function () {}
-load("../athena.js");
-
-function assert (cond, err) {
-    if (!cond) {
-        throw new Error("Test Failure: " + err);
-    }
-}
 
 function testClass() {
     var Eater = Divmod.Class.subclass('Eater');
@@ -164,7 +157,4 @@ var testFunctions = [
     testMethod,
     testLogger];
 
-for (var i = 0; i < testFunctions.length; ++i) {
-    testFunctions[i]();
-}
-print("SUCCESS");
+runTests(testFunctions);

@@ -1,9 +1,17 @@
 
+import sys
+
 from twisted.trial import unittest
 from twisted.internet import reactor, protocol, error, defer
 from twisted.python import procutils, filepath
 
+from twisted.python.util import untilConcludes
+
 class _JavaScriptTestSuiteProtocol(protocol.ProcessProtocol):
+
+    # XXX TODO: integrate this with Trial somehow, to report results of
+    # individual JS tests.
+
     finished = None
 
     def connectionMade(self):
@@ -11,9 +19,13 @@ class _JavaScriptTestSuiteProtocol(protocol.ProcessProtocol):
         self.err = []
 
     def outReceived(self, out):
+        untilConcludes(sys.stdout.write, out)
+        untilConcludes(sys.stdout.flush)
         self.out.append(out)
 
     def errReceived(self, err):
+        untilConcludes(sys.stdout.write, err)
+        untilConcludes(sys.stdout.flush)
         self.err.append(err)
 
     def processEnded(self, reason):
@@ -30,20 +42,21 @@ class JavaScriptTestSuite(unittest.TestCase):
 
     javascriptInterpreter = None
 
-    def testAllJavaScript(self):
+    def onetest(self, jsfile):
         p = _JavaScriptTestSuiteProtocol()
         d = p.finished = defer.Deferred()
         reactor.spawnProcess(
             p,
             self.javascriptInterpreter,
-            ("js", filepath.FilePath(__file__).parent().child('test_object.js').path),
+            ("js", filepath.FilePath(__file__).parent().child(jsfile).path),
             path=filepath.FilePath(__file__).parent().path)
 
-        def finished(output):
-            lines = output.splitlines()
-            self.assertEquals(lines[-1], 'SUCCESS')
+        return d
 
-        return d.addCallback(finished)
+    def testJSDeferred(self):
+        return self.onetest('test_deferred.js')
+    def testJSObject(self):
+        return self.onetest('test_object.js')
 
 
 

@@ -170,10 +170,12 @@ class JSDependencies(object):
     def __init__(self, mapping=None):
         if mapping is None:
             self.mapping = {
-                u'Divmod': util.resource_filename('nevow', 'athena.js'),
+                u'Divmod': util.resource_filename('nevow', 'divmod.js'),
+                u'Divmod.Defer': util.resource_filename('nevow', 'defer.js'),
                 u'Divmod.Runtime': util.resource_filename('nevow', 'runtime.js'),
                 u'Divmod.XML': util.resource_filename('nevow', 'xml.js'),
-                u'Nevow.Athena': util.resource_filename('nevow', 'widget.js'),
+                u'Nevow': util.resource_filename('nevow', 'nevow.js'),
+                u'Nevow.Athena': util.resource_filename('nevow', 'athena.js'),
                 u'MochiKit': util.resource_filename('nevow', 'MochiKit.js'),
                 u'Nevow.TagLibrary': util.resource_filename('nevow.taglibrary', 'taglibrary.js'),
                 u'Nevow.TagLibrary.TabbedPane': util.resource_filename('nevow.taglibrary', 'tabbedPane.js')}
@@ -368,7 +370,7 @@ class LivePage(rend.Page):
             transportRoot = url.here
         self.transportRoot = transportRoot
         self.liveFragmentChildren = []
-        self._includedModules = ['MochiKit', 'Divmod', 'Nevow.Athena']
+        self._includedModules = ['MochiKit', 'Divmod', 'Nevow', 'Nevow.Athena']
 
 
     def _shouldInclude(self, moduleName):
@@ -556,6 +558,7 @@ class LivePage(rend.Page):
         return ctx.tag[
             tags.script(type='text/javascript', src=self.getJSModuleURL('MochiKit')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod')),
+            tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow.Athena')),
             tags.script(type='text/javascript')[tags.raw("""
                 Divmod._location = '%(baseURL)s';
