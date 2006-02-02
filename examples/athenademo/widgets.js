@@ -1,9 +1,7 @@
 
 // import Nevow.Athena
 
-if (typeof WidgetDemo == 'undefined') {
-    WidgetDemo = {};
-}
+var WidgetDemo = {};
 
 WidgetDemo.Clock = Nevow.Athena.Widget.subclass('WidgetDemo.Clock');
 WidgetDemo.Clock.methods(

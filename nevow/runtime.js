@@ -30,7 +30,7 @@ Divmod.Runtime.Platform.method(
             var curnode = deque.shift();
             var visitorResult = visitor(curnode);
             switch (visitorResult) {
-            case self.DOM_DESCEND:
+            case Divmod.Runtime.Platform.DOM_DESCEND:
                 for (var i = 0; i < curnode.childNodes.length; i++) {
                     // "maybe you could make me care about how many stop
                     // bits my terminal has!  that would be so retro!"
@@ -38,7 +38,7 @@ Divmod.Runtime.Platform.method(
                 }
                 break;
 
-            case self.DOM_CONTINUE:
+            case Divmod.Runtime.Platform.DOM_CONTINUE:
                 break;
 
             default :
@@ -120,7 +120,7 @@ Divmod.Runtime.Firefox.method(
                 if (node.tagName == 'script') {
                     scripts.push(node);
                 }
-                return Divmod.Runtime.theRuntime.DOM_DESCEND;
+                return Divmod.Runtime.Platform.DOM_DESCEND;
             });
 
         var oldScript;
@@ -198,7 +198,7 @@ Divmod.Runtime.InternetExplorer.method(
                     node.parentNode.removeChild(node);
                     body.appendChild(newScript);
                 }
-                return self.DOM_DESCEND;
+                return Divmod.Runtime.Platform.DOM_DESCEND;
             });
     });
 

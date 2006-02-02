@@ -1,2 +1,2 @@
 
-Nevow = {};
+var Nevow = {};

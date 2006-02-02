@@ -258,7 +258,7 @@ Nevow.Athena._walkDOM = function(parent, test, memo) {
     /* alert(parent); */
     if ((parent == undefined) ||
         (parent.childNodes == undefined)) {
-        return;
+        return null;
     }
     var child;
     var len = parent.childNodes.length;

@@ -1,7 +1,5 @@
 
-if (typeof Divmod == 'undefined') {
-    Divmod = {};
-}
+var Divmod = {};
 
 Divmod.baseURL = function() {
     // Use "cached" value if it exists
