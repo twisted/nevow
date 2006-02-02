@@ -11,23 +11,26 @@ classifiers=[
     "Programming Language :: Python",
     "Development Status :: 4 - Beta",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content"]
-scripts=['bin/nevow-xmlgettext', 'bin/livetrial']
+scripts=['bin/nevow-xmlgettext', 'bin/nit']
 package_data={
         'formless': [
             'freeform-default.css'
             ],
         'nevow': [
             'athena.js',
-            'runtime.js',
-            'xml.js',
-            'widget.js',
-            'MochiKit.js',
-            'MochiKitLogConsole.js',
+            'defer.js',
+            'divmod.js',
+            'Canvas.swf',
             'liveglue.js',
+            'livetest.css',
             'livetest.js',
             'livetest-postscripts.js',
-            'livetest.css',
-            'Canvas.swf',
+            'MochiKit.js',
+            'MochiKitLogConsole.js',
+            'nevow.js',
+            'runtime.js',
+            'widget.js',
+            'xml.js',
             ],
         'nevow.taglibrary': [
             'tabbedPane.js',
@@ -35,5 +38,9 @@ package_data={
             'progressBar.js',
             'progressBar.css',
             'taglibrary.js',
-            ]
+            ],
+        'nevow.livetrial': [
+            'livetest.css',
+            'livetest.js',
+            ],
         }

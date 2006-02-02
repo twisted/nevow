@@ -1,10 +1,9 @@
 from twisted.python import filepath
 
-from nevow import athena, loaders, tags, rend, url, static
+from nevow import athena, loaders, tags, rend, url, static, util
 from nevow.livetrial import testcase
 
-here = filepath.FilePath(__file__).parent()
-staticData = here.child('static')
+staticData = filepath.FilePath(__file__).parent().child('static')
 
 class TestSuiteFragment(athena.LiveFragment):
     jsClass = u'Nevow.Athena.Test.TestSuite'
@@ -48,7 +47,7 @@ class TestFramework(athena.LivePage):
         tags.xml(DOCTYPE_XHTML),
         tags.html[
             tags.head(render=tags.directive('liveglue'))[
-                tags.link(rel='stylesheet', href='static/livetest.css'),
+                tags.link(rel='stylesheet', href='livetest.css'),
             ],
             tags.body[
                 tags.invisible(render=tags.directive('runner')),
@@ -60,6 +59,9 @@ class TestFramework(athena.LivePage):
     def __init__(self, testSuite):
         super(TestFramework, self).__init__(None, None, jsModuleRoot=url.here.child('jsmodule'))
         self.testSuite = testSuite
+        self.children = {
+            'livetest.css': static.File(util.resource_filename('nevow.livetrial', 'livetest.css')),
+        }
 
     def render_runner(self, ctx, data):
         f = TestRunner(self.testSuite)
@@ -70,9 +72,6 @@ class TestFramework(athena.LivePage):
         f = athena.IntrospectionFragment()
         f.setFragmentParent(self)
         return f
-
-    def child_static(self, ctx):
-        return static.File(staticData.path)
 
 class TestFrameworkRoot(rend.Page):
     def child_app(self, ctx):
