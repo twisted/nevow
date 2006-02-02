@@ -469,7 +469,39 @@ Nevow.Athena.Widget.methods(
         self.node = widgetNode;
         self.childWidgets = [];
         self.widgetParent = null;
+        self.createEventBindings();
         Nevow.Athena.Widget.upcall(self, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
+    },
+
+    function createEventBindings(self) {
+        if (self.node.getElementsByTagNameNS) {
+            var events = self.node.getElementsByTagNameNS(Nevow.Athena.XMLNS_URI, 'handler');
+            if (events.length == 0) {
+                // Maybe namespaces aren't being handled properly, let's check
+                var events = self.node.getElementsByTagName('athena:handler');
+            }
+        } else {
+            // We haven't even heard of namespaces, so do without
+            var events = self.node.getElementsByTagName('athena:handler');
+        }
+
+        function makeHandler(evtHandler) {
+            return function (e) {
+                try {
+                    return self[evtHandler](this, e);
+                } catch (e) {
+                    Divmod.err(e);
+                    return false;
+                }
+           };
+        }
+
+        for (var i = 0; i < events.length; ++i) {
+            var event = events[i];
+            var evtName = event.getAttribute('event');
+            var evtHandler = event.getAttribute('handler');
+            event.parentNode[evtName] = makeHandler(evtHandler);
+        }
     },
 
     function addChildWidget(self, newChild) {
@@ -557,11 +589,6 @@ Nevow.Athena.consoleDoc = (
     '      margin: 0;' +
     '      padding: 0;' +
     '    }' +
-    '    #clear {' +
-    '      position: absolute;' +
-    '      right: 1em;' +
-    '      color: #900;' +
-    '    }' +
     '    #console {' +
     '      font-family: monospace;' +
     '    }' +
@@ -579,7 +606,10 @@ Nevow.Athena.consoleDoc = (
     '    </style>' +
     '  </head>' +
     '  <body>' +
-    '    <div id="console" />' +
+    '    <div id="console">' +
+    '    </div>' +
+    '    <hr />' +
+    '    <a id="clear" href="">Clear</button>' +
     '  </body>' +
     '</html>');
 
@@ -630,6 +660,12 @@ Nevow.Athena.IntrospectionWidget.methods(
         div.scrollIntoView(false);
     },
 
+    function _clearEvents(self) {
+        while (self._logNode.firstChild) {
+            self._logNode.removeChild(self._logNode.firstChild);
+        }
+    },
+
     function _openLogWindow(self) {
         self._logWindow = window.open('', 'Nevow_Athena_Log_Window', 'width=640,height=480,scrollbars');
         self._logWindow.document.write(Nevow.Athena.consoleDoc);
@@ -639,6 +675,9 @@ Nevow.Athena.IntrospectionWidget.methods(
         for (var i = 0; i < self.events.length; i++) {
             self.observe(self.events[i]);
         }
+
+        self._clearNode = self._logWindow.document.getElementById('clear');
+        self._clearNode.onclick = function(event) { self._clearEvents(); return false; };
     },
 
     function _closeLogWindow(self) {

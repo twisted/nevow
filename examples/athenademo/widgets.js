@@ -7,12 +7,14 @@ if (typeof WidgetDemo == 'undefined') {
 
 WidgetDemo.Clock = Nevow.Athena.Widget.subclass('WidgetDemo.Clock');
 WidgetDemo.Clock.methods(
-    function start(self) {
+    function start(self, node, event) {
         self.callRemote('start');
+        return false;
     },
 
-    function stop(self) {
+    function stop(self, node, event) {
         self.callRemote('stop');
+        return false;
     },
 
     function setTime(self, toWhat) {

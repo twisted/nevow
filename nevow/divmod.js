@@ -229,6 +229,8 @@ Divmod.Logger.methods(
         var event = {'isError': true, 'error': error};
         if (message != undefined) {
             event['message'] = message;
+        } else {
+            event['message'] = error.message;
         }
         self.emit(event);
     },

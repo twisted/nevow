@@ -9,20 +9,21 @@ from nevow import athena, loaders, static
 class Clock(athena.LiveFragment):
     jsClass = u"WidgetDemo.Clock"
 
-    docFactory = loaders.xmlstr("""\
+    docFactory = loaders.xmlstr('''\
 <div xmlns:nevow="http://nevow.com/ns/nevow/0.1"
+     xmlns:athena="http://divmod.org/ns/athena/0.7"
      nevow:render="liveFragment">
     <div>
-        <a href="" onclick="WidgetDemo.Clock.get(this).start(); return false;">
+        <a href="#"><athena:handler event="onclick" handler="start" />
             Start
         </a>
-        <a href="" onclick="WidgetDemo.Clock.get(this).stop(); return false;">
+        <a href="#"><athena:handler event="onclick" handler="stop" />
             Stop
         </a>
     </div>
     <div class="clock-time" />
 </div>
-""")
+''')
 
     running = False
 
@@ -62,7 +63,7 @@ class WidgetPage(athena.LivePage):
         <div nevow:render="clock">
             Second Clock
         </div>
-        <div id="nevow-log" />
+        <div nevow:render="debug" />
     </body>
 </html>
 """)
@@ -85,3 +86,8 @@ class WidgetPage(athena.LivePage):
         c = Clock()
         c.page = self
         return ctx.tag[c]
+
+    def render_debug(self, ctx, data):
+        f = athena.IntrospectionFragment()
+        f.setFragmentParent(self)
+        return ctx.tag[f]
