@@ -1,0 +1,8 @@
+<div xmlns="http://www.w3.org/1999/xhtml" xmlns:n="http://nevow.com/ns/nevow/0.1" class="test-runner" n:render="liveFragment">
+    <form action="#" onsubmit="Nevow.Athena.Test.TestRunner.get(this).run(); return false;">
+        <input type="submit" value="Run Tests" />
+    </form>
+    <div>Tests passed: <span class="test-success-count">0</span></div>
+    <div>Tests failed: <span class="test-failure-count">0</span></div>
+    <n:invisible n:render="tests" />
+</div>

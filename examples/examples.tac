@@ -65,7 +65,6 @@ try:
     from athenademo import calculator
     from athenademo import typeahead
     from athenademo import widgets
-    from athenademo import athenatest
     from athenademo import benchmark
 except ImportError, e:
     if str(e).find('No module named') != -1:
@@ -178,11 +177,6 @@ class Examples(rend.Page):
 
     def child_calculator(self, ctx):
         return calculator.CalculatorResource(calculator.ICalculator, calculator.Calculator())
-
-    def child_athenatest(self, ctx):
-        here = url.URL.fromContext(ctx).child('athenatest')
-        modules = here.child('jsmodule')
-        return athenatest.AthenaTests(jsModuleRoot=modules)
 
     def child_widgets(self, ctx):
         return widgets.WidgetPage(None, None)

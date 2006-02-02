@@ -1,58 +1,21 @@
 
 // import Nevow.Athena
 
-AthenaTest = {};
+if (Nevow.Athena.Tests == undefined) {
+    Nevow.Athena.Tests = {};
+}
 
-AthenaTest.TestCase = Nevow.Athena.Widget.subclass('AthenaTest.TestCase');
-AthenaTest.TestCase.methods(
-    function fail(self, msg) {
-        throw new Error('Test Failure: ' + msg);
-    },
-
-    function assertEquals(self, a, b) {
-        if (!(a == b)) {
-            fail(a + ' != ' + b);
-        }
-    },
-
-    function test(self) {
-        var res;
-        var subargs = [];
-        for (var i = 1; i < arguments.length; ++i) {
-            subargs.push(arguments[i]);
-        }
-        try {
-            res = self._test.apply(self, subargs);
-        } catch (e) {
-            res = MochiKit.Async.fail(e);
-        }
-
-        if (res == undefined || !res.addCallback || !res.addErrback) {
-            res = MochiKit.Async.succeed(res);
-        }
-
-        res.addCallback(function(result) {
-            Divmod.log('test', 'Success!');
-        });
-
-        res.addErrback(function(err) {
-            Divmod.log('test', 'Failure: ' + err.message);
-        });
-
-        return false;
-    });
-
-AthenaTest.ClientToServerArgumentSerialization = AthenaTest.TestCase.subclass('AthenaTest.ClientToServerArgumentSerialization');
-AthenaTest.ClientToServerArgumentSerialization.methods(
-    function _test(self) {
+Nevow.Athena.Tests.ClientToServerArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerArgumentSerialization');
+Nevow.Athena.Tests.ClientToServerArgumentSerialization.methods(
+    function run(self) {
         var L = [1, 1.5, 'Hello world'];
         var O = {'hello world': 'object value'};
         return self.callRemote('test', 1, 1.5, 'Hello world', L, O);
     });
 
-AthenaTest.ClientToServerResultSerialization = AthenaTest.TestCase.subclass('AthenaTest.ClientToServerResultSerialization');
-AthenaTest.ClientToServerResultSerialization.methods(
-    function _test(self) {
+Nevow.Athena.Tests.ClientToServerResultSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerResultSerialization');
+Nevow.Athena.Tests.ClientToServerResultSerialization.methods(
+    function run(self) {
         var L = [1, 1.5, 'Hello world'];
         var O = {'hello world': 'object value'};
         var d = self.callRemote('test', 1, 1.5, 'Hello world', L, O);
@@ -68,16 +31,12 @@ AthenaTest.ClientToServerResultSerialization.methods(
         return d;
     });
 
-AthenaTest.ClientToServerExceptionResult = AthenaTest.TestCase.subclass('AthenaTest.ClientToServerExceptionResult');
-AthenaTest.ClientToServerExceptionResult.methods(
-    function _test(self, sync) {
+Nevow.Athena.Tests.ClientToServerExceptionResult = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerExceptionResult');
+Nevow.Athena.Tests.ClientToServerExceptionResult.methods(
+    function run(self) {
         var d;
         var s = 'This exception should appear on the client.';
-        if (sync) {
-            d = self.callRemote('testSync', s);
-        } else {
-            d = self.callRemote('testAsync', s);
-        }
+        d = self.callRemote('testSync', s);
         d.addCallbacks(
             function(result) {
                 self.fail('Erroneously received a result: ' + result);
@@ -91,9 +50,28 @@ AthenaTest.ClientToServerExceptionResult.methods(
         return d;
     });
 
-AthenaTest.ServerToClientArgumentSerialization = AthenaTest.TestCase.subclass('AthenaTest.ServerToClientArgumentSerialization');
-AthenaTest.ServerToClientArgumentSerialization.methods(
-    function _test(self) {
+Nevow.Athena.Tests.ClientToServerAsyncExceptionResult = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerAsyncExceptionResult');
+Nevow.Athena.Tests.ClientToServerAsyncExceptionResult.methods(
+    function run(self) {
+        var d;
+        var s = 'This exception should appear on the client.';
+        d = self.callRemote('testAsync', s);
+        d.addCallbacks(
+            function(result) {
+                self.fail('Erroneously received a result: ' + result);
+            },
+            function(err) {
+                var idx = err.message.indexOf(s);
+                if (idx == -1) {
+                    self.fail('Did not find expected message in error message: ' + err);
+                }
+            });
+        return d;
+    });
+
+Nevow.Athena.Tests.ServerToClientArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientArgumentSerialization');
+Nevow.Athena.Tests.ServerToClientArgumentSerialization.methods(
+    function run(self) {
         return self.callRemote('test');
     },
 
@@ -104,9 +82,9 @@ AthenaTest.ServerToClientArgumentSerialization.methods(
         self.assertEquals(o['world'], 'value');
     });
 
-AthenaTest.ServerToClientResultSerialization = AthenaTest.TestCase.subclass('AthenaTest.ServerToClientResultSerialization');
-AthenaTest.ServerToClientResultSerialization.methods(
-    function _test(self) {
+Nevow.Athena.Tests.ServerToClientResultSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientResultSerialization');
+Nevow.Athena.Tests.ServerToClientResultSerialization.methods(
+    function run(self) {
         return self.callRemote('test');
     },
 
@@ -114,25 +92,25 @@ AthenaTest.ServerToClientResultSerialization.methods(
         return [1, 1.5, 'hello', {'world': 'value'}];
     });
 
-AthenaTest.WidgetInATable = AthenaTest.TestCase.subclass('AthenaTest.WidgetInATable');
-AthenaTest.WidgetInATable.methods(
-    function _test(self) {
+Nevow.Athena.Tests.WidgetInATable = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.WidgetInATable');
+Nevow.Athena.Tests.WidgetInATable.methods(
+    function run(self) {
         // Nothing to do
     });
 
-AthenaTest.WidgetIsATable = AthenaTest.TestCase.subclass('AthenaTest.WidgetIsATable');
-AthenaTest.WidgetIsATable.methods(
-    function _test(self) {
+Nevow.Athena.Tests.WidgetIsATable = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.WidgetIsATable');
+Nevow.Athena.Tests.WidgetIsATable.methods(
+    function run(self) {
         // Nothing to do
     });
 
-AthenaTest.ChildParentRelationshipTest = AthenaTest.TestCase.subclass('AthenaTest.ChildParentRelationshipTest');
-AthenaTest.ChildParentRelationshipTest.methods(
+Nevow.Athena.Tests.ChildParentRelationshipTest = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ChildParentRelationshipTest');
+Nevow.Athena.Tests.ChildParentRelationshipTest.methods(
     function checkParent(self, proposedParent) {
         self.assertEquals(self.widgetParent, proposedParent);
     },
 
-    function _test(self) {
+    function run(self) {
         var deferredList = function(finalDeferred, counter) {
             if (counter == 0) {
                 finalDeferred.callback(null);
@@ -158,22 +136,22 @@ AthenaTest.ChildParentRelationshipTest.methods(
             for (var i = 0; i < self.childWidgets.length; i++) {
                 var childWidget = self.childWidgets[i];
                 childWidget.checkParent(self);
-                childWidget._test().addCallback(cb).addErrback(function(err) { d.errback(err); });
+                childWidget.run().addCallback(cb).addErrback(function(err) { d.errback(err); });
             }
             return d;
         });
         return result;
     });
 
-AthenaTest.AutomaticClass = AthenaTest.TestCase.subclass('AthenaTest.AutomaticClass');
-AthenaTest.AutomaticClass.methods(
-    function _test(self) {
+Nevow.Athena.Tests.AutomaticClass = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AutomaticClass');
+Nevow.Athena.Tests.AutomaticClass.methods(
+    function run(self) {
         // Nothing to do here
     });
 
 
-AthenaTest.ImportBeforeLiteralJavaScript = AthenaTest.TestCase.subclass('AthenaTest.ImportBeforeLiteralJavaScript');
-AthenaTest.ImportBeforeLiteralJavaScript.methods(
-    function _test(self) {
+Nevow.Athena.Tests.ImportBeforeLiteralJavaScript = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ImportBeforeLiteralJavaScript');
+Nevow.Athena.Tests.ImportBeforeLiteralJavaScript.methods(
+    function run(self) {
         self.assertEquals(importBeforeLiteralJavaScriptResult, false);
     });

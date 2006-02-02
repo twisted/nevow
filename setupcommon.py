@@ -11,7 +11,7 @@ classifiers=[
     "Programming Language :: Python",
     "Development Status :: 4 - Beta",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content"]
-scripts=['bin/nevow-xmlgettext']
+scripts=['bin/nevow-xmlgettext', 'bin/livetrial']
 package_data={
         'formless': [
             'freeform-default.css'

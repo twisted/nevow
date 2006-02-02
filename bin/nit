@@ -1,0 +1,3 @@
+#!/usr/bin/python
+from nevow.scripts.livetrial import run
+run()
