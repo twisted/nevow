@@ -30,7 +30,7 @@ for pkg, files in setupcommon.package_data.items():
 packages = [
     'formless', 'formless.test', 'nevow', 'nevow.flat',
     'nevow.scripts', 'nevow.test', 'nevow.taglibrary',
-    'nevow.plugins']
+    'nevow.plugins', 'nevow.livetrial']
 
 setup(
     name=setupcommon.name,
