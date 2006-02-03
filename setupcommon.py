@@ -43,4 +43,10 @@ package_data={
             'livetest.css',
             'livetest.js',
             ],
+        'nevow.test': [
+            'livetest.js',
+            'test_deferred.js',
+            'test_object.js',
+            'testsupport.js',
+            ],
         }

@@ -7,7 +7,10 @@ staticData = filepath.FilePath(__file__).parent().child('static')
 
 class TestSuiteFragment(athena.LiveFragment):
     jsClass = u'Nevow.Athena.Test.TestSuite'
-    docFactory = loaders.xmlfile(staticData.child('suite.xhtml').path)
+    docFactory = loaders.stan(
+        tags.div(_class='test-suite', render=tags.directive('liveFragment'))[
+            tags.div(render=tags.directive('name')),
+            tags.invisible(render=tags.directive('tests'))])
 
     def __init__(self, suite):
         super(TestSuiteFragment, self).__init__()
@@ -36,7 +39,13 @@ DOCTYPE_XHTML = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http:
 
 class TestRunner(TestSuiteFragment):
     jsClass = u'Nevow.Athena.Test.TestRunner'
-    docFactory = loaders.xmlfile(staticData.child('runner.xhtml').path)
+    docFactory = loaders.stan(
+        tags.div(_class='test-runner', render=tags.directive('liveFragment')[
+            tags.form(action='#', onsubmit='Nevow.Athena.Test.TestRunner.get(this).run(); return false;')[
+                tags.input(type='submit', value='Run Tests')],
+            tags.div['Tests passed: ', tags.span(_class='test-success-count')[0]],
+            tags.div['Tests failed: ', tags.span(_class='test-failure-count')[0]],
+            tags.invisible(render=tags.directive('tests'))])
 
     def __init__(self, suite):
         super(TestRunner, self).__init__(suite)
