@@ -5,6 +5,34 @@ load("testsupport.js");
 // import Divmod
 // import Divmod.Defer
 
+function succeedDeferred() {
+    var result = null;
+    var error = null;
+    var d = Divmod.Defer.succeed("success");
+    d.addCallback(function(res) {
+        result = res;
+    });
+    d.addErrback(function(err) {
+        error = err;
+    });
+    assert(result == "success", "Result was not success but instead: " + result);
+    assert(error == null, "Error was not null but instead: " + error);
+}
+
+function failDeferred() {
+    var result = null;
+    var error = null;
+    var d = Divmod.Defer.fail(Error("failure"));
+    d.addCallback(function(res) {
+        result = res;
+    });
+    d.addErrback(function(err) {
+        error = err;
+    });
+    assert(result == null, "Result was not null but instead: " + result);
+    assert(error.error.message == "failure", "Error message was not failure but instead: " + error.error.message);
+}
+
 function callThisDontCallThat() {
     var thisCalled = false;
     var thatCalled = false;
@@ -82,7 +110,9 @@ function deferredReturnedFromCallback() {
     assert(theResult == "final result", "theResult did not get final result: " + theResult);
 }
 
-runTests([callThisDontCallThat,
+runTests([succeedDeferred,
+          failDeferred,
+          callThisDontCallThat,
           callbackResultPassedToNextCallback,
           addCallbacksAfterResult,
           deferredReturnedFromCallback]);

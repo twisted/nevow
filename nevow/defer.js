@@ -7,6 +7,10 @@ Divmod.Defer = {};
 Divmod.Defer.AlreadyCalledError = Divmod.Class.subclass("Divmod.Defer.AlreadyCalledError");
 
 Divmod.Defer.Failure = Divmod.Class.subclass("Divmod.Defer.Failure");
+Divmod.Defer.Failure.methods(
+    function __init__(self, error) {
+        self.error = error;
+    });
 
 Divmod.Defer.Deferred = Divmod.Class.subclass("Divmod.Defer.Deferred");
 
@@ -86,6 +90,11 @@ Divmod.Defer.Deferred.methods(
                     var callback = item[0];
                     var args = item[2];
                 }
+
+                if (callback == null) {
+                    continue;
+                }
+
                 args.unshift(self._result);
                 try {
                     self._result = callback.apply(null, args);
@@ -125,3 +134,15 @@ Divmod.Defer.Deferred.methods(
         }
         self._startRunCallbacks(err);
     });
+
+Divmod.Defer.succeed = function(result) {
+    var d = new Divmod.Defer.Deferred();
+    d.callback(result);
+    return d;
+};
+
+Divmod.Defer.fail = function(err) {
+    var d = new Divmod.Defer.Deferred();
+    d.errback(err);
+    return d;
+};
