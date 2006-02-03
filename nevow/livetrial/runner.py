@@ -40,7 +40,7 @@ DOCTYPE_XHTML = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http:
 class TestRunner(TestSuiteFragment):
     jsClass = u'Nevow.Athena.Test.TestRunner'
     docFactory = loaders.stan(
-        tags.div(_class='test-runner', render=tags.directive('liveFragment')[
+        tags.div(_class='test-runner', render=tags.directive('liveFragment'))[
             tags.form(action='#', onsubmit='Nevow.Athena.Test.TestRunner.get(this).run(); return false;')[
                 tags.input(type='submit', value='Run Tests')],
             tags.div['Tests passed: ', tags.span(_class='test-success-count')[0]],
