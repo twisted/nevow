@@ -27,7 +27,7 @@ Nevow.Athena.Test.TestCase.methods(
         }
         if (typeof result == 'object' && result.addCallback && result.addErrback) {
             result.addCallback(function(result) { self._success(reporter); });
-            result.addErrback(function(err) { self._failure(err, reporter); });
+            result.addErrback(function(err) { self._failure(err.error, reporter); });
             return result;
         } else {
             self._success(reporter);

@@ -301,6 +301,12 @@ class LivePageTransport(object):
         """
 
 
+    def action_close(self, ctx):
+        """
+        The client is going away.  Clean up after them.
+        """
+        self.livePage._disconnected()
+
 
 class LivePageFactory:
     noisy = True
@@ -372,7 +378,7 @@ class LivePage(rend.Page):
             transportRoot = url.here
         self.transportRoot = transportRoot
         self.liveFragmentChildren = []
-        self._includedModules = ['MochiKit', 'Divmod', 'Nevow', 'Nevow.Athena']
+        self._includedModules = ['MochiKit', 'Divmod', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
 
 
     def _shouldInclude(self, moduleName):
@@ -472,6 +478,11 @@ class LivePage(rend.Page):
     def _disconnected(self, reason):
         if not self._didDisconnect:
             self._didDisconnect = True
+
+            if self._noTransportsDisconnectCall is not None:
+                self._noTransportsDisconnectCall.cancel()
+                self._noTransportsDisconnectCall = None
+
             notifications = self._disconnectNotifications
             self._disconnectNotifications = None
             for d in notifications:
@@ -560,6 +571,8 @@ class LivePage(rend.Page):
         return ctx.tag[
             tags.script(type='text/javascript', src=self.getJSModuleURL('MochiKit')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod')),
+            tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod.Defer')),
+            tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod.Runtime')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow')),
             tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow.Athena')),
             tags.script(type='text/javascript')[tags.raw("""

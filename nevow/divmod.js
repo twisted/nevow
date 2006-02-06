@@ -1,6 +1,7 @@
 
 var Divmod = {};
 
+
 Divmod.baseURL = function() {
     // Use "cached" value if it exists
     if (Divmod._baseURL != undefined) {
@@ -27,12 +28,14 @@ Divmod.baseURL = function() {
     return Divmod._baseURL;
 };
 
+
 Divmod.importURL = function(moduleName) {
     return Divmod.baseURL() + 'jsmodule/' + moduleName;
 };
 
 
 Divmod._global = this;
+
 
 Divmod.namedAny = function(name) {
     var namedParts = name.split('.');
@@ -47,9 +50,10 @@ Divmod.namedAny = function(name) {
     return obj;
 };
 
+
 Divmod.vars = function(obj) {
     var L = [];
-    for (var i in o) {
+    for (var i in obj) {
         L.push([i, obj[i]]);
     }
     return L;
@@ -58,7 +62,7 @@ Divmod.vars = function(obj) {
 
 Divmod.dir = function(obj) {
     var L = [];
-    for (var i in o) {
+    for (var i in obj) {
         L.push(i);
     }
     return L;
@@ -160,6 +164,7 @@ Divmod.Class.subclass = function(/* optional */ className) {
     return subClass;
 };
 
+
 Divmod.Class.prototype.__init__ = function() {
     /* throw new Error("If you ever hit this code path something has gone horribly wrong");
      */
@@ -237,6 +242,7 @@ Divmod.Logger.methods(
         var event = {'isError': false, 'message': message};
         self.emit(event);
     });
+
 
 Divmod.logger = new Divmod.Logger();
 Divmod.msg = function() { return Divmod.logger.msg.apply(Divmod.logger, arguments); };

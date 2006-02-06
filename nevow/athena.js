@@ -1,6 +1,8 @@
 // -*- test-case-name: nevow.test.test_javascript -*-
 
 // import Divmod
+// import Divmod.Runtime
+
 // import Nevow
 
 Nevow.Athena = {};
@@ -10,21 +12,26 @@ Nevow.Athena.__repr__ = function() {
     return '[' + this.NAME + ']';
 };
 
+
 Nevow.Athena.toString = function() {
     return this.__repr__();
 };
 
+
 Nevow.Athena.XMLNS_URI = 'http://divmod.org/ns/athena/0.7';
+
 
 Nevow.Athena.baseURL = function() {
     return Divmod.baseURL() + 'transport';
 };
+
 
 Nevow.Athena.constructActionURL = function(action) {
     return (Nevow.Athena.baseURL()
             + '?action='
             + encodeURIComponent(action));
 };
+
 
 Nevow.Athena.CONNECTED = 'connected';
 Nevow.Athena.DISCONNECTED = 'disconnected';
@@ -36,6 +43,7 @@ Nevow.Athena.remoteCalls = {};
 Nevow.Athena._transportCounter = 0;
 Nevow.Athena.outstandingTransports = {};
 
+
 Nevow.Athena._numTransports = function() {
     /* XXX UGGG */
     var num = 0;
@@ -46,21 +54,101 @@ Nevow.Athena._numTransports = function() {
     return num;
 };
 
-/**
- * Notice the unusual ordering of arguments here.  Please ask Bob
- * Ippolito about it.
- */
-Nevow.Athena.XMLHttpRequestFinished = function(reqId, passthrough) {
-    Divmod.debug('transport', 'request ' + reqId + ' completed');
+
+Nevow.Athena._connectionLost = function(reason) {
+    Divmod.debug('transport', 'Closed');
+    Nevow.Athena.connectionState = Nevow.Athena.DISCONNECTED;
+    var calls = Nevow.Athena.remoteCalls;
+    Nevow.Athena.remoteCalls = {};
+    for (var k in calls) {
+        calls[k].errback(new Error("Connection lost"));
+    }
+    /* IE doesn't close outstanding requests when a user navigates
+     * away from the page that spawned them.  Also, we may have lost
+     * the connection without navigating away from the page.  So,
+     * clean up any outstanding requests right here.
+     */
+    var cancelledTransports = Nevow.Athena.outstandingTransports;
+    Nevow.Athena.outstandingTransports = {};
+    for (var reqId in cancelledTransports) {
+        cancelledTransports[reqId].abort();
+    }
+};
+
+
+Nevow.Athena.preparePostContent = function(args, kwargs) {
+    return MochiKit.Base.serializeJSON([args, kwargs]);
+};
+
+
+Nevow.Athena._updateTransportTracking = function(passthrough, reqId) {
+    Divmod.debug(
+        'transport',
+        ('request ' +
+         reqId +
+         ' completed - now ' +
+         Nevow.Athena._numTransports() +
+         ' transports, returning ' +
+         typeof passthrough + ' ' +
+         Divmod.vars(passthrough)));
+
     if (!delete Nevow.Athena.outstandingTransports[reqId]) {
         Divmod.debug("Crap failed to delete crap");
     }
-    Divmod.debug('transport', 'outstanding transport removed');
-    Divmod.debug('transport', 'there are ' + Nevow.Athena._numTransports() + ' transports');
 
-    Divmod.debug('transport', 'Passthrough returning ' + passthrough);
     return passthrough;
 };
+
+
+Nevow.Athena.sendMessage = function(actionType, args, kwargs, requestId, responseId) {
+    if (Nevow.Athena.connectionState != Nevow.Athena.CONNECTED) {
+        return Divmod.Defer.fail(Error("Not Connected"));
+    }
+
+    if (!args) {
+        args = [];
+    }
+
+    if (!kwargs) {
+        kwargs = {};
+    }
+
+    var headers = [
+        ['Livepage-Id', Nevow.Athena.livepageId],
+        ['Content-Type', 'text/x-json+athena']];
+
+    if (requestId) {
+        headers.push(['Request-Id', requestId]);
+    } else if (responseId) {
+        headers.push(['Response-Id', responseId]);
+    }
+
+    var request = Divmod.Runtime.theRuntime.getPage(
+        Nevow.Athena.baseURL(),
+        [['action', actionType]],
+        'POST',
+        headers,
+        Nevow.Athena.preparePostContent(args, kwargs));
+
+    Nevow.Athena.outstandingTransports[++Nevow.Athena._transportCounter] = request[0];
+
+    request[1].addBoth(Nevow.Athena._updateTransportTracking, Nevow.Athena._transportCounter);
+    request[1].addCallback(Nevow.Athena._cbMessage);
+    request[1].addErrback(Nevow.Athena._ebMessage);
+
+    Divmod.debug(
+        'transport',
+        ('Issuing a request ' +
+         Nevow.Athena._transportCounter +
+         ' transport of type ' +
+         actionType +
+         '(now ' +
+         Nevow.Athena._numTransports() +
+         ' outstanding)'));
+
+    return request[1];
+};
+
 
 Nevow.Athena._actionHandlers = {
     noop: function() {
@@ -117,16 +205,20 @@ Nevow.Athena._actionHandlers = {
 };
 
 
-Nevow.Athena.XMLHttpRequestReady = function(req) {
+Nevow.Athena._cbMessage = function(result) {
     /* The response is a JSON-encoded 2-array of [action, arguments]
      * where action is one of "noop", "call", "respond", or "close".
      * The arguments are action-specific and passed on to the handler
      * for the action.
      */
 
-    Divmod.debug('request', 'Ready "' + req.responseText.replace('\\', '\\\\').replace('"', '\\"') + '"');
+    if (result.status != 200) {
+        throw Error("Non-success response code: " + result.status);
+    }
 
-    var actionParts = MochiKit.Base.evalJSON(req.responseText);
+    Divmod.debug('request', 'Ready: ' + result.response);
+
+    var actionParts = MochiKit.Base.evalJSON(result.response);
 
     Nevow.Athena.failureCount = 0;
 
@@ -144,32 +236,13 @@ Nevow.Athena.XMLHttpRequestReady = function(req) {
      * have one.  In that case, issue a no-op to the server so it can
      * send us things if it needs to. */
     if (Nevow.Athena._numTransports() == 0) {
-        Nevow.Athena.sendNoOp();
+        Nevow.Athena.sendMessage('noop');
     }
 };
 
-Nevow.Athena._connectionLost = function(reason) {
-    Divmod.debug('transport', 'Closed');
-    Nevow.Athena.connectionState = Nevow.Athena.DISCONNECTED;
-    var calls = Nevow.Athena.remoteCalls;
-    Nevow.Athena.remoteCalls = {};
-    for (var k in calls) {
-        calls[k].errback(new Error("Connection lost"));
-    }
-    /* IE doesn't close outstanding requests when a user navigates
-     * away from the page that spawned them.  Also, we may have lost
-     * the connection without navigating away from the page.  So,
-     * clean up any outstanding requests right here.
-     */
-    var cancelledTransports = Nevow.Athena.outstandingTransports;
-    Nevow.Athena.outstandingTransports = {};
-    for (var reqId in cancelledTransports) {
-        cancelledTransports[reqId].abort();
-    }
-};
 
-Nevow.Athena.XMLHttpRequestFail = function(err) {
-    Divmod.debug('request', 'Failed ' + err.message);
+Nevow.Athena._ebMessage = function(err) {
+    Divmod.err(err, 'request failed');
 
     Nevow.Athena.failureCount++;
 
@@ -179,76 +252,19 @@ Nevow.Athena.XMLHttpRequestFail = function(err) {
     }
 
     if (Nevow.Athena._numTransports() == 0) {
-        Nevow.Athena.sendNoOp();
+        Nevow.Athena.sendMessage('noop');
     }
 };
 
-Nevow.Athena.prepareRemoteAction = function(actionType) {
-    var url = Nevow.Athena.constructActionURL(actionType);
-    var req = MochiKit.Async.getXMLHttpRequest();
 
-    if (Nevow.Athena.connectionState != Nevow.Athena.CONNECTED) {
-        return MochiKit.Async.fail(new Error("Not connected"));
-    }
-
-    try {
-        req.open('POST', url, true);
-    } catch (err) {
-        return MochiKit.Async.fail(err);
-    }
-
-    /* The values in this object aren't actually used by anything.
-     */
-    Nevow.Athena.outstandingTransports[++Nevow.Athena._transportCounter] = req;
-    Divmod.debug('transport', 'Added a request ' + Nevow.Athena._transportCounter + ' transport of type ' + actionType);
-    Divmod.debug('transport', 'There are ' + Nevow.Athena._numTransports() + ' transports');
-
-    Divmod.debug('transport', 'Issuing ' + actionType);
-
-    req.setRequestHeader('Livepage-Id', Nevow.Athena.livepageId);
-    req.setRequestHeader('content-type', 'text/x-json+athena')
-    return MochiKit.Async.succeed(req);
+Nevow.Athena.respondToRemote = function(requestId, response) {
+    return Nevow.Athena.sendMessage('respond', [response], {}, null, requestId);
 };
 
-Nevow.Athena.preparePostContent = function(args, kwargs) {
-    return MochiKit.Base.serializeJSON([args, kwargs]);
-};
-
-Nevow.Athena.respondToRemote = function(requestID, response) {
-    var reqD = Nevow.Athena.prepareRemoteAction('respond');
-    var argumentQueryArgument = Nevow.Athena.preparePostContent([response], {});
-
-    reqD.addCallback(function(req) {
-        req.setRequestHeader('Response-Id', requestID);
-        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, argumentQueryArgument);
-        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished, Nevow.Athena._transportCounter);
-        reqD2.addCallback(Nevow.Athena.XMLHttpRequestReady);
-        reqD2.addErrback(Nevow.Athena.XMLHttpRequestFail);
-    });
-};
-
-Nevow.Athena._noArgAction = function(actionName) {
-    var reqD = Nevow.Athena.prepareRemoteAction(actionName);
-    reqD.addCallback(function(req) {
-        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, Nevow.Athena.preparePostContent([], {}));
-        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished, Nevow.Athena._transportCounter);
-        reqD2.addCallback(function(ign) {
-            return Nevow.Athena.XMLHttpRequestReady(req);
-        });
-        reqD2.addErrback(function(err) {
-            return Nevow.Athena.XMLHttpRequestFail(err);
-        });
-    });
-};
-
-Nevow.Athena.sendNoOp = function() {
-    Divmod.debug('transport', 'Sending no-op for AthenaID ' + Nevow.Athena.livepageId);
-    Nevow.Athena._noArgAction('noop');
-};
 
 Nevow.Athena.sendClose = function() {
     Divmod.debug('transport', 'Sending close for AthenaID ' + Nevow.Athena.livepageId);
-    Nevow.Athena._noArgAction('close');
+    Nevow.Athena.sendMessage('close');
 };
 
 Nevow.Athena._walkDOM = function(parent, test, memo) {
@@ -273,25 +289,18 @@ Nevow.Athena._walkDOM = function(parent, test, memo) {
 };
 
 Nevow.Athena._callRemote = function(methodName, args, kwargs) {
-    var resultDeferred = new MochiKit.Async.Deferred();
-    var reqD = Nevow.Athena.prepareRemoteAction('call');
+    var resultDeferred = new Divmod.Defer.Deferred();
     var requestId = 'c2s' + Nevow.Athena.remoteCallCount;
-
-    var actionArguments = Nevow.Athena.preparePostContent(MochiKit.Base.extend([methodName], args), kwargs);
 
     Nevow.Athena.remoteCallCount++;
     Nevow.Athena.remoteCalls[requestId] = resultDeferred;
 
-    reqD.addCallback(function(req) {
-        req.setRequestHeader('Request-Id', requestId);
-
-        var reqD2 = MochiKit.Async.sendXMLHttpRequest(req, actionArguments);
-        reqD2.addBoth(Nevow.Athena.XMLHttpRequestFinished, Nevow.Athena._transportCounter);
-        reqD2.addCallback(Nevow.Athena.XMLHttpRequestReady);
-        return reqD2;
-    });
-
-    reqD.addErrback(Nevow.Athena.XMLHttpRequestFail);
+    Nevow.Athena.sendMessage(
+        'call',
+        MochiKit.Base.extend([methodName], args),
+        kwargs,
+        requestId,
+        null);
 
     return resultDeferred;
 };
@@ -447,7 +456,7 @@ Nevow.Athena._initialize = function() {
      */
     setTimeout(function() {
         Divmod.debug("transport", "starting up");
-        Nevow.Athena.sendNoOp();
+        Nevow.Athena.sendMessage('noop');
         Divmod.debug("transport", "started up");
     }, 1);
 };
@@ -673,7 +682,7 @@ Nevow.Athena.IntrospectionWidget.methods(
         self._logNode = self._logWindow.document.getElementById('console');
         self._logWindow.document.title = 'Mantissa Debug Log Viewer';
         for (var i = 0; i < self.events.length; i++) {
-            self.observe(self.events[i]);
+            self._addEvent(self.events[i]);
         }
 
         self._clearNode = self._logWindow.document.getElementById('clear');

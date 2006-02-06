@@ -32,6 +32,7 @@ Divmod.Defer.Deferred.methods(
         if (self._called) {
             self._runCallbacks();
         }
+        return self;
     },
     function addCallback(self, callback) {
         var callbackArgs = [];
@@ -39,6 +40,7 @@ Divmod.Defer.Deferred.methods(
             callbackArgs.push(arguments[i]);
         }
         self.addCallbacks(callback, null, callbackArgs, null);
+        return self;
     },
     function addErrback(self, errback) {
         var errbackArgs = [];
@@ -46,6 +48,7 @@ Divmod.Defer.Deferred.methods(
             errbackArgs.push(arguments[i]);
         }
         self.addCallbacks(null, errback, null, errbackArgs);
+        return self;
     },
     function addBoth(self, callback) {
         var callbackArgs = [];
@@ -53,6 +56,7 @@ Divmod.Defer.Deferred.methods(
             callbackArgs.push(arguments[i]);
         }
         self.addCallbacks(callback, callback, callbackArgs, callbackArgs);
+        return self;
     },
     function _pause(self) {
         self._pauseLevel++;

@@ -1,7 +1,8 @@
 
 // import Divmod
+// import Divmod.Defer
 
-Divmod.Runtime = new Divmod.Module('Divmod.Runtime');
+Divmod.Runtime = {};
 
 Divmod.Runtime.Platform = Divmod.Class.subclass("Divmod.Runtime.Platform");
 
@@ -13,17 +14,79 @@ Divmod.Runtime.Platform.method(
         self.name = name;
     });
 
-Divmod.Runtime.Platform.method(
-    function requestHTTP(self, url) {
-        throw new Error("requestHTTP not implemented on " + self.name);
-    });
+Divmod.Runtime.Platform.methods(
+    function makeHTTPRequest(self) {
+        throw Error("makeHTTPRequest is unimplemented on " + self);
+    },
 
-Divmod.Runtime.Platform.method(
+    function _onReadyStateChange(self, req, d) {
+        return function() {
+            if (d == null) {
+                /* We've been here before, and finished everything we needed
+                 * to finish.
+                 */
+                return;
+            }
+            if (req.readyState == 4) {
+                var result = null;
+                try {
+                    result = {'status': req.status,
+                              'response': req.responseText};
+                } catch (err) {
+                    d.errback(err);
+                }
+                if (result != null) {
+                    d.callback(result);
+                }
+                d = null;
+            }
+        };
+    },
+
+    function getPage(self, url, /* optional */ args, action, headers, content) {
+        if (args == undefined) {
+            args = [];
+        }
+        if (action == undefined) {
+            action = 'GET';
+        }
+        if (headers == undefined) {
+            headers = [];
+        }
+        if (content == undefined) {
+            content = null;
+        }
+
+        var qargs = [];
+        for (var i = 0; i < args.length; ++i) {
+            /* encodeURIComponent may not exist on some browsers, I guess.  FF
+             * 1.5 and IE 6 have it, anyway.
+             */
+            qargs.push(args[i][0] + '=' + encodeURIComponent(args[i][1]));
+        }
+
+        if (qargs.length) {
+            url = url + '?' + qargs.join('&');
+        }
+
+        var d = new Divmod.Defer.Deferred();
+        var req = self.makeHTTPRequest();
+
+        req.open(action, url, true);
+
+        for (var i = 0; i < headers.length; ++i) {
+            req.setRequestHeader(headers[i][0], headers[i][1]);
+        }
+
+        req.onreadystatechange = self._onReadyStateChange(req, d);
+        req.send(content);
+        return [req, d];
+    },
+
     function parseXHTMLString(self, s) {
         throw new Error("parseXHTMLString not implemented on " + self.name);
-    });
+    },
 
-Divmod.Runtime.Platform.method(
     function traverse(self, rootNode, visitor) {
         var deque = [rootNode];
         while (deque.length != 0) {
@@ -47,14 +110,12 @@ Divmod.Runtime.Platform.method(
                 break;
             }
         }
-    });
+    },
 
-Divmod.Runtime.Platform.method(
     function appendNodeContent(self, node, innerHTML) {
         throw new Error("appendNode content not implemented on " + self.name);
-    });
+    },
 
-Divmod.Runtime.Platform.method(
     function setNodeContent(self, node, innerHTML) {
         while (node.childNodes.length) {
             node.removeChild(node.firstChild);
@@ -68,14 +129,13 @@ Divmod.Runtime.Firefox.isThisTheOne = function isThisTheOne() {
     return navigator.appName == "Netscape";
 };
 
-Divmod.Runtime.Firefox.method(
+Divmod.Runtime.Firefox.methods(
     function __init__(self) {
         Divmod.Runtime.Firefox.upcall(self, '__init__', 'Firefox');
         self.dp = new DOMParser();
         self.ds = new XMLSerializer();
-    });
+    },
 
-Divmod.Runtime.Firefox.method(
     function makeHTML(self, element) {
         throw new Error("This sucks don't use it");
 
@@ -98,18 +158,16 @@ Divmod.Runtime.Firefox.method(
             HTML_ELEMENT.appendChild(MAKE_HTML(element.childNodes[i]));
         }
         return HTML_ELEMENT;
-    });
+    },
 
-Divmod.Runtime.Firefox.method(
     function parseXHTMLString(self, s) {
         var doc = self.dp.parseFromString(s, "application/xml");
         if (doc.documentElement.namespaceURI != "http://www.w3.org/1999/xhtml") {
             throw new Error("Unknown namespace used with parseXHTMLString - only XHTML 1.0 is supported.");
         }
         return doc;
-    });
+    },
 
-Divmod.Runtime.Firefox.method(
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
         var scripts = [];
@@ -143,14 +201,17 @@ Divmod.Runtime.Firefox.method(
             node.appendChild(newScript);
         }
         node.appendChild(doc.documentElement);
-    });
+    },
 
-Divmod.Runtime.Firefox.method(
     function setNodeContent(self, node, innerHTML) {
         while (node.childNodes.length) {
             node.removeChild(node.firstChild);
         }
         self.appendNodeContent(node, innerHTML);
+    },
+
+    function makeHTTPRequest(self) {
+        return new XMLHttpRequest();
     });
 
 Divmod.Runtime.InternetExplorer = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorer");
@@ -159,31 +220,18 @@ Divmod.Runtime.InternetExplorer.isThisTheOne = function isThisTheOne() {
     return navigator.appName == "Microsoft Internet Explorer";
 };
 
-Divmod.Runtime.InternetExplorer.method(
+Divmod.Runtime.InternetExplorer.methods(
     function __init__(self) {
         Divmod.Runtime.InternetExplorer.upcall(self, '__init__', 'Internet Explorer');
-    });
+    },
 
-// Divmod.Runtime.InternetExplorer.method(
-//     function requestHTTP(self, url) {
-//         var req = new XMLHttpRequest();
-//         req.open("GET", url, false);
-//         req.send(null);
-//         if (req.status != 200 && req.status != 304) {
-//             throw new Error("Failed to retrieve " + url);
-//         }
-//         return req.responseText;
-//     });
-
-Divmod.Runtime.InternetExplorer.method(
     function parseXHTMLString(self, s) {
         var xmldoc = new ActiveXObject("Microsoft.XMLDOM");
         xmldoc.async = false;
         xmldoc.loadXML(s);
         return xmldoc;
-    });
+    },
 
-Divmod.Runtime.InternetExplorer.method(
     function appendNodeContent(self, node, innerHTML) {
         var body = document.getElementsByTagName('body')[0];
         var newScript;
@@ -200,6 +248,24 @@ Divmod.Runtime.InternetExplorer.method(
                 }
                 return Divmod.Runtime.Platform.DOM_DESCEND;
             });
+    },
+
+    function makeHTTPRequest(self) {
+        if (!self._xmlhttpname) {
+            var names = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
+            while (names.length) {
+                self._xmlhttpname = names.shift();
+                try {
+                    return self.makeHTTPRequest();
+                } catch (e) {
+                    // pass
+                }
+            }
+            self._xmlhttpname = null;
+            throw Error("No support XML HTTP Request thingy on this platform");
+        } else {
+            return new ActiveXObject(self._xmlhttpname);
+        }
     });
 
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
@@ -213,4 +279,4 @@ Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
 };
 
 Divmod.Runtime.theRuntimeType = Divmod.Runtime.Platform.determinePlatform();
-Divmod.Runtime.theRuntime = new Divmod.Runtime.theRuntimeType();
+Divmod.Runtime.theRuntime = new Divmod.Runtime.theRuntimeType;

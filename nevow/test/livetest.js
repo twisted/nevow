@@ -41,8 +41,8 @@ Nevow.Athena.Tests.ClientToServerExceptionResult.methods(
             function(result) {
                 self.fail('Erroneously received a result: ' + result);
             },
-            function(err) {
-                var idx = err.message.indexOf(s);
+            function(f) {
+                var idx = f.error.message.indexOf(s);
                 if (idx == -1) {
                     self.fail('Did not find expected message in error message: ' + err);
                 }
@@ -60,10 +60,10 @@ Nevow.Athena.Tests.ClientToServerAsyncExceptionResult.methods(
             function(result) {
                 self.fail('Erroneously received a result: ' + result);
             },
-            function(err) {
-                var idx = err.message.indexOf(s);
+            function(f) {
+                var idx = f.error.message.indexOf(s);
                 if (idx == -1) {
-                    self.fail('Did not find expected message in error message: ' + err);
+                    self.fail('Did not find expected message in error message: ' + f.err.message);
                 }
             });
         return d;
