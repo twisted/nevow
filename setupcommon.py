@@ -29,7 +29,6 @@ package_data={
             'MochiKitLogConsole.js',
             'nevow.js',
             'runtime.js',
-            'widget.js',
             'xml.js',
             ],
         'nevow.taglibrary': [
