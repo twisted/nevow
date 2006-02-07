@@ -8,7 +8,7 @@ from twisted.internet import defer, error, reactor
 from twisted.python import log, failure
 from twisted import plugin
 
-from nevow import inevow, plugins, stan, flat
+from nevow import inevow, plugins, flat
 from nevow import rend, loaders, url, static, json, util, tags, guard
 
 ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
@@ -337,6 +337,8 @@ class LivePageFactory:
         return guard._sessionCookie()
 
 
+_thePrivateAthenaResource = static.File(util.resource_filename('nevow', 'athena_private'))
+
 
 class LivePage(rend.Page):
     transportFactory = LivePageTransport
@@ -400,6 +402,10 @@ class LivePage(rend.Page):
             return super(LivePage, self).locateChild(ctx, segments)
         else:
             return client, segments[1:]
+
+
+    def child___athena_private__(self, ctx):
+        return _thePrivateAthenaResource
 
 
     # A note on timeout/disconnect logic: whenever a live client goes from some
@@ -740,5 +746,3 @@ class IntrospectionFragment(LiveFragment):
         tags.a(
         href="#DEBUG_ME",
         class_='toggle-debug')["Debug"]])
-
-

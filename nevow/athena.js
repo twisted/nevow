@@ -56,11 +56,16 @@ Nevow.Athena._numTransports = function() {
 
 
 Nevow.Athena._connectionLost = function(reason) {
+    if (Nevow.Athena.connectionState == Nevow.Athena.DISCONNECTED) {
+        Divmod.debug("transport", "Warning: duplicate close notification.");
+        return;
+    }
     Divmod.debug('transport', 'Closed');
     Nevow.Athena.connectionState = Nevow.Athena.DISCONNECTED;
     var calls = Nevow.Athena.remoteCalls;
     Nevow.Athena.remoteCalls = {};
     for (var k in calls) {
+        Divmod.msg("Errbacking an existing call");
         calls[k].errback(new Error("Connection lost"));
     }
     /* IE doesn't close outstanding requests when a user navigates
@@ -73,6 +78,29 @@ Nevow.Athena._connectionLost = function(reason) {
     for (var reqId in cancelledTransports) {
         cancelledTransports[reqId].abort();
     }
+};
+
+
+Nevow.Athena._notifyOnDisconnectCounter = 0;
+/*
+ * Set up to have a function called when the LivePage connection has been
+ * lost, either due to an explicit close, a timeout, or some other error. 
+ * The function will be invoked with one argument, probably a Failure
+ * indicating the reason the connection was lost.
+ */
+Nevow.Athena.notifyOnDisconnect = function(callback) {
+    var d;
+    d = new Divmod.Defer.Deferred();
+    /*
+     * Cheat a little bit.  Add a Deferred to the remoteCalls object
+     * (DICTIONARY NGNGRNGRNGNRN) so that when the connection is lost, we
+     * will get told about it.  This is somewhat abusive and could probably
+     * be improved, but it works pretty nicely for now.  We use a different
+     * counter and a different prefix so as to avoid the possibility of
+     * colliding with an actual remote call.
+     */
+    Nevow.Athena.remoteCalls['notifyOnDisconnect-' + Nevow.Athena._notifyOnDisconnectCounter] = d;
+    d.addBoth(callback);
 };
 
 
@@ -218,7 +246,7 @@ Nevow.Athena._cbMessage = function(result) {
 
     Divmod.debug('request', 'Ready: ' + result.response);
 
-    var actionParts = MochiKit.Base.evalJSON(result.response);
+    var actionParts = eval('(' + result.response + ')');
 
     Nevow.Athena.failureCount = 0;
 
@@ -764,12 +792,70 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
         });
 };
 
+
+Nevow.Athena.Widget._defaultDisconnectionNotifier = function() {
+    var url = String(document.location);
+    if (url.slice(url.length - 1, url.length) != '/') {
+        url += '/';
+    }
+    url += '__athena_private__/connection-status-down.png';
+
+    var img = document.createElement('img');
+    img.src = url;
+
+    var div = document.createElement('div');
+    div.appendChild(img);
+    div.appendChild(document.createElement('br'));
+    div.appendChild(document.createTextNode('Connection to server lost! '));
+    div.appendChild(document.createElement('br'));
+
+    var a = document.createElement('a');
+    a.appendChild(document.createTextNode('Click to attempt to reconnect.'));
+    a.href = '#';
+    a.onclick = function() { document.location = document.location; };
+    div.appendChild(a);
+
+    div.style.textAlign = 'center';
+    div.style.position = 'absolute';
+    div.style.top = '1em';
+    div.style.left = '1em';
+    div.style.backgroundColor = '#fff';
+    div.style.border = 'thick solid red';
+    div.style.padding = '2em';
+    div.style.margin = '2em';
+
+    Nevow.Athena.notifyOnDisconnect(function() {
+            Divmod.msg("Appending connection status image to document.");
+            document.body.appendChild(div);
+
+            var setInvisible = function() {
+                img.style.visibility = 'hidden';
+                setTimeout(setVisible, 1000);
+            };
+            var setVisible = function() {
+                img.style.visibility = 'visible';
+                setTimeout(setInvisible, 1000);
+            };
+            setVisible();
+        });
+};
+
 Nevow.Athena.Widget._initialize = function() {
+
     Divmod.debug("widget", "Instantiating live widgets");
     Nevow.Athena.Widget._pageLoaded = true;
     Nevow.Athena.Widget._instantiateWidgets();
     Divmod.debug("widget", "Finished instantiating live widgets");
-}
+
+    Divmod.debug("transport", "Setting up page disconnect notifier");
+    /*
+     * XXX TODO: Certain pages may want to disable the default disconnection
+     * notifier, if they are going to provide something nicer that indicates
+     * connection status.
+     */
+    Nevow.Athena.Widget._defaultDisconnectionNotifier();
+    Divmod.debug("transport", "Finished setting up page disconnect notifier");
+};
 
 MochiKit.DOM.addLoadEvent(Nevow.Athena._initialize);
 MochiKit.DOM.addLoadEvent(Nevow.Athena.Widget._initialize);

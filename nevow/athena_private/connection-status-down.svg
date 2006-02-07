@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.43"
+   sodipodi:docbase="/home/glyph/Projects/Divmod/branches/serial-numbers-344/Nevow/nevow/athena_private"
+   sodipodi:docname="connection-status-down.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="372.04724"
+     inkscape:cy="646.18109"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="885"
+     inkscape:window-height="583"
+     inkscape:window-x="346"
+     inkscape:window-y="242" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <image
+       id="image3666"
+       height="48"
+       width="48"
+       sodipodi:absref="/usr/share/icons/gnome/48x48/stock/net/stock_channel.png"
+       xlink:href="/usr/share/icons/gnome/48x48/stock/net/stock_channel.png"
+       x="177.0211"
+       y="306.70367" />
+    <path
+       style="fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.19688885px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 200.5498,294.14309 C 180.58478,294.39626 164.45645,310.67576 164.45645,330.70048 C 164.45645,350.8829 180.83868,367.26512 201.0211,367.26512 C 221.20352,367.26512 237.58575,350.8829 237.58575,330.70048 C 237.58575,310.51806 221.20352,294.14309 201.0211,294.14309 C 200.86343,294.14309 200.70701,294.14109 200.5498,294.14309 z M 200.54257,306.09203 C 200.59497,306.09103 200.64959,306.09269 200.70208,306.09203 C 200.80789,306.09069 200.91498,306.09203 201.0211,306.09203 C 206.08053,306.09203 210.78382,307.61818 214.69569,310.23936 L 180.55998,344.37507 C 177.93881,340.4632 176.41265,335.75991 176.41265,330.70048 C 176.41265,317.27494 187.1773,306.34562 200.54257,306.09203 z M 221.48222,317.02589 C 224.10339,320.93777 225.62955,325.64105 225.62955,330.70048 C 225.62955,344.2848 214.60541,355.30894 201.0211,355.30894 C 195.96167,355.30894 191.25838,353.78277 187.34651,351.16161 L 221.48222,317.02589 z "
+       id="path1307" />
+  </g>
+</svg>
