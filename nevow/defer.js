@@ -10,6 +10,10 @@ Divmod.Defer.Failure = Divmod.Class.subclass("Divmod.Defer.Failure");
 Divmod.Defer.Failure.methods(
     function __init__(self, error) {
         self.error = error;
+    },
+
+    function toString(self) {
+        return 'Failure: ' + self.error;
     });
 
 Divmod.Defer.Deferred = Divmod.Class.subclass("Divmod.Defer.Deferred");
