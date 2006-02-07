@@ -10,7 +10,7 @@ Floating points are not yet supported.  None serializes to null, True and
 False to true and false, tuples and lists serialize to arrays and
 dictionaries serialize to objects.
 
-unserialisation is supported via parse(str).
+unserialization is supported via parse(str).
 
 The parser does not understand utf-8 characters at all. All unicode
 characters passed to 'dump' be encoded using the \u1000 syntax. High-ascii
@@ -19,7 +19,7 @@ become python u'\xf0' which is '\xc3\xb0' when encoded in utf-8.
 
 Brain damage: the parser understands json objects of the form
 { "foo":"bar" }
-but the serialiser gives json objects of the form
+but the serializer gives json objects of the form
 { foo:"bar" }
 """
 
@@ -40,7 +40,7 @@ closeBrace = re.compile(r'}')
 openSquare = re.compile(r'\[')
 closeSquare = re.compile(r'\]')
 
-class StringTokeniser(object):
+class StringTokenizer(object):
     """
     because r'(?<!\\)"([^"]+|\\")*(?<!\\)"'
     """
@@ -70,7 +70,7 @@ class StringTokeniser(object):
     def group(self, num):
         return self.matched
         
-string = StringTokeniser()
+string = StringTokenizer()
 identifier = re.compile(r'[A-Za-z_][A-Za-z_0-9]*')
 colon = re.compile(r':')
 comma = re.compile(r',')
