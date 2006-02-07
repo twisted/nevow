@@ -812,7 +812,10 @@ Nevow.Athena.Widget._defaultDisconnectionNotifier = function() {
     var a = document.createElement('a');
     a.appendChild(document.createTextNode('Click to attempt to reconnect.'));
     a.href = '#';
-    a.onclick = function() { document.location = document.location; };
+    a.onclick = function() {
+        document.location = document.location;
+        return false;
+        };
     div.appendChild(a);
 
     div.style.textAlign = 'center';
