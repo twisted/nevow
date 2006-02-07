@@ -305,7 +305,7 @@ class LivePageTransport(object):
         """
         The client is going away.  Clean up after them.
         """
-        self.livePage._disconnected()
+        self.livePage._disconnected(error.ConnectionDone("Connection closed"))
 
 
 class LivePageFactory:
