@@ -68,6 +68,7 @@ class TabbedPaneFragment(athena.LiveFragment):
 
     docFactory = loaders.xmlstr("""
 <div class="tabbedPane" xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:render="liveFragment">
+    <nevow:attr name="name"><nevow:invisible nevow:render="name" /></nevow:attr>
     <ul class="tabs">
         <nevow:invisible nevow:render="tabs" />
     </ul>
@@ -83,11 +84,15 @@ class TabbedPaneFragment(athena.LiveFragment):
     <nevow:invisible nevow:render="pages" />
 </div>""".replace('\n', ''))
 
-    def __init__(self, pages, selected=0):
+    def __init__(self, pages, selected=0, name='default'):
         self.pages = pages
         self.selected = selected
+        self.name = name
 
         super(TabbedPaneFragment, self).__init__()
+
+    def render_name(self, ctx, data):
+        return self.name
 
     def render_tabs(self, ctx, data):
         tabPattern = inevow.IQ(self.docFactory).patternGenerator('tab')
@@ -95,7 +100,7 @@ class TabbedPaneFragment(athena.LiveFragment):
             if self.selected == i:
                 cls = 'selected'
             else:
-                cls = 'taglibrary-tabbedpane-tabname-' + str(i)
+                cls = 'taglibrary-tabbedpane-' + self.name + '-tabname-' + str(i)
             yield tabPattern.fillSlots(
                       'tab-name', name).fillSlots(
                       'class', cls)
@@ -106,7 +111,7 @@ class TabbedPaneFragment(athena.LiveFragment):
             if self.selected == i:
                 cls = 'selected'
             else:
-                cls = 'taglibrary-tabbedpane-tabdata-' + str(i)
+                cls = 'taglibrary-tabbedpane-'  + self.name + '-tabdata-' + str(i)
             yield pagePattern.fillSlots(
                     'page-content', content).fillSlots(
                     'class', cls)

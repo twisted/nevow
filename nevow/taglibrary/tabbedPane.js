@@ -4,11 +4,20 @@ Nevow.TagLibrary.TabbedPane = Nevow.Athena.Widget.subclass("Nevow.TabbedPane");
 
 Nevow.TagLibrary.TabbedPane.methods(
     function __init__(self, node) {
-        self._tabPrefix = "taglibrary-tabbedpane-tabname-";
-        self._pagePrefix = "taglibrary-tabbedpane-tabdata-";
+        var name = node.getAttribute("name");
+        self._tabPrefix = "taglibrary-tabbedpane-" + name + "-tabname-";
+        self._pagePrefix = "taglibrary-tabbedpane-" + name + "-tabdata-";
         self._selectedClassName = "selected";
+        self._elements = {};
 
         Nevow.TagLibrary.TabbedPane.upcall(self, "__init__", node);
+    },
+
+    function _getHandyNode(self, classValue) {
+        if(!(classValue in self._elements)) {
+            self._elements[classValue] = self.nodeByAttribute('class', classValue);
+        }
+        return self._elements[classValue];
     },
 
     function tabClicked(self, tab) {
@@ -35,7 +44,7 @@ Nevow.TagLibrary.TabbedPane.methods(
         self.lastSelectedPage.className = self._pagePrefix + self.lastSelectedOffset;
             
         var tabOffset = tab.className.substr(self._tabPrefix.length, tab.className.length);
-        var page = self.nodeByAttribute("class", self._pagePrefix + tabOffset);
+        var page = self._getHandyNode(self._pagePrefix + tabOffset);
         tab.className = page.className = self._selectedClassName;
 
         self.lastSelectedTab = tab;
