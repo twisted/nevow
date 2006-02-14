@@ -62,103 +62,14 @@ def getPOSTCharset(ctx):
     return 'utf-8'
 
 
-def qual(clazz):
-    return clazz.__module__ + '.' + clazz.__name__
+from twisted.python.reflect import qual, namedAny, allYourBase, accumulateBases
+from twisted.python.util import uniquify
 
+from twisted.internet.defer import Deferred, succeed, maybeDeferred, DeferredList
+from twisted.python import failure
+from twisted.python.failure import Failure
+from twisted.python import log
 
-def namedAny(name):
-    """Get a fully named package, module, module-global object, or attribute.
-    """
-    names = name.split('.')
-    topLevelPackage = None
-    moduleNames = names[:]
-    while not topLevelPackage:
-        try:
-            trialname = '.'.join(moduleNames)
-            topLevelPackage = __import__(trialname)
-        except ImportError:
-            # if the ImportError happened in the module being imported,
-            # this is a failure that should be handed to our caller.
-            # count stack frames to tell the difference.
-
-            # string-matching is another technique, but I think it could be
-            # fooled in some funny cases
-            #if sys.exc_info()[1] != "cannot import name %s" % trialname:
-            #    raise
-            import traceback
-            if len(traceback.extract_tb(sys.exc_info()[2])) > 1:
-                raise
-            moduleNames.pop()
-    
-    obj = topLevelPackage
-    for n in names[1:]:
-        obj = getattr(obj, n)
-        
-    return obj
-
-
-def uniquify(lst):
-    """Make the elements of a list unique by inserting them into a dictionary.
-    This must not change the order of the input lst.
-    """
-    dct = {}
-    result = []
-    for k in lst:
-        if not dct.has_key(k): result.append(k)
-        dct[k] = 1
-    return result
-
-
-def allYourBase(classObj, baseClass=None):
-    """allYourBase(classObj, baseClass=None) -> list of all base
-    classes that are subclasses of baseClass, unless it is None,
-    in which case all bases will be added.
-    """
-    l = []
-    accumulateBases(classObj, l, baseClass)
-    return l
-
-
-def accumulateBases(classObj, l, baseClass=None):
-    for base in classObj.__bases__:
-        if baseClass is None or issubclass(base, baseClass):
-            l.append(base)
-        accumulateBases(base, l, baseClass)
-
-
-try:
-
-    from twisted.internet.defer import Deferred, succeed, maybeDeferred, DeferredList
-    from twisted.python import failure
-    from twisted.python.failure import Failure
-    from twisted.python import log
-
-except ImportError:
-    class Deferred(object): pass
-    class Failure(object):
-        def __init__(self, e):
-            self.exc = e
-    class DeferredList(object):
-        def __init__(self, l):
-            self.l = l
-
-        def addCallback(self, cb, *args, **kw):
-            cb(self.l, *args, **kw)
-
-        def addErrback(self, eb, *args, **kw):
-            pass
-
-        def addBoth(self, cbeb, *args, **kw):
-            cbeb(self.l, *args, **kw)
-
-    class Logger(object):
-        def msg(self, *args, **kw):
-            for arg in args:
-                print >> sys.stderr, arg
-            for k, v in kw.items():
-                print >> sys.stderr, "%s: %s" % (k, v)
-
-    log = Logger()
 
 ## The tests rely on these, but they should be removed ASAP
 def remainingSegmentsFactory(ctx):
