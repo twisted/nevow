@@ -462,24 +462,46 @@ class LivePage(rend.Page):
 
 
     def _noTransports(self):
-        assert self._noTransportsDisconnectCall is None
-        self._noTransportsDisconnectCall = reactor.callLater(
-            self.TRANSPORTLESS_DISCONNECT_TIMEOUT, self._noTransportsDisconnect)
+        # Called when there are absolutely, positively no Requests
+        # outstanding to be used as transports for server-to-client
+        # events.  Set up a timeout to consider this client
+        # disconnected.  It's possible for this to be called even if
+        # there were already no transports, so check to make sure that
+        # we don't have a timeout already.
+        if self._noTransportsDisconnectCall is None:
+            self._noTransportsDisconnectCall = reactor.callLater(
+                self.TRANSPORTLESS_DISCONNECT_TIMEOUT, self._noTransportsDisconnect)
 
 
     def _someTransports(self):
-        self._noTransportsDisconnectCall.cancel()
-        self._noTransportsDisconnectCall = None
+        # Called when we find ourselves with a spare Request to be
+        # used as a transport for server-to-client events.  If there
+        # is a pending timeout, cancel it.  It's possible for this to
+        # be called even if there was already a spare Request
+        # (although highly unlikely), so it's okay if there is no
+        # timeout call active.
+        if self._noTransportsDisconnectCall is not None:
+            self._noTransportsDisconnectCall.cancel()
+            self._noTransportsDisconnectCall = None
 
 
-    def _newTransport(self, req):
-        self._transportTimeouts[req] = reactor.callLater(
-            self.TRANSPORT_IDLE_TIMEOUT, self._idleTransportDisconnect, req)
+    def _newTransport(self):
+        # Called when a new Request becomes available but will
+        # immediately be used as a transport for a server-to-client
+        # event.  There will be an active timeout call in this case,
+        # since the only time a Request can be immediately consumed is
+        # when there were none available already.  Just push the
+        # timeout back a bit.  Perhaps this is an optimization, rather
+        # than a necessary step in the state machine.  I can't really
+        # tell.
+        assert self._noTransportsDisconnectCall is not None
+        self._noTransportsDisconnectCall.reset(self.TRANSPORTLESS_DISCONNECT_TIMEOUT)
 
 
     def _noTransportsDisconnect(self):
         self._noTransportsDisconnectCall = None
         self._disconnected(error.TimeoutError("No transports created by client"))
+
 
     def _disconnected(self, reason):
         if not self._didDisconnect:
@@ -525,20 +547,23 @@ class LivePage(rend.Page):
 
         req.notifyFinish().addErrback(self._activeTransportDisconnect, req)
 
-        # _transportCount can be negative
-        if self._transportCount == 0:
-            self._someTransports()
         self._transportCount += 1
+        if self._transportCount > 0:
+            self._someTransports()
+        else:
+            self._newTransport()
 
-        self._newTransport(req)
+        self._transportTimeouts[req] = reactor.callLater(
+            self.TRANSPORT_IDLE_TIMEOUT, self._idleTransportDisconnect, req)
 
         d = defer.Deferred()
         self._transportQueue.put((d, req))
         return d
 
+
     def getTransport(self):
         self._transportCount -= 1
-        if self._transportCount == 0:
+        if self._transportCount <= 0:
             self._noTransports()
         def cbTransport((d, req)):
             timeoutCall = self._transportTimeouts.pop(req, None)
