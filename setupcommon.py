@@ -48,4 +48,7 @@ package_data={
             'test_object.js',
             'testsupport.js',
             ],
+        'nevow.athena_private': [
+            'connection-status-down.png',
+            ],
         }
