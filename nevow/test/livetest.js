@@ -31,8 +31,8 @@ Nevow.Athena.Tests.ClientToServerResultSerialization.methods(
         return d;
     });
 
-Nevow.Athena.Tests.ClientToServerExceptionResult = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerExceptionResult');
-Nevow.Athena.Tests.ClientToServerExceptionResult.methods(
+Nevow.Athena.Tests.ExceptionFromServer = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ExceptionFromServer');
+Nevow.Athena.Tests.ExceptionFromServer.methods(
     function run(self) {
         var d;
         var s = 'This exception should appear on the client.';
@@ -50,8 +50,8 @@ Nevow.Athena.Tests.ClientToServerExceptionResult.methods(
         return d;
     });
 
-Nevow.Athena.Tests.ClientToServerAsyncExceptionResult = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerAsyncExceptionResult');
-Nevow.Athena.Tests.ClientToServerAsyncExceptionResult.methods(
+Nevow.Athena.Tests.AsyncExceptionFromServer = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AsyncExceptionFromServer');
+Nevow.Athena.Tests.AsyncExceptionFromServer.methods(
     function run(self) {
         var d;
         var s = 'This exception should appear on the client.';
@@ -67,6 +67,45 @@ Nevow.Athena.Tests.ClientToServerAsyncExceptionResult.methods(
                 }
             });
         return d;
+    });
+
+Nevow.Athena.Tests.ExceptionFromClient = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ExceptionFromClient');
+Nevow.Athena.Tests.ExceptionFromClient.methods(
+    function run(self) {
+        var d;
+        d = self.callRemote('loopbackError');
+        d.addCallbacks(
+            function (result) {
+            },
+            function (err) {
+                self.fail('Received unexpected exception: ' + err);
+            });
+        return d;
+    },
+
+    function generateError(self) {
+        throw new Error('This is a test exception');
+    });
+
+Nevow.Athena.Tests.AsyncExceptionFromClient = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AsyncExceptionFromClient');
+Nevow.Athena.Tests.AsyncExceptionFromClient.methods(
+    function run(self) {
+        var d;
+        d = self.callRemote('loopbackError');
+        d.addCallbacks(
+            function (result) {
+                if (!result) {
+                    self.fail('Received incorrect Javascript exception or no traceback.');
+                }
+            },
+            function (err) {
+                self.fail('Received unexpected exception: ' + err);
+            });
+        return d;
+    },
+
+    function generateError(self) {
+        return MochiKit.Async.fail(Error('This is a deferred test exception'));
     });
 
 Nevow.Athena.Tests.ServerToClientArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientArgumentSerialization');

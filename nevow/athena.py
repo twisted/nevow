@@ -19,8 +19,8 @@ class LivePageError(Exception):
 
 def neverEverCache(request):
     """
-    Set headers to indicate that the response to this request should
-    never, ever be cached.
+    Set headers to indicate that the response to this request should never,
+    ever be cached.
     """
     request.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
     request.setHeader('Pragma', 'no-cache')
@@ -28,8 +28,8 @@ def neverEverCache(request):
 
 def activeChannel(request):
     """
-    Mark this connection as a 'live' channel by setting the
-    Connection: close header and flushing all headers immediately.
+    Mark this connection as a 'live' channel by setting the Connection: close
+    header and flushing all headers immediately.
     """
     request.setHeader("Connection", "close")
     request.write('')
@@ -217,6 +217,100 @@ class ConnectionLostTransport(object):
 
 
 
+class JSException(Exception):
+    """
+    Exception class to wrap remote exceptions from JavaScript.
+    """
+
+
+
+class JSCode(object):
+    """
+    Class for mock code objects in mock JS frames.
+    """
+
+    def __init__(self, name, filename):
+        self.co_name = name
+        self.co_filename = filename
+
+
+
+class JSFrame(object):
+    """
+    Class for mock frame objects in JS client-side traceback wrappers.
+    """
+
+    def __init__(self, func, fname, ln):
+        self.f_back = None
+        self.f_locals = {}
+        self.f_globals = {}
+        self.f_code = JSCode(func, fname)
+        self.f_lineno = ln
+
+
+
+class JSTraceback(object):
+    """
+    Class for mock traceback objects representing client-side JavaScript
+    tracebacks.
+    """
+
+    def __init__(self, frame, ln):
+        self.tb_frame = frame
+        self.tb_lineno = ln
+        self.tb_next = None
+
+
+
+def parseStack(stack):
+    """
+    Extract function name, file name, and line number information from the
+    string representation of a JavaScript trace-back.
+    """
+    frames = []
+    for line in stack.split('\n'):
+        if '@' not in line:
+            continue
+        func, rest = line.split('@', 1)
+        if ':' not in rest:
+            continue
+        fname, ln = rest.rsplit(':', 1)
+        ln = int(ln)
+        frames.insert(0, (func, fname, ln))
+    return frames
+
+def buildTraceback(frames):
+    """
+    Build a chain of mock traceback objects from a serialized Error (or other
+    exception) object, and return the head of the chain.
+    """
+    last = None
+    first = None
+    for func, fname, ln in frames:
+        frame = JSFrame(func, fname, ln)
+        tb = JSTraceback(frame, ln)
+        if last:
+            last.tb_next = tb
+        else:
+            first = tb
+        last = tb
+    return first
+
+
+def getJSFailure(exc):
+    """
+    Convert a serialized client-side exception to a Failure.
+    """
+    text = '%s: %s' % (exc[u'name'], exc[u'message'])
+
+    frames = []
+    if u'stack' in exc:
+        frames = parseStack(exc[u'stack'])
+
+    return failure.Failure(JSException(text), exc_tb=buildTraceback(frames))
+
+
+
 class LivePageTransport(object):
     implements(inevow.IResource)
 
@@ -292,7 +386,7 @@ class LivePageTransport(object):
         if success:
             callDeferred.callback(result)
         else:
-            callDeferred.errback(Exception(result))
+            callDeferred.errback(getJSFailure(result))
 
 
     def action_noop(self, ctx):

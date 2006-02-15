@@ -1,5 +1,6 @@
 
 import StringIO
+from itertools import izip
 
 from twisted.trial import unittest
 
@@ -92,3 +93,23 @@ class Nesting(unittest.TestCase):
         self.assertEquals(tf1.page, lp)
 
 
+class Tracebacks(unittest.TestCase):
+    frames = (('Error()', '', 0),
+              ('someFunction()', 'http://somesite.com:8080/someFile', 42),
+              ('anotherFunction([object Object])', 'http://user:pass@somesite.com:8080/someOtherFile', 69))
+
+    stack = '\n'.join('%s@%s:%d' % frame for frame in frames)
+
+    exc = {u'name': 'SomeError',
+           u'message': 'An error occurred.',
+           u'stack': stack}
+
+    def testStackParsing(self):
+        p = athena.parseStack(self.stack)
+        for iframe, oframe in izip(reversed(self.frames), p):
+            self.assertEquals(oframe, iframe)
+
+    def testStackLengthAndOrder(self):
+        f = athena.getJSFailure(self.exc)
+        self.assertEqual(len(f.frames), len(self.frames))
+        self.assertEqual(f.frames[0][0], self.frames[-1][0])

@@ -207,7 +207,7 @@ Nevow.Athena._actionHandlers = {
             result.addCallbacks(function(result) {
                     Nevow.Athena.respondToRemote(requestId, [true, result]);
                 }, function(err) {
-                    Nevow.Athena.respondToRemote(requestId, [false, result]);
+                    Nevow.Athena.respondToRemote(requestId, [false, err]);
                 });
         } else {
             Nevow.Athena.respondToRemote(requestId, [success, result]);

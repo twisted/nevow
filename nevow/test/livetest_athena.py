@@ -27,8 +27,8 @@ class ClientToServerArgumentSerialization(testcase.TestCase):
 
 class ClientToServerResultSerialization(testcase.TestCase):
     """
-    Tests that the return value from a method on the server is
-    properly received by the client.
+    Tests that the return value from a method on the server is properly
+    received by the client.
     """
 
     jsClass = u'Nevow.Athena.Tests.ClientToServerResultSerialization'
@@ -39,38 +39,78 @@ class ClientToServerResultSerialization(testcase.TestCase):
     def test(self, i, f, s, l, d):
         return (i, f, s, l, d)
 
-class ClientToServerExceptionResult(testcase.TestCase):
+class ExceptionFromServer(testcase.TestCase):
     """
-    Tests that when a method on the server raises an exception, the
-    client properly receives an error.
+    Tests that when a method on the server raises an exception, the client
+    properly receives an error.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ClientToServerExceptionResult'
+    jsClass = u'Nevow.Athena.Tests.ExceptionFromServer'
 
-    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ClientToServerExceptionResult'])
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ExceptionFromServer'])
 
     allowedMethods = {'testSync': True}
     def testSync(self, s):
         raise Exception(s)
 
-class ClientToServerAsyncExceptionResult(testcase.TestCase):
+class AsyncExceptionFromServer(testcase.TestCase):
     """
     Tests that when a method on the server raises an exception asynchronously,
     the client properly receives an error.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ClientToServerAsyncExceptionResult'
+    jsClass = u'Nevow.Athena.Tests.AsyncExceptionFromServer'
 
-    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ClientToServerAsyncExceptionResult'])
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AsyncExceptionFromServer'])
 
     allowedMethods = {'testAsync': True}
     def testAsync(self, s):
         return defer.fail(Exception(s))
 
+class ExceptionFromClient(testcase.TestCase):
+    """
+    Tests that when a method on the client raises an exception, the server
+    properly receives an error.
+    """
+
+    jsClass = u'Nevow.Athena.Tests.ExceptionFromClient'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ExceptionFromClient'])
+
+    allowedMethods = dict(loopbackError=True)
+    def loopbackError(self):
+        return self.callRemote('generateError').addErrback(self.checkError)
+
+    def checkError(self, f):
+        f.trap(athena.JSException)
+        if len(f.frames) > 0 and u'This is a test exception' in f.value.args[0]:
+            return True
+        else:
+            raise f
+
+class AsyncExceptionFromClient(testcase.TestCase):
+    """
+    Tests that when a method on the client raises an exception asynchronously,
+    the server properly receives an error.
+    """
+
+    jsClass = u'Nevow.Athena.Tests.AsyncExceptionFromClient'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AsyncExceptionFromClient'])
+
+    allowedMethods = dict(loopbackError=True)
+    def loopbackError(self):
+        return self.callRemote('generateError').addErrback(self.checkError)
+
+    def checkError(self, f):
+        f.trap(athena.JSException)
+        if len(f.frames) > 0 and u'This is a deferred test exception' in f.value.args[0]:
+            return True
+        else:
+            raise f
+
 class ServerToClientArgumentSerialization(testcase.TestCase):
     """
-    Tests that a method invoked on the client by the server is passed
-    the correct arguments.
+    Tests that a method invoked on the client by the server is passed the
+    correct arguments.
     """
 
     jsClass = u'Nevow.Athena.Tests.ServerToClientArgumentSerialization'
@@ -83,8 +123,8 @@ class ServerToClientArgumentSerialization(testcase.TestCase):
 
 class ServerToClientResultSerialization(testcase.TestCase):
     """
-    Tests that the result returned by a method invoked on the client
-    by the server is correct.
+    Tests that the result returned by a method invoked on the client by the
+    server is correct.
     """
 
     jsClass = u'Nevow.Athena.Tests.ServerToClientResultSerialization'
