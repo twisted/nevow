@@ -530,8 +530,8 @@ Nevow.Athena.Widget.methods(
                     Divmod.err(e);
                     return false;
                 }
-           };
-        }
+            };
+        };
 
         for (var i = 0; i < events.length; ++i) {
             var event = events[i];
