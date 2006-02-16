@@ -44,7 +44,7 @@ Nevow.Athena.Tests.ExceptionFromServer.methods(
             function(f) {
                 var idx = f.error.message.indexOf(s);
                 if (idx == -1) {
-                    self.fail('Did not find expected message in error message: ' + err);
+                    self.fail('Did not find expected message in error message: ' + f.error.message);
                 }
             });
         return d;
@@ -63,7 +63,7 @@ Nevow.Athena.Tests.AsyncExceptionFromServer.methods(
             function(f) {
                 var idx = f.error.message.indexOf(s);
                 if (idx == -1) {
-                    self.fail('Did not find expected message in error message: ' + f.err.message);
+                    self.fail('Did not find expected message in error message: ' + f.error.message);
                 }
             });
         return d;
@@ -193,4 +193,18 @@ Nevow.Athena.Tests.ImportBeforeLiteralJavaScript = Nevow.Athena.Test.TestCase.su
 Nevow.Athena.Tests.ImportBeforeLiteralJavaScript.methods(
     function run(self) {
         self.assertEquals(importBeforeLiteralJavaScriptResult, false);
+    });
+
+Nevow.Athena.Tests.AthenaHandler = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AthenaHandler');
+Nevow.Athena.Tests.AthenaHandler.methods(
+    function run(self) {
+        self.handled = false;
+        var onsubmit = self.node.getElementsByTagName('button')[0].onclick;
+        self.assertEquals(onsubmit(), false);
+        self.assertEquals(self.handled, true);
+    },
+
+    function handler(self, evt) {
+        self.handled = true;
+        return false;
     });

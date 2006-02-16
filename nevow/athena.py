@@ -9,7 +9,7 @@ from twisted.python import log, failure
 from twisted import plugin
 
 from nevow import inevow, plugins, flat
-from nevow import rend, loaders, url, static, json, util, tags, guard
+from nevow import rend, loaders, url, static, json, util, tags, guard, stan
 
 ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
 
@@ -865,3 +865,6 @@ class IntrospectionFragment(LiveFragment):
         tags.a(
         href="#DEBUG_ME",
         class_='toggle-debug')["Debug"]])
+
+
+handler = stan.Proto('athena:handler')

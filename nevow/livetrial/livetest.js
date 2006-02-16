@@ -13,7 +13,7 @@ Nevow.Athena.Test.TestCase.methods(
 
     function assertEquals(self, a, b) {
         if (!(a == b)) {
-            fail(a + ' != ' + b);
+            self.fail(a + ' != ' + b);
         }
     },
 

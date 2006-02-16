@@ -203,3 +203,11 @@ class AutomaticClass(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.AutomaticClass'
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AutomaticClass'])
+
+class AthenaHandler(testcase.TestCase):
+    jsClass = u'Nevow.Athena.Tests.AthenaHandler'
+
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))[
+        tags.button[
+            '<athena:handler>',
+            athena.handler(event='onclick', handler='handler')]])
