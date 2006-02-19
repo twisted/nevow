@@ -224,15 +224,15 @@ class ConfigurableMixin(object):
         been called. If it fails, a ValidateError exception
         will be raised.
         """
-	def _callback(binding):
-	    ctx.remember(binding, iformless.IBinding)
-	    ctx.remember(self, iformless.IConfigurable)
-	    rv = iformless.IInputProcessor(binding).process(ctx, self, args)
-	    ctx.remember(rv, inevow.IHand)
-	    ctx.remember('%r success.' % bindingName, inevow.IStatusMessage)
-	    return rv
+        def _callback(binding):
+            ctx.remember(binding, iformless.IBinding)
+            ctx.remember(self, iformless.IConfigurable)
+            rv = iformless.IInputProcessor(binding).process(ctx, self, args)
+            ctx.remember(rv, inevow.IHand)
+            ctx.remember('%r success.' % bindingName, inevow.IStatusMessage)
+            return rv
         return util.maybeDeferred(self.getBinding, ctx, 
-				  bindingName).addCallback(_callback)
+                                  bindingName).addCallback(_callback)
 compy.backwardsCompatImplements(ConfigurableMixin)
 
 
