@@ -538,6 +538,7 @@ Nevow.Athena.Widget.methods(
             var evtName = event.getAttribute('event');
             var evtHandler = event.getAttribute('handler');
             event.parentNode[evtName] = makeHandler(evtHandler);
+            Divmod.msg("Hooked " + evtName + " up to " + evtHandler + " on " + self);
         }
     },
 
