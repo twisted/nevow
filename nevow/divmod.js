@@ -40,10 +40,10 @@ Divmod._global = this;
 Divmod.namedAny = function(name) {
     var namedParts = name.split('.');
     var obj = Divmod._global;
-    for (var p in namedParts) {
-        obj = obj[namedParts[p]];
+    for (var i = 0; i < namedParts.length; ++i) {
+        obj = obj[namedParts[i]];
         if (obj == undefined) {
-            Divmod.debug('widget', 'Failed in namedAny for ' + name + 'at ' + namedParts[p]);
+            Divmod.debug('widget', 'Failed in namedAny for ' + name + 'at ' + namedParts[i]);
             break;
         }
     }
