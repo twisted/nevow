@@ -9,12 +9,13 @@ Divmod.baseURL = function() {
     }
     var baseURL = Divmod._location;
     if (baseURL == undefined) {
-        window.location.toString();
-        var queryParamIndex = baseURL.indexOf('?');
+        baseURL = window.location.toString();
+    }
 
-        if (queryParamIndex != -1) {
-            baseURL = baseURL.substring(0, queryParamIndex);
-        }
+    var queryParamIndex = baseURL.indexOf('?');
+
+    if (queryParamIndex != -1) {
+        baseURL = baseURL.substring(0, queryParamIndex);
     }
 
     if (baseURL.charAt(baseURL.length - 1) != '/') {
