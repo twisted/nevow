@@ -443,6 +443,8 @@ class LivePage(rend.Page):
     _transportCount = 0
     _didDisconnect = False
 
+    useActiveChannels = True
+
     # This is the number of seconds that is acceptable for a LivePage to be
     # considered 'connected' without any transports still active.  In other
     # words, if the browser cannot make requests for more than this timeout
@@ -637,7 +639,8 @@ class LivePage(rend.Page):
 
     def addTransport(self, req):
         neverEverCache(req)
-        activeChannel(req)
+        if self.useActiveChannels:
+            activeChannel(req)
 
         req.notifyFinish().addErrback(self._activeTransportDisconnect, req)
 
