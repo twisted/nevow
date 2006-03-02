@@ -795,11 +795,7 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
 
 
 Nevow.Athena.Widget._defaultDisconnectionNotifier = function() {
-    var url = String(document.location);
-    if (url.slice(url.length - 1, url.length) != '/') {
-        url += '/';
-    }
-    url += '__athena_private__/connection-status-down.png';
+    var url = Divmod.baseURL() + '__athena_private__/connection-status-down.png';
 
     var img = document.createElement('img');
     img.src = url;
