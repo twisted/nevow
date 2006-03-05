@@ -1,6 +1,6 @@
 
 var Divmod = {};
-
+Divmod.debugging = false;
 
 Divmod.baseURL = function() {
     // Use "cached" value if it exists

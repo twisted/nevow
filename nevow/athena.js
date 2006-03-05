@@ -662,8 +662,6 @@ Nevow.Athena.IntrospectionWidget.methods(
 
         self.infoNodes['toggleDebugging'].onclick = function() { self.toggleDebugging(); return false; };
 
-        self.setDebuggingDisplayStyle();
-
         self.events = [];
         self.eventLimit = 1000;
 
@@ -671,6 +669,8 @@ Nevow.Athena.IntrospectionWidget.methods(
         self._logNode = null;
 
         Divmod.logger.addObserver(function(event) { self.observe(event); });
+
+        self.setDebuggingDisplayStyle();
     },
 
     function observe(self, event) {
