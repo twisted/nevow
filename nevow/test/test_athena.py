@@ -98,7 +98,7 @@ class Tracebacks(unittest.TestCase):
               ('someFunction()', 'http://somesite.com:8080/someFile', 42),
               ('anotherFunction([object Object])', 'http://user:pass@somesite.com:8080/someOtherFile', 69))
 
-    stack = '\n'.join('%s@%s:%d' % frame for frame in frames)
+    stack = '\n'.join(['%s@%s:%d' % frame for frame in frames])
 
     exc = {u'name': 'SomeError',
            u'message': 'An error occurred.',
