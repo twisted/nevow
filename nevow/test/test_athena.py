@@ -110,6 +110,6 @@ class Tracebacks(unittest.TestCase):
             self.assertEquals(oframe, iframe)
 
     def testStackLengthAndOrder(self):
-        f = athena.getJSFailure(self.exc)
+        f = athena.getJSFailure(self.exc, {})
         self.assertEqual(len(f.frames), len(self.frames))
         self.assertEqual(f.frames[0][0], self.frames[-1][0])
