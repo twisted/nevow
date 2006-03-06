@@ -279,7 +279,7 @@ def parseStack(stack):
         frames.insert(0, (func, fname, ln))
     return frames
 
-def buildTraceback(frames):
+def buildTraceback(frames, modules):
     """
     Build a chain of mock traceback objects from a serialized Error (or other
     exception) object, and return the head of the chain.
@@ -287,6 +287,7 @@ def buildTraceback(frames):
     last = None
     first = None
     for func, fname, ln in frames:
+        fname = modules.get(fname.split('/')[-1], fname)
         frame = JSFrame(func, fname, ln)
         tb = JSTraceback(frame, ln)
         if last:
@@ -297,7 +298,7 @@ def buildTraceback(frames):
     return first
 
 
-def getJSFailure(exc):
+def getJSFailure(exc, modules):
     """
     Convert a serialized client-side exception to a Failure.
     """
@@ -307,7 +308,7 @@ def getJSFailure(exc):
     if u'stack' in exc:
         frames = parseStack(exc[u'stack'])
 
-    return failure.Failure(JSException(text), exc_tb=buildTraceback(frames))
+    return failure.Failure(JSException(text), exc_tb=buildTraceback(frames, modules))
 
 
 
@@ -386,7 +387,7 @@ class LivePageTransport(object):
         if success:
             callDeferred.callback(result)
         else:
-            callDeferred.errback(getJSFailure(result))
+            callDeferred.errback(getJSFailure(result, self.livePage.jsModules.mapping))
 
 
     def action_noop(self, ctx):
