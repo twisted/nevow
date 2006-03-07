@@ -274,7 +274,12 @@ def parseStack(stack):
         func, rest = line.split('@', 1)
         if ':' not in rest:
             continue
-        fname, ln = rest.rsplit(':', 1)
+
+        divide = rest.rfind(':')
+        if divide == -1:
+            fname, ln = rest, ''
+        else:
+            fname, ln = rest[:divide], rest[divide + 1:]
         ln = int(ln)
         frames.insert(0, (func, fname, ln))
     return frames
