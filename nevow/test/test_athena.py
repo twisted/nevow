@@ -106,7 +106,7 @@ class Tracebacks(unittest.TestCase):
 
     def testStackParsing(self):
         p = athena.parseStack(self.stack)
-        for iframe, oframe in izip(reversed(self.frames), p):
+        for iframe, oframe in izip(self.frames[::-1], p):
             self.assertEquals(oframe, iframe)
 
     def testStackLengthAndOrder(self):
