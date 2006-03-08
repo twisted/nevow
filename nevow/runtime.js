@@ -200,7 +200,7 @@ Divmod.Runtime.Firefox.methods(
             }
             node.appendChild(newScript);
         }
-        node.appendChild(doc.documentElement);
+        node.appendChild(document.importNode(doc.documentElement, true));
     },
 
     function setNodeContent(self, node, innerHTML) {
