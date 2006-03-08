@@ -7,9 +7,8 @@ with an example of remembering values within the session.
 #
 
 import random
-from zope.interface import implements
+from zope.interface import implements, Interface
 
-from nevow import compy
 from nevow import guard
 from nevow import rend
 from nevow import loaders
@@ -17,10 +16,10 @@ from nevow import tags as T
 from nevow import url
 from nevow.inevow import ISession
 
-class IValueHistory(compy.Interface):
+class IValueHistory(Interface):
     pass
 
-class ISessionValue(compy.Interface):
+class ISessionValue(Interface):
     pass
 
 class MyRootResource(rend.Page):

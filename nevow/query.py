@@ -3,11 +3,12 @@
 
 """inevow.IQ adapter implementations.
 """
+import twisted.python.components as tpc
 
-from nevow import inevow, compy, stan
+from nevow import inevow, stan
 from zope.interface import implements
 
-class QueryContext(compy.Adapter):
+class QueryContext(tpc.Adapter):
     implements(inevow.IQ)
 
     def _locatePatterns(self, pattern, default, loop=True):
@@ -38,9 +39,8 @@ class QueryContext(compy.Adapter):
         if not found:
             raise stan.NodeNotFound, ('pattern', pattern)
         return found
-compy.backwardsCompatImplements(QueryContext)
 
-class QueryList(compy.Adapter):
+class QueryList(tpc.Adapter):
     def _locatePatterns(self, pattern, default, loop=True):
         produced = []
         for item in self.original:
@@ -92,7 +92,7 @@ class QuerySlot(QueryList):
         QueryList.__init__(self, original.children)
 
 
-class QueryNeverFind(compy.Adapter):
+class QueryNeverFind(tpc.Adapter):
     def patternGenerator(self, pattern, default=None):
         raise stan.NodeNotFound, ('pattern', pattern)
 
@@ -106,7 +106,7 @@ class QueryNeverFind(compy.Adapter):
         return []
 
 
-class QueryLoader(compy.Adapter):
+class QueryLoader(tpc.Adapter):
     def patternGenerator(self, pattern, default=None):
         return inevow.IQ(self.original.load()).patternGenerator(pattern, default)
 

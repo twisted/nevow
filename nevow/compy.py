@@ -7,13 +7,15 @@ so that nevow works with it.
 
 import warnings
 
-from zope.interface import Interface, implements as zimplements
+from zope.interface import Interface, implements as zimplements, Attribute
 
-try:
-    from twisted.python.components import *
-    from twisted.python.components import CannotAdapt
-except:
-    from compyCompat import *
+from twisted.python.components import *
+
+warnings.warn("compy.py module is deprecated, use zope.interface and twisted.python.components.registerAdapter directly.",
+              stacklevel=2)
+
+# Backwards compat code
+CannotAdapt = TypeError
 
 _registerAdapter = registerAdapter
 def registerAdapter(adapterFactory, origInterface, *interfaceClasses):

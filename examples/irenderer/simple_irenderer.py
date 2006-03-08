@@ -1,6 +1,7 @@
-from zope.interface import implements
+from zope.interface import implements, Interface
 
-from nevow import compy
+from twisted.python.components import registerAdapter, Adapter
+
 from nevow import inevow
 from nevow import loaders
 from nevow import rend
@@ -15,10 +16,10 @@ from nevow import tags as T
 ##  but I'm going to give you just a fast overview of how objects and adapter relate to each other):
 
 ##  We need 2 different adapters since Person and Bookmark are not directly renderable and need some extra 
-##  transformations. What we do here with PersonView and BookmarkView is to define a class that inherits from compy.
+##  transformations. What we do here with PersonView and BookmarkView is to define a class that inherits from
 ##  Adapter and define a rend method.
 
-##  What is compy.Adapter? Basically it is a class that accepts an argument in the constructor which is the object that 
+##  What is Adapter? Basically it is a class that accepts an argument in the constructor which is the object that 
 ##  needs to be adapted to some other interface. Obviously the adapter will implement the interface we need (ie: inevow.
 ##  IRenderer).
 
@@ -30,8 +31,8 @@ from nevow import tags as T
 
 ##  Then 2 interesting lines:
 
-##  compy.registerAdapter(PersonView, Person, inevow.IRenderer)
-##  compy.registerAdapter(BookmarkView, Bookmark, inevow.IRenderer)
+##  registerAdapter(PersonView, Person, inevow.IRenderer)
+##  registerAdapter(BookmarkView, Bookmark, inevow.IRenderer)
 
 ##  Basically we are registering in Nevow object space, that PersonView and BookmarkView are the adapters for classes/
 ##  objects Person and Bookmark to inevow.IRenderer. What does this mean? It means that when we will call inevow.
@@ -57,7 +58,7 @@ class Bookmark:
         self.name = name
         self.url = url
 
-class PersonView(compy.Adapter):
+class PersonView(Adapter):
     """Render a full view of a Person.
     """
     implements(inevow.IRenderer)
@@ -71,7 +72,7 @@ class PersonView(compy.Adapter):
                 ]
             ]
 
-class BookmarkView(compy.Adapter):
+class BookmarkView(Adapter):
     """Render a full view of a Bookmark.
     """
     implements(inevow.IRenderer)
@@ -90,8 +91,8 @@ class BookmarkView(compy.Adapter):
 # Register the rendering adapters. Note, these could easily be defined in
 # a text file and registered by name rather than class object.
 
-compy.registerAdapter(PersonView, Person, inevow.IRenderer)
-compy.registerAdapter(BookmarkView, Bookmark, inevow.IRenderer)
+registerAdapter(PersonView, Person, inevow.IRenderer)
+registerAdapter(BookmarkView, Bookmark, inevow.IRenderer)
 
 ############################################################################
 # Create some data for the application to do something with.

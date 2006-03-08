@@ -28,7 +28,6 @@ from nevow import context
 from nevow import inevow
 from nevow import tags
 from nevow import flat
-from nevow import compy
 from nevow.flat import flatsax
 
 try:
@@ -73,7 +72,6 @@ class DocFactory:
         if self.precompiledDoc is None:
             self.precompiledDoc = self.precompile(ctx)
         return self.precompiledDoc
-compy.backwardsCompatImplements(DocFactory)
 
 class stan(object):
     """A stan tags document factory"""
@@ -97,7 +95,6 @@ class stan(object):
                 stan = inevow.IQ(stan).onePattern(self.pattern)
             self._cache = stan
         return self._cache
-compy.backwardsCompatImplements(stan)
 
 class htmlstr(object):
     """A document factory for HTML contained in a string"""
@@ -130,7 +127,6 @@ class htmlstr(object):
                 doc = inevow.IQ(doc).onePattern(self.pattern)
             self._cache = doc
         return self._cache
-compy.backwardsCompatImplements(htmlstr)
 
 class htmlfile(object):
     """A document factory for an HTML disk template"""
@@ -172,7 +168,6 @@ class htmlfile(object):
             self._mtime = mtime
             self._cache = doc
         return self._cache
-compy.backwardsCompatImplements(htmlfile)
 
 class xmlstr(object):
 
@@ -202,7 +197,6 @@ class xmlstr(object):
                 doc = inevow.IQ(doc).onePattern(self.pattern)
             self._cache = doc
         return self._cache
-compy.backwardsCompatImplements(xmlstr)
 
 
 class xmlfile(object):
@@ -263,4 +257,5 @@ class xmlfile(object):
         self._mtime = currentModified
         self._cache[cacheKey] = currentModified, doc
         return doc
-compy.backwardsCompatImplements(xmlfile)
+
+

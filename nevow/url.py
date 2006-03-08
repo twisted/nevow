@@ -9,7 +9,7 @@ from __future__ import generators
 import weakref
 from zope.interface import implements
 
-from nevow import inevow, compy, flat
+from nevow import inevow, flat
 from nevow.stan import raw
 from nevow.flat import serialize
 from nevow.context import WovenContext
@@ -568,5 +568,4 @@ class URLRedirectAdapter:
             u = flat.flatten(URL.fromContext(ctx).click(u), ctx)
             return redirectTo(u, inevow.IRequest(ctx))
         return flat.flattenFactory(self.original, ctx, bits.append, flattened)
-compy.backwardsCompatImplements(URLRedirectAdapter)
 

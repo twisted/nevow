@@ -3,7 +3,7 @@
 
 from twisted.python import log
 from zope.interface import implements
-from nevow import loaders, rend, inevow, compy
+from nevow import loaders, rend, inevow
 from nevow.stan import directive
 from nevow.tags import *
 
@@ -205,5 +205,4 @@ class VHostMonsterResource:
             request.uri = request.uri[prefixLen:]
 
             return _prepathCleaner, segments[2:]
-        
-compy.backwardsCompatImplements(VHostMonsterResource)
+

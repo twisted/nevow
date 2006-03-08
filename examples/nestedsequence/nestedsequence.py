@@ -1,4 +1,5 @@
-from nevow import appserver, rend, loaders, tags as t, inevow, accessors, compy
+from twisted.python.components import registerAdapter
+from nevow import appserver, rend, loaders, tags as t, inevow, accessors
 
 class Edge(object):
     pass
@@ -36,4 +37,4 @@ class Root(rend.Page):
     def data_vertexes(self, ctx, data):
         return [v1, v2, v3]
 
-compy.registerAdapter(accessors.ObjectContainer, Vertex, inevow.IContainer)
+registerAdapter(accessors.ObjectContainer, Vertex, inevow.IContainer)

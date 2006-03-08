@@ -1,25 +1,25 @@
-from nevow import compy
+from zope.interface import Interface
 
 
-class IPasting(compy.Interface):
+class IPasting(Interface):
 
-    def getLatestVersion(self):
+    def getLatestVersion():
         """Return the latest version"""
 
-    def getVersion(self, version):
+    def getVersion(version):
         """Get a specific version"""
 
-    def getHistory(self):
+    def getHistory():
         """Get the history of the pasting as a list of (version, author, time) tuples."""
 
 
-class IVersion(compy.Interface):
+class IVersion(Interface):
     
-    def getAuthor(self):
+    def getAuthor():
         pass
 
-    def getText(self):
+    def getText():
         pass
 
-    def getTime(self):
+    def getTime():
         pass

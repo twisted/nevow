@@ -1,16 +1,16 @@
-from nevow import compy
+from zope.interface import Interface
 
-class ITimer(compy.Interface):
+class ITimer(Interface):
     """ """
 
-class IEnv(compy.Interface):
+class IEnv(Interface):
     """ """
 
-class ITodos(compy.Interface):
+class ITodos(Interface):
     """ """
-    def add(self, description, done):
+    def add(description, done):
         pass
-    def delete(self, id):
+    def delete(id):
         pass
-    def edit(self, id, description, done):
+    def edit(id, description, done):
         pass

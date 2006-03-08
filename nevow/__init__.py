@@ -8,10 +8,10 @@ if __version_info__[3:]:
     __version__ = '-'.join((__version__, '-'.join(__version_info__[3:])))
 
 import sys
+from twisted.python.components import registerAdapter
 
-from nevow import compy
 from nevow import flat
-
+from nevow.util import _namedAnyWithBuiltinTranslation
 
 # Python2.2 has a stupidity where instance methods have name
 # '__builtin__.instance method' instead of '__builtin__.instancemethod'
@@ -27,7 +27,9 @@ def load(S):
         line = line.strip()
         if line and not line.startswith('#'):
             (a, o, i) = line.split()
-            compy.registerAdapter(a, clean(o), i)
+            registerAdapter(_namedAnyWithBuiltinTranslation(a),
+                            _namedAnyWithBuiltinTranslation(clean(o)),
+                            _namedAnyWithBuiltinTranslation(i))
 
 
 def loadFlatteners(S):
@@ -223,6 +225,6 @@ loadFlatteners(flatteners)
 
 
 __all__ = [
-    'accessors', 'appserver', 'blocks', 'canvas', 'compy', 'context', 'dirlist', 'entities', 'events', 'failure', 'guard', 'inevow',
-    'loaders', 'rend', 'scripts', 'stan', 'static', 'tags', 'test', 'testutil', 'url', 'util', 'vhost'
+    'accessors', 'appserver', 'blocks', 'canvas', 'context', 'dirlist', 'entities', 'events', 'failure', 'guard', 'inevow',
+    'loaders', 'rend', 'scripts', 'stan', 'static', 'tags', 'test', 'testutil', 'url', 'util', 'vhost', 'flat'
 ]

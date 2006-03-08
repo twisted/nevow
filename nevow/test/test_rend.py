@@ -1,13 +1,13 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-from zope.interface import implements
+from zope.interface import implements, Interface
+from twisted.python.components import registerAdapter
 
 from twisted.internet import defer
 from twisted.trial import unittest
 
 from nevow import appserver
-from nevow import compy
 from nevow import inevow
 from nevow import context
 from nevow import flat
@@ -519,7 +519,7 @@ class TestRenderString(unittest.TestCase):
             lambda result: self.assertEquals(result, '<div><p>foo</p><p>bar</p></div>'))
 
     def test_parentCtx(self):
-        class IFoo(compy.Interface):
+        class IFoo(Interface):
             pass
         ctx = context.WovenContext()
         ctx.remember('Hello!', IFoo)
@@ -562,7 +562,7 @@ class TestRenderSynchronously(unittest.TestCase):
         self.assertEquals(result, '<div><p>foo</p><p>bar</p></div>')
 
     def test_parentCtx(self):
-        class IFoo(compy.Interface):
+        class IFoo(Interface):
             pass
         ctx = context.WovenContext()
         ctx.remember('Hello!', IFoo)
@@ -661,7 +661,7 @@ class TestLocateChild(unittest.TestCase):
 
     def test_missingRemembrances(self):
 
-        class IThing(compy.Interface):
+        class IThing(Interface):
             pass
 
         class Page(rend.Page):

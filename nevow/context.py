@@ -6,7 +6,7 @@ from __future__ import generators
 
 import warnings
 
-from nevow import compy, stan
+from nevow import stan
 from nevow.inevow import IData, IRequest
 from nevow.stan import Unset
 from nevow.util import qual
@@ -15,10 +15,7 @@ from zope.interface import providedBy
 # TTT: Move to web2.context
 
 def megaGetInterfaces(adapter):
-    if hasattr(adapter, "__class__"):
-        compy.fixClassImplements(adapter.__class__)
     return [qual(x) for x in providedBy(adapter)]
-
 
 dataqual = qual(IData)
 

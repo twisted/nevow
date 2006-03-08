@@ -1,18 +1,18 @@
-from nevow import compy
+from zope.interface import Interface
 
-class IPasteBin(compy.Interface):
+class IPasteBin(Interface):
 
-    def getListOfPastings(self, limit=None):
+    def getListOfPastings(limit=None):
         """
         (oid, author, time) tuples
         """
         pass
 
-    def getPasting(self, oid):
+    def getPasting(oid):
         pass
 
-    def addPasting(self, author, text):
+    def addPasting(author, text):
         pass
 
-    def updatePasting(self, oid, author, text):
+    def updatePasting(oid, author, text):
         pass

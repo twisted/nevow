@@ -6,15 +6,13 @@
 """
 
 from zope.interface import Interface, Attribute
-from nevow import compy
 
-
-class IQ(compy.Interface):
+class IQ(Interface):
     """Interface for querying. Adapters implement this for objects which may
     appear in the stan DOM to allow introspecting the DOM and finding nodes
     with certain qualities.
     """
-    def patternGenerator(self, pattern, default=None):
+    def patternGenerator(pattern, default=None):
         """Returns a pseudo-Tag which will generate clones of matching
         pattern tags forever, looping around to the beginning when running
         out of unique matches.
@@ -32,7 +30,7 @@ class IQ(compy.Interface):
         ...   return [pattern(data=element) for element in data]
         """
 
-    def allPatterns(self, pattern):
+    def allPatterns(pattern):
         """Return a list of all matching pattern tags, cloned.
         
         Useful if you just want to insert them in the output in one
@@ -41,7 +39,7 @@ class IQ(compy.Interface):
         E.g. the sequence renderer's header and footer are found with this.
         """
 
-    def onePattern(self, pattern):
+    def onePattern(pattern):
         """Return a single matching pattern, cloned.
         If there is more than one matching pattern or no matching patterns,
         raise an exception.
@@ -50,7 +48,7 @@ class IQ(compy.Interface):
         sub-tag and do something with it.
         """
 
-    def keyed(self, key):
+    def keyed(key):
         """Locate the node with the key 'key', clone it, call fillSlots(key, clone)
         and return the clone.
 
@@ -61,51 +59,51 @@ class IQ(compy.Interface):
         """
 
 
-class IResource(compy.Interface):
-    def locateChild(self, ctx, segments):
+class IResource(Interface):
+    def locateChild(ctx, segments):
         """Locate another object which can be adapted to IResource
         Return a tuple of resource, path segments
         """
 
-    def renderHTTP(self, ctx):
+    def renderHTTP(ctx):
         """Render a request
         """
 
 
-class IRenderer(compy.Interface):
+class IRenderer(Interface):
     """Things implementing this interface are serialized by calling their
     'rend' method.
     """
-    def rend(self, ctx, data):
+    def rend(ctx, data):
         """Turn this instance into stan suitable for displaying it in a web page.
         """
 
 
-class IRendererFactory(compy.Interface):
+class IRendererFactory(Interface):
     """A renderer factory is capable of taking a renderer directive (a string)
     and returning a callable which when called, will render a portion of DOM.
     """
-    def renderer(self, context, name):
+    def renderer(context, name):
         """Given a context object and a name, return a callable which responds
         to the signature (context, data) or (data) and returns an object which
         is flattenable.
         """
 
 
-class IMacroFactory(compy.Interface):
+class IMacroFactory(Interface):
     """A macro factory is capable of taking a macro directive (a string)
     and returning a callable which when called, will replace the portion
     of the DOM upon which the macro was placed with some different
     DOM.
     """
-    def macro(self, context, name):
+    def macro(context, name):
         """Given a context object and a name, return a callable which responds
         to the signature (context, *parameters) and returns an object which
         is flattenable.
         """
 
 
-class IData(compy.Interface):
+class IData(Interface):
     """Any python object to be used as model data to be passed
     to view functions. Used for marking the context stack only.
     
@@ -113,24 +111,24 @@ class IData(compy.Interface):
     """
 
 
-class IGettable(compy.Interface):
-    def get(self, context):
+class IGettable(Interface):
+    def get(context):
         """Return the data
         
         Return any object
         """
 
 
-class ISettable(compy.Interface):
-    def set(self, context, data):
+class ISettable(Interface):
+    def set(context, data):
         """Set the data
 
         This might be removed.
         """
 
 
-class IContainer(compy.Interface):
-    def child(self, context, name):
+class IContainer(Interface):
+    def child(context, name):
         """Return a conceptual child; an attribute, or a key,
         or the result of a function call.
     
@@ -144,7 +142,7 @@ class IContainer(compy.Interface):
         raise whatever exception is natural
         """
 
-class IComponentized(compy.Interface):
+class IComponentized(Interface):
     """I am a mixin to allow you to be adapted in various ways persistently.
 
     I define a list of persistent adapters.  This is to allow adapter classes
@@ -156,12 +154,12 @@ class IComponentized(compy.Interface):
     is specific to Twisted.
     """
 
-    def setComponent(self):
+    def setComponent(interfaceClass, component):
         """
-        Add a component to me, for all appropriate interfaces.
+        Add a component to me for the indicated interface.
         """
     
-    def addComponent(self, component, ignoreClass=0, registry=None):
+    def addComponent(component, ignoreClass=0, registry=None):
         """
         Add a component to me, for all appropriate interfaces.
 
@@ -178,7 +176,7 @@ class IComponentized(compy.Interface):
         @return: the list of appropriate interfaces
         """
 
-    def getComponent(self, interface, registry=None, default=None):
+    def getComponent(interface, registry=None, default=None):
         """Create or retrieve an adapter for the given interface.
 
         If such an adapter has already been created, retrieve it from the cache
@@ -195,10 +193,10 @@ class IComponentized(compy.Interface):
         True on your adapter class.
         """
         
-    def unsetComponent(self, interfaceClass):
+    def unsetComponent(interfaceClass):
         """Remove my component specified by the given interface class."""
 
-    def removeComponent(self, component):
+    def removeComponent(component):
         """
         Remove the given component from me entirely, for all interfaces for which
         it has been registered.
@@ -218,7 +216,7 @@ class ISession(IComponentized):
     TODO: Need better docs; what's a session and why and how do you use it
     """
 
-    def setLifetime(self, lifetime):
+    def setLifetime(lifetime):
         """Set the approximate lifetime of this session, in seconds.
 
         This is highly imprecise, but it allows you to set some general
@@ -230,15 +228,15 @@ class ISession(IComponentized):
         attribute in class guard.SessionWrapper
         """
 
-    def notifyOnExpire(self, callback):
+    def notifyOnExpire(callback):
         """Call this callback when the session expires or logs out.
         """
 
-    def expire(self):
+    def expire():
         """Expire/logout of the session.
         """
 
-    def touch(self):
+    def touch():
         """Refresh the session
         """
 
@@ -248,7 +246,7 @@ class IGuardSession(ISession):
 
     guard: SessionWrapper object
     """
-    def portalLogout(self, port):
+    def portalLogout(port):
         """Logout from portal port
         """
 
@@ -268,26 +266,26 @@ class IRequest(IComponentized):
     @ivar received_headers: All received headers
     """
     # Methods for received request
-    def getHeader(self, key):
+    def getHeader(key):
         """Get a header that was sent from the network.
         """
         
-    def getCookie(self, key):
+    def getCookie(key):
         """Get a cookie that was sent from the network.
         """    
 
 
-    def getAllHeaders(self):
+    def getAllHeaders():
         """Return dictionary of all headers the request received."""
 
-    def getRequestHostname(self):
+    def getRequestHostname():
         """Get the hostname that the user passed in to the request.
 
         This will either use the Host: header (if it is available) or the
         host we are listening on if the header is unavailable.
         """
 
-    def getHost(self):
+    def getHost():
         """Get my originally requesting transport's host.
 
         Don't rely on the 'transport' attribute, since Request objects may be
@@ -295,48 +293,52 @@ class IRequest(IComponentized):
         twisted.internet.tcp.Port.
         """
         
-    def getClientIP(self):
-        pass
-    def getClient(self):
-        pass
-    def getUser(self):
-        pass
-    def getPassword(self):
-        pass
-    def isSecure(self):
+    def getClientIP():
         pass
 
-    def getSession(self, sessionInterface = None):
+    def getClient():
+        pass
+
+    def getUser():
+        pass
+
+    def getPassword():
+        pass
+
+    def isSecure():
+        pass
+
+    def getSession(sessionInterface = None):
         pass
     
-    def URLPath(self):
+    def URLPath():
         pass
 
-    def prePathURL(self):
+    def prePathURL():
         pass
 
-    def rememberRootURL(self):
+    def rememberRootURL():
         """
         Remember the currently-processed part of the URL for later
         recalling.
         """
         
-    def getRootURL(self):
+    def getRootURL():
         """
         Get a previously-remembered URL.
         """
         
     # Methods for outgoing request
-    def finish(self):
+    def finish():
         """We are finished writing data."""
 
-    def write(self, data):
+    def write(data):
         """
         Write some data as a result of an HTTP request.  The first
         time this is called, it writes out response data.
         """
 
-    def addCookie(self, k, v, expires=None, domain=None, path=None, max_age=None, comment=None, secure=None):
+    def addCookie(k, v, expires=None, domain=None, path=None, max_age=None, comment=None, secure=None):
         """Set an outgoing HTTP cookie.
 
         In general, you should consider using sessions instead of cookies, see
@@ -344,21 +346,21 @@ class IRequest(IComponentized):
         twisted.web.server.Session class for details.
         """
 
-    def setResponseCode(self, code, message=None):
+    def setResponseCode(code, message=None):
         """Set the HTTP response code.
         """
 
-    def setHeader(self, k, v):
+    def setHeader(k, v):
         """Set an outgoing HTTP header.
         """
 
-    def redirect(self, url):
+    def redirect(url):
         """Utility function that does a redirect.
 
         The request should have finish() called after this.
         """
 
-    def setLastModified(self, when):
+    def setLastModified(when):
         """Set the X{Last-Modified} time for the response to this request.
 
         If I am called more than once, I ignore attempts to set
@@ -377,7 +379,7 @@ class IRequest(IComponentized):
             body.  Otherwise, I return a false value.
         """
 
-    def setETag(self, etag):
+    def setETag(etag):
         """Set an X{entity tag} for the outgoing response.
 
         That's \"entity tag\" as in the HTTP/1.1 X{ETag} header, \"used
@@ -398,7 +400,7 @@ class IRequest(IComponentized):
             value.
         """
 
-    def setHost(self, host, port, ssl=0):
+    def setHost(host, port, ssl=0):
         """Change the host and port the request thinks it's using.
 
         This method is useful for working with reverse HTTP proxies (e.g.
@@ -415,23 +417,23 @@ class IRequest(IComponentized):
         This method is experimental.
         """
 
-class ISerializable(compy.Interface):
+class ISerializable(Interface):
     """DEPRECATED. Use nevow.flat.registerFlattener instead of registering
     an ISerializable adapter.
     """
-    def serialize(self, context):
+    def serialize(context):
         """Serialize the adaptee, with the given context
         stack if necessary.
         """
 
-class IStatusMessage(compy.Interface):
+class IStatusMessage(Interface):
     """A marker interface, which should be set on the user's web session
     to an object which can be cast to a string, which will be shown to the
     user to indicate the status of the most recent operation.
     """
 
 
-class IHand(compy.Interface):
+class IHand(Interface):
     """A marker interface which indicates what object the user is currently
     holding in their hand. This is conceptually the "result" of the last operation;
     this interface can be used to mark a status string which indicates whether
@@ -440,27 +442,27 @@ class IHand(compy.Interface):
     """
 
 
-class ICanHandleException(compy.Interface):
-    def renderHTTP_exception(self, context, failure):
+class ICanHandleException(Interface):
+    def renderHTTP_exception(context, failure):
         """Render an exception to the given request object.
         """
 
-    def renderInlineException(self, context, reason):
+    def renderInlineException(context, reason):
         """Return stan representing the exception, to be printed in the page,
         not replacing the page."""
 
 
-class ICanHandleNotFound(compy.Interface):
-    def renderHTTP_notFound(self, context):
+class ICanHandleNotFound(Interface):
+    def renderHTTP_notFound(context):
         """Render a not found message to the given request.
         """
 
 
-class IEventMaster(compy.Interface):
+class IEventMaster(Interface):
     pass
 
 
-class IDocFactory(compy.Interface):
+class IDocFactory(Interface):
     """Interface for objects that load and parse templates for Nevow's
     renderers.
     
@@ -475,12 +477,12 @@ class IDocFactory(compy.Interface):
     actually rendered.
     """
     
-    def load(self, ctx=None):
+    def load(ctx=None):
         """Load a template and return a stan document tree.
         """
 
 
-class ISession(compy.Interface):
+class ISession(Interface):
     """A web session
 
     You can locate a Session object to represent a unique web session using
@@ -491,7 +493,7 @@ class ISession(compy.Interface):
     """
 
 
-class IRemainingSegments(compy.Interface):
+class IRemainingSegments(Interface):
     """During the URL traversal process, requesting this from the context
     will result in a tuple of the segments remaining to be processed.
     
@@ -499,7 +501,7 @@ class IRemainingSegments(compy.Interface):
     """
 
 
-class ICurrentSegments(compy.Interface):
+class ICurrentSegments(Interface):
     """Requesting this from the context will result in a tuple of path segments
     which have been consumed to reach the current Page instance during
     the URL traversal process.
@@ -508,20 +510,20 @@ class ICurrentSegments(compy.Interface):
     """
 
 
-class IViewParameters(compy.Interface):
+class IViewParameters(Interface):
     """An interface used by url.viewhere. When this interface is remembered
     above a url.viewhere embedded in a page, and the url to the current page
     is rendered, this object will be consulted for additional manipulations
     to perform on the url object before returning it.
     """
-    def __iter__(self):
+    def __iter__():
         """Return an iterator which yields a series of (command, args, kw) triples, 
         where 'command' is a string, indicating which url method to call, 'args' is a 
         list indicating the arguments to be passed to this method, and 'kw' is a dict 
         of keyword arguments to pass to this method.
         """
 
-class II18NConfig(compy.Interface):
+class II18NConfig(Interface):
     """
     Interface for I18N configuration.
 
@@ -538,23 +540,23 @@ class II18NConfig(compy.Interface):
     localeDir = Attribute("Path to the messages files or None to use the system default")
 
         
-class ILanguages(compy.Interface):
+class ILanguages(Interface):
     """
     Marker interface for the sequence of strings that defines the
     languages requested by the user.
     """
     
 
-class ILogger(compy.Interface):
+class ILogger(Interface):
     """
     An access.log writing interface.
 
     Remember this interface in the context stack to use alternative
     logging for the resources below that point in the tree.
     """
-    def log(self, ctx):
+    def log(ctx):
         """Write a log entry for this request."""
-        pass
+
 
 class IJavascriptPackage(Interface):
     """

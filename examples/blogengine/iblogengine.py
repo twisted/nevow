@@ -1,4 +1,4 @@
-from nevow.compy import Interface
+from zope.interface import Interface
 
 class IStore(Interface):
     """ Interface used to remember the store in the site object """

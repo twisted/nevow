@@ -30,7 +30,7 @@ except ImportError:
     from twisted.protocols import http
 
 # Nevow imports
-from nevow import inevow, url, stan, compy
+from nevow import inevow, url, stan
 
 
 def _sessionCookie():
@@ -217,7 +217,6 @@ class Forbidden(object):
         request.setResponseCode(http.FORBIDDEN)
         return ("<html><head><title>Forbidden</title></head>"
                 "<body><h1>Forbidden</h1>Request was forbidden.</body></html>")
-compy.backwardsCompatImplements(Forbidden)
 
 class SessionWrapper:
     """SessionWrapper
@@ -561,5 +560,4 @@ class SessionWrapper:
         session.expire()
         error.trap(UnauthorizedLogin)
         return Forbidden(), ()
-compy.backwardsCompatImplements(SessionWrapper)
 

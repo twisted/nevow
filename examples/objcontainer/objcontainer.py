@@ -3,8 +3,7 @@ look inside application types.
 """
 
 from nevow import accessors, inevow, loaders, rend, tags as T
-from nevow.compy import registerAdapter
-
+from twisted.python.components import registerAdapter
 
 class Image:
     """An image consisting of a filename and some comments.

@@ -14,7 +14,7 @@ methods found in the stan tree.
 
 from zope.interface import implements
 
-from nevow import compy
+import twisted.python.components as tpc
 
 from nevow.inevow import IGettable, IContainer, IData
 from nevow import util
@@ -41,7 +41,7 @@ class NoAccessor(NotImplementedError):
     pass
 
 
-class DirectiveAccessor(compy.Adapter):
+class DirectiveAccessor(tpc.Adapter):
     implements(IGettable)
 
     def get(self, context):
@@ -51,33 +51,29 @@ class DirectiveAccessor(compy.Adapter):
             raise NoAccessor, "%r does not implement IContainer, and there is no registered adapter." % data
         child = container.child(context, self.original.name)
         return child
-compy.backwardsCompatImplements(DirectiveAccessor)
 
 
-class SlotAccessor(compy.Adapter):
+class SlotAccessor(tpc.Adapter):
     implements(IGettable)
 
     def get(self, context):
         return context.locateSlotData(self.original.name)
-compy.backwardsCompatImplements(SlotAccessor)
 
 
-class FunctionAccessor(compy.Adapter):
+class FunctionAccessor(tpc.Adapter):
     implements(IGettable)
     def get(self, context):
         return self.original(context, context.locate(IData))
-compy.backwardsCompatImplements(FunctionAccessor)
 
 
-class DictionaryContainer(compy.Adapter):
+class DictionaryContainer(tpc.Adapter):
     implements(IContainer)
     
     def child(self, context, name):
         return self.original[name]
-compy.backwardsCompatImplements(DictionaryContainer)
 
 
-class ObjectContainer(compy.Adapter):
+class ObjectContainer(tpc.Adapter):
     """Retrieve object attributes in response to a data directive; providing
     easy access to your application objects' attributes.
 
@@ -114,7 +110,6 @@ class ObjectContainer(compy.Adapter):
         if name[:1] == '_':
             raise ValueError("ObjectContainer does not support attribute names starting with '_', got %r"%name)
         return getattr(self.original, name)
-compy.backwardsCompatImplements(ObjectContainer)
 
 
 def intOrNone(s):
@@ -124,12 +119,11 @@ def intOrNone(s):
         return None
 
 
-class ListContainer(compy.Adapter):
+class ListContainer(tpc.Adapter):
     implements(IContainer)
 
     def child(self, context, name):
         if ':' in name:
             return self.original[slice(*[intOrNone(x) for x in name.split(':')])]
         return self.original[int(name)]
-compy.backwardsCompatImplements(ListContainer)
 

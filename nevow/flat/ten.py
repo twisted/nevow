@@ -7,7 +7,8 @@ import types
 import warnings
 from zope.interface import declarations, interface
 
-from nevow import compy
+import twisted.python.components as tpc
+
 from nevow import inevow
 from nevow import tags
 from nevow import testutil
@@ -36,18 +37,14 @@ def registerFlattener(flattener, forType):
         forType = util._namedAnyWithBuiltinTranslation(forType)
 
     if not isinstance(forType, interface.InterfaceClass):
-        # fix up __implements__ if it's old style
-        compy.fixClassImplements(forType)
         forType = declarations.implementedBy(forType)
         
-    compy.globalRegistry.register([forType], ISerializable, 'nevow.flat', flattener)
+    tpc.globalRegistry.register([forType], ISerializable, 'nevow.flat', flattener)
 
 def getFlattener(original):
     """Get a flattener function with signature (ctx, original) for the object original.
     """
-    if hasattr(original, "__class__"):
-        compy.fixClassImplements(original.__class__)
-    return compy.globalRegistry.lookup1(declarations.providedBy(original), ISerializable, 'nevow.flat')
+    return tpc.globalRegistry.lookup1(declarations.providedBy(original), ISerializable, 'nevow.flat')
 
 def getSerializer(obj):
     warnings.warn('getSerializer is deprecated; It has been renamed getFlattener.', stacklevel=2)
@@ -143,7 +140,7 @@ def precompile(stan, ctx=None):
     from nevow.context import WovenContext
     newctx = WovenContext(precompile=True)
     if ctx is not None:
-        macroFactory = inevow.IMacroFactory(ctx, default=None)
+        macroFactory = inevow.IMacroFactory(ctx, None)
         if macroFactory is not None:
             newctx.remember(macroFactory, inevow.IMacroFactory)
     doc = []

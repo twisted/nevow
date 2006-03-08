@@ -6,9 +6,9 @@
 
 
 import random
-from zope.interface import implements
+from zope.interface import implements, Interface
+from twisted.python.components import registerAdapter, Adapter
 
-from nevow import compy
 from nevow import inevow
 from nevow import loaders
 from nevow import rend
@@ -35,11 +35,11 @@ class Bookmark:
 # These are nothing but marker interfaces to register a rendering adapt
 # for simplicity sake you can consider them to be named views.
 
-class ISummaryView(compy.Interface):
+class ISummaryView(Interface):
     """Render a summary of an object.
     """
 
-class IFullView(compy.Interface):
+class IFullView(Interface):
     """Full view of the object.
     """
 
@@ -48,7 +48,7 @@ class IFullView(compy.Interface):
 # Define the rendering adapters that do the real work of rendering an
 # object.
 
-class PersonSummaryView(compy.Adapter):
+class PersonSummaryView(Adapter):
     """Render a summary of a Person.
     """
     implements(inevow.IRenderer, ISummaryView)
@@ -59,7 +59,7 @@ class PersonSummaryView(compy.Adapter):
                 ]
             ]
 
-class PersonFullView(compy.Adapter):
+class PersonFullView(Adapter):
     """Render a full view of a Person.
     """
     implements(inevow.IRenderer, IFullView)
@@ -73,7 +73,7 @@ class PersonFullView(compy.Adapter):
                 ]
             ]
     
-class BookmarkSummaryView(compy.Adapter):
+class BookmarkSummaryView(Adapter):
     """Render a summary of a Person.
     """
     implements(inevow.IRenderer, ISummaryView)
@@ -82,7 +82,7 @@ class BookmarkSummaryView(compy.Adapter):
             T.a(href=self.original.url)[self.original.name]
             ]
     
-class BookmarkFullView(compy.Adapter):
+class BookmarkFullView(Adapter):
     """Render a full view of a Bookmark.
     """
     implements(inevow.IRenderer, IFullView)
@@ -101,10 +101,10 @@ class BookmarkFullView(compy.Adapter):
 # Register the rendering adapters. Note, these could easily be defined in
 # a text file and registered by name rather than class object.
 
-compy.registerAdapter(PersonSummaryView, Person, ISummaryView)
-compy.registerAdapter(PersonFullView, Person, IFullView)
-compy.registerAdapter(BookmarkSummaryView, Bookmark, ISummaryView)
-compy.registerAdapter(BookmarkFullView, Bookmark, IFullView)
+registerAdapter(PersonSummaryView, Person, ISummaryView)
+registerAdapter(PersonFullView, Person, IFullView)
+registerAdapter(BookmarkSummaryView, Bookmark, ISummaryView)
+registerAdapter(BookmarkFullView, Bookmark, IFullView)
 
 
 ############################################################################

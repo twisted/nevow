@@ -11,6 +11,7 @@ from urllib import unquote
 
 from zope.interface import implements, classImplements
 
+import twisted.python.components as tpc
 from twisted.web import server
 
 try:
@@ -21,7 +22,6 @@ except ImportError:
 from twisted.python import log
 from twisted.internet import defer
 
-from nevow import compy
 from nevow import context
 from nevow import inevow
 from nevow import url
@@ -43,7 +43,6 @@ class UninformativeExceptionHandler:
     def renderInlineException(self, context, reason):
         log.err(reason)
         return """<div style="border: 1px dashed red; color: red; clear: both">[[ERROR]]</div>"""
-compy.backwardsCompatImplements(UninformativeExceptionHandler)
 
 
 class DefaultExceptionHandler:
@@ -72,7 +71,6 @@ class DefaultExceptionHandler:
             formatted,
             stan.xml('</div></div>')
         ], context)
-compy.backwardsCompatImplements(DefaultExceptionHandler)
 
 
 errorMarker = object()
@@ -99,7 +97,7 @@ def defaultExceptionHandlerFactory(ctx):
     return DefaultExceptionHandler()
 
 
-class NevowRequest(compy.Componentized, server.Request):
+class NevowRequest(tpc.Componentized, server.Request):
     """A Request subclass which does additional
     processing if a form was POSTed. When a form is POSTed,
     we create a cgi.FieldStorage instance using the data posted,
@@ -116,7 +114,7 @@ class NevowRequest(compy.Componentized, server.Request):
 
     def __init__(self, *args, **kw):
         server.Request.__init__(self, *args, **kw)
-        compy.Componentized.__init__(self)
+        tpc.Componentized.__init__(self)
         
     def process(self):
         # extra request parsing
@@ -219,7 +217,6 @@ class NevowRequest(compy.Componentized, server.Request):
             return server.Request.rememberRootURL(self)
         else:
             self.appRootURL = url
-compy.backwardsCompatImplements(NevowRequest)
 
 
 def sessionFactory(ctx):
@@ -372,7 +369,6 @@ class OldResourceAdapter(object):
 
     def renderHTTP_notFound(self, ctx):
         return self.original.renderHTTP_notFound(ctx)
-compy.backwardsCompatImplements(OldResourceAdapter)
 
 
 from nevow import rend

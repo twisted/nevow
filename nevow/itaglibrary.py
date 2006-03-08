@@ -1,4 +1,4 @@
-from nevow import compy
+from zope.interface import Interface
 
-class ICalendarOptions(compy.Interface):
+class ICalendarOptions(Interface):
     pass

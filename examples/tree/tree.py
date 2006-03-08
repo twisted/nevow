@@ -1,6 +1,8 @@
 from zope.interface import implements
 
-from nevow import loaders, rend, inevow, compy, tags as T
+from twisted.python.components import registerAdapter
+
+from nevow import loaders, rend, inevow, tags as T
 from formless import annotate, webform
  
 class Tree(dict):
@@ -68,4 +70,4 @@ class TreeRenderer(rend.Page):
                T.input(type="submit", value="Delete")]
         return ret
  
-compy.registerAdapter(TreeRenderer, Tree, inevow.IResource)
+registerAdapter(TreeRenderer, Tree, inevow.IResource)

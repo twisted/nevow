@@ -38,7 +38,6 @@ from zope.interface import implements
 
 from nevow import static
 from nevow import inevow
-from nevow import compy
 from nevow.tags import *
 
 boxStyle = xml("""
@@ -188,5 +187,4 @@ class collapser(object):
         div(_class=self.collapsed)[
             self.body
         ])
-compy.backwardsCompatImplements(collapser)
 

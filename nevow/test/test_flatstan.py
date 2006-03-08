@@ -5,7 +5,7 @@ from __future__ import generators
 
 from twisted.internet import defer
 
-from zope.interface import implements
+from zope.interface import implements, Interface
 
 from nevow import stan
 from nevow import context
@@ -14,7 +14,6 @@ from nevow import entities
 from nevow import inevow
 from nevow import flat
 from nevow import rend
-from nevow import compy
 from nevow.testutil import FakeRequest, TestCase
 
 from twisted.trial import util
@@ -339,7 +338,7 @@ class TestComplexSerialization(Base):
         self.assertEquals(self.render(tag), "<html><span>Hi</span></html>")
 
     def test_nested_remember(self):
-        class IFoo(compy.Interface):
+        class IFoo(Interface):
             pass
         class Foo(str):
             implements(IFoo)
@@ -352,7 +351,7 @@ class TestComplexSerialization(Base):
         self.assertEquals(self.render(tag), "<html><span>Hi</span></html>")
         
     def test_deferredRememberInRenderer(self):
-        class IFoo(compy.Interface):
+        class IFoo(Interface):
             pass
         def rememberIt(ctx, data):
             ctx.remember("bar", IFoo)

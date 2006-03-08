@@ -1,6 +1,8 @@
 from time import time as now
 
-from nevow import rend, inevow, url, util, compy, loaders, tags as t
+import twisted.python.components as tpc
+
+from nevow import rend, inevow, url, util, loaders, tags as t
 from nevow.rend import _CARRYOVER
 from formless import iformless
 
@@ -58,7 +60,9 @@ class ManualFormMixin(rend.Page):
             refpath = url.URL.fromString(ref)
             magicCookie = str(now())
             refpath = refpath.replace('_nevow_carryover_', magicCookie)
-            _CARRYOVER[magicCookie] = C = compy.Componentized(aspects)
+            _CARRYOVER[magicCookie] = C = tpc.Componentized()
+            for k, v in aspects.iteritems():
+                C.setComponent(k, v)
             request.redirect(str(refpath))
             from nevow import static
             return static.Data('You posted a form to %s' % bindingName, 'text/plain'), ()

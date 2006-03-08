@@ -10,13 +10,13 @@ page.
 import itertools, types
 import warnings
 
-from zope.interface import implements
+from zope.interface import implements, Interface
 
 from twisted.internet import defer, error
 from twisted.internet.task import LoopingCall
 from twisted.python import log
 
-from nevow import tags, inevow, compy, context, static, flat, rend, url, util, stan
+from nevow import tags, inevow, context, static, flat, rend, url, util, stan
 
 # If you need to debug livepage itself or your livepage app, set this to true
 DEBUG = False
@@ -260,25 +260,25 @@ def anonymous(block):
     return _js([stan.raw("function() {\n"), block, stan.raw("\n}")])
 
 
-class IClientHandle(compy.Interface):
-    def hookupOutput(self, output, finisher=None):
+class IClientHandle(Interface):
+    def hookupOutput(output, finisher=None):
         """hook up an output conduit to this live evil instance.
         """
 
-    def send(self, script):
+    def send(script):
         """send a script through the output conduit to the browser.
         If no output conduit is yet hooked up, buffer the script
         until one is.
         """
 
-    def handleInput(self, identifier, *args):
+    def handleInput(identifier, *args):
         """route some input from the browser to the appropriate
         destination.
         """
 
 
-class IHandlerFactory(compy.Interface):
-    def locateHandler(self, ctx, name):
+class IHandlerFactory(Interface):
+    def locateHandler(ctx, name):
         """Locate a handler callable with the given name.
         """
 
@@ -469,9 +469,6 @@ class ClientHandle(object):
             2)
         self.send(string)
 
-compy.backwardsCompatImplements(ClientHandle)
-
-
 
 class DefaultClientHandleFactory(object):
     clientHandleClass = ClientHandle
@@ -644,8 +641,11 @@ _js("}")
 flat.registerFlattener(flattenAttemptDeferred, attempt)
 
 
-class IOutputEvent(compy.Interface): pass
-class IInputEvent(compy.Interface): pass
+class IOutputEvent(Interface):
+    pass
+
+class IInputEvent(Interface):
+    pass
 
 
 class ExceptionHandler(object):

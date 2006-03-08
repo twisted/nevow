@@ -1,7 +1,7 @@
 import errno
 from zope.interface import implements
 
-from nevow import inevow, flat, compy
+from nevow import inevow, flat
 
 
 def languagesFactory(ctx):
@@ -34,7 +34,6 @@ class I18NConfig(object):
                  ):
         self.domain = domain
         self.localeDir = localeDir
-compy.backwardsCompatImplements(I18NConfig)
         
 class PlaceHolder(object):
     def __init__(self, translator, *args, **kwargs):
@@ -74,7 +73,7 @@ def flattenL10n(placeHolder, ctx):
 
     try:
         languages = inevow.ILanguages(ctx)
-    except compy.CannotAdapt:
+    except TypeError:
         pass
     else:
         kw = dict(kw) # copy before we mutate it
@@ -82,7 +81,7 @@ def flattenL10n(placeHolder, ctx):
 
     try:
         cfg = inevow.II18NConfig(ctx)
-    except compy.CannotAdapt:
+    except TypeError:
         pass
     else:
         kw = dict(kw) # copy before we mutate it

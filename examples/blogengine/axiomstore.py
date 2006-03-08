@@ -24,7 +24,7 @@ class Post(item.Item):
     def setModified(self):
         self.modified = Time()
 
-class Blog(item.Item):
+class Blog(item.Item, item.InstallableMixin):
     implements(IBlog)
 
     typeName = "BlogengineBlog"
@@ -43,6 +43,10 @@ class Blog(item.Item):
                     category=u'Test',
                     content=u'I guess it worked.')
         self.addNewPost(post)
+
+    def installOn(self, other):
+        super(Blog, self).installOn(other)
+        other.powerUp(self, IBlog)
 
     def addNewPost(self, post):
         # Why even let posts manage their own ids?  Oh well.
@@ -68,6 +72,5 @@ class Blog(item.Item):
     
 def initialize(storename):
     s = store.Store(storename)
-    if s.findFirst(Blog) is None:
-        s.powerUp(Blog(store=s), IBlog)
+    s.findOrCreate(Blog).installOn(s)
     return s

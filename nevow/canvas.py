@@ -8,7 +8,7 @@ from zope.interface import implements
 from twisted.internet import defer
 from twisted.python import log
 
-from nevow import inevow, rend, loaders, static, url, tags, compy, util
+from nevow import inevow, rend, loaders, static, url, tags, util
 from nevow.flat import flatten
 from nevow.stan import Proto, Tag
 from itertools import count
@@ -368,7 +368,6 @@ class CanvasSocket(GroupBase):
 
     def handle_diagnostic(self, info):
         print "Trace", info
-compy.backwardsCompatImplements(CanvasSocket)
 
 canvasServerMessage = loaders.stan(tags.html["This server dispatches for nevow canvas events."])
 

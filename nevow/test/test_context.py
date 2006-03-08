@@ -5,15 +5,17 @@
 import itertools
 import time
 
+import zope.interface as zi
+from twisted.python.components import registerAdapter
+
 from nevow import context
 from nevow import tags
-from nevow import compy
 from nevow import inevow
 
 from nevow.testutil import TestCase
 
 
-class IStuff(compy.Interface): pass
+class IStuff(zi.Interface): pass
 
 
 class TestRememberLocate(TestCase):
@@ -59,7 +61,7 @@ class TestRememberLocate(TestCase):
     def test_negativeLocate(self):
         ctx = context.WovenContext()
         self.assertRaises(KeyError, ctx.locate, IFoo)
-        self.assertRaises(compy.CannotAdapt, IFoo, ctx)
+        self.assertRaises(TypeError, IFoo, ctx)
 
     def test_negativeSomething(self):
         factory = TestContext()
@@ -104,17 +106,17 @@ class TestContext(context.FactoryContext):
     """
 
 # IFoo interface/adapter that always adapts to True
-class IFoo(compy.Interface):
+class IFoo(zi.Interface):
     """A dummy interface.
     """
 
 dummyAdapter = lambda x: True
 
-compy.registerAdapter(dummyAdapter, TestContext, IFoo)
+registerAdapter(dummyAdapter, TestContext, IFoo)
 
 
 # IBar interface that adapts to an incrementing value
-class IBar(compy.Interface):
+class IBar(zi.Interface):
     """A dummy interface.
     """
 
@@ -122,5 +124,5 @@ nextBar = itertools.count()
 def barFactory(ctx):
     return nextBar.next()
 
-compy.registerAdapter(barFactory, TestContext, IBar)
+registerAdapter(barFactory, TestContext, IBar)
 

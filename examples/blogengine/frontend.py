@@ -1,11 +1,12 @@
 import time
 from time import time as now
-from zope.interface import implements
+from zope.interface import implements, Interface
 
 from twisted.web import xmlrpc
+from twisted.python.components import registerAdapter
 
 from nevow import rend, loaders, url, static
-from nevow import tags as t, inevow, compy
+from nevow import tags as t, inevow
 from formless import annotate, iformless, webform
 
 from axiomstore import Post
@@ -15,7 +16,8 @@ def pptime(tt):
     return tt.asHumanly()+" UTC"
 def atompptime(tt):
     return tt.asISO8601TimeAndDate()
-class ITimer(compy.Interface): pass
+class ITimer(Interface):
+    pass
 
 #####################################
 categories = ['Programming', 'Test', 'Sport', 'People', 'Python', 
@@ -237,5 +239,5 @@ class BlogRPC(xmlrpc.XMLRPC):
     
     xmlrpc_entries = transacted(xmlrpc_entries)
 
-compy.registerAdapter(Entry, Post, inevow.IResource)
+registerAdapter(Entry, Post, inevow.IResource)
 

@@ -63,7 +63,7 @@ def TagSerializer(original, context, contextIsMine=False):
         nestedcontext = WovenContext(precompile=context.precompile, isAttrib=context.isAttrib)
         
         # If necessary, remember the MacroFactory onto the new context chain.
-        macroFactory = IMacroFactory(context, default=None)
+        macroFactory = IMacroFactory(context, None)
         if macroFactory is not None:
             nestedcontext.remember(macroFactory, IMacroFactory)
 

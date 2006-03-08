@@ -2,8 +2,9 @@
 # See LICENSE for details.
 
 
-from nevow import compy, inevow
+from nevow import inevow
 from zope.interface import implements
+import twisted.python.components as tpc
 
 class FakeChannel:
     def __init__(self, site):
@@ -14,10 +15,10 @@ class FakeSite:
     pass
 
 
-class FakeSession(compy.Componentized):
+class FakeSession(tpc.Componentized):
     implements(inevow.ISession)
     def __init__(self, avatar):
-        compy.Componentized.__init__(self)
+        tpc.Componentized.__init__(self)
         self.avatar = avatar
         self.uid = 12345
     def getLoggedInRoot(self):
@@ -27,7 +28,7 @@ class FakeSession(compy.Componentized):
 fs = FakeSession(None)
 
 
-class FakeRequest(compy.Componentized):
+class FakeRequest(tpc.Componentized):
     implements(inevow.IRequest)
     args = {}
     failure = None
@@ -48,7 +49,7 @@ class FakeRequest(compy.Componentized):
         currentSegments:
             list of segments that have "already been located"
         """
-        compy.Componentized.__init__(self)
+        tpc.Componentized.__init__(self)
         self.uri = uri
         self.prepath = []
         postpath = uri.split('?')[0]

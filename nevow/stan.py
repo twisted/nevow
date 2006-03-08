@@ -24,7 +24,7 @@ prototypes for all of the XHTML element types.
 from __future__ import generators
 from zope.interface import implements
 
-from nevow import inevow, compy
+from nevow import inevow
 
 
 class Proto(str):
@@ -376,7 +376,6 @@ class Tag(object):
             while True:
                 yield self.clone()
         return PatternTag(forever())
-compy.backwardsCompatImplements(Tag)
 
 
 class UnsetClass:
