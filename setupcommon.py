@@ -17,6 +17,7 @@ package_data={
             'freeform-default.css'
             ],
         'nevow': [
+            'athena_private/*',
             'athena.js',
             'defer.js',
             'divmod.js',
@@ -47,8 +48,5 @@ package_data={
             'test_deferred.js',
             'test_object.js',
             'testsupport.js',
-            ],
-        'nevow.athena_private': [
-            'connection-status-down.png',
             ],
         }
