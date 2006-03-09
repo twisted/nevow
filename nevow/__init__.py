@@ -112,7 +112,7 @@ nevow.rend.statusFactory   nevow.context.RequestContext    nevow.inevow.IStatusM
 nevow.rend.defaultsFactory   nevow.context.RequestContext    formless.iformless.IFormDefaults
 nevow.rend.errorsFactory   nevow.context.RequestContext    formless.iformless.IFormErrors
 nevow.rend.originalFactory  nevow.context.RequestContext   nevow.inevow.IRequest
-nevow.appserver.defaultExceptionHandlerFactory   nevow.context.RequestContext    nevow.inevow.ICanHandleException
+nevow.appserver.defaultExceptionHandlerFactory   nevow.context.SiteContext    nevow.inevow.ICanHandleException
 
 nevow.rend.originalFactory  nevow.context.PageContext   nevow.inevow.IRenderer
 nevow.rend.originalFactory  nevow.context.PageContext   nevow.inevow.IRendererFactory
