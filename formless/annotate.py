@@ -14,7 +14,7 @@ from zope.interface import implements
 from zope.interface.interface import InterfaceClass, Attribute
 
 from nevow import util
-from nevow.compy import Interface, MetaInterface
+from twisted.python.components import MetaInterface
 from nevow import compy
 
 
