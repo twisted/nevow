@@ -4,6 +4,7 @@
 import os.path
 from distutils.command import install
 from distutils.core import setup
+import glob
 import sys
 import setupcommon
 
@@ -21,10 +22,12 @@ else:
 
 # Turn the package_data into a data_files for 2.3 compatability
 data_files = []
-for pkg, files in setupcommon.package_data.items():
+for pkg, patterns in setupcommon.package_data.items():
     pkgdir = os.path.join(*pkg.split('.'))
-    files = [os.path.join(pkgdir, file) for file in files]
-    data_files.append([site_packages+pkgdir, files])
+    for pattern in patterns:
+        globdir = os.path.dirname(pattern)
+        files = glob.glob(os.path.join(pkgdir, pattern))
+        data_files.append((os.path.join(site_packages,pkgdir,globdir),files))
 
 # We need to list the packages explicitly.
 packages = [
