@@ -72,11 +72,11 @@ Nevow.Athena.Test.TestRunner.methods(
         Nevow.Athena.Test.TestRunner.upcall(self, '__init__', node);
         self._successNode = self.nodeByAttribute('class', 'test-success-count');
         self._failureNode = self.nodeByAttribute('class', 'test-failure-count');
-        self._successCount = 0;
-        self._failureCount = 0;
     },
 
     function run(self) {
+        self._successCount = 0;
+        self._failureCount = 0;
         self._run(self);
     },
 
