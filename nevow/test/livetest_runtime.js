@@ -1,0 +1,34 @@
+
+// import Nevow.Athena.Test
+// import Divmod.Runtime
+
+Divmod.Runtime.Tests = {};
+
+Divmod.Runtime.Tests.AppendNodeContent = Nevow.Athena.Test.TestCase.subclass('AppendNodeContent');
+Divmod.Runtime.Tests.AppendNodeContent.methods(
+    function run(self) {
+        var html = '<div xmlns="http://www.w3.org/1999/xhtml">foo</div>';
+        Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
+        self.assertEquals(self.node.lastChild.tagName, 'div');
+        self.assertEquals(self.node.lastChild.textContent, 'foo');
+        self.node.removeChild(self.node.lastChild);
+    });
+
+Divmod.Runtime.Tests.SetNodeContent = Nevow.Athena.Test.TestCase.subclass('SetNodeContent');
+Divmod.Runtime.Tests.SetNodeContent.methods(
+    function run(self) {
+        var html = '<div xmlns="http://www.w3.org/1999/xhtml">foo</div>';
+        Divmod.Runtime.theRuntime.setNodeContent(self.node, html);
+        self.assertEquals(self.node.childNodes.length, 1);
+        self.assertEquals(self.node.firstChild.tagName, 'div');
+        self.assertEquals(self.node.firstChild.textContent, 'foo');
+    });
+
+Divmod.Runtime.Tests.AppendNodeContentScripts = Nevow.Athena.Test.TestCase.subclass('AppendNodeContentScripts');
+Divmod.Runtime.Tests.AppendNodeContentScripts.methods(
+    function run(self) {
+        Divmod.Runtime.Tests.AppendNodeContentScripts.scriptRan = false;
+        var html = '<div xmlns="http://www.w3.org/1999/xhtml"><script type="text/javascript">Divmod.Runtime.Tests.AppendNodeContentScripts.scriptRan = true;</script></div>';
+        Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
+        self.assertEquals(Divmod.Runtime.Tests.AppendNodeContentScripts.scriptRan, true);
+    });

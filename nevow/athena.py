@@ -173,6 +173,7 @@ class JSDependencies(object):
                 u'Divmod': util.resource_filename('nevow', 'divmod.js'),
                 u'Divmod.Defer': util.resource_filename('nevow', 'defer.js'),
                 u'Divmod.Runtime': util.resource_filename('nevow', 'runtime.js'),
+                u'Divmod.Runtime.Tests': util.resource_filename('nevow.test', 'livetest_runtime.js'),
                 u'Divmod.XML': util.resource_filename('nevow', 'xml.js'),
                 u'Nevow': util.resource_filename('nevow', 'nevow.js'),
                 u'Nevow.Athena': util.resource_filename('nevow', 'athena.js'),

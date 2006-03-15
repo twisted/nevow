@@ -170,17 +170,7 @@ Divmod.Runtime.Firefox.methods(
 
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
-        var scripts = [];
-
-        self.traverse(
-            doc.documentElement,
-            function(node) {
-                if (node.tagName == 'script') {
-                    scripts.push(node);
-                }
-                return Divmod.Runtime.Platform.DOM_DESCEND;
-            });
-
+        var scripts = doc.getElementsByTagName('script');
         var oldScript;
         var newScript;
         var newAttr;

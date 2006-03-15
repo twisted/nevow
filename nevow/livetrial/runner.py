@@ -7,33 +7,27 @@ staticData = filepath.FilePath(__file__).parent().child('static')
 
 class TestSuiteFragment(athena.LiveFragment):
     jsClass = u'Nevow.Athena.Test.TestSuite'
-    docFactory = loaders.stan(
-        tags.div(_class='test-suite', render=tags.directive('liveFragment'))[
-            tags.div(render=tags.directive('name')),
-            tags.invisible(render=tags.directive('tests'))])
+    docFactory = loaders.stan(tags.invisible(render=tags.directive('tests')))
 
     def __init__(self, suite):
         super(TestSuiteFragment, self).__init__()
         self.suite = suite
 
-    def render_name(self, ctx, data):
-        return ctx.tag[self.suite.name]
-
-    def render_tests(self, ctx, data):
-        for test in self.suite.tests:
+    def gatherTests(self, suite):
+        suiteTag = tags.div(_class='test-suite')[tags.div[suite.name]]
+        for test in suite.tests:
             if isinstance(test, testcase.TestSuite):
                 suite = test
-                while len(suite.tests) == 1 and isinstance(suite.tests[0], testcase.TestSuite):
-                    suite = suite.tests[0]
-                if len(suite.tests) > 0:
-                    f = TestSuiteFragment(suite)
-                else:
-                    continue
+                suiteTag[self.gatherTests(suite)]
             else:
-                f = test()
+                t = test()
+                t.name = '%s.%s' % (suite.name, test.__name__)
+                t.setFragmentParent(self)
+                suiteTag[t]
+        return suiteTag
 
-            f.setFragmentParent(self)
-            yield f
+    def render_tests(self, ctx, data):
+        return self.gatherTests(self.suite)
 
 DOCTYPE_XHTML = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'
 
