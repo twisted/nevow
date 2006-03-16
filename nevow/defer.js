@@ -154,3 +154,125 @@ Divmod.Defer.fail = function(err) {
     d.errback(err);
     return d;
 };
+
+
+Divmod.Defer.FirstError = Divmod.Class.subclass('Divmod.Defer.FirstError');
+Divmod.Defer.FirstError.methods(
+    function __init__(self, err, index) {
+        self.err = err;
+        self.index = index;
+    });
+
+/*
+ * I combine a group of deferreds into one callback.
+ *
+ * I track a list of L{Deferred}s for their callbacks, and make a single
+ * callback when they have all completed, a list of (success, result) tuples,
+ * 'success' being a boolean.
+ *
+ * Note that you can still use a L{Deferred} after putting it in a
+ * DeferredList.  For example, you can suppress 'Unhandled error in Deferred'
+ * messages by adding errbacks to the Deferreds *after* putting them in the
+ * DeferredList, as a DeferredList won't swallow the errors.  (Although a more
+ * convenient way to do this is simply to set the consumeErrors flag)
+ */
+Divmod.Defer.DeferredList = Divmod.Defer.Deferred.subclass('Divmod.Defer.DeferredList');
+Divmod.Defer.DeferredList.methods(
+    /* Initialize a DeferredList.
+     *
+     * @type deferredList: C{Array} of L{Divmod.Defer.Deferred}s
+     *
+     * @param deferredList: The list of deferreds to track.
+     *
+     * @param fireOnOneCallback: A flag indicating that only one callback needs
+     * to be fired for me to call my callback.
+     *
+     * @param fireOnOneErrback: A flag indicating that only one errback needs to
+     * be fired for me to call my errback.
+     *
+     * @param consumeErrors: A flag indicating that any errors raised in the
+     * original deferreds should be consumed by this DeferredList.  This is
+     * useful to prevent spurious warnings being logged.
+     */
+    function __init__(self,
+                      deferredList,
+                      /* optional */
+                      fireOnOneCallback /* = false */,
+                      fireOnOneErrback /* = false */,
+                      consumeErrors /* = false */) {
+        self.resultList = new Array(deferredList.length);
+        Divmod.Defer.DeferredList.upcall(self, '__init__');
+        if (deferredList.length == 0 && !fireOnOneErrback) {
+            self.callback(self.resultList);
+        }
+
+        if (fireOnOneCallback == undefined) {
+            fireOnOneCallback = false;
+        }
+
+        if (fireOnOneErrback == undefined) {
+            fireOnOneErrback = false;
+        }
+
+        if (consumeErrors == undefined) {
+            self.consumeErrors == false;
+        }
+
+        /* These flags need to be set *before* attaching callbacks to the
+         * deferreds, because the callbacks use these flags, and will run
+         * synchronously if any of the deferreds are already fired.
+         */
+        self.fireOnOneCallback = fireOnOneCallback;
+        self.fireOnOneErrback = fireOnOneErrback;
+        self.consumeErrors = consumeErrors;
+        self.finishedCount = 0;
+
+        for (var index = 0; index < deferredList.length; ++index) {
+            deferredList[index].addCallbacks(function(result, index) {
+                self._cbDeferred(result, true, index);
+            }, function(err, index) {
+                self._cbDeferred(err, false, index);
+            }, [index], [index]);
+        }
+    },
+
+    function _cbDeferred(self, result, success, index) {
+        self.resultList[index] = [success, result];
+
+        self.finishedCount += 1;
+        if (!self._called) {
+            if (success && self.fireOnOneCallback) {
+                self.callback([result, index]);
+            } else if (!success && self.fireOnOneErrback) {
+                self.errback(new Divmod.Defer.FirstError(result, index));
+            } else if (self.finishedCount == self.resultList.length) {
+                self.callback(self.resultList);
+            }
+        }
+
+        if (!success && self.consumeErrors) {
+            return null;
+        } else {
+            return result;
+        }
+    });
+
+
+/* Returns list with result of given Deferreds.
+ *
+ * This builds on C{DeferredList} but is useful since you don't need to parse
+ * the result for success/failure.
+ *
+ * @type deferredList: C{Array} of L{Divmod.Defer.Deferred}s
+ */
+Divmod.Defer.gatherResults = function gatherResults(deferredList) {
+    var d = new Divmod.Defer.DeferredList(deferredList, false, true, false);
+    d.addCallback(function(results) {
+        var undecorated = [];
+        for (var i = 0; i < results.length; ++i) {
+            undecorated.push(results[i][1]);
+        }
+        return undecorated;
+    });
+    return d;
+};

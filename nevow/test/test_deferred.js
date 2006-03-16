@@ -110,9 +110,91 @@ function deferredReturnedFromCallback() {
     assert(theResult == "final result", "theResult did not get final result: " + theResult);
 }
 
+function deferredList() {
+    var defr1 = new Divmod.Defer.Deferred();
+    var defr2 = new Divmod.Defer.Deferred();
+    var defr3 = new Divmod.Defer.Deferred();
+    var dl = new Divmod.Defer.DeferredList([defr1, defr2, defr3]);
+
+    var result;
+    function cb(resultList) {
+        result = resultList;
+    };
+
+    dl.addCallback(cb);
+    defr1.callback("1");
+    defr2.errback(new Error("2"));
+    defr3.callback("3");
+
+    assert(result.length == 3);
+    assert(result[0].length == 2);
+    assert(result[0][0]);
+    assert(result[0][1] == "1");
+    assert(result[1].length == 2);
+    assert(!result[1][0]);
+    assert(result[1][1] instanceof Divmod.Defer.Failure);
+    assert(result[1][1].error.message == "2");
+    assert(result[2].length == 2);
+    assert(result[2][0]);
+    assert(result[2][1] == "3");
+};
+
+function emptyDeferredList() {
+    var result = null;
+    var dl = new Divmod.Defer.DeferredList([]).addCallback(function(res) {
+        result = res;
+    });
+    assert(result instanceof Array);
+    assert(result.length == 0);
+};
+
+function fireOnOneCallback() {
+    var result = null;
+    var dl = new Divmod.Defer.DeferredList(
+        [new Divmod.Defer.Deferred(), Divmod.Defer.succeed("success")],
+        true, false, false);
+    dl.addCallback(function(res) {
+        result = res;
+    });
+    assert(result instanceof Array);
+    assert(result.length == 2);
+    assert(result[0] == "success");
+    assert(result[1] == 1);
+};
+
+function fireOnOneErrback() {
+    var result = null;
+    var dl = new Divmod.Defer.DeferredList(
+        [new Divmod.Defer.Deferred(), Divmod.Defer.fail(new Error("failure"))],
+        false, true, false);
+    dl.addErrback(function(err) {
+        result = err;
+    });
+    assert(result instanceof Divmod.Defer.Failure);
+    assert(result.error instanceof Divmod.Defer.FirstError);
+};
+
+function gatherResults() {
+    var result = null;
+    var dl = Divmod.Defer.gatherResults([Divmod.Defer.succeed("1"),
+                                         Divmod.Defer.succeed("2")]);
+    dl.addCallback(function(res) {
+        result = res;
+    });
+    assert(result instanceof Array);
+    assert(result.length == 2);
+    assert(result[0] == "1");
+    assert(result[1] == "2");
+};
+
 runTests([succeedDeferred,
           failDeferred,
           callThisDontCallThat,
           callbackResultPassedToNextCallback,
           addCallbacksAfterResult,
-          deferredReturnedFromCallback]);
+          deferredReturnedFromCallback,
+          deferredList,
+          emptyDeferredList,
+          fireOnOneCallback,
+          fireOnOneErrback,
+          gatherResults]);
