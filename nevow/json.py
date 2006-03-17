@@ -155,10 +155,35 @@ def parseValue(tokens):
     raise ParseError, "Unexpected %r" % tokens[0]
 
 
+_stringExpr = re.compile(
+    r'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' '\n'
+    r'|' '\n'
+    r'(?P<control>\\[fbntr\\"]) # Match escaped control characters' '\n',
+    re.VERBOSE)
+
+_controlMap = {
+    '\\f': '\f',
+    '\\b': '\b',
+    '\\n': '\n',
+    '\\t': '\t',
+    '\\r': '\r',
+    '\\"': '"',
+    '\\\\': '\\',
+    }
+
+def _stringSub(m):
+    u = m.group('unicode')
+    if u is not None:
+        return unichr(int(u, 16))
+    c = m.group('control')
+    return _controlMap[c]
+
+
 def parseString(tokens):
     if type(tokens[0]) is not StringToken:
         raise ParseError, "Unexpected %r" % tokens[0]
-    return tokens.pop(0)[1:-1].decode('unicode-escape'), tokens
+    s = _stringExpr.sub(_stringSub, tokens.pop(0)[1:-1].decode('utf-8'))
+    return s, tokens
 
 
 def parseIdentifier(tokens):

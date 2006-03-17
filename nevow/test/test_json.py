@@ -16,6 +16,8 @@ TEST_OBJECTS = [
     u'string with \\"escaped embedded\\" quotes',
     u"string with \\'escaped embedded\\' single-quotes",
     u"string with backslashes\\\\",
+    u"string with trailing accented vowels: \xe1\xe9\xed\xf3\xfa\xfd",
+    u"string with trailing control characters: \f\b\n\t\r",
     [],
     [0],
     [0, 1, 2],
@@ -51,3 +53,14 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
     def testScientificNotation(self):
         self.assertEquals(json.parse('1e10'), 10**10)
         self.assertEquals(json.parse('1e0'), 1)
+
+
+    def testHexEscapedCodepoints(self):
+        self.assertEquals(
+            json.parse('"\\xe1\\xe9\\xed\\xf3\\xfa\\xfd"'),
+            u"\xe1\xe9\xed\xf3\xfa\xfd")
+
+    def testEscapedControls(self):
+        self.assertEquals(
+            json.parse('"\\f\\b\\n\\t\\r"'),
+            u"\f\b\n\t\r")
