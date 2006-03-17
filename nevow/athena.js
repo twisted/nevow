@@ -346,6 +346,7 @@ Nevow.Athena._rf = (function() {
                 [],
                 [['Livepage-Id', Nevow.Athena.livepageId],
                  ['Content-Type', 'text/x-json+athena']]);
+        }
         return rf;
     };
 })();
