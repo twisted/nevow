@@ -295,7 +295,7 @@ Nevow.Athena.sendClose = function() {
     Nevow.Athena.sendMessage('close');
 };
 
-Nevow.Athena._walkDOM = function(parent, test, memo) {
+Nevow.Athena._walkDOM = function(parent, test, memo, onlyOne) {
     if (memo == undefined) {
         memo = [];
     }
@@ -311,7 +311,13 @@ Nevow.Athena._walkDOM = function(parent, test, memo) {
         if (test(child)) {
             memo.push(child);
         }
-        Nevow.Athena._walkDOM(child, test, memo);
+        if(onlyOne && memo.length) {
+            return memo[0];
+        }
+        Nevow.Athena._walkDOM(child, test, memo, onlyOne);
+    }
+    if(onlyOne) {
+        return null;
     }
     return memo;
 };
@@ -436,6 +442,23 @@ Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
     return Nevow.Athena._walkDOM(root, visitor);
 };
 
+Nevow.Athena.FirstNodeByAttribute = function(root, attrName, attrValue) {
+    /* duplicate this here rather than adding an "onlyOne" arg to
+       NodesByAttribute so adding an extra arg accidentally doesn't
+       change it's behaviour if called directly
+    */
+    var visitor = function(node) {
+        return (attrValue == MochiKit.DOM.getNodeAttribute(node, attrName));
+    }
+    var node = Nevow.Athena._walkDOM(root, visitor, undefined, true);
+    if(!node) {
+        throw new Error("Failed to discover node with " + attrName +
+                        " value " + attrValue + " beneath " + root +
+                        " (programmer error).");
+    }
+    return node;
+};
+
 /**
  * Given a Node, find the single child node (to any depth) with the
  * given attribute set to the given value.  If there are more than one
@@ -515,11 +538,11 @@ Nevow.Athena.Widget.methods(
             var events = self.node.getElementsByTagNameNS(Nevow.Athena.XMLNS_URI, 'handler');
             if (events.length == 0) {
                 // Maybe namespaces aren't being handled properly, let's check
-                var events = self.node.getElementsByTagName('athena:handler');
+                events = self.node.getElementsByTagName('athena:handler');
             }
         } else {
             // We haven't even heard of namespaces, so do without
-            var events = self.node.getElementsByTagName('athena:handler');
+            events = self.node.getElementsByTagName('athena:handler');
         }
 
         function makeHandler(evtHandler) {
@@ -564,6 +587,11 @@ Nevow.Athena.Widget.methods(
 
     function nodeByAttribute(self, attrName, attrValue) {
         return Nevow.Athena.NodeByAttribute(self.node, attrName, attrValue);
+    },
+
+
+    function firstNodeByAttribute(self, attrName, attrValue) {
+        return Nevow.Athena.FirstNodeByAttribute(self.node, attrName, attrValue);
     },
 
 
