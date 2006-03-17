@@ -208,3 +208,13 @@ Nevow.Athena.Tests.AthenaHandler.methods(
         self.handled = true;
         return false;
     });
+
+Nevow.Athena.Tests.FirstNodeByAttribute = Nevow.Athena.Test.TestCase.subclass('FirstNodeByAttribute');
+Nevow.Athena.Tests.FirstNodeByAttribute.methods(
+    function run(self) {
+        var html = '<div xmlns="http://www.w3.org/1999/xhtml" class="foo" />';
+        Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
+        var node = self.firstNodeByAttribute("class", "foo");
+        self.assertEquals(node.tagName.toLowerCase(), "div");
+        self.assertEquals(node.className, "foo");
+    });

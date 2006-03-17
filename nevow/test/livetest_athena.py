@@ -211,3 +211,7 @@ class AthenaHandler(testcase.TestCase):
         tags.button[
             '<athena:handler>',
             athena.handler(event='onclick', handler='handler')]])
+
+class FirstNodeByAttribute(testcase.TestCase):
+    jsClass = u'Nevow.Athena.Tests.FirstNodeByAttribute'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['FirstNodeByAttribute'])
