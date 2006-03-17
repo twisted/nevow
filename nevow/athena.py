@@ -484,6 +484,7 @@ class LivePage(rend.Page):
         self.transportRoot = transportRoot
         self.liveFragmentChildren = []
         self._includedModules = ['MochiKit', 'Divmod', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
+        self._disconnectNotifications = []
 
 
     def _shouldInclude(self, moduleName):
@@ -535,7 +536,6 @@ class LivePage(rend.Page):
         self._requestIDCounter = itertools.count().next
         self._transportQueue = defer.DeferredQueue(size=self.transportLimit)
         self._remoteCalls = {}
-        self._disconnectNotifications = []
 
         # Mapping of Object-ID to a Python object that will accept messages
         # from the client.
@@ -695,6 +695,15 @@ class LivePage(rend.Page):
         return d
 
     def notifyOnDisconnect(self):
+        """
+        Return a Deferred which will fire or errback when this LivePage is
+        no longer connected.
+
+        Note that if a LivePage never establishes a connection in the first
+        place, the Deferreds this returns will never fire.
+
+        @rtype: L{defer.Deferred}
+        """
         d = defer.Deferred()
         self._disconnectNotifications.append(d)
         return d
