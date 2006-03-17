@@ -215,6 +215,6 @@ Nevow.Athena.Tests.FirstNodeByAttribute.methods(
         var html = '<div xmlns="http://www.w3.org/1999/xhtml" class="foo" />';
         Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
         var node = self.firstNodeByAttribute("class", "foo");
-        self.assertEquals(node.tagName.toLowerCase(), "div");
         self.assertEquals(node.className, "foo");
+        self.assertEquals(node.tagName.toLowerCase(), "div");
     });
