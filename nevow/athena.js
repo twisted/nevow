@@ -461,27 +461,6 @@ Nevow.Athena.RemoteReference.methods(
         return self._call(methodName, [], kwargs);
     });
 
-Nevow.Athena._walkDOM = function(parent, test, memo) {
-    if (memo == undefined) {
-        memo = [];
-    }
-    /* alert(parent); */
-    if ((parent == undefined) ||
-        (parent.childNodes == undefined)) {
-        return null;
-    }
-    var child;
-    var len = parent.childNodes.length;
-    for (var i = 0; i < len; i++) {
-        child = parent.childNodes[i];
-        if (test(child)) {
-            memo.push(child);
-        }
-        Nevow.Athena._walkDOM(child, test, memo);
-    }
-    return memo;
-};
-
 /**
  * Given a Node, find all of its children (to any depth) with the
  * given attribute set to the given value.  Note: you probably don't
