@@ -3,10 +3,11 @@
 
 from zope.interface import implements
 
+from twisted.python import components
+
 from nevow import tags
 from nevow import inevow
 from nevow import context
-from nevow import compy
 from nevow import util
 
 import formless
@@ -87,7 +88,7 @@ class Complete(Base):
 
     def test_configureMethod(self):
         class IDumb(formless.TypedInterface):
-            def foo(self, bar=formless.String()):
+            def foo(bar=formless.String()):
                 return formless.String()
             foo = formless.autocallable(foo)
 
@@ -114,7 +115,7 @@ class BuildingBlocksTest(Base):
 
         ## Look up a renderer specific to the type of our binding, typedValue;
         renderer = iformless.ITypedRenderer(
-            binding.typedValue, None, persist=False)
+            binding.typedValue, None)
 
         ## But render the binding itself with this renderer
         ## The binding has the ".name" attribute we need
@@ -209,7 +210,7 @@ class TestDefaults(Base):
 
     def test_4_testBindingDefaults(self):
         class IBindingDefaults(formless.TypedInterface):
-            def aMethod(self, foo=formless.String(default="The foo")):
+            def aMethod(foo=formless.String(default="The foo")):
                 pass
             aMethod = formless.autocallable(aMethod)
 
@@ -225,9 +226,9 @@ class TestDefaults(Base):
 
     def test_5_testDynamicDefaults(self):
         class IDynamicDefaults(formless.TypedInterface):
-            def aMethod(self, foo=formless.String(default="NOTFOO")):
+            def aMethod(foo=formless.String(default="NOTFOO")):
                 pass
-            def bMethod(self, foo=formless.String(default="NOTBAR")):
+            def bMethod(foo=formless.String(default="NOTBAR")):
                 pass
             aMethod = formless.autocallable(aMethod)
             bMethod = formless.autocallable(bMethod)
@@ -250,7 +251,7 @@ class TestNonConfigurableSubclass(Base):
     def test_1_testSimple(self):
         class ISimpleTypedInterface(formless.TypedInterface):
             anInt = formless.Integer()
-            def aMethod(self, aString = formless.String()):
+            def aMethod(aString = formless.String()):
                 return None
             aMethod = formless.autocallable(aMethod)
 
@@ -268,7 +269,7 @@ class TestNonConfigurableSubclass(Base):
 class TestPostAForm(Base):
     def test_1_failAndSucceed(self):
         class IAPasswordMethod(formless.TypedInterface):
-            def password(self, pword = formless.Password(), integer=formless.Integer()):
+            def password(pword = formless.Password(), integer=formless.Integer()):
                 pass
             password = formless.autocallable(password)
 
@@ -316,11 +317,11 @@ class TestRenderPropertyGroup(Base):
                 one = formless.Integer()
                 two = formless.Integer()
 
-                def buckleMyShoe(self):
+                def buckleMyShoe():
                     pass
                 buckleMyShoe = formless.autocallable(buckleMyShoe)
 
-                def buriedAlive(self):
+                def buriedAlive():
                     pass
                 buriedAlive = formless.autocallable(buriedAlive)
 
@@ -368,7 +369,7 @@ class TestRenderMethod(Base):
     def testDefault(self):
 
         class IFoo(formless.TypedInterface):
-            def foo(self, abc=formless.String()):
+            def foo(abc=formless.String()):
                 pass
             foo = formless.autocallable(foo)
 
@@ -384,7 +385,7 @@ class TestRenderMethod(Base):
     def testActionLabel(self):
 
         class IFoo(formless.TypedInterface):
-            def foo(self, abc=formless.String()):
+            def foo(abc=formless.String()):
                 pass
             foo = formless.autocallable(foo, action='FooFooFoo')
 
@@ -399,7 +400,7 @@ class TestRenderMethod(Base):
     def testOneSigMultiCallables(self):
 
         class IFoo(formless.TypedInterface):
-            def sig(self, abc=formless.String()):
+            def sig(abc=formless.String()):
                 pass
             foo = formless.autocallable(sig)
             bar = formless.autocallable(sig, action='FooFooFOo')
@@ -429,7 +430,7 @@ class TestCustomTyped(Base):
         typedinst = MyTyped()
 
         class IMyInterface(formless.TypedInterface):
-            def theFunc(self, test=typedinst):
+            def theFunc(test=typedinst):
                 pass
             theFunc = formless.autocallable(theFunc)
 
@@ -500,7 +501,7 @@ class TestHandAndStatus(Base):
         """
         returnResult = object()
         class IMethod(formless.TypedInterface):
-            def foo(self): pass
+            def foo(): pass
             foo = formless.autocallable(foo)
 
         class Method(object):
@@ -524,7 +525,10 @@ class TestHandAndStatus(Base):
         def setupRequest(r):
             r.args['_nevow_carryover_'] = ['abc']
             from nevow import rend
-            rend._CARRYOVER['abc'] = compy.Componentized({inevow.IHand: returnResult, inevow.IStatusMessage: status})
+            c = components.Componentized()
+            c.setComponent(inevow.IHand, returnResult)
+            c.setComponent(inevow.IStatusMessage, status)
+            rend._CARRYOVER['abc'] = c
             return r
         ctx = self.setupContext(setupRequest=setupRequest)
 
@@ -570,7 +574,7 @@ class TestCharsetDetectionSupport(Base):
     def test_method(self):
 
         class ITest(formless.TypedInterface):
-            def foo(self, foo = formless.String()):
+            def foo(foo = formless.String()):
                 pass
             foo = formless.autocallable(foo)
 
@@ -611,12 +615,12 @@ class TestChoice(Base):
         self.called = []
 
         class IFormyThing(formless.TypedInterface):
-            def choiceyFunc(self, arg = formless.Choice(["one", "two"], required=True)):
+            def choiceyFunc(arg = formless.Choice(["one", "two"], required=True)):
                 pass
             choiceyFunc = formless.autocallable(choiceyFunc)
 
         class Impl(object):
-            __implements__ = (IFormyThing,)
+            implements(IFormyThing)
 
             def choiceyFunc(innerSelf, arg):
                 self.called.append(arg)
@@ -637,7 +641,7 @@ class mg(Base):
             """
             foo = formless.String()
 
-            def meth(self, foo = formless.String()):
+            def meth(foo = formless.String()):
                 pass
             meth = formless.autocallable(meth)
 

@@ -229,17 +229,17 @@ class Annotation(TestCase):
             pass
 
         class Test2(formless.TypedInterface):
-            def foo(self, foobar=formless.String()):
+            def foo(foobar=formless.String()):
                 """This is a description of foo"""
                 pass
             foo = formless.autocallable(foo)
 
-            def bar(self, barbaz=formless.Integer(label="The Baz")):
+            def bar(barbaz=formless.Integer(label="The Baz")):
                 ## this has no docstring, make sure it doesn't fail
                 return formless.String()
             bar = formless.autocallable(bar, someAttribute="Hello")
 
-            def baz(self, bazfoo=formless.Boolean(label="The Foo", description="The foo to baz.")):
+            def baz(bazfoo=formless.Boolean(label="The Foo", description="The foo to baz.")):
                 """The Label
 
                 The description"""
@@ -291,7 +291,7 @@ class Annotation(TestCase):
     def testTypedInterfaceMethods_actionLabel(self):
         """When no label was given, docstring is given preference compared to action."""
         class Test(formless.TypedInterface):
-            def foo(self, foobar=formless.String()):
+            def foo(foobar=formless.String()):
                 """
                 Label for foo
                 Description for foo
@@ -310,7 +310,7 @@ class Annotation(TestCase):
     def testTypedInterfaceMethods_explicitLabel(self):
         """When a label was given, it is given preference compared to docstring."""
         class Test(formless.TypedInterface):
-            def foo(self, foobar=formless.String()):
+            def foo(foobar=formless.String()):
                 """
                 Docstring label for foo
                 Description for foo
@@ -329,10 +329,34 @@ class Annotation(TestCase):
         self.assertEquals(bfoo.label, 'Explicit label for foo')
         self.assertEquals(bfoo.description, 'Description for foo')
 
+    def testTypedInterfaceMethods_deprecated(self):
+        class Test(formless.TypedInterface):
+            def noArgs(self):
+                pass
+            noArgs = formless.autocallable(noArgs)
+
+            def oneArg(self, someParam=formless.String()):
+                pass
+            oneArg = formless.autocallable(oneArg)
+
+        self.assertEquals(Test.__methods__, Test.__spec__)
+        m_noArgs, m_oneArg = Test.__methods__
+
+        self.assertEquals(len(m_noArgs.arguments), 0)
+        self.assertEquals(len(m_oneArg.arguments), 1)
+
+    def testTypedInterfaceMethods_nonAutocallable(self):
+        class Test(formless.TypedInterface):
+            def notAutocallable(arg1, arg2):
+                pass
+
+        self.assertEquals(Test.__methods__, Test.__spec__)
+        self.assertEquals(Test.__methods__, [])
+
 class IListWithActions(formless.TypedInterface):
-    def actionOne(self, theSubset = formless.List()):
+    def actionOne(theSubset = formless.List()):
         pass
-    def actionTwo(self, theSubset = formless.List()):
+    def actionTwo(theSubset = formless.List()):
         pass
 
     theListOfStuff = formless.List(actions=[actionOne, actionTwo])

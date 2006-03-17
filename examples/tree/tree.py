@@ -17,13 +17,13 @@ class Tree(dict):
         return True
  
 class ITreeEdit(annotate.TypedInterface):
-    def setDescription(self, description=annotate.String()):
+    def setDescription(description=annotate.String()):
         pass
     setDescription = annotate.autocallable(setDescription)
-    def deleteChild(self, name=annotate.String(required=True)):
+    def deleteChild(name=annotate.String(required=True)):
         pass
     deleteChild = annotate.autocallable(deleteChild, invisible=True)
-    def addChild(self, name=annotate.String(required=True),
+    def addChild(name=annotate.String(required=True),
                        description=annotate.String()):
         pass
     addChild = annotate.autocallable(addChild)

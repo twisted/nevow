@@ -14,11 +14,7 @@ from zope.interface import implements
 from zope.interface.interface import InterfaceClass, Attribute
 
 from nevow import util
-from twisted.python.components import MetaInterface
-from nevow import compy
 
-
-InterfaceClass = MetaInterface
 
 from formless import iformless
 
@@ -143,7 +139,6 @@ class Typed(Attribute):
 
     def coerce(self, val, configurable):
         raise NotImplementedError, "Implement in %s" % util.qual(self.__class__)
-compy.backwardsCompatImplements(Typed)
 
 
 #######################################
@@ -401,7 +396,6 @@ class List(Object):
 
     def getActionBindings(self):
         return self.actions
-compy.backwardsCompatImplements(List)
 
 class Dictionary(List):
     pass
@@ -416,7 +410,7 @@ class Request(Typed):
     request when called. Including a Request arg will not affect the
     appearance of the rendered form.
 
-    >>> def doSomething(self, request=formless.Request(), name=formless.String()):
+    >>> def doSomething(request=formless.Request(), name=formless.String()):
     ...     pass
     >>> doSomething = formless.autocallable(doSomething)
     """
@@ -428,7 +422,7 @@ class Context(Typed):
     context when called. Including a Context arg will not affect the
     appearance of the rendered form.
 
-    >>> def doSomething(self, context=formless.Context(), name=formless.String()):
+    >>> def doSomething(context=formless.Context(), name=formless.String()):
     ...     pass
     >>> doSomething = formless.autocallable(doSomething)
     """
@@ -473,7 +467,7 @@ def autocallable(method, action=None, visible=False, **kw):
     Use this like a method adapter around a method in a TypedInterface:
     
     >>> class IFoo(TypedInterface):
-    ...     def doSomething(self):
+    ...     def doSomething():
     ...         '''Do Something
     ...         
     ...         Do some action bla bla'''
@@ -550,7 +544,6 @@ class Binding(object):
         if hasattr(self.original, 'coerce'):
             return self.original.coerce(val)
         return val
-compy.backwardsCompatImplements(Binding)
 
 class Argument(Binding):
     pass
@@ -710,12 +703,12 @@ class MetaTypedInterface(InterfaceClass):
     ...     bar = String()
     ...     baz = Integer()
     ...     
-    ...     def frotz(self): pass
+    ...     def frotz(): pass
     ...     frotz = autocallable(frotz)
     ...     
     ...     xyzzy = Float()
     ...     
-    ...     def blam(self): pass
+    ...     def blam(): pass
     ...     blam = autocallable(blam)
 
     Once the metaclass __new__ is done, the Foo class instance will have three
@@ -744,20 +737,36 @@ class MetaTypedInterface(InterfaceClass):
             if isinstance(value, MetaTypedInterface):
                 ## A Nested TypedInterface indicates a GroupBinding
                 properties.append(GroupBinding(key, value, value.__id__))
+
+                ## zope.interface doesn't like these
+                del dct[key]
+                setattr(cls, key, value)
             elif callable(value):
-                try:
-                    result = value(_Marker)
-                except:
-                    ## Allow non-autocallable methods in the interface; ignore them
-                    continue
                 names, _, _, typeList = inspect.getargspec(value)
 
+                _testCallArgs = ()
+
                 if typeList is None:
-                    argumentTypes = []
-                else:
-                    argumentTypes = [
-                        Argument(n, argtype, argtype.id) for n, argtype in zip(names[1:], typeList)
-                    ]
+                    typeList = []
+
+                if len(names) == len(typeList) + 1:
+                    warnings.warn(
+                        "TypeInterface method declarations should not have a 'self' parameter",
+                        DeprecationWarning,
+                        stacklevel=2)
+                    del names[0]
+                    _testCallArgs = (_Marker,)
+
+                if len(names) != len(typeList):
+                    ## Allow non-autocallable methods in the interface; ignore them
+                    continue
+
+                argumentTypes = [
+                    Argument(n, argtype, argtype.id) for n, argtype in zip(names[-len(typeList):], typeList)
+                ]
+
+                result = value(*_testCallArgs)
+
                 label = None
                 description = None
                 if getattr(value, 'autocallable', None):
@@ -786,7 +795,7 @@ class MetaTypedInterface(InterfaceClass):
                 if defaultLabel is None:
                     # final fallback: use the function name as label
                     defaultLabel = nameToLabel(key)
-                    
+
                 if label is None:
                     label = defaultLabel
                 if description is None:
@@ -805,8 +814,6 @@ class MetaTypedInterface(InterfaceClass):
             else:
                 if not value.label:
                     value.label = nameToLabel(key)
-                if hasattr(value, "__class__"):
-                    compy.fixClassImplements(value.__class__)
                 if iformless.IActionableType.providedBy(value):
                     actionAttachers.append(value)
                 properties.append(

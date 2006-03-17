@@ -62,7 +62,6 @@ class Data:
         if request.method == "HEAD":
             return ''
         return self.data
-components.backwardsCompatImplements(Data)
 
 def staticHTML(someString):
     return Data(someString, 'text/html')
@@ -349,7 +348,6 @@ class File:
         f.processors = self.processors
         f.indexNames = self.indexNames[:]
         return f
-components.backwardsCompatImplements(File)
 
 
 class FileTransfer(pb.Viewable):
@@ -416,4 +414,3 @@ class ASISProcessor:
 
     def locateChild(self, ctx, segments):
         return appserver.NotFound
-components.backwardsCompatImplements(ASISProcessor)

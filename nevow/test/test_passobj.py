@@ -36,7 +36,7 @@ class Frob:
 
 
 class IObjectTest(formless.TypedInterface):
-    def someMethod(self, one=formless.Object(interface=IBar), two=formless.Integer(description="an integer please")):
+    def someMethod(one=formless.Object(interface=IBar), two=formless.Integer(description="an integer please")):
         """Some Method.
         
         This method takes an IBar instance.
@@ -44,7 +44,7 @@ class IObjectTest(formless.TypedInterface):
         return None
     someMethod = formless.autocallable(someMethod)
 
-    def frobber(self, frobber=formless.Object(interface=IFrob), frobee=formless.Object(IFrob)):
+    def frobber(frobber=formless.Object(interface=IFrob), frobee=formless.Object(IFrob)):
         """Frobber.
         
         Takes two frobs and raises one to the power of the other.
@@ -79,7 +79,7 @@ class CompoundChecker(formless.Compound):
 
 
 class IAnotherTest(formless.TypedInterface):
-    def aBarMethod(self, abar=formless.Object(interface=IBar)):
+    def aBarMethod(abar=formless.Object(interface=IBar)):
         """A Bar Method
         
         This method takes a bar, but there are no bar instances on this page.
@@ -88,7 +88,7 @@ class IAnotherTest(formless.TypedInterface):
         return str
     aBarMethod = formless.autocallable(aBarMethod)
 
-    def aFrobMethod(self, aFrob=formless.Object(interface=IFrob)):
+    def aFrobMethod(aFrob=formless.Object(interface=IFrob)):
         """A Frob Method
         
         This method takes a frob, but there are no frob instances on this page.
@@ -97,7 +97,7 @@ class IAnotherTest(formless.TypedInterface):
         return str
     aFrobMethod = formless.autocallable(aFrobMethod)
 
-    def whatIsMyClass(self, anObj=formless.Object()):
+    def whatIsMyClass(anObj=formless.Object()):
         """What is my class?
         
         Pass an object and get back the class in your hand.
@@ -105,7 +105,7 @@ class IAnotherTest(formless.TypedInterface):
         return formless.Object()
     whatIsMyClass = formless.autocallable(whatIsMyClass)
 
-    def setBreakpoint(self, breakpoint=formless.String()):
+    def setBreakpoint(breakpoint=formless.String()):
         """Set a breakpoint
 
         Set a breakpoint at the given filename and line number. String passed is equivalent
@@ -116,7 +116,7 @@ class IAnotherTest(formless.TypedInterface):
 
     breakpoints = formless.List()
 
-    def compoundTest(self, 
+    def compoundTest(
         aCompound = formless.Compound(
             [formless.String(label="firstname"), formless.String(label="lastname")],
             label="Full Name"),
@@ -131,7 +131,7 @@ class IAnotherTest(formless.TypedInterface):
         return str
     compoundTest = formless.autocallable(compoundTest)
 
-    def compoundChecker(self,
+    def compoundChecker(
         theAnswer = CompoundChecker(
             [formless.Integer(label="six"), formless.Integer(label="nine")],
             label="The Answer",

@@ -41,7 +41,7 @@ typeChoice = annotate.Choice(choices=allTypes, valueToKey=reflect.qual, keyToVal
 
 
 class IFormBuilder(annotate.TypedInterface):
-    def addElement(self, name=annotate.String(required=True), type=typeChoice):
+    def addElement(name=annotate.String(required=True), type=typeChoice):
         """Add Element
         
         Add an element to this form.

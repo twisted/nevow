@@ -259,13 +259,13 @@ class ConfigurableFactory:
         subclasses. Usage:
 
         >>> class IFoo(TypedInterface):
-        ...     def bar(self): pass
+        ...     def bar(): pass
         ...     bar = autocallable(bar)
         ...
         >>> class Foo(Page):
         ...     implements(IFoo)
         ...
-        ...     def bar(self):
+        ...     def bar():
         ...         print "bar called through the web!"
         ...
         ...     def render_forms(self, ctx, data):

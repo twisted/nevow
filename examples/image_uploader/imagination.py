@@ -21,8 +21,7 @@ def label(length=None):
    return newLabel
 
 class IInsert(annotate.TypedInterface):
-    def insert(self, 
-               ctx = annotate.Context(),
+    def insert(ctx = annotate.Context(),
                title = annotate.String(),
                author = annotate.String(),
                image = annotate.FileUpload(required=True,

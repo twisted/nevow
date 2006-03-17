@@ -8,13 +8,14 @@ from __future__ import generators
 
 import os.path
 import warnings
-from zope.interface import implements
+from zope.interface import implements, Interface
+
+from twisted.python import components
 
 from nevow import inevow
 from nevow.stan import slot
 from nevow.tags import *
 from nevow import util
-from nevow import compy
 from nevow.context import NodeNotFound
 
 from formless import iformless
@@ -37,7 +38,6 @@ except ImportError:
         def renderHTTP(self, ctx):
             inevow.IRequest(ctx).setHeader('Content-type', self.content_type)
             return open(self.path).read()
-    compy.backwardsCompatImplements(File)
 
 defaultCSS = File(util.resource_filename('formless', 'freeform-default.css'), 'text/css')
 
@@ -47,12 +47,11 @@ class DefaultRenderer(object):
     complexType = False
     def rend(self, context, data):
         return StringRenderer(data)
-compy.backwardsCompatImplements(DefaultRenderer)
 
 defaultBindingRenderer = DefaultRenderer()
 
 
-class BaseInputRenderer(compy.Adapter):
+class BaseInputRenderer(components.Adapter):
     implements(inevow.IRenderer, iformless.ITypedRenderer)
     complexType = False
     def rend(self, context, data):
@@ -84,7 +83,6 @@ class BaseInputRenderer(compy.Adapter):
 
     def input(self, context, slot, data, name, value):
         raise NotImplementedError, "Implement in subclass"
-compy.backwardsCompatImplements(BaseInputRenderer)
 
 class PasswordRenderer(BaseInputRenderer):
     def input(self, context, slot, data, name, value):
@@ -142,7 +140,7 @@ class FileUploadRenderer(BaseInputRenderer):
                           _class='freeform-input-file')]
 
 
-class ICurrentlySelectedValue(compy.Interface):
+class ICurrentlySelectedValue(Interface):
     """The currently-selected-value for the ITypedRenderer being rendered.
     """
 
@@ -195,25 +193,23 @@ class RadioRenderer(ChoiceRenderer):
                 lambda c, d: iformless.ITyped(c).stringify(d)]]]
 
 
-class ObjectRenderer(compy.Adapter):
+class ObjectRenderer(components.Adapter):
     implements(inevow.IRenderer, iformless.ITypedRenderer)
     complexType = True
     def rend(self, context, data):
         configurable = context.locate(iformless.IConfigurable)
         return getattr(configurable, data.name)
-compy.backwardsCompatImplements(ObjectRenderer)
 
-class NullRenderer(compy.Adapter):
+class NullRenderer(components.Adapter):
     """Use a NullRenderer as the ITypedRenderer adapter when nothing should
     be included in the output.
     """
     implements(inevow.IRenderer, iformless.ITypedRenderer)
     def rend(self, context, data):
         return ''
-compy.backwardsCompatImplements(NullRenderer)
 
 
-class GroupBindingRenderer(compy.Adapter):
+class GroupBindingRenderer(components.Adapter):
     implements(inevow.IRenderer)
 
     def rend(self, context, data):
@@ -248,10 +244,9 @@ class GroupBindingRenderer(compy.Adapter):
                     input(type='hidden', name='_charset_'),
                     generateBindings(),
                     input(type="submit")]]
-compy.backwardsCompatImplements(GroupBindingRenderer)
 
 
-class BaseBindingRenderer(compy.Adapter):
+class BaseBindingRenderer(components.Adapter):
     implements(inevow.IRenderer)
 
     isGrouped = False
@@ -286,7 +281,6 @@ class BaseBindingRenderer(compy.Adapter):
         context.fillSlots( 'form-action', calculatePostURL(context, data) )
         context.fillSlots( 'form-name', data.name )
         context.fillSlots( 'form-error', getError(context) )
-compy.backwardsCompatImplements(BaseBindingRenderer)
 
 
 class PropertyBindingRenderer(BaseBindingRenderer):
@@ -382,12 +376,11 @@ class MethodBindingRenderer(BaseBindingRenderer):
             yield pat
 
 
-class ButtonRenderer(compy.Adapter):
+class ButtonRenderer(components.Adapter):
     implements(inevow.IRenderer)
 
     def rend(self, context, data):
         return input(id=keyToXMLID(context.key), type='submit', value=data.label, name=data.name, class_="freeform-button")
-compy.backwardsCompatImplements(ButtonRenderer)
 
 
 freeformDefaultForm = div(_class="freeform-form").freeze()

@@ -107,7 +107,6 @@ FORM_LAYOUT = loaders.xmlstr(
 class ISomething(annotate.TypedInterface):
     
     def doSomething(
-        self,
         ctx = annotate.Context(),
         fee = annotate.String(required=True, description="Wee!"),
         fi = annotate.Integer(description="Tra-la-la"),

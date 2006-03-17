@@ -6,17 +6,16 @@ from time import time as now
 import itodo
 
 class ITodo(annotate.TypedInterface):
-    def insert(self,
-               ctx=annotate.Context(),
+    def insert(ctx=annotate.Context(),
                description=annotate.String(required=True,
                                            requiredFailMessage="Description Missing")
                ):
         pass
     insert = annotate.autocallable(insert, action="New Todo")
-    def delete(self, ctx=annotate.Context(), id=annotate.Integer()):
+    def delete(ctx=annotate.Context(), id=annotate.Integer()):
         pass
     delete = annotate.autocallable(delete, invisible=True)
-    def update(self, ctx=annotate.Context(), 
+    def update(ctx=annotate.Context(), 
                id=annotate.Integer(), 
                oldstate=annotate.Integer()):
         pass

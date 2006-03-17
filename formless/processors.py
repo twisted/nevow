@@ -4,9 +4,10 @@
 import warnings
 from zope.interface import implements
 
+from twisted.python import components
+
 from nevow.util import Deferred, DeferredList, getPOSTCharset
 
-from nevow import compy
 from nevow.tags import *
 from nevow import inevow
 from nevow.context import WovenContext
@@ -32,7 +33,7 @@ def exceptblock(f, handler, exception, *a, **kw):
         return result
 
     
-class ProcessGroupBinding(compy.Adapter):
+class ProcessGroupBinding(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
@@ -78,9 +79,8 @@ class ProcessGroupBinding(compy.Adapter):
                 #print "There were validation errors. The errors were: ", failures
                 raise formless.ValidateError(failures, 'Error:', results)
         return DeferredList(waiters).addBoth(_finish)
-compy.backwardsCompatImplements(ProcessGroupBinding)
 
-class ProcessMethodBinding(compy.Adapter):
+class ProcessMethodBinding(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data, autoConfigure = True):
@@ -117,9 +117,8 @@ class ProcessMethodBinding(compy.Adapter):
             return exceptblock(self.original.configure, _except, formless.InputError,
                                boundTo, results)
         return results
-compy.backwardsCompatImplements(ProcessMethodBinding)
 
-class ProcessPropertyBinding(compy.Adapter):
+class ProcessPropertyBinding(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data, autoConfigure = True):
@@ -143,9 +142,8 @@ class ProcessPropertyBinding(compy.Adapter):
                 result[binding.name] = data.get(binding.name, [''])
                 raise formless.ValidateError({binding.name: e.reason}, e.reason, result)
         return result
-compy.backwardsCompatImplements(ProcessPropertyBinding)
 
-class ProcessTyped(compy.Adapter):
+class ProcessTyped(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
@@ -170,9 +168,8 @@ class ProcessTyped(compy.Adapter):
         except TypeError, e:
             warnings.warn('Typed.coerce takes two values now, the value to coerce and the configurable in whose context the coerce is taking place. %s %s' % (typed.__class__, typed))
             return typed.coerce(val)
-compy.backwardsCompatImplements(ProcessTyped)
 
-class ProcessPassword(compy.Adapter):
+class ProcessPassword(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
@@ -204,25 +201,22 @@ class ProcessPassword(compy.Adapter):
         except TypeError:
             warnings.warn('Typed.coerce takes two values now, the value to coerce and the configurable in whose context the coerce is taking place. %s %s' % (typed.__class__, typed))
             return typed.coerce(data[0])
-compy.backwardsCompatImplements(ProcessPassword)
 
-class ProcessRequest(compy.Adapter):
+class ProcessRequest(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
         return context.locate(inevow.IRequest)
-compy.backwardsCompatImplements(ProcessRequest)
 
 
-class ProcessContext(compy.Adapter):
+class ProcessContext(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
         return context
-compy.backwardsCompatImplements(ProcessContext)
 
 
-class ProcessUpload(compy.Adapter):
+class ProcessUpload(components.Adapter):
     implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
@@ -269,7 +263,6 @@ class ProcessUpload(compy.Adapter):
                 return typed.null
             
         return field
-compy.backwardsCompatImplements(ProcessUpload)
 
 
 def process(typed, data, configurable=None, ctx=None):

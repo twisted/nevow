@@ -41,7 +41,6 @@ _colourisers = {
 
 class IAddPasting(annotate.TypedInterface):
     def addPasting(
-        self,
         request=annotate.Request(),
         author=annotate.String(strip=True),
         text=annotate.Text(strip=True, required=True)):
@@ -51,7 +50,6 @@ class IAddPasting(annotate.TypedInterface):
 
 class IEditPasting(annotate.TypedInterface):
     def editPasting(
-        self,
         request=annotate.Request(),
         postedBy=annotate.String(immutable=1),
         author=annotate.String(strip=True),

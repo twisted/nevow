@@ -4,10 +4,9 @@
 from zope.interface import implements, providedBy
 
 from formless.iformless import IConfigurable, IActionableType, IBinding
-from formless.annotate import Argument, ElementBinding, GroupBinding, Object, TypedInterface, MetaTypedInterface
+from formless.annotate import Argument, ElementBinding, GroupBinding, Object, TypedInterface
 
 from nevow import inevow
-from nevow import compy
 from nevow.context import WovenContext
 
 class Configurable(object):
@@ -34,8 +33,6 @@ class Configurable(object):
                 bindingDict[binding.name] = binding
                 if binding.name not in bindingNames:
                     bindingNames.append(binding.name)
-                if hasattr(binding.typedValue, "__class__"):
-                    compy.fixClassImplements(binding.typedValue.__class__)
                 if IActionableType.providedBy(binding.typedValue):
                     acts = binding.typedValue.actions
                     if acts is None:
@@ -125,7 +122,6 @@ class Configurable(object):
         return "An instance of %s" % self.__class__.__name__
 
     postLocation = None
-compy.backwardsCompatImplements(Configurable)
 
 class NotFoundConfigurable(Configurable):
     def getBinding(self, context, name):
@@ -166,8 +162,6 @@ class GroupConfigurable(TypedInterfaceConfigurable):
             bindingDict[binding.name] = binding
             if binding.name not in bindingNames:
                 bindingNames.append(binding.name)
-            if hasattr(binding.typedValue, "__class__"):
-                compy.fixClassImplements(binding.typedValue.__class__)
             if IActionableType.providedBy(binding.typedValue):
                 acts = binding.typedValue.actions
                 if acts is None:

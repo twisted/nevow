@@ -25,7 +25,6 @@ categories = ['Programming', 'Test', 'Sport', 'People', 'Python',
 
 class IInsert(annotate.TypedInterface):
     def insert(
-        self,
         ctx = annotate.Context(),
         title = annotate.String(strip=True, required=True, \
                                 requiredFailMessage="Title must be provided", tabindex='1'),

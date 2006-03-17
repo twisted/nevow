@@ -42,7 +42,7 @@ def doQuery(q, *args):
 
 
 class IAddItem(annotate.TypedInterface):
-    def addItem(self, newSubject=annotate.String()):
+    def addItem(newSubject=annotate.String()):
         pass
     addItem = annotate.autocallable(addItem)
 
@@ -90,7 +90,7 @@ class DBBrowser(rend.Page):
 
 
 class IItemWithSubject(annotate.TypedInterface):
-    def setSubject(self, newSubject=annotate.String(label="Change Subject")):
+    def setSubject(newSubject=annotate.String(label="Change Subject")):
         pass
     setSubject = annotate.autocallable(setSubject)
 
