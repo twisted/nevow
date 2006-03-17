@@ -247,28 +247,36 @@ Divmod.Runtime.InternetExplorer.methods(
     },
 
     function parseXHTMLString(self, s) {
-        var xmldoc = new ActiveXObject("Microsoft.XMLDOM");
+        var xmldoc = new ActiveXObject("MSXML.DOMDocument");
         xmldoc.async = false;
-        xmldoc.loadXML(s);
+
+        if(!xmldoc.loadXML(s)){
+            throw new Error('XML parsing error: ' + xmldoc.parseError.reason);
+        }
         return xmldoc;
     },
 
     function appendNodeContent(self, node, innerHTML) {
-        var body = document.getElementsByTagName('body')[0];
-        var newScript;
-        node.innerHTML += innerHTML;
-        self.traverse(
-            node,
-            function(node) {
-                if (node.tagName == 'SCRIPT') {
-                    newScript = document.createElement('SCRIPT');
-                    newScript.setAttribute('src', node.getAttribute('src'));
-                    newScript.text = node.text;
-                    node.parentNode.removeChild(node);
-                    body.appendChild(newScript);
-                }
-                return Divmod.Runtime.Platform.DOM_DESCEND;
-            });
+        var head = document.getElementsByTagName('head').item(0);
+        var doc = self.parseXHTMLString(innerHTML);
+        var scripts = doc.getElementsByTagName('script');
+
+        for(var i = 0;i < scripts.length;i++){
+            var oldScript = scripts[i].parentNode.removeChild(scripts[i]);
+            var src = oldScript.getAttribute('src');
+            var text = oldScript.text;
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            if(src != '' && src != null){
+                script.src = src;
+            }
+            else if(text != '' && text != null){
+                script.text = text;
+            }
+            head.appendChild(script);
+        }
+
+        node.innerHTML += doc.xml;
     },
 
     function makeHTTPRequest(self) {

@@ -9,8 +9,8 @@ Divmod.Runtime.Tests.AppendNodeContent.methods(
     function run(self) {
         var html = '<div xmlns="http://www.w3.org/1999/xhtml">foo</div>';
         Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
-        self.assertEquals(self.node.lastChild.tagName, 'div');
-        self.assertEquals(self.node.lastChild.textContent, 'foo');
+        self.assertEquals(self.node.lastChild.tagName.toLowerCase(), 'div');
+        self.assertEquals(self.node.lastChild.childNodes[0].nodeValue, 'foo');
         self.node.removeChild(self.node.lastChild);
     });
 
@@ -20,8 +20,8 @@ Divmod.Runtime.Tests.SetNodeContent.methods(
         var html = '<div xmlns="http://www.w3.org/1999/xhtml">foo</div>';
         Divmod.Runtime.theRuntime.setNodeContent(self.node, html);
         self.assertEquals(self.node.childNodes.length, 1);
-        self.assertEquals(self.node.firstChild.tagName, 'div');
-        self.assertEquals(self.node.firstChild.textContent, 'foo');
+        self.assertEquals(self.node.firstChild.tagName.toLowerCase(), 'div');
+        self.assertEquals(self.node.firstChild.childNodes[0].nodeValue, 'foo');
     });
 
 Divmod.Runtime.Tests.AppendNodeContentScripts = Nevow.Athena.Test.TestCase.subclass('AppendNodeContentScripts');
