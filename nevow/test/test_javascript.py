@@ -53,8 +53,11 @@ class JavaScriptTestSuite(unittest.TestCase):
 
         return d
 
+
     def testJSDeferred(self):
         return self.onetest('test_deferred.js')
+
+
     def testJSObject(self):
         return self.onetest('test_object.js')
 

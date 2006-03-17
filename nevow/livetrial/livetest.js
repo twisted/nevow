@@ -78,6 +78,7 @@ Nevow.Athena.Test.TestRunner.methods(
         self._successCount = 0;
         self._failureCount = 0;
         self._run(self);
+        return false;
     },
 
     function reportSuccess(self) {

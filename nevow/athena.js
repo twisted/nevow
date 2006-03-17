@@ -26,34 +26,223 @@ Nevow.Athena.baseURL = function() {
 };
 
 
-Nevow.Athena.constructActionURL = function(action) {
-    return (Nevow.Athena.baseURL()
-            + '?action='
-            + encodeURIComponent(action));
-};
+Nevow.Athena.ReliableMessageDelivery = Divmod.Class.subclass('Nevow.Athena.ReliableMessageDelivery');
+Nevow.Athena.ReliableMessageDelivery.methods(
+    function __init__(self,
+                      outputFactory,
+                      /* optional */
+                      connectionLost /* = null */,
+                      transportlessTimeout /* = 30 */,
+                      idleTimeout /* = 300 */,
+                      scheduler /* = setTimeout */) {
 
+        self.messages = [];
+        self.outputs = [];
+
+        self.ack = -1;
+        self.seq = -1;
+
+        self._paused = 0;
+
+        self.failureCount = 0;
+
+        self.outputFactory = outputFactory;
+        self.requests = [];
+
+        if (transportlessTimeout == undefined) {
+            transportlessTimeout = 30;
+        }
+        if (idleTimeout == undefined) {
+            idleTimeout = 300;
+        }
+        if (connectionLost == undefined) {
+            connectionLost = null;
+        }
+        if (scheduler == undefined) {
+            scheduler = setTimeout;
+        }
+        self.transportlessTimeout = transportlessTimeout * 1000;
+        self.idleTimeout = idleTimeout * 1000;
+        self.connectionLost = connectionLost;
+        self.scheduler = scheduler;
+    },
+
+    function start(self) {
+        self.running = true;
+        if (self.requests.length == 0) {
+            self.flushMessages();
+        }
+    },
+
+    function stop(self) {
+        self.running = false;
+        for (var i = 0; i < self.requests.length; ++i) {
+            self.requests[i].abort();
+        }
+        self.requests = null;
+    },
+
+    function acknowledgeMessage(self, ack) {
+        while (self.messages.length && self.messages[0][0] <= ack) {
+            self.messages.shift();
+        }
+    },
+
+    function messageReceived(self, message) {
+        self.pause();
+        if (message.length) {
+           if (self.ack + 1 >= message[0][0]) {
+               var ack = self.ack;
+               self.ack = message[message.length - 1][0];
+               for (var i = 0; i < message.length; ++i) {
+                   var msg = message[i];
+                   var seq = msg[0];
+                   var payload = msg[1];
+                   if (seq > ack) {
+                       try {
+                           Nevow.Athena._actionHandlers[payload[0]].apply(null, payload[1]);
+                       } catch (e) {
+                           Divmod.err(e, 'Action handler ' + payload[0] + ' for ' + seq + ' failed.');
+                       }
+                   }
+               }
+           } else {
+               Divmod.debug("transport", "Sequence gap!  " + Nevow.Athena.livepageId + " went from " + self.ack + " to " + message[0][0]);
+           }
+        }
+        self.unpause();
+    },
+
+    function pause(self) {
+        self._paused += 1;
+        var s = "";
+        for (var i = 0; i < self._paused; ++i) {
+            s += " *";
+        }
+        Divmod.debug("transport", s + "Pausing.");
+    },
+
+    function unpause(self) {
+        var s = "";
+        for (var i = 0; i < self._paused; ++i) {
+            s += " *";
+        }
+        Divmod.debug("transport", s + "Unpausing.");
+        self._paused -= 1;
+        if (self._paused == 0) {
+            Divmod.debug("transport", s + "And flushing");
+            self.flushMessages();
+        }
+    },
+
+    function addMessage(self, msg) {
+        ++self.seq;
+        self.messages.push([self.seq, msg]);
+        self.flushMessages();
+    },
+
+    function flushMessages(self) {
+        if (!self.running || self._paused) {
+            return;
+        }
+
+        var outgoingMessages = self.messages;
+
+        if (outgoingMessages.length == 0) {
+            if (self.requests.length != 0) {
+                return;
+            }
+        }
+
+        if (self.requests.length > 1) {
+            self.failureCount -= 1;
+            self.requests[0].abort();
+        }
+
+        var theRequest = self.outputFactory().send(self.ack, outgoingMessages);
+
+        self.requests.push(theRequest);
+        theRequest.deferred.addCallback(function(result) {
+            self.failureCount = 0;
+            self.acknowledgeMessage(result[0]);
+            self.messageReceived(result[1]);
+        });
+        theRequest.deferred.addErrback(function(err) {
+            self.failureCount += 1;
+        });
+        theRequest.deferred.addCallback(function(ign) {
+            for (var i = 0; i < self.requests.length; ++i) {
+                if (self.requests[i] === theRequest) {
+                    self.requests.splice(i, 1);
+                    break;
+                }
+            }
+            if (self.failureCount < 3) {
+                if (!theRequest.aborted) {
+                    self.flushMessages();
+                }
+            } else if (self.connectionLost != null) {
+                self.connectionLost();
+            }
+        });
+    });
+
+Nevow.Athena.AbortableHTTPRequest = Divmod.Class.subclass("Nevow.Athena.AbortableHTTPRequest");
+Nevow.Athena.AbortableHTTPRequest.methods(
+    function __init__(self,
+                      request,
+                      deferred) {
+        self.request = request;
+        self.deferred = deferred;
+        self.aborted = false;
+    },
+
+    function abort(self) {
+        self.aborted = true;
+        self.request.abort();
+    });
+
+Nevow.Athena.HTTPRequestOutput = Divmod.Class.subclass('Nevow.Athena.HTTPRequestOutput');
+Nevow.Athena.HTTPRequestOutput.methods(
+    function __init__(self,
+                      /* optional */
+                      baseURL /* = Nevow.Athena.baseURL() */,
+                      queryArgs /* = [] */,
+                      headers /* = [] */) {
+        if (baseURL == undefined) {
+            baseURL = Nevow.Athena.baseURL();
+        }
+        self.baseURL = baseURL;
+        self.queryArgs = queryArgs;
+        self.headers = headers;
+    },
+
+    function send(self, ack, message) {
+        var serialized = MochiKit.Base.serializeJSON([ack, message]);
+        var response = Divmod.Runtime.theRuntime.getPage(
+            self.baseURL,
+            self.queryArgs,
+            'POST',
+            self.headers,
+            serialized);
+        var requestWrapper = new Nevow.Athena.AbortableHTTPRequest(
+            response[0], response[1]);
+        requestWrapper.deferred.addCallback(function(result) {
+            if (result.status == 200) {
+                return eval('(' + result.response + ')');
+            }
+            throw new Error("Request failed: " + result.status);
+        });
+        return requestWrapper;
+    });
+
+
+Nevow.Athena.remoteCallCount = 0;
+Nevow.Athena.remoteCalls = {};
 
 Nevow.Athena.CONNECTED = 'connected';
 Nevow.Athena.DISCONNECTED = 'disconnected';
-
 Nevow.Athena.connectionState = Nevow.Athena.CONNECTED;
-Nevow.Athena.failureCount = 0;
-Nevow.Athena.remoteCallCount = 0;
-Nevow.Athena.remoteCalls = {};
-Nevow.Athena._transportCounter = 0;
-Nevow.Athena.outstandingTransports = {};
-
-
-Nevow.Athena._numTransports = function() {
-    /* XXX UGGG */
-    var num = 0;
-    var e = null;
-    for (e in Nevow.Athena.outstandingTransports) {
-        num += 1;
-    }
-    return num;
-};
-
 
 Nevow.Athena._connectionLost = function(reason) {
     if (Nevow.Athena.connectionState == Nevow.Athena.DISCONNECTED) {
@@ -67,16 +256,6 @@ Nevow.Athena._connectionLost = function(reason) {
     for (var k in calls) {
         Divmod.msg("Errbacking an existing call");
         calls[k].errback(new Error("Connection lost"));
-    }
-    /* IE doesn't close outstanding requests when a user navigates
-     * away from the page that spawned them.  Also, we may have lost
-     * the connection without navigating away from the page.  So,
-     * clean up any outstanding requests right here.
-     */
-    var cancelledTransports = Nevow.Athena.outstandingTransports;
-    Nevow.Athena.outstandingTransports = {};
-    for (var reqId in cancelledTransports) {
-        cancelledTransports[reqId].abort();
     }
 };
 
@@ -101,80 +280,6 @@ Nevow.Athena.notifyOnDisconnect = function(callback) {
      */
     Nevow.Athena.remoteCalls['notifyOnDisconnect-' + Nevow.Athena._notifyOnDisconnectCounter] = d;
     d.addBoth(callback);
-};
-
-
-Nevow.Athena.preparePostContent = function(args, kwargs) {
-    return MochiKit.Base.serializeJSON([args, kwargs]);
-};
-
-
-Nevow.Athena._updateTransportTracking = function(passthrough, reqId) {
-    Divmod.debug(
-        'transport',
-        ('request ' +
-         reqId +
-         ' completed - now ' +
-         Nevow.Athena._numTransports() +
-         ' transports, returning ' +
-         typeof passthrough + ' ' +
-         Divmod.vars(passthrough)));
-
-    if (!delete Nevow.Athena.outstandingTransports[reqId]) {
-        Divmod.debug("Crap failed to delete crap");
-    }
-
-    return passthrough;
-};
-
-
-Nevow.Athena.sendMessage = function(actionType, args, kwargs, requestId, responseId) {
-    if (Nevow.Athena.connectionState != Nevow.Athena.CONNECTED) {
-        return Divmod.Defer.fail(Error("Not Connected"));
-    }
-
-    if (!args) {
-        args = [];
-    }
-
-    if (!kwargs) {
-        kwargs = {};
-    }
-
-    var headers = [
-        ['Livepage-Id', Nevow.Athena.livepageId],
-        ['Content-Type', 'text/x-json+athena']];
-
-    if (requestId) {
-        headers.push(['Request-Id', requestId]);
-    } else if (responseId) {
-        headers.push(['Response-Id', responseId]);
-    }
-
-    var request = Divmod.Runtime.theRuntime.getPage(
-        Nevow.Athena.baseURL(),
-        [['action', actionType]],
-        'POST',
-        headers,
-        Nevow.Athena.preparePostContent(args, kwargs));
-
-    Nevow.Athena.outstandingTransports[++Nevow.Athena._transportCounter] = request[0];
-
-    request[1].addBoth(Nevow.Athena._updateTransportTracking, Nevow.Athena._transportCounter);
-    request[1].addCallback(Nevow.Athena._cbMessage);
-    request[1].addErrback(Nevow.Athena._ebMessage);
-
-    Divmod.debug(
-        'transport',
-        ('Issuing a request ' +
-         Nevow.Athena._transportCounter +
-         ' transport of type ' +
-         actionType +
-         '(now ' +
-         Nevow.Athena._numTransports() +
-         ' outstanding)'));
-
-    return request[1];
 };
 
 
@@ -205,12 +310,12 @@ Nevow.Athena._actionHandlers = {
 
         if (isDeferred) {
             result.addCallbacks(function(result) {
-                    Nevow.Athena.respondToRemote(requestId, [true, result]);
+                    Nevow.Athena._rdm.addMessage(['respond', [requestId, true, result]]);
                 }, function(err) {
-                    Nevow.Athena.respondToRemote(requestId, [false, err]);
+                    Nevow.Athena._rdm.addMessage(['respond', [requestId, false, err.error]]);
                 });
         } else {
-            Nevow.Athena.respondToRemote(requestId, [success, result]);
+            Nevow.Athena._rdm.addMessage(['respond', [requestId, success, result]]);
         }
     },
 
@@ -232,68 +337,18 @@ Nevow.Athena._actionHandlers = {
     }
 };
 
-
-Nevow.Athena._cbMessage = function(result) {
-    /* The response is a JSON-encoded 2-array of [action, arguments]
-     * where action is one of "noop", "call", "respond", or "close".
-     * The arguments are action-specific and passed on to the handler
-     * for the action.
-     */
-
-    if (result.status != 200) {
-        throw Error("Non-success response code: " + result.status);
-    }
-
-    Divmod.debug('request', 'Ready: ' + result.response);
-
-    var actionParts = eval('(' + result.response + ')');
-
-    Nevow.Athena.failureCount = 0;
-
-    var actionName = actionParts[0];
-    var actionArgs = actionParts[1];
-    var action = Nevow.Athena._actionHandlers[actionName];
-
-    Divmod.debug('transport', 'Received ' + actionName);
-
-    action.apply(null, actionArgs);
-
-    /* Client code has had a chance to run now, in response to
-     * receiving the result.  If it issued a new request, we've got an
-     * output channel already.  If it didn't, though, we might not
-     * have one.  In that case, issue a no-op to the server so it can
-     * send us things if it needs to. */
-    if (Nevow.Athena._numTransports() == 0) {
-        Nevow.Athena.sendMessage('noop');
-    }
-};
-
-
-Nevow.Athena._ebMessage = function(err) {
-    Divmod.err(err, 'request failed');
-
-    Nevow.Athena.failureCount++;
-
-    if (Nevow.Athena.failureCount >= 3) {
-        Nevow.Athena._connectionLost('There are too many failures!');
-        return;
-    }
-
-    if (Nevow.Athena._numTransports() == 0) {
-        Nevow.Athena.sendMessage('noop');
-    }
-};
-
-
-Nevow.Athena.respondToRemote = function(requestId, response) {
-    return Nevow.Athena.sendMessage('respond', [response], {}, null, requestId);
-};
-
-
-Nevow.Athena.sendClose = function() {
-    Divmod.debug('transport', 'Sending close for AthenaID ' + Nevow.Athena.livepageId);
-    Nevow.Athena.sendMessage('close');
-};
+Nevow.Athena._rf = (function() {
+    var rf;
+    return function() {
+        if (rf == undefined) {
+            rf = new Nevow.Athena.HTTPRequestOutput(
+                Nevow.Athena.baseURL(),
+                [],
+                [['Livepage-Id', Nevow.Athena.livepageId],
+                 ['Content-Type', 'text/x-json+athena']]);
+        return rf;
+    };
+})();
 
 Nevow.Athena._walkDOM = function(parent, test, memo, onlyOne) {
     if (memo == undefined) {
@@ -322,56 +377,15 @@ Nevow.Athena._walkDOM = function(parent, test, memo, onlyOne) {
     return memo;
 };
 
-Nevow.Athena._callRemote = function(methodName, args, kwargs) {
-    var resultDeferred = new Divmod.Defer.Deferred();
-    var requestId = 'c2s' + Nevow.Athena.remoteCallCount;
+Nevow.Athena._rdm = new Nevow.Athena.ReliableMessageDelivery(Nevow.Athena._rf, Nevow.Athena._connectionLost);
 
-    Nevow.Athena.remoteCallCount++;
-    Nevow.Athena.remoteCalls[requestId] = resultDeferred;
-
-    Nevow.Athena.sendMessage(
-        'call',
-        MochiKit.Base.extend([methodName], args),
-        kwargs,
-        requestId,
-        null);
-
-    return resultDeferred;
-};
-
-Nevow.Athena.getAttribute = function(node, namespaceURI, namespaceIdentifier, localName) {
-    if (node.hasAttributeNS) {
-        if (node.hasAttributeNS(namespaceURI, localName)) {
-            return node.getAttributeNS(namespaceURI, localName);
-        } else if (node.hasAttributeNS(namespaceIdentifier, localName)) {
-            return node.getAttributeNS(namespaceIdentifier, localName);
-        }
-    }
-    if (node.hasAttribute) {
-        var r = namespaceURI + ':' + localName;
-        if (node.hasAttribute(r)) {
-            return node.getAttribute(r);
-        }
-    }
-    if (node.getAttribute) {
-        var s = namespaceIdentifier + ':' + localName;
-        try {
-            return node.getAttribute(s);
-        } catch(err) {
-            // IE has a stupid bug where getAttribute throws an error ... on
-            // TABLE elements and perhaps other elememnt types!
-            // Resort to looking in the attributes.
-            var value = node.attributes[s];
-            if(value != null) {
-                return value.nodeValue;
-            }
-        }
-    }
-    return null;
+Nevow.Athena.getAttribute = function() {
+    /* Deprecated alias */
+    return Divmod.Runtime.theRuntime.getAttribute.apply(Divmod.Runtime.theRuntime, arguments);
 };
 
 Nevow.Athena.athenaIDFromNode = function(n) {
-    var athenaID = Nevow.Athena.getAttribute(n, Nevow.Athena.XMLNS_URI, 'athena', 'id');
+    var athenaID = Divmod.Runtime.theRuntime.getAttribute(n, Nevow.Athena.XMLNS_URI, 'athena', 'id');
     if (athenaID != null) {
         return parseInt(athenaID);
     } else {
@@ -380,7 +394,7 @@ Nevow.Athena.athenaIDFromNode = function(n) {
 };
 
 Nevow.Athena.athenaClassFromNode = function(n) {
-    var athenaClass = Nevow.Athena.getAttribute(
+    var athenaClass = Divmod.Runtime.theRuntime.getAttribute(
         n, Nevow.Athena.XMLNS_URI, 'athena', 'class');
     if (athenaClass != null) {
         var cls = Divmod.namedAny(athenaClass);
@@ -414,20 +428,58 @@ Nevow.Athena.RemoteReference.methods(
         self.objectID = objectID;
     },
 
-    function callRemote(self, methodName /*, ... */) {
+    function _call(self, methodName, args, kwargs) {
         if (self.objectID == undefined) {
             throw new Error("Cannot callRemote without an objectID");
         }
-        var args = [self.objectID];
+
+        if (Nevow.Athena.connectionState == Nevow.Athena.DISCONNECTED) {
+            return Divmod.Defer.fail(new Error("Connection lost"));
+        }
+
+        var resultDeferred = new Divmod.Defer.Deferred();
+        var requestId = 'c2s' + Nevow.Athena.remoteCallCount;
+
+        Nevow.Athena.remoteCallCount++;
+        Nevow.Athena.remoteCalls[requestId] = resultDeferred;
+
+        Nevow.Athena._rdm.addMessage(['call', [requestId, methodName, self.objectID, args, kwargs]]);
+
+        return resultDeferred;
+    },
+
+    function callRemote(self, methodName /*, ... */) {
+        var args = [];
         for (var idx = 2; idx < arguments.length; idx++) {
             args.push(arguments[idx]);
         }
-        return Nevow.Athena._callRemote(methodName, args, {});
+        return self._call(methodName, args, {});
     },
 
     function callRemoteKw(self, methodName, kwargs) {
-        return Nevow.Athena._callRemote(methodName, [self.objectID], kwargs);
+        return self._call(methodName, [], kwargs);
     });
+
+Nevow.Athena._walkDOM = function(parent, test, memo) {
+    if (memo == undefined) {
+        memo = [];
+    }
+    /* alert(parent); */
+    if ((parent == undefined) ||
+        (parent.childNodes == undefined)) {
+        return null;
+    }
+    var child;
+    var len = parent.childNodes.length;
+    for (var i = 0; i < len; i++) {
+        child = parent.childNodes[i];
+        if (test(child)) {
+            memo.push(child);
+        }
+        Nevow.Athena._walkDOM(child, test, memo);
+    }
+    return memo;
+};
 
 /**
  * Given a Node, find all of its children (to any depth) with the
@@ -491,15 +543,30 @@ var server = Nevow.Athena.server;
  * connected.
  */
 Nevow.Athena._finalize = function() {
-    Nevow.Athena.sendClose();
-    Nevow.Athena._connectionLost('page unloaded');
+    Nevow.Athena._rdm.addMessage(['close', []]);
+};
+
+Nevow.Athena._pageUnloaded = false;
+Nevow.Athena._unloaded = function() {
+    Nevow.Athena._pageUnloaded = true;
+    Nevow.Athena._finalize();
+};
+
+Nevow.Athena._checkEscape = function(event) {
+    if (event.keyCode == 27) {
+        Nevow.Athena._finalize();
+        return false;
+    }
 };
 
 /**
  *
  */
 Nevow.Athena._initialize = function() {
-    MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._finalize, true);
+    MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._unloaded, true);
+
+    MochiKit.DOM.addToCallStack(window, 'onkeypress', Nevow.Athena._checkEscape, false);
+    MochiKit.DOM.addToCallStack(window, 'onkeyup', Nevow.Athena._checkEscape, false);
 
     /**
      * Delay initialization for just a moment so that Safari stops whirling
@@ -507,7 +574,7 @@ Nevow.Athena._initialize = function() {
      */
     setTimeout(function() {
         Divmod.debug("transport", "starting up");
-        Nevow.Athena.sendMessage('noop');
+        Nevow.Athena._rdm.start();
         Divmod.debug("transport", "started up");
     }, 1);
 };
@@ -547,12 +614,19 @@ Nevow.Athena.Widget.methods(
 
         function makeHandler(evtHandler) {
             return function (e) {
+                Divmod.debug("widget", "Handling an event.");
+                var success = false;
+                var result = false;
+                Nevow.Athena._rdm.pause();
                 try {
-                    return self[evtHandler](this, e);
+                    result = self[evtHandler](this, e);
                 } catch (e) {
+                    success = false;
                     Divmod.err(e);
-                    return false;
                 }
+                Nevow.Athena._rdm.unpause();
+                Divmod.debug("widget", "Finished handling event.");
+                return result;
             };
         };
 
@@ -663,6 +737,18 @@ Nevow.Athena.consoleDoc = (
     '      padding: 0;' +
     '      border-bottom: 1px dashed #ccf;' +
     '      color: red;' +
+    '    }' +
+    '    .log-message-transport {' +
+    '      margin: 0 0 0 0;' +
+    '      padding: 0;' +
+    '      border-bottom: 1px dashed #ccf;' +
+    '      color: magenta;' +
+    '    }' +
+    '    .log-message-request {' +
+    '      margin: 0 0 0 0;' +
+    '      padding: 0;' +
+    '      border-bottom: 1px dashed #ccf;' +
+    '      color: blue;' +
     '    }' +
     '    .timestamp {' +
     '      display: block;' +
@@ -853,6 +939,7 @@ Nevow.Athena.Widget._defaultDisconnectionNotifier = function() {
     div.style.margin = '2em';
 
     Nevow.Athena.notifyOnDisconnect(function() {
+        if (!Nevow.Athena._pageUnloaded) {
             Divmod.msg("Appending connection status image to document.");
             document.body.appendChild(div);
 
@@ -865,7 +952,8 @@ Nevow.Athena.Widget._defaultDisconnectionNotifier = function() {
                 setTimeout(setInvisible, 1000);
             };
             setVisible();
-        });
+        }
+    });
 };
 
 Nevow.Athena.Widget._initialize = function() {

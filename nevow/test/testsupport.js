@@ -30,6 +30,11 @@ MochiKit = {};
 MochiKit.DOM = {};
 MochiKit.DOM.addLoadEvent = function () {};
 
+_testsupportDummyScheduler = [];
+function setTimeout(f, n) {
+    _testsupportDummyScheduler.push([n, f]);
+}
+
 /*
  * XXX TODO: actually parse //import lines, don't always import everything.
  */

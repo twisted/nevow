@@ -15,6 +15,37 @@ Divmod.Runtime.Platform.method(
     });
 
 Divmod.Runtime.Platform.methods(
+    function getAttribute(self, node, namespaceURI, namespaceIdentifier, localName) {
+        if (node.hasAttributeNS) {
+            if (node.hasAttributeNS(namespaceURI, localName)) {
+                return node.getAttributeNS(namespaceURI, localName);
+            } else if (node.hasAttributeNS(namespaceIdentifier, localName)) {
+                return node.getAttributeNS(namespaceIdentifier, localName);
+            }
+        }
+        if (node.hasAttribute) {
+            var r = namespaceURI + ':' + localName;
+            if (node.hasAttribute(r)) {
+                return node.getAttribute(r);
+            }
+        }
+        if (node.getAttribute) {
+            var s = namespaceIdentifier + ':' + localName;
+            try {
+                return node.getAttribute(s);
+            } catch(err) {
+                // IE has a stupid bug where getAttribute throws an error ... on
+                // TABLE elements and perhaps other elememnt types!
+                // Resort to looking in the attributes.
+                var value = node.attributes[s];
+                if(value != null) {
+                    return value.nodeValue;
+                }
+            }
+        }
+        return null;
+    },
+
     function makeHTTPRequest(self) {
         throw Error("makeHTTPRequest is unimplemented on " + self);
     },

@@ -13,6 +13,14 @@ else:
     from twisted.scripts import twistd
 
 class Options(twistd.ServerOptions):
+    def opt_port(self, value):
+        """Specify the TCP port to which to bind the test server (defaults to 8080).
+        """
+        try:
+            self['port'] = int(value)
+        except ValueError:
+            raise usage.UsageError("Invalid port: %r" % (value,))
+
     def parseArgs(self, *args):
         self['testmodules'] = args
 
@@ -20,6 +28,9 @@ class Options(twistd.ServerOptions):
         app.installReactor(self['reactor'])
         self['no_save'] = True
         self['nodaemon'] = True
+
+        if 'port' not in self:
+            self['port'] = 8080
 
         oldstdout = sys.stdout
         oldstderr = sys.stderr
@@ -40,7 +51,7 @@ class Options(twistd.ServerOptions):
     def _constructApplication(self):
         application = service.Application('Athena Livetest')
         site = appserver.NevowSite(runner.TestFrameworkRoot(self.suite))
-        internet.TCPServer(8080, site).setServiceParent(application)
+        internet.TCPServer(self['port'], site).setServiceParent(application)
         return application
 
     def _startApplication(self):

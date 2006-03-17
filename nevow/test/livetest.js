@@ -77,8 +77,8 @@ Nevow.Athena.Tests.ExceptionFromClient.methods(
         d.addCallbacks(
             function (result) {
             },
-            function (err) {
-                self.fail('Received unexpected exception: ' + err);
+            function (f) {
+                self.fail('Received unexpected exception: ' + f.error.message);
             });
         return d;
     },
@@ -98,14 +98,14 @@ Nevow.Athena.Tests.AsyncExceptionFromClient.methods(
                     self.fail('Received incorrect Javascript exception or no traceback.');
                 }
             },
-            function (err) {
-                self.fail('Received unexpected exception: ' + err);
+            function (f) {
+                self.fail('Received unexpected exception: ' + f.error.message);
             });
         return d;
     },
 
     function generateError(self) {
-        return MochiKit.Async.fail(Error('This is a deferred test exception'));
+        return Divmod.Defer.fail(Error('This is a deferred test exception'));
     });
 
 Nevow.Athena.Tests.ServerToClientArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientArgumentSerialization');
@@ -168,7 +168,7 @@ Nevow.Athena.Tests.ChildParentRelationshipTest.methods(
 
         result.addCallback(function(count) {
             Divmod.log('test', 'Discovered I have ' + count + ' children');
-            var d = new MochiKit.Async.Deferred();
+            var d = new Divmod.Defer.Deferred();
             d.addCallback(function() { self.node.style.border = 'thin solid green'; });
             var cb = deferredList(d, count);
             self.assertEquals(self.childWidgets.length, count);

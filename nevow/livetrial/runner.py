@@ -35,7 +35,8 @@ class TestRunner(TestSuiteFragment):
     jsClass = u'Nevow.Athena.Test.TestRunner'
     docFactory = loaders.stan(
         tags.div(_class='test-runner', render=tags.directive('liveFragment'))[
-            tags.form(action='#', onsubmit='Nevow.Athena.Test.TestRunner.get(this).run(); return false;')[
+            tags.form(action='#')[
+                athena.handler(event='onsubmit', handler='run'),
                 tags.input(type='submit', value='Run Tests')],
             tags.div['Tests passed: ', tags.span(_class='test-success-count')[0]],
             tags.div['Tests failed: ', tags.span(_class='test-failure-count')[0]],

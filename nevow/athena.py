@@ -321,8 +321,9 @@ def getJSFailure(exc, modules):
 class LivePageTransport(object):
     implements(inevow.IResource)
 
-    def __init__(self, livePage):
-        self.livePage = livePage
+    def __init__(self, messageDeliverer, useActiveChannels=True):
+        self.messageDeliverer = messageDeliverer
+        self.useActiveChannels = useActiveChannels
 
 
     def locateChild(self, ctx, segments):
@@ -331,82 +332,18 @@ class LivePageTransport(object):
 
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
-        try:
-            d = self.livePage.addTransport(req)
-        except defer.QueueOverflow:
-            log.msg("Fast transport-close path")
-            d = json.serialize((u'noop', ()))
+        neverEverCache(req)
+        if self.useActiveChannels:
+            activeChannel(req)
+
         requestContent = req.content.read()
+        messageData = json.parse(requestContent)
 
-        args, kwargs = json.parse(requestContent)
-        asciiKwargs = {}
-        for (k, v) in kwargs.iteritems():
-            asciiKwargs[k.encode('ascii')] = v
+        response = self.messageDeliverer.basketCaseReceived(ctx, messageData)
+        response.addCallback(json.serialize)
+        req.notifyFinish().addErrback(lambda err: self.messageDeliverer._unregisterDeferredAsOutputChannel(response))
+        return response
 
-        method = getattr(self, 'action_' + req.args['action'][0])
-        method(ctx, *args, **asciiKwargs)
-        return d
-
-
-    def _cbCall(self, result, requestId):
-        def cb((d, req)):
-            res = result
-            success = True
-            if isinstance(res, failure.Failure):
-                log.msg("Sending error to browser:")
-                log.err(res)
-                success = False
-                res = (unicode(result.type.__name__, 'ascii'), unicode(result.getErrorMessage(), 'ascii'))
-            message = json.serialize((u'respond', (unicode(requestId), success, res)))
-            d.callback(message)
-        self.livePage.getTransport().addCallback(cb)
-
-
-    def action_call(self, ctx, method, objectID, *args, **kw):
-        """
-        Handle a remote call initiated by the client.
-        """
-        func = self.livePage._localObjects[objectID].locateMethod(ctx, method)
-        requestId = inevow.IRequest(ctx).getHeader('Request-Id')
-        if requestId is not None:
-            result = defer.maybeDeferred(func, *args, **kw)
-            result.addBoth(self._cbCall, requestId)
-        else:
-            try:
-                func(*args, **kw)
-            except:
-                log.msg("Unhandled error in event handler:")
-                log.err()
-
-
-    def action_respond(self, ctx, response):
-        """
-        Handle the response from the client to a call initiated by the server.
-        """
-        responseId = inevow.IRequest(ctx).getHeader('Response-Id')
-        if responseId is None:
-            log.msg("No Response-Id given")
-            return
-
-        success, result = response
-        callDeferred = self.livePage._remoteCalls.pop(responseId)
-        if success:
-            callDeferred.callback(result)
-        else:
-            callDeferred.errback(getJSFailure(result, self.livePage.jsModules.mapping))
-
-
-    def action_noop(self, ctx):
-        """
-        Handle noop, used to initialise and ping the live transport.
-        """
-
-
-    def action_close(self, ctx):
-        """
-        The client is going away.  Clean up after them.
-        """
-        self.livePage._disconnected(error.ConnectionDone("Connection closed"))
 
 
 class LivePageFactory:
@@ -441,13 +378,160 @@ class LivePageFactory:
 _thePrivateAthenaResource = static.File(util.resource_filename('nevow', 'athena_private'))
 
 
+class ConnectFailed(Exception):
+    pass
+
+
+class ConnectionLost(Exception):
+    pass
+
+
+class ReliableMessageDelivery(object):
+    _paused = 0
+
+    outgoingAck = -1            # sequence number which has been acknowledged
+                                # by this end of the connection.
+    def __init__(self,
+                 livePage,
+                 connectTimeout=60, transportlessTimeout=30, idleTimeout=300,
+                 connectionLost=None,
+                 scheduler=None):
+        self.livePage = livePage
+        self.messages = []
+        self.outputs = []
+        self.connectTimeout = connectTimeout
+        self.transportlessTimeout = transportlessTimeout
+        self.idleTimeout = idleTimeout
+        if scheduler is None:
+            scheduler = reactor.callLater
+        self.scheduler = scheduler
+        self._transportlessTimeoutCall = self.scheduler(self.connectTimeout, self._connectTimedOut)
+        self.connectionLost = connectionLost
+
+
+    def _connectTimedOut(self):
+        self._transportlessTimeoutCall = None
+        self.connectionLost(failure.Failure(ConnectFailed("Timeout")))
+
+
+    def _transportlessTimedOut(self):
+        self._transportlessTimeoutCall = None
+        self.connectionLost(failure.Failure(ConnectionLost("Timeout")))
+
+
+    def _idleTimedOut(self):
+        output, timeout = self.outputs.pop(0)
+        if not self.outputs:
+            self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
+        output([self.outgoingAck, []])
+
+
+    def pause(self):
+        self._paused += 1
+
+
+    def unpause(self):
+        self._paused -= 1
+        if self._paused == 0:
+            if self.messages and self.outputs:
+                output, timeout = self.outputs.pop(0)
+                timeout.cancel()
+                if not self.outputs:
+                    self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
+                output([self.outgoingAck, self.messages])
+
+
+    def addMessage(self, seq, msg):
+        self.messages.append((seq, msg))
+        if not self._paused and self.outputs:
+            output, timeout = self.outputs.pop(0)
+            timeout.cancel()
+            if not self.outputs:
+                self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
+            output([self.outgoingAck, self.messages])
+
+
+    def addOutput(self, output):
+        if self._transportlessTimeoutCall is not None:
+            self._transportlessTimeoutCall.cancel()
+            self._transportlessTimeoutCall = None
+        if not self._paused and self.messages:
+            self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
+            output([self.outgoingAck, self.messages])
+        else:
+            self.outputs.append((output, self.scheduler(self.idleTimeout, self._idleTimedOut)))
+
+
+    def _unregisterDeferredAsOutputChannel(self, deferred):
+        for i in xrange(len(self.outputs)):
+            if self.outputs[i][0].im_self is deferred:
+                output, timeout = self.outputs.pop(i)
+                timeout.cancel()
+                break
+        else:
+            return
+        if not self.outputs:
+            self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
+
+
+    def _registerDeferredAsOutputChannel(self):
+        d = defer.Deferred()
+        self.addOutput(d.callback)
+        return d
+
+
+    def basketCaseReceived(self, ctx, basketCase):
+        """
+        This is called when some random JSON data is received from an HTTP
+        request.
+
+        A 'basket case' is currently a data structure of the form [ackNum, [[1,
+        message], [2, message], [3, message]]]
+
+        Its name is highly informal because unless you are maintaining this
+        exact code path, you should not encounter it.  If you do, something has
+        gone *badly* wrong.
+        """
+        ack, incomingMessages = basketCase
+
+        outgoingMessages = self.messages
+
+        # dequeue messages that our client certainly knows about.
+        while outgoingMessages and outgoingMessages[0][0] <= ack:
+            outgoingMessages.pop(0)
+
+        if incomingMessages:
+            if self.outgoingAck + 1 >= incomingMessages[0][0]:
+                lastSentAck = self.outgoingAck
+                self.outgoingAck = incomingMessages[-1][0]
+                self.pause()
+                try:
+                    for (seq, msg) in incomingMessages:
+                        if seq > lastSentAck:
+                            self.livePage.liveTransportMessageReceived(ctx, msg)
+                        else:
+                            log.msg("Athena transport duplicate message, discarding: %r %r" %
+                                    (self.livePage.clientID,
+                                     seq))
+                    d = self._registerDeferredAsOutputChannel()
+                finally:
+                    self.unpause()
+            else:
+                d = defer.succeed([self.outgoingAck, []])
+                log.msg(
+                    "Sequence gap! %r went from %d to %d" %
+                    (self.livePage.clientID,
+                     self.outgoingAck,
+                     incomingMessages[0][0]))
+        else:
+            d = self._registerDeferredAsOutputChannel()
+        return d
+
+
+
 class LivePage(rend.Page):
-    transportFactory = LivePageTransport
-    transportLimit = 2
     factory = LivePageFactory()
     _rendered = False
-    _noTransportsDisconnectCall = None
-    _transportCount = 0
     _didDisconnect = False
 
     useActiveChannels = True
@@ -534,7 +618,14 @@ class LivePage(rend.Page):
             self.jsModuleRoot = url.here.child(self.clientID).child('jsmodule')
 
         self._requestIDCounter = itertools.count().next
-        self._transportQueue = defer.DeferredQueue(size=self.transportLimit)
+        self._sequenceCounter = itertools.count().next
+
+        self._messageDeliverer = ReliableMessageDelivery(
+            self,
+            self.TRANSPORTLESS_DISCONNECT_TIMEOUT * 2,
+            self.TRANSPORTLESS_DISCONNECT_TIMEOUT,
+            self.TRANSPORT_IDLE_TIMEOUT,
+            self._disconnected)
         self._remoteCalls = {}
 
         # Mapping of Object-ID to a Python object that will accept messages
@@ -544,13 +635,7 @@ class LivePage(rend.Page):
         # Counter for assigning local object IDs
         self._localObjectIDCounter = itertools.count().next
 
-        # Do this later: list of RemoteReference weakrefs with decref callbacks
-        # self._remoteObjects = ???
-
         self.addLocalObject(self)
-
-        self._transportTimeouts = {}
-        self._noTransports()
 
 
     def renderHTTP(self, ctx):
@@ -564,55 +649,9 @@ class LivePage(rend.Page):
         return rend.Page.renderHTTP(self, ctx)
 
 
-    def _noTransports(self):
-        # Called when there are absolutely, positively no Requests
-        # outstanding to be used as transports for server-to-client
-        # events.  Set up a timeout to consider this client
-        # disconnected.  It's possible for this to be called even if
-        # there were already no transports, so check to make sure that
-        # we don't have a timeout already.
-        if self._noTransportsDisconnectCall is None:
-            self._noTransportsDisconnectCall = reactor.callLater(
-                self.TRANSPORTLESS_DISCONNECT_TIMEOUT, self._noTransportsDisconnect)
-
-
-    def _someTransports(self):
-        # Called when we find ourselves with a spare Request to be
-        # used as a transport for server-to-client events.  If there
-        # is a pending timeout, cancel it.  It's possible for this to
-        # be called even if there was already a spare Request
-        # (although highly unlikely), so it's okay if there is no
-        # timeout call active.
-        if self._noTransportsDisconnectCall is not None:
-            self._noTransportsDisconnectCall.cancel()
-            self._noTransportsDisconnectCall = None
-
-
-    def _newTransport(self):
-        # Called when a new Request becomes available but will
-        # immediately be used as a transport for a server-to-client
-        # event.  There will be an active timeout call in this case,
-        # since the only time a Request can be immediately consumed is
-        # when there were none available already.  Just push the
-        # timeout back a bit.  Perhaps this is an optimization, rather
-        # than a necessary step in the state machine.  I can't really
-        # tell.
-        assert self._noTransportsDisconnectCall is not None
-        self._noTransportsDisconnectCall.reset(self.TRANSPORTLESS_DISCONNECT_TIMEOUT)
-
-
-    def _noTransportsDisconnect(self):
-        self._noTransportsDisconnectCall = None
-        self._disconnected(error.TimeoutError("No transports created by client"))
-
-
     def _disconnected(self, reason):
         if not self._didDisconnect:
             self._didDisconnect = True
-
-            if self._noTransportsDisconnectCall is not None:
-                self._noTransportsDisconnectCall.cancel()
-                self._noTransportsDisconnectCall = None
 
             notifications = self._disconnectNotifications
             self._disconnectNotifications = None
@@ -625,74 +664,25 @@ class LivePage(rend.Page):
             self.factory.removeClient(self.clientID)
 
 
-    def _idleTransportDisconnect(self, req):
-        del self._transportTimeouts[req]
-        # This is lame.  Queue may be the wrong way to store requests. :/
-        def cbTransport((gotD, gotReq)):
-            assert req is gotReq
-            gotD.callback(json.serialize((u'noop', ())))
-        self.getTransport().addCallback(cbTransport)
-
-
-    def _activeTransportDisconnect(self, error, req):
-        # XXX I don't think this will ever be a KeyError... but what if someone
-        # wrote a response to the request, and halfway through the socket
-        # kerploded... we might get here in that case?
-        timeoutCall = self._transportTimeouts.pop(req, None)
-        if timeoutCall is not None:
-            timeoutCall.cancel()
-        self._disconnected(error)
-
-
-    def addTransport(self, req):
-        neverEverCache(req)
-        if self.useActiveChannels:
-            activeChannel(req)
-
-        req.notifyFinish().addErrback(self._activeTransportDisconnect, req)
-
-        self._transportCount += 1
-        if self._transportCount > 0:
-            self._someTransports()
-        else:
-            self._newTransport()
-
-        self._transportTimeouts[req] = reactor.callLater(
-            self.TRANSPORT_IDLE_TIMEOUT, self._idleTransportDisconnect, req)
-
-        d = defer.Deferred()
-        self._transportQueue.put((d, req))
-        return d
-
-
-    def getTransport(self):
-        self._transportCount -= 1
-        if self._transportCount <= 0:
-            self._noTransports()
-        def cbTransport((d, req)):
-            timeoutCall = self._transportTimeouts.pop(req, None)
-            if timeoutCall is not None:
-                timeoutCall.cancel()
-            return (d, req)
-        return self._transportQueue.get().addCallback(cbTransport)
-
-    def _cbCallRemote(self, (d, req), methodName, args):
-        requestID = u's2c%i' % (self._requestIDCounter(),)
-        d.callback(json.serialize((u'call', (methodName, requestID, args))))
-
-        resultD = defer.Deferred()
-        self._remoteCalls[requestID] = resultD
-        return resultD
-
     def addLocalObject(self, obj):
         objID = self._localObjectIDCounter()
         self._localObjects[objID] = obj
         return objID
 
+
     def callRemote(self, methodName, *args):
-        d = self.getTransport()
-        d.addCallback(self._cbCallRemote, unicode(methodName, 'ascii'), args)
-        return d
+        requestID = u's2c%i' % (self._requestIDCounter(),)
+        message = (u'call', (unicode(methodName, 'ascii'), requestID, args))
+        resultD = defer.Deferred()
+        self._remoteCalls[requestID] = resultD
+        self.addMessage(message)
+        return resultD
+
+
+    def addMessage(self, message):
+        seq = self._sequenceCounter()
+        self._messageDeliverer.addMessage(seq, message)
+
 
     def notifyOnDisconnect(self):
         """
@@ -708,8 +698,10 @@ class LivePage(rend.Page):
         self._disconnectNotifications.append(d)
         return d
 
+
     def getJSModuleURL(self, moduleName):
         return self.jsModuleRoot.child(moduleName)
+
 
     def render_liveglue(self, ctx, data):
         return ctx.tag[
@@ -725,19 +717,76 @@ class LivePage(rend.Page):
             """ % {'clientID': self.clientID, 'baseURL': flat.flatten(self.transportRoot, ctx)})]
         ]
 
-    def newTransport(self):
-        return self.transportFactory(self)
 
     def child_jsmodule(self, ctx):
         return JSModules(self.jsModules.mapping)
 
+
+    _transportResource = None
     def child_transport(self, ctx):
-        return self.newTransport()
+        if self._transportResource is None:
+            self._transportResource = LivePageTransport(
+                self._messageDeliverer,
+                self.useActiveChannels)
+        return self._transportResource
+
 
     def locateMethod(self, ctx, methodName):
         if methodName in self.iface:
             return getattr(self.rootObject, methodName)
         raise AttributeError(methodName)
+
+
+    def liveTransportMessageReceived(self, ctx, (action, args)):
+        """
+        A message was received from the reliable transport layer.  Process it by
+        dispatching it first to myself, then later to application code if
+        applicable.
+        """
+        method = getattr(self, 'action_' + action)
+        method(ctx, *args)
+
+
+    def action_call(self, ctx, requestId, method, objectID, args, kwargs):
+        """
+        Handle a remote call initiated by the client.
+        """
+        func = self._localObjects[objectID].locateMethod(ctx, method)
+        result = defer.maybeDeferred(func, *args, **kwargs)
+        def _cbCall(result):
+            success = True
+            if isinstance(result, failure.Failure):
+                log.msg("Sending error to browser:")
+                log.err(result)
+                success = False
+                result = (unicode(result.type.__name__, 'ascii'), unicode(result.getErrorMessage(), 'ascii'))
+            message = (u'respond', (unicode(requestId), success, result))
+            self.addMessage(message)
+        result.addBoth(_cbCall)
+
+
+    def action_respond(self, ctx, responseId, success, result):
+        """
+        Handle the response from the client to a call initiated by the server.
+        """
+        callDeferred = self._remoteCalls.pop(responseId)
+        if success:
+            callDeferred.callback(result)
+        else:
+            callDeferred.errback(getJSFailure(result, self.jsModules.mapping))
+
+
+    def action_noop(self, ctx):
+        """
+        Handle noop, used to initialise and ping the live transport.
+        """
+
+
+    def action_close(self, ctx):
+        """
+        The client is going away.  Clean up after them.
+        """
+        self._disconnected(error.ConnectionDone("Connection closed"))
 
 
 
