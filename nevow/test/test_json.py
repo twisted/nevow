@@ -10,14 +10,6 @@ TEST_OBJECTS = [
     None,
     True,
     False,
-    u'string',
-    u'string with "embedded" quotes',
-    u"string with 'embedded' single-quotes",
-    u'string with \\"escaped embedded\\" quotes',
-    u"string with \\'escaped embedded\\' single-quotes",
-    u"string with backslashes\\\\",
-    u"string with trailing accented vowels: \xe1\xe9\xed\xf3\xfa\xfd",
-    u"string with trailing control characters: \f\b\n\t\r",
     [],
     [0],
     [0, 1, 2],
@@ -34,6 +26,19 @@ TEST_OBJECTS = [
     {u'baz': [1, 2, 3]},
     {u'quux': {u'bar': u'foo'}}]
 
+TEST_STRINGLIKE_OBJECTS = [
+    u'',
+    u'string',
+    u'string with "embedded" quotes',
+    u"string with 'embedded' single-quotes",
+    u'string with \\"escaped embedded\\" quotes',
+    u"string with \\'escaped embedded\\' single-quotes",
+    u"string with backslashes\\\\",
+    u"string with trailing accented vowels: \xe1\xe9\xed\xf3\xfa\xfd",
+    u"string with trailing control characters: \f\b\n\t\r",
+    u'string with high codepoint characters: \u1111\u2222\u3333\u4444',
+    ]
+
 
 class JavascriptObjectNotationTestCase(unittest.TestCase):
 
@@ -49,6 +54,15 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
                 unstruct, struct,
                 "Failed to roundtrip %r: %r (through %r)" % (
                     struct, unstruct, bytes))
+
+    def testStringlikeRountrip(self):
+        for struct in TEST_STRINGLIKE_OBJECTS:
+            bytes = json.serialize(struct)
+            unstruct = json.parse(bytes)
+            failMsg = "Failed to roundtrip %r: %r (through %r)" % (
+                    struct, unstruct, bytes)
+            self.assertEquals(unstruct, struct, failMsg)
+            self.assert_(isinstance(unstruct, unicode), failMsg)
 
     def testScientificNotation(self):
         self.assertEquals(json.parse('1e10'), 10**10)
