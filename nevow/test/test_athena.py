@@ -147,8 +147,8 @@ class Transport(unittest.TestCase):
 
     clientID = 'FAKE ATHENA PAGE'
 
-    def liveTransportMessageReceived(self, outgoingMessage):
-        self.outgoingMessages.append(outgoingMessage)
+    def liveTransportMessageReceived(self, ctx, outgoingMessage):
+        self.outgoingMessages.append((ctx, outgoingMessage))
 
     def setUp(self):
         self.transport = []
@@ -425,3 +425,36 @@ class Transport(unittest.TestCase):
 
         self.rdm.unpause()
         self.assertEquals(self.transport, [[(0, self.theMessage)]])
+
+
+    def testStaleMessages(self):
+        """
+        Test that if an older basket case with fewer messages in it arrives
+        after a more recent, complete basket case is processed, that it is
+        properly disregarded.
+        """
+        self.rdm.basketCaseReceived(
+            None,
+            [-1, [[0, self.theMessage],
+                  [1, self.theMessage + "-1"],
+                  [2, self.theMessage + "-2"]]])
+        self.assertEquals(
+            self.outgoingMessages,
+            [(None, self.theMessage),
+             (None, self.theMessage + "-1"),
+             (None, self.theMessage + "-2")])
+        self.outgoingMessages = []
+
+        self.rdm.basketCaseReceived(
+            None,
+            [-1, [[1, self.theMessage + "-1"]]])
+        self.assertEquals(
+            self.outgoingMessages,
+            [])
+
+        self.rdm.basketCaseReceived(
+            None,
+            [-1, [[2, self.theMessage + "-2"]]])
+        self.assertEquals(
+            self.outgoingMessages,
+            [])

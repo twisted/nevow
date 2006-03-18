@@ -503,7 +503,7 @@ class ReliableMessageDelivery(object):
         if incomingMessages:
             if self.outgoingAck + 1 >= incomingMessages[0][0]:
                 lastSentAck = self.outgoingAck
-                self.outgoingAck = incomingMessages[-1][0]
+                self.outgoingAck = max(incomingMessages[-1][0], self.outgoingAck)
                 self.pause()
                 try:
                     for (seq, msg) in incomingMessages:
