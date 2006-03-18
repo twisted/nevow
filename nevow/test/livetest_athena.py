@@ -2,6 +2,7 @@ from twisted.internet import defer
 
 from nevow import loaders, tags, athena
 from nevow.livetrial import testcase
+from nevow.test import test_json
 
 class ClientToServerArgumentSerialization(testcase.TestCase):
     """
@@ -38,6 +39,23 @@ class ClientToServerResultSerialization(testcase.TestCase):
     allowedMethods = {'test': True}
     def test(self, i, f, s, l, d):
         return (i, f, s, l, d)
+
+class JSONRoundtrip(testcase.TestCase):
+    """
+    Test that all test cases from nevow.test.test_json roundtrip correctly
+    through the real client implementation, too.
+    """
+
+    jsClass = u'Nevow.Athena.Tests.JSONRoundtrip'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['JSONRoundtrip'])
+    allowedMethods = {'test': True}
+
+    def test(self):
+        cases = test_json.TEST_OBJECTS + test_json.TEST_STRINGLIKE_OBJECTS
+        def _verifyRoundtrip(_cases):
+            for v1, v2 in zip(cases, _cases):
+                self.assertEquals(v1, v2)
+        return self.callRemote('identity', cases).addCallback(_verifyRoundtrip)
 
 class ExceptionFromServer(testcase.TestCase):
     """

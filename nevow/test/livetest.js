@@ -50,6 +50,16 @@ Nevow.Athena.Tests.ExceptionFromServer.methods(
         return d;
     });
 
+Nevow.Athena.Tests.JSONRoundtrip = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.JSONRoundtrip');
+Nevow.Athena.Tests.JSONRoundtrip.methods(
+    function run(self) {
+        return self.callRemote('test');
+    },
+
+    function identity(self, value) {
+        return value;
+    });
+
 Nevow.Athena.Tests.AsyncExceptionFromServer = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AsyncExceptionFromServer');
 Nevow.Athena.Tests.AsyncExceptionFromServer.methods(
     function run(self) {
