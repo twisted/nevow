@@ -458,3 +458,20 @@ class Transport(unittest.TestCase):
         self.assertEquals(
             self.outgoingMessages,
             [])
+
+
+    def testClosing(self):
+        """
+        Test that closing a reliable message deliverer causes all of outs
+        remaining outputs to be used up with a close message and that any
+        future outputs added to it are immediately used in a similar
+        manner.
+        """
+        self.rdm.addOutput(mappend(self.transport))
+        self.rdm.addOutput(mappend(self.transport))
+        self.rdm.close()
+        self.assertEquals(self.transport, [[(0, athena.CLOSE)], [(1, athena.CLOSE)]])
+
+        self.transport = []
+        self.rdm.addOutput(mappend(self.transport))
+        self.assertEquals(self.transport, [[(0, athena.CLOSE), (1, athena.CLOSE), (2, athena.CLOSE)]])
