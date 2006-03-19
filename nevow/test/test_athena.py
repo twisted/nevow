@@ -475,3 +475,4 @@ class Transport(unittest.TestCase):
         self.transport = []
         self.rdm.addOutput(mappend(self.transport))
         self.assertEquals(self.transport, [[(0, athena.CLOSE), (1, athena.CLOSE), (2, athena.CLOSE)]])
+    testClosing.skip = "This is not yet implemented."
