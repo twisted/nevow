@@ -18,35 +18,19 @@ package_data={
             ],
         'nevow': [
             'athena_private/*',
-            'athena.js',
-            'defer.js',
-            'divmod.js',
             'Canvas.swf',
-            'liveglue.js',
-            'livetest.css',
-            'livetest.js',
-            'livetest-postscripts.js',
-            'MochiKit.js',
-            'MochiKitLogConsole.js',
-            'nevow.js',
-            'runtime.js',
-            'xml.js',
+            '*.css',
+            '*.js',
             ],
         'nevow.taglibrary': [
-            'tabbedPane.js',
-            'tabbedPane.css',
-            'progressBar.js',
-            'progressBar.css',
-            'taglibrary.js',
+            '*.css',
+            '*.js'
             ],
         'nevow.livetrial': [
-            'livetest.css',
-            'livetest.js',
+            '*.css',
+            '*.js'
             ],
         'nevow.test': [
-            'livetest.js',
-            'test_deferred.js',
-            'test_object.js',
-            'testsupport.js',
+            '*.js'
             ],
         }
