@@ -51,7 +51,7 @@ class StringTokenizer(object):
 
     def group(self, num):
         return self.matched
-        
+
 string = StringTokenizer()
 identifier = re.compile(r'[A-Za-z_][A-Za-z_0-9]*')
 colon = re.compile(r':')
@@ -225,19 +225,31 @@ def parse(s):
 class CycleError(Exception):
     pass
 
-def unicodeEscapePlusBackslashFix(obj):
-    # Required for Python 2.4 and earlier.
-    return obj.replace('\\', '\\\\').replace('"', '\\"').encode('unicode-escape')
+_lowChars = [r'\x%02x' % (n,) for n in range(256)]
+_passthru = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&()*+,-./:;<=>?@[]^_`{|}~ '
+for c in _passthru:
+    _lowChars[ord(c)] = c
+_lowChars[ord('\0')] = '\\0'
+_lowChars[ord('\b')] = '\\b'
+_lowChars[ord('\t')] = '\\t'
+_lowChars[ord('\n')] = '\\n'
+_lowChars[ord('\v')] = '\\v'
+_lowChars[ord('\f')] = '\\f'
+_lowChars[ord('\r')] = '\\r'
+_lowChars[ord('\\')] = '\\\\'
+_lowChars[ord('"')] = '\\"'
 
-def unicodeEscapeWithoutBackslashFix(obj):
-    # Required for Python 2.4.2+ on dapper (screw you guys) and Python 2.5.
-    return obj.encode('unicode-escape').replace('"', '\\"')
-
-if u'\\'.encode('unicode-escape') == '\\\\':
-    unicodeEscape = unicodeEscapeWithoutBackslashFix
-else:
-    unicodeEscape = unicodeEscapePlusBackslashFix
-
+def stringEncode(s):
+    out = []
+    for c in s:
+        o = ord(c)
+        if o <= 0xff:
+            out.append(_lowChars[o])
+        elif o <= 0xffff:
+            out.append(r'\u%04x' % (o,))
+        else:
+            raise ValueError('Character ordinals greater than 0xffff are not supported: %r' % (c,))
+    return ''.join(out)
 
 def _serialize(obj, w, seen):
     if isinstance(obj, types.BooleanType):
@@ -249,7 +261,7 @@ def _serialize(obj, w, seen):
         w(str(obj))
     elif isinstance(obj, unicode):
         w('"')
-        w(unicodeEscape(obj))
+        w(stringEncode(obj))
         w('"')
     elif isinstance(obj, types.NoneType):
         w('null')
