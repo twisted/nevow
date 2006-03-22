@@ -182,7 +182,9 @@ Nevow.Athena.ReliableMessageDelivery.methods(
                     self.flushMessages();
                 }
             } else if (self.connectionLost != null) {
-                self.connectionLost();
+                var connLost = self.connectionLost;
+                self.stop();
+                connLost();
             }
         });
     });
@@ -333,6 +335,7 @@ Nevow.Athena._actionHandlers = {
     },
 
     close: function() {
+        Nevow.Athena._rdm.stop();
         Nevow.Athena._connectionLost('Connection closed by remote host');
     }
 };

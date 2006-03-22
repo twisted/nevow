@@ -179,9 +179,9 @@ class Transport(unittest.TestCase):
         message immediately does so, consuming the output channel.
         """
         self.rdm.addOutput(mappend(self.transport))
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.assertEquals(self.transport, [[(0, self.theMessage)]])
-        self.rdm.addMessage(1, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.assertEquals(self.transport, [[(0, self.theMessage)]])
 
 
@@ -190,7 +190,7 @@ class Transport(unittest.TestCase):
         Test that if there is no output channel when a message is sent, it will
         be sent once an output channel becomes available.
         """
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.rdm.addOutput(mappend(self.transport))
         self.assertEquals(self.transport, [[(0, self.theMessage)]])
 
@@ -200,8 +200,8 @@ class Transport(unittest.TestCase):
         Test that if there are several messages queued they are all sent at
         once when an output channel becomes available.
         """
-        self.rdm.addMessage(0, self.theMessage)
-        self.rdm.addMessage(1, self.theMessage.encode('hex'))
+        self.rdm.addMessage(self.theMessage)
+        self.rdm.addMessage(self.theMessage.encode('hex'))
         self.rdm.addOutput(mappend(self.transport))
         self.assertEquals(self.transport, [[(0, self.theMessage), (1, self.theMessage.encode('hex'))]])
 
@@ -214,7 +214,7 @@ class Transport(unittest.TestCase):
         secondTransport = []
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.addOutput(mappend(secondTransport))
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.assertEquals(self.transport, [[(0, self.theMessage)]])
         self.assertEquals(secondTransport, [])
 
@@ -228,8 +228,8 @@ class Transport(unittest.TestCase):
         secondTransport = []
         thirdTransport = []
         fourthTransport = []
-        self.rdm.addMessage(0, self.theMessage)
-        self.rdm.addMessage(1, secondMessage)
+        self.rdm.addMessage(self.theMessage)
+        self.rdm.addMessage(secondMessage)
         self.rdm.addOutput(mappend(self.transport))
         self.assertEquals(self.transport, [[(0, self.theMessage), (1, secondMessage)]])
         self.rdm.addOutput(mappend(secondTransport))
@@ -280,7 +280,7 @@ class Transport(unittest.TestCase):
         particular, test that if there is a message waiting and a new output is
         added, the timeout behavior is correct.
         """
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.rdm.addOutput(mappend(self.transport))
 
         n, f, a, kw = self.scheduled.pop()
@@ -302,7 +302,7 @@ class Transport(unittest.TestCase):
         to be used.
         """
         self.rdm.addOutput(mappend(self.transport))
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
 
         n, f, a, kw = self.scheduled.pop()
         self.failIf(self.scheduled, "Too many tasks scheduled.")
@@ -321,7 +321,7 @@ class Transport(unittest.TestCase):
         Test that the timeout created when the last output is used is cancelled
         when a new output is added.
         """
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.rdm.addOutput(mappend(self.transport))
 
         self.assertEquals(len(self.scheduled), 1, "Transportless timeout not created.")
@@ -388,7 +388,7 @@ class Transport(unittest.TestCase):
         n, f, a, kw = self.scheduled[0]
         self.assertEquals(n, self.idleTimeout)
 
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.assertEquals(self.transport, [])
 
         self.rdm.unpause()
@@ -404,7 +404,7 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
 
         self.rdm.pause()
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.assertEquals(self.transport, [])
 
         self.rdm.unpause()
@@ -420,7 +420,7 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
 
         self.rdm.pause()
-        self.rdm.addMessage(0, self.theMessage)
+        self.rdm.addMessage(self.theMessage)
         self.assertEquals(self.transport, [])
 
         self.rdm.unpause()
@@ -470,9 +470,8 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.close()
-        self.assertEquals(self.transport, [[(0, athena.CLOSE)], [(1, athena.CLOSE)]])
+        self.assertEquals(self.transport, [[(0, athena.CLOSE)], [(0, athena.CLOSE)]])
 
         self.transport = []
         self.rdm.addOutput(mappend(self.transport))
-        self.assertEquals(self.transport, [[(0, athena.CLOSE), (1, athena.CLOSE), (2, athena.CLOSE)]])
-    testClosing.skip = "This is not yet implemented."
+        self.assertEquals(self.transport, [[(0, athena.CLOSE)]])

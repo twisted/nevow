@@ -207,17 +207,6 @@ jsDeps = JSDependencies()
 
 
 
-class ConnectionLostTransport(object):
-    implements(inevow.IResource)
-
-    def locateChild(self, ctx, segments):
-        return rend.NotFound
-
-    def renderHTTP(self, ctx):
-        return json.serialize((u'close', ()))
-
-
-
 class JSException(Exception):
     """
     Exception class to wrap remote exceptions from JavaScript.
@@ -386,11 +375,18 @@ class ConnectionLost(Exception):
     pass
 
 
+CLOSE = u'close'
+
 class ReliableMessageDelivery(object):
     _paused = 0
+    _stopped = False
 
     outgoingAck = -1            # sequence number which has been acknowledged
                                 # by this end of the connection.
+
+    outgoingSeq = -1            # sequence number of the next message to be
+                                # added to the outgoing queue.
+
     def __init__(self,
                  livePage,
                  connectTimeout=60, transportlessTimeout=30, idleTimeout=300,
@@ -441,8 +437,12 @@ class ReliableMessageDelivery(object):
                 output([self.outgoingAck, self.messages])
 
 
-    def addMessage(self, seq, msg):
-        self.messages.append((seq, msg))
+    def addMessage(self, msg):
+        if self._stopped:
+            return
+
+        self.outgoingSeq += 1
+        self.messages.append((self.outgoingSeq, msg))
         if not self._paused and self.outputs:
             output, timeout = self.outputs.pop(0)
             timeout.cancel()
@@ -459,7 +459,21 @@ class ReliableMessageDelivery(object):
             self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
             output([self.outgoingAck, self.messages])
         else:
-            self.outputs.append((output, self.scheduler(self.idleTimeout, self._idleTimedOut)))
+            if self._stopped:
+                output([self.outgoingAck, self.messages])
+            else:
+                self.outputs.append((output, self.scheduler(self.idleTimeout, self._idleTimedOut)))
+
+
+    def close(self):
+        assert not self._stopped, "Cannot multiply stop ReliableMessageDelivery"
+        self.addMessage((CLOSE, []))
+        self._stopped = True
+        while self.outputs:
+            output, timeout = self.outputs.pop(0)
+            timeout.cancel()
+            output([self.outgoingAck, self.messages])
+        self.outputs = None
 
 
     def _unregisterDeferredAsOutputChannel(self, deferred):
@@ -618,7 +632,6 @@ class LivePage(rend.Page):
             self.jsModuleRoot = url.here.child(self.clientID).child('jsmodule')
 
         self._requestIDCounter = itertools.count().next
-        self._sequenceCounter = itertools.count().next
 
         self._messageDeliverer = ReliableMessageDelivery(
             self,
@@ -680,8 +693,7 @@ class LivePage(rend.Page):
 
 
     def addMessage(self, message):
-        seq = self._sequenceCounter()
-        self._messageDeliverer.addMessage(seq, message)
+        self._messageDeliverer.addMessage(message)
 
 
     def notifyOnDisconnect(self):
@@ -786,6 +798,7 @@ class LivePage(rend.Page):
         """
         The client is going away.  Clean up after them.
         """
+        self._messageDeliverer.close()
         self._disconnected(error.ConnectionDone("Connection closed"))
 
 
