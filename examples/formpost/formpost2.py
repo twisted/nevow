@@ -58,7 +58,7 @@ class FormPage(rend.Page):
     child_webform_css = webform.defaultCSS
 
     def render_hand(self, ctx, data):
-        hand = inevow.IHand(ctx, default=None)
+        hand = inevow.IHand(ctx, None)
         if hand is not None:
             return ctx.tag[hand]
         return ''
