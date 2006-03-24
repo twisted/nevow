@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Base 1.1
+MochiKit.Base 1.2
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -19,7 +19,7 @@ if (typeof(MochiKit.Base) == 'undefined') {
     MochiKit.Base = {};
 }
 
-MochiKit.Base.VERSION = "1.1";
+MochiKit.Base.VERSION = "1.2";
 MochiKit.Base.NAME = "MochiKit.Base"
 MochiKit.Base.update = function (self, obj/*, ... */) {
     /***
@@ -227,6 +227,7 @@ MochiKit.Base.update(MochiKit.Base, {
         sub: function (a, b) { return a - b; },
         div: function (a, b) { return a / b; },
         mod: function (a, b) { return a % b; },
+        mul: function (a, b) { return a * b; },
 
         // bitwise binary operators
         and: function (a, b) { return a & b; },
@@ -236,7 +237,7 @@ MochiKit.Base.update(MochiKit.Base, {
         rshift: function (a, b) { return a >> b; },
         zrshift: function (a, b) { return a >>> b; },
 
-        // near-worthless build-in comparators
+        // near-worthless built-in comparators
         eq: function (a, b) { return a == b; },
         ne: function (a, b) { return a != b; },
         gt: function (a, b) { return a > b; },
@@ -518,8 +519,7 @@ MochiKit.Base.update(MochiKit.Base, {
         if (typeof(Array.prototype.filter) == 'function') {
             // Mozilla fast-path
             return Array.prototype.filter.call(lst, fn, self);
-        }
-        else if (typeof(self) == 'undefined' || self == null) {
+        } else if (typeof(self) == 'undefined' || self == null) {
             for (var i = 0; i < lst.length; i++) {
                 var o = lst[i];
                 if (fn(o)) {
@@ -556,6 +556,9 @@ MochiKit.Base.update(MochiKit.Base, {
     },
             
     bind: function (func, self/* args... */) {
+        if (typeof(func) == "string") {
+            func = self[func];
+        }
         var im_func = func.im_func;
         var im_preargs = func.im_preargs;
         var im_self = func.im_self;
@@ -870,7 +873,7 @@ MochiKit.Base.update(MochiKit.Base, {
                 }
                 res.push(val);
             }
-            return "[" + res.join(",") + "]";
+            return "[" + res.join(", ") + "]";
         }
         // look in the registry
         try {
@@ -905,7 +908,7 @@ MochiKit.Base.update(MochiKit.Base, {
             }
             res.push(useKey + ":" + val);
         }
-        return "{" + res.join(",") + "}";
+        return "{" + res.join(", ") + "}";
     },
             
 
@@ -1052,6 +1055,31 @@ MochiKit.Base.update(MochiKit.Base, {
         return MochiKit.Base.listMinMax(-1, arguments);
     },
 
+    findIdentical: function (lst, value, start/* = 0 */, /* optional */end) {
+        if (typeof(end) == "undefined" || end == null) {
+            end = lst.length;
+        }
+        for (var i = (start || 0); i < end; i++) {
+            if (lst[i] === value) {
+                return i;
+            }
+        }
+        return -1;
+    },
+
+    find: function (lst, value, start/* = 0 */, /* optional */end) {
+        if (typeof(end) == "undefined" || end == null) {
+            end = lst.length;
+        }
+        var cmp = MochiKit.Base.compare;
+        for (var i = (start || 0); i < end; i++) {
+            if (cmp(lst[i], value) == 0) {
+                return i;
+            }
+        }
+        return -1;
+    },
+    
     nodeWalk: function (node, visitor) {
         /***
 
@@ -1283,7 +1311,9 @@ MochiKit.Base.EXPORT = [
     "serializeJSON",
     "registerJSON",
     "evalJSON",
-    "parseQueryString"
+    "parseQueryString",
+    "find",
+    "findIdentical"
 ];
 
 MochiKit.Base.EXPORT_OK = [
@@ -1299,12 +1329,17 @@ MochiKit.Base.EXPORT_OK = [
 ];
 
 MochiKit.Base._exportSymbols = function (globals, module) {
-    if ((typeof(JSAN) == 'undefined' && typeof(dojo) == 'undefined')
-        || (typeof(MochiKit.__compat__) == 'boolean' && MochiKit.__compat__)) {
-        var all = module.EXPORT_TAGS[":all"];
-        for (var i = 0; i < all.length; i++) {
-            globals[all[i]] = module[all[i]];
-        }
+    if (typeof(MochiKit.__export__) == "undefined") {
+        MochiKit.__export__ = (MochiKit.__compat__  ||
+            (typeof(JSAN) == 'undefined' && typeof(dojo) == 'undefined')
+        );
+    }
+    if (!MochiKit.__export__) {
+        return;
+    }
+    var all = module.EXPORT_TAGS[":all"];
+    for (var i = 0; i < all.length; i++) {
+        globals[all[i]] = module[all[i]];
     }
 };
 

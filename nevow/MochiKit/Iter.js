@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Iter 1.1
+MochiKit.Iter 1.2
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -29,7 +29,7 @@ if (typeof(MochiKit.Iter) == 'undefined') {
 }           
         
 MochiKit.Iter.NAME = "MochiKit.Iter";
-MochiKit.Iter.VERSION = "1.1";
+MochiKit.Iter.VERSION = "1.2";
 MochiKit.Base.update(MochiKit.Iter, {
     __repr__: function () {
         return "[" + this.NAME + " " + this.VERSION + "]";
@@ -395,7 +395,7 @@ MochiKit.Base.update(MochiKit.Iter, {
                 if (argiter.length == 1) {
                     // optimize last element
                     var arg = argiter.shift();
-                    this.next = m.bind(arg.next, arg);
+                    this.next = m.bind("next", arg);
                     return this.next();
                 }
                 throw self.StopIteration;
@@ -448,7 +448,7 @@ MochiKit.Base.update(MochiKit.Iter, {
                         break;
                     }
                 }
-                this.next = bind(seq.next, seq);
+                this.next = bind("next", seq);
                 return rval;
             }
         };
@@ -702,8 +702,14 @@ MochiKit.Base.update(MochiKit.Iter, {
         }
         // fast path for array
         if (m.isArrayLike(iterable)) {
-            for (var i = 0; i < iterable.length; i++) {
-                func(iterable[i]);
+            try {
+                for (var i = 0; i < iterable.length; i++) {
+                    func(iterable[i]);
+                }
+            } catch (e) {
+                if (e != MochiKit.Iter.StopIteration) {
+                    throw e;
+                }
             }
         } else {
             self = MochiKit.Iter;

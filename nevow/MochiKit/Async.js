@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Async 1.1
+MochiKit.Async 1.2
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -29,7 +29,7 @@ if (typeof(MochiKit.Async) == 'undefined') {
 }
 
 MochiKit.Async.NAME = "MochiKit.Async";
-MochiKit.Async.VERSION = "1.1";
+MochiKit.Async.VERSION = "1.2";
 MochiKit.Async.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -547,7 +547,9 @@ MochiKit.Base.update(MochiKit.Async, {
         if (typeof(value) != 'undefined') {
             d.addCallback(function () { return value; });
         }
-        var timeout = setTimeout(m.bind(d.callback, d), Math.floor(seconds * 1000));
+        var timeout = setTimeout(
+            m.bind("callback", d),
+            Math.floor(seconds * 1000));
         d.canceller = function () {
             try {
                 clearTimeout(timeout);

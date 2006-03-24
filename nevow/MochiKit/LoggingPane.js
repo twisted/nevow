@@ -1,6 +1,6 @@
 /***
 
-MochiKit.LoggingPane 1.1
+MochiKit.LoggingPane 1.2
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -31,7 +31,7 @@ if (typeof(MochiKit.LoggingPane) == 'undefined') {
 }
 
 MochiKit.LoggingPane.NAME = "MochiKit.LoggingPane";
-MochiKit.LoggingPane.VERSION = "1.1";
+MochiKit.LoggingPane.VERSION = "1.2";
 MochiKit.LoggingPane.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
 };
@@ -65,32 +65,51 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
     var bind = MochiKit.Base.bind;
     var clone = MochiKit.Base.clone;
     var win = window;
+    var uid = "_MochiKit_LoggingPane";
     if (typeof(MochiKit.DOM) != "undefined") {
         win = MochiKit.DOM.currentWindow();
     }
     if (!inline) {
         // name the popup with the base URL for uniqueness
-        var url = win.location.href.split("?")[0];
-        var name = "MochiKit.LoggingPane." + url;
-        win = win.open("", name, "dependent,resizable,height=200");
-        if (!win) {
+        var url = win.location.href.split("?")[0].replace(/[:\/.><&]/g, "_");
+        var name = uid + "_" + url;
+        var nwin = win.open("", name, "dependent,resizable,height=200");
+        if (!nwin) {
             alert("Not able to open debugging window due to pop-up blocking.");
-            return;
+            return undefined;
         }
+        nwin.document.write(
+            '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" '
+            + '"http://www.w3.org/TR/html4/loose.dtd">'
+            + '<html><head><title>[MochiKit.LoggingPane]</title></head>'
+            + '<body></body></html>'
+        );
+        nwin.document.close();
+        nwin.document.title += ' ' + win.document.title;
+        win = nwin;
     }
     var doc = win.document;
     this.doc = doc;
     
     // Connect to the debug pane if it already exists (i.e. in a window orphaned by the page being refreshed)
-    var debugPane = doc.getElementById("_debugPane");
-    if(debugPane && typeof(debugPane.loggingPane) != "undefined") {
+    var debugPane = doc.getElementById(uid);
+    var existing_pane = !!debugPane;
+    if (debugPane && typeof(debugPane.loggingPane) != "undefined") {
         debugPane.loggingPane.logger = this.logger;
         debugPane.loggingPane.buildAndApplyFilter();
         return debugPane.loggingPane;
     }
     
-    debugPane = doc.createElement("div");
-    debugPane.id = "_debugPane";
+    if (existing_pane) {
+        // clear any existing contents
+        var child;
+        while ((child = debugPane.firstChild)) {
+            debugPane.removeChild(child);
+        }
+    } else {
+        debugPane = doc.createElement("div");
+        debugPane.id = uid;
+    }
     debugPane.loggingPane = this;
     var levelFilterField = doc.createElement("input");
     var infoFilterField = doc.createElement("input");
@@ -102,7 +121,7 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
     var logPane = doc.createElement("div");
 
     /* Set up the functions */
-    var listenerId = "_debugPaneListener";
+    var listenerId = uid + "_Listener";
     this.colorTable = clone(this.colorTable);
     var messages = [];
     var messageFilter = null;
@@ -124,8 +143,8 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
         var text = messageText(msg);
         var c = this.colorTable[level];
         var p = doc.createElement("span");
-        p.style.color = c;
-        p.style.margin = "0";
+        p.className = "MochiKit-LogMessage MochiKit-LogLevel-" + level;
+        p.style.cssText = "margin: 0px; white-space: -moz-pre-wrap; white-space: -o-pre-wrap; white-space: pre-wrap; white-space: pre-line; word-wrap: break-word; wrap-option: emergency; color: " + c;
         p.appendChild(doc.createTextNode(level + ": " + text));
         logPane.appendChild(p);
         logPane.appendChild(doc.createElement("br"));
@@ -212,40 +231,34 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
     };
 
 
-    var loadMessages = function () {
+    var loadMessages = bind(function () {
         messages = this.logger.getMessages();
         filterMessages();
-    };
+    }, this);
 
-    var filterOnEnter = function (event) {
+    var filterOnEnter = bind(function (event) {
         event = event || window.event;
         key = event.which || event.keyCode;
         if (key == 13) {
             this.buildAndApplyFilter();
         }
-    };
+    }, this);
 
     /* Create the debug pane */
-    var style = {
-        "display": "block",
-        "position": "fixed",
-        "left": "0px",
-        "bottom": "0px",
-        "font": this.logFont,
-        "width": "100%",
-        "height": "100%",
-        "backgroundColor": "white"
-    };
+    var style = "display: block; left: 0px; bottom: 0px; position: fixed; width: 100%; background-color: white; font: " + this.logFont;
     if (inline) {
-        style.height = "10em";
-        style.borderTop = "2px solid black";
+        style += "; height: 10em; border-top: 2px solid black";
+    } else {
+        style += "; height: 100%;";
     }
-    update(debugPane.style, style);
+    debugPane.style.cssText = style;
 
-    doc.body.appendChild(debugPane);
+    if (!existing_pane) {
+        doc.body.appendChild(debugPane);
+    }
 
     /* Create the filter fields */
-    style = {"width": "33%", "display": "inline", "font": this.logFont};
+    style = {"cssText": "width: 33%; display: inline; font: " + this.logFont};
 
     updatetree(levelFilterField, {
         "value": "FATAL|ERROR|WARNING|INFO|DEBUG",
@@ -262,35 +275,31 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
     debugPane.appendChild(infoFilterField);
 
     /* Create the buttons */
-    style = {"width": "8%", "display": "inline", "font": this.logFont};
+    style = "width: 8%; display:inline; font: " + this.logFont;
 
     filterButton.appendChild(doc.createTextNode("Filter"));
-    filterButton.onclick = this.buildAndApplyFilter;
-    update(filterButton.style, style);
+    filterButton.onclick = bind("buildAndApplyFilter", this);
+    filterButton.style.cssText = style;
     debugPane.appendChild(filterButton);
 
     loadButton.appendChild(doc.createTextNode("Load"));
     loadButton.onclick = loadMessages;
-    update(loadButton.style, style);
+    loadButton.style.cssText = style;
     debugPane.appendChild(loadButton);
 
     clearButton.appendChild(doc.createTextNode("Clear"));
     clearButton.onclick = clearMessages;
-    update(clearButton.style, style);
+    clearButton.style.cssText = style;
     debugPane.appendChild(clearButton);
 
     closeButton.appendChild(doc.createTextNode("Close"));
     closeButton.onclick = closePane;
-    update(closeButton.style, style);
+    closeButton.style.cssText = style;
     debugPane.appendChild(closeButton);
 
     /* Create the logging pane */
-    debugPane.style.display = "block";
-    logPaneArea.style.overflow = "auto";
-    logPaneArea.style.width = "100%";
-    logPane.style.whitespace = "preserve";
-    logPane.style.width = "100%";
-    logPane.style.height = "8em";
+    logPaneArea.style.cssText = "overflow: auto; width: 100%";
+    logPane.style.cssText = "width: 100%; height: " + (inline ? "8em" : "100%");
 
     logPaneArea.appendChild(logPane);
     debugPane.appendChild(logPaneArea);
@@ -306,6 +315,8 @@ MochiKit.LoggingPane.LoggingPane = function (inline/* = false */, logger/* = Moc
     this.inline = inline;
     this.closePane = closePane;
     this.closed = false;
+
+    return this;
 };
 
 MochiKit.LoggingPane.LoggingPane.prototype = {

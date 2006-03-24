@@ -1,6 +1,6 @@
 /***
 
-MochiKit.Color 1.1
+MochiKit.Color 1.2
 
 See <http://mochikit.com/> for documentation, downloads, license, etc.
 
@@ -30,7 +30,7 @@ if (typeof(MochiKit.Color) == "undefined") {
 }
 
 MochiKit.Color.NAME = "MochiKit.Color";
-MochiKit.Color.VERSION = "1.1";
+MochiKit.Color.VERSION = "1.2";
 
 MochiKit.Color.__repr__ = function () {
     return "[" + this.NAME + " " + this.VERSION + "]";
@@ -101,7 +101,7 @@ MochiKit.Color.Color.prototype = {
 
     lighterColorWithLevel: function (level) {
         var hsl  = this.asHSL();
-        Math.min(hsl.l + level, 1);
+        hsl.l = Math.min(hsl.l + level, 1);
         var m = MochiKit.Color;
         return m.Color.fromHSL(hsl);
     },
@@ -277,7 +277,6 @@ MochiKit.Base.update(MochiKit.Color.Color, {
     },
 
     fromString: function (colorString) {
-        // TODO: support RGBA
         var self = MochiKit.Color.Color;
         var three = colorString.substr(0, 3);
         if (three == "rgb") {
@@ -338,19 +337,15 @@ MochiKit.Base.update(MochiKit.Color.Color, {
         return this[method].apply(this, colorFloats);
     },
     
-    fromBackground: function (elem) {
-        var m = MochiKit.Color;
+    fromComputedStyle: function (elem, style, mozillaEquivalentCSS) {
         var d = MochiKit.DOM;
+        var cls = MochiKit.Color.Color;
         for (elem = d.getElement(elem); elem; elem = elem.parentNode) {
-            var actualColor = d.computedStyle(
-                elem,
-                "backgroundColor",
-                "background-color"
-            );
+            var actualColor = d.computedStyle.apply(d, arguments);
             if (!actualColor) {
                 continue;
             }
-            var color = m.Color.fromString(actualColor);
+            var color = cls.fromString(actualColor);
             if (!color) {
                 break;
             }
@@ -358,7 +353,19 @@ MochiKit.Base.update(MochiKit.Color.Color, {
                 return color;
             }
         }
-        return m.Color.whiteColor();
+        return null;
+    },
+
+    fromBackground: function (elem) {
+        var cls = MochiKit.Color.Color;
+        return cls.fromComputedStyle(
+            elem, "backgroundColor", "background-color") || cls.whiteColor();
+    },
+
+    fromText: function (elem) {
+        var cls = MochiKit.Color.Color;
+        return cls.fromComputedStyle(
+            elem, "color", "color") || cls.blackColor();
     },
 
     namedColors: function () {
