@@ -470,8 +470,8 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.close()
-        self.assertEquals(self.transport, [[(0, athena.CLOSE)], [(0, athena.CLOSE)]])
+        self.assertEquals(self.transport, [[(0, (athena.CLOSE, []))], [(0, (athena.CLOSE, []))]])
 
         self.transport = []
         self.rdm.addOutput(mappend(self.transport))
-        self.assertEquals(self.transport, [[(0, athena.CLOSE)]])
+        self.assertEquals(self.transport, [[(0, (athena.CLOSE, []))]])
