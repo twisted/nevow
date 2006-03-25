@@ -7,6 +7,8 @@
 
 import re, types
 
+from nevow import rend, flat, tags
+
 class ParseError(ValueError):
     pass
 
@@ -283,6 +285,10 @@ def _serialize(obj, w, seen):
             if n != len(obj) - 1:
                 w(',')
         w('}')
+    elif isinstance(obj, rend.Fragment):
+        w('"')
+        w(stringEncode(flat.flatten(tags.div(xmlns="http://www.w3.org/1999/xhtml")[obj]).decode('utf-8')))
+        w('"')
     else:
         raise TypeError("Unsupported type %r: %r" % (type(obj), obj))
 
