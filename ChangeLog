@@ -1,4 +1,98 @@
-2006-01-04  Glyph Lefkowitz  <glyph@twistedmatrix.com>
+2006-03-24  Allen Short <washort@divmod.com>
+
+	* Upgrade MochiKit to 1.2
+
+2006-03-17  Tristan Seligmann <mithrandi@mithrandi.za.net>
+
+	* Remove usage of twisted.python.components.Interface from formless. 
+	Convert TypedInterface to zope.interface.
+
+2006-03-17  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/json.py: Improved (hopefully correct this time ;) unicode
+	support.
+
+2006-03-08  Valentino Volonghi <dialtone@divmod.com>
+
+	* Remove usage of twisted.python.components.Interface from nevow. 
+	Remove compyCompat.
+
+2006-02-28  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py: Make the "Connection: Close" header of Athena
+	transport responses optional (toggleable by a flag on LivePage) to
+	allow TCP connection setup overhead to be avoided.
+
+2006-02-15  Tristan Seligmann <mithrandi@mithrandi.za.net>
+
+	* nevow/athena.js, nevow/athena.py: Pass JavaScript call-stack
+	information back to the server and include it in logged tracebacks
+	(Firefox only).
+
+2006-02-14  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/util.py: Delete a bunch of code duplicated from Twisted.
+
+2006-02-06  Glyph Lefkowitz <glyph@twistedmatrix.com>
+
+	* nevow/athena.py, nevow/athena.js: Pop up an obnoxious widget when
+	an Athena connection is lost.
+
+2006-02-06  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/runtime.js: Add Platform.getPage, a wrapper around the
+	browser-provided HTTP request function.
+
+2006-02-01  Tristan Seligmann <mithrandi@mithrandi.za.net>
+
+	* nevow/athena.js: Add support for <athena:handler> element, a
+	declarative mechanism for attaching event handlers to nodes.
+
+2006-02-01  Tristan Seligmann <mithrandi@mithrandi.za.net>
+
+	* bin/nit: Test collector/runner for Athena widgets.
+
+2006-02-01  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/defer.js: Deferred implementation to replace MochiKit
+	Deferreds.
+
+2006-01-21  Valentino Volonghi <dialtone@divmod.com>
+
+	* nevow/rend.py, formless/webform.py: Support Deferreds returned
+	from bind_ methods.
+
+2006-01-21  Valentino Volonghi <dialtone@divmod.com>
+
+	* nevow/flat/flatstan.py: Fix macros inside of other specials.
+
+2006-01-19  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.js: Added Divmod.Class.methods() for defining
+	multiple methods at once.
+
+2006-01-19  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.py, nevow/athena.js: Support the addition of
+	LiveFragment instances to a page after the initial render pass.
+
+2006-01-15  Jp Calderone <exarkun@divmod.com>
+
+	* nevow/athena.js: Introduced new form of Divmod.Class.method() for
+	adding methods to JavaScript classes.  Added a child-window based
+	log viewer.
+
+2006-01-08  Valentino Volonghi <dialtone@divmod.com>
+
+	* examples/hello/hellohtml.py: Removed htmlfile usage
+	* nevow/loaders.py: Deprecated htmlfile/htmlstr
+
+2006-01-08  Glyph Lefkowitz <glyph@twistedmatrix.com>
+
+	* nevow/test/, formless/test/: Removed all usage of trial's
+	deferredResult() and util.wait() functions.
+
+2006-01-04  Glyph Lefkowitz <glyph@twistedmatrix.com>
 
 	* nevow/athena.py: Added fragment and widget nesting.  On the
 	server side, this documents and provides a supported way of
