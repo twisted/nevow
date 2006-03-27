@@ -422,6 +422,11 @@ class ReliableMessageDelivery(object):
         output([self.outgoingAck, []])
 
 
+    def _sendMessagesToOutput(self, output):
+        log.msg(athena_send_messages=True, count=len(self.messages))
+        output([self.outgoingAck, self.messages])
+
+
     def pause(self):
         self._paused += 1
 
@@ -434,7 +439,7 @@ class ReliableMessageDelivery(object):
                 timeout.cancel()
                 if not self.outputs:
                     self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
-                output([self.outgoingAck, self.messages])
+                self._sendMessagesToOutput(output)
 
 
     def addMessage(self, msg):
@@ -448,7 +453,7 @@ class ReliableMessageDelivery(object):
             timeout.cancel()
             if not self.outputs:
                 self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
-            output([self.outgoingAck, self.messages])
+            self._sendMessagesToOutput(output)
 
 
     def addOutput(self, output):
@@ -457,10 +462,10 @@ class ReliableMessageDelivery(object):
             self._transportlessTimeoutCall = None
         if not self._paused and self.messages:
             self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
-            output([self.outgoingAck, self.messages])
+            self._sendMessagesToOutput(output)
         else:
             if self._stopped:
-                output([self.outgoingAck, self.messages])
+                self._sendMessagesToOutput(output)
             else:
                 self.outputs.append((output, self.scheduler(self.idleTimeout, self._idleTimedOut)))
 
@@ -472,7 +477,7 @@ class ReliableMessageDelivery(object):
         while self.outputs:
             output, timeout = self.outputs.pop(0)
             timeout.cancel()
-            output([self.outgoingAck, self.messages])
+            self._sendMessagesToOutput(output)
         self.outputs = None
 
 
@@ -515,6 +520,8 @@ class ReliableMessageDelivery(object):
             outgoingMessages.pop(0)
 
         if incomingMessages:
+            log.msg(athena_received_messages=True, count=len(incomingMessages))
+
             if self.outgoingAck + 1 >= incomingMessages[0][0]:
                 lastSentAck = self.outgoingAck
                 self.outgoingAck = max(incomingMessages[-1][0], self.outgoingAck)
