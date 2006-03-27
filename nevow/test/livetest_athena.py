@@ -4,6 +4,26 @@ from nevow import loaders, tags, athena
 from nevow.livetrial import testcase
 from nevow.test import test_json
 
+class WidgetInitializerArguments(testcase.TestCase):
+    """
+    Test that the arguments represented by the list returned by
+    getInitialArguments are properly passed to the widget class's __init__
+    method.
+    """
+    jsClass = u'Nevow.Athena.Tests.WidgetInitializerArguments'
+
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['WidgetInitializerArguments'])
+
+    _args = [1, u"two", [3.0 for four in range(5)]]
+
+    def getInitialArguments(self):
+        return self._args
+
+    allowedMethods = {'test': True}
+    def test(self, args):
+        self.assertEquals(self._args, args)
+
+
 class ClientToServerArgumentSerialization(testcase.TestCase):
     """
     Tests that arguments passed to a method on the server are properly

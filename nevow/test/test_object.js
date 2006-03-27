@@ -2,7 +2,6 @@
 
 load("testsupport.js");
 
-// import Nevow.Athena
 // import Divmod
 
 /*
@@ -40,7 +39,7 @@ function testClass() {
 
     var makeFood = function() {
         return 100;
-    }
+    };
 
     var be = new BetterEater(makeFood);
 
@@ -54,6 +53,31 @@ function testClass() {
 
     assert(Eater.classCounter == 3, 'classmethod fuckup');
     assert(BetterEater.classCounter == 2, 'classmethod fuckup');
+}
+
+function testNewlessInstantiation() {
+    /*
+     * Test that Divmod.Class subclasses can be instantiated without using
+     * `new', as well as using .apply() and .call().
+     */
+    var SomeClass = Divmod.Class.subclass("SomeClass");
+    SomeClass.methods(
+        function __init__(self, x, y) {
+            self.x = x;
+            self.y = y;
+        });
+
+    var a = SomeClass(1, 2);
+    assert(a.x == 1, "Normal instantiation without new lost an argument");
+    assert(a.y == 2, "Normal instantiation without new lost an argument");
+
+    var b = SomeClass.apply(null, [1, 2]);
+    assert(b.x == 1, ".apply() instantiation lost an argument");
+    assert(b.y == 2, ".apply() instantiation lost an argument");
+
+    var c = SomeClass.call(null, 1, 2);
+    assert(c.x == 1, ".call() instantiation lost an argument");
+    assert(c.y == 2, ".call() instantiation lost an argument");
 }
 
 function testUtil() {
@@ -153,6 +177,7 @@ Divmod.logger.addObserver(function(event) {
 
 var testFunctions = [
     testClass,
+    testNewlessInstantiation,
     testUtil,
     testMethod,
     testLogger];

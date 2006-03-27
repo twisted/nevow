@@ -70,32 +70,78 @@ Divmod.dir = function(obj) {
 };
 
 
-Divmod._PROTOTYPE_ONLY = {};
-
-
-Divmod.Class = function(asPrototype) {
-    if (asPrototype !== Divmod._PROTOTYPE_ONLY) {
-        this.__init__.apply(this, arguments);
-    }
-};
-
-
 Divmod.__classDebugCounter__ = 0;
 
+Divmod._CONSTRUCTOR = {};
+
+Divmod.Class = function() {};
 
 Divmod.Class.subclass = function(/* optional */ className) {
+
+    /*
+     * subclass() must always be called on Divmod.Class or an object returned
+     * from subclass() - so in this execution context, C{this} is the "class"
+     * object.
+     */
     var superClass = this;
-    var subClass = function() {
-        return Divmod.Class.apply(this, arguments)
+
+    /*
+     * Create a function which basically serves the purpose of type.__call__ in Python:
+     */
+    var subClass = function(asConstructor) {
+        var self;
+        if (this instanceof subClass) {
+            /*
+             * If the instance is being created using C{new Class(args)},
+             * C{this} will already be an object with the appropriate
+             * prototype, so we can skip creating one ourself.
+             */
+            self = this;
+        } else {
+            /*
+             * If the instance is being created using just C{Class(args)} (or,
+             * similarly, C{Class.apply(null, args)} or C{Class.call(null,
+             * args)}), then C{this} is actually some random object - maybe the
+             * global execution context object, maybe the window, maybe a
+             * pseudo-namespace object (ie, C{Divmod}), maybe null.  Whichever,
+             * invoke C{new subClass(Divmod._CONSTRUCTOR)} to create an object
+             * with the right prototype without invoking C{__init__}.
+             */
+            self = new subClass(Divmod._CONSTRUCTOR);
+        }
+        /*
+         * Once we have an instance, if C{asConstructor} is not the magic internal
+         * object C{Divmod._CONSTRUCTOR}, pass all our arguments on to the
+         * instance's C{__init__}.
+         */
+        if (asConstructor !== Divmod._CONSTRUCTOR) {
+            self.__init__.apply(self, arguments);
+        }
+
+        /*
+         * We've accomplished... Something.  Either we made a blank, boring
+         * instance of a particular class, or we actually initialized an
+         * instance of something (possibly something that we had to create).
+         * Whatever it is, give it back to our caller to enjoy.
+         */
+        return self;
     };
-    subClass.prototype = new superClass(Divmod._PROTOTYPE_ONLY);
+
+    /*
+     * This is how you spell inheritance in JavaScript.
+     */
+    subClass.prototype = new superClass(Divmod._CONSTRUCTOR);
+
+    /*
+     * Make the subclass subclassable in the same way.
+     */
     subClass.subclass = Divmod.Class.subclass;
 
-    /* Copy class methods and attributes, so that you can do
+    /*
+     * Copy class methods and attributes, so that you can do
      * polymorphism on class methods (useful for things like
      * Nevow.Athena.Widget.get in widgets.js).
      */
-
     for (var varname in superClass) {
         if ((varname != 'prototype') &&
             (varname != 'constructor') &&

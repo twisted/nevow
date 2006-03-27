@@ -45,5 +45,3 @@ load("../divmod.js");
 load("../defer.js");
 
 load("../nevow.js");
-
-load("../athena.js");

@@ -853,6 +853,21 @@ class LiveFragment(rend.Fragment):
         super(LiveFragment, self).__init__(*a, **k)
         self.liveFragmentChildren = []
 
+
+    def getInitialArguments(self):
+        """
+        Return a C{tuple} or C{list} of arguments to be passed to this
+        C{LiveFragment}'s client-side Widget.
+
+        This will be called during the rendering process.  Whatever it
+        returns will be serialized into the page and passed to the
+        C{__init__} method of the widget specified by C{jsClass}.
+
+        @rtype: C{list} or C{tuple}
+        """
+        return ()
+
+
     def rend(self, context, data):
         self._athenaID = self.page.addLocalObject(self)
         context.fillSlots('athena:id', self._athenaID)
@@ -899,6 +914,12 @@ class LiveFragment(rend.Fragment):
             [tags.script(type='text/javascript',
                          src=self.getJSModuleURL(mod))
              for mod in modules if self.page._shouldInclude(mod)],
+
+            # Dump some data for our client-side __init__ into a text area
+            # where it can easily be found.
+            tags.textarea(id='athena-init-args-' + str(self._athenaID),
+                          style="display: none")[
+                json.serialize(self.getInitialArguments())],
 
             # Arrange to be instantiated
             tags.script(type='text/javascript')[

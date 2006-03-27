@@ -668,7 +668,11 @@ Nevow.Athena.Widget.get = function(node) {
     var widgetId = Nevow.Athena.athenaIDFromNode(widgetNode);
     if (Nevow.Athena.Widget._athenaWidgets[widgetId] == null) {
         var widgetClass = Nevow.Athena.athenaClassFromNode(widgetNode);
-        Nevow.Athena.Widget._athenaWidgets[widgetId] = new widgetClass(widgetNode);
+        var initNode = document.getElementById('athena-init-args-' + widgetId);
+        var initText = initNode.value;
+        var initArgs = eval(initText);
+	initArgs.unshift(widgetNode);
+        Nevow.Athena.Widget._athenaWidgets[widgetId] = widgetClass.apply(null, initArgs);
     }
     return Nevow.Athena.Widget._athenaWidgets[widgetId];
 };

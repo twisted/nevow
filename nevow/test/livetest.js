@@ -1,9 +1,21 @@
 
 // import Nevow.Athena
 
-if (Nevow.Athena.Tests == undefined) {
-    Nevow.Athena.Tests = {};
-}
+Nevow.Athena.Tests = {};
+
+Nevow.Athena.Tests.WidgetInitializerArguments = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.WidgetInitializerArguments');
+Nevow.Athena.Tests.WidgetInitializerArguments.methods(
+    function __init__(self, node) {
+        Nevow.Athena.Tests.WidgetInitializerArguments.upcall(self, '__init__', node);
+        self.args = [];
+        for (var i = 2; i < arguments.length; ++i) {
+            self.args.push(arguments[i]);
+        }
+    },
+
+    function run(self) {
+        return self.callRemote('test', self.args);
+    });
 
 Nevow.Athena.Tests.ClientToServerArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerArgumentSerialization');
 Nevow.Athena.Tests.ClientToServerArgumentSerialization.methods(
