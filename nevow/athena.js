@@ -93,7 +93,7 @@ Nevow.Athena.ReliableMessageDelivery.methods(
         if (message.length) {
            if (self.ack + 1 >= message[0][0]) {
                var ack = self.ack;
-               self.ack = message[message.length - 1][0];
+               self.ack = Divmod.max(self.ack, message[message.length - 1][0]);
                for (var i = 0; i < message.length; ++i) {
                    var msg = message[i];
                    var seq = msg[0];

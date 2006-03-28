@@ -52,6 +52,15 @@ Divmod.namedAny = function(name) {
 };
 
 
+Divmod.max = function(a, b) {
+    if (a >= b) {
+        return a;
+    } else {
+        return b;
+    }
+};
+
+
 Divmod.vars = function(obj) {
     var L = [];
     for (var i in obj) {
