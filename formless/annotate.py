@@ -275,6 +275,8 @@ class Choice(Typed):
     passed to stringify, which is by default "str".
     """
 
+    requiredFailMessage = 'Please choose an option.'
+
     def __init__(self, choices=None, choicesAttribute=None, stringify=str,
                  valueToKey=str, keyToValue=None, keyAndConfigurableToValue=None,
                  *args, **kw):
