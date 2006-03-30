@@ -7,7 +7,7 @@
 .freeform-label { float: left; width: 200px; }
 .freeform-input-text { width: 250px; }
 .freeform-input-password { width: 100px; }
-.freeform-error { color: red; margin-left: 1em;}
+.freeform-error, .freeform-form-error { color: red; margin-left: 1em;}
 .freeform-description { border-bottom: 1px dashed #bdedfe; margin-bottom: 0.5em; padding-bottom: 0.5em }
 .freeform-list-item { width: auto }
 .freeform-form-label { color: #666666 }
@@ -27,4 +27,3 @@
 .freeform-grouped-property-binding {}
 .freeform-grouped-method-binding {}
 .freeform-radio-option {margin-left: 200px}
-
