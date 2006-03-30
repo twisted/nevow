@@ -87,6 +87,12 @@ Divmod.Class = function() {};
 
 Divmod.Class.subclass = function(/* optional */ className) {
 
+
+    if (className == undefined) {
+        Divmod.__classDebugCounter__ += 1;
+        className = '#' + Divmod.__classDebugCounter__;
+    }
+
     /*
      * subclass() must always be called on Divmod.Class or an object returned
      * from subclass() - so in this execution context, C{this} is the "class"
@@ -118,6 +124,7 @@ Divmod.Class.subclass = function(/* optional */ className) {
              */
             self = new subClass(Divmod._CONSTRUCTOR);
         }
+        self.__class__ = subClass;
         /*
          * Once we have an instance, if C{asConstructor} is not the magic internal
          * object C{Divmod._CONSTRUCTOR}, pass all our arguments on to the
@@ -145,6 +152,11 @@ Divmod.Class.subclass = function(/* optional */ className) {
      * Make the subclass subclassable in the same way.
      */
     subClass.subclass = Divmod.Class.subclass;
+
+    /*
+     * Make a minimal amount of information about this class available.
+     */
+    subClass.__name__ = className;
 
     /*
      * Copy class methods and attributes, so that you can do
@@ -198,21 +210,12 @@ Divmod.Class.subclass = function(/* optional */ className) {
         }
     };
 
-    /**
-       Not quite sure what to do with this...
-    **/
-    Divmod.__classDebugCounter__ += 1;
-    subClass.__classDebugCounter__ = Divmod.__classDebugCounter__;
     subClass.toString = function() {
-        if (className == undefined) {
-            return '<Class #' + subClass.__classDebugCounter__ + '>';
-        } else {
-            return '<Class ' + className + '>';
-        }
+        return '<Class ' + className + '>';
     };
     subClass.prototype.toString = function() {
-        if (className == undefined) {
-            return '<"Instance" of #' + subClass.__classDebugCounter__ + '>';
+        if (this.__repr__) {
+            return this.__repr__();
         } else {
             return '<"Instance" of ' + className + '>';
         }
@@ -226,6 +229,32 @@ Divmod.Class.prototype.__init__ = function() {
      */
 };
 
+Divmod.Error = Divmod.Class.subclass("Divmod.Error");
+Divmod.Error.methods(
+    function __init__(self, message, stack /* = null */) {
+        if (stack == undefined) {
+            stack = null;
+        }
+
+        self.message = message;
+        self.stack = stack;
+
+        self.args = [];
+        for (var i = 3; i < arguments.length; ++i) {
+            self.args.push(arguments[i]);
+        }
+    },
+
+    function __repr__(self) {
+        return '<' + self.__class__.__name__ + ': ' + self.args.toString() + '>';
+    });
+
+
+Divmod.StandardError = Divmod.Error.subclass("Divmod.StandardError");
+Divmod.StandardError.methods(
+    function __init__(self, err) {
+        Divmod.StandardError.upcall(self, '__init__', err.message, err.stack);
+    })
 
 Divmod.Module = Divmod.Class.subclass('Divmod.Module');
 Divmod.Module.method(

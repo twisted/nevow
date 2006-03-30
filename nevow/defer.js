@@ -9,8 +9,8 @@ Divmod.Defer.AlreadyCalledError = Divmod.Class.subclass("Divmod.Defer.AlreadyCal
 Divmod.Defer.Failure = Divmod.Class.subclass("Divmod.Defer.Failure");
 Divmod.Defer.Failure.methods(
     function __init__(self, error) {
-        if (!(error instanceof Error)) {
-            error = Error.apply(null, arguments);
+        if (error instanceof Error) {
+            error = Divmod.StandardError(error);
         }
         self.error = error;
     },
@@ -34,7 +34,7 @@ Divmod.Defer.Failure.methods(
     },
 
     function getErrorMessage(self) {
-        return self.error.message;
+        return String(self.error);
     },
 
     function getTraceback(self) {
@@ -188,9 +188,10 @@ Divmod.Defer.fail = function(err) {
 };
 
 
-Divmod.Defer.FirstError = Divmod.Class.subclass('Divmod.Defer.FirstError');
+Divmod.Defer.FirstError = Divmod.Error.subclass('Divmod.Defer.FirstError');
 Divmod.Defer.FirstError.methods(
     function __init__(self, err, index) {
+        Divmod.Defer.FirstError.upcall(self, '__init__', err, index);
         self.err = err;
         self.index = index;
     });

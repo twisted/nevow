@@ -34,7 +34,18 @@ function failDeferred() {
 }
 
 function failureTrapping() {
-    var f = Divmod.Defer.Failure(Error(""));
+    var TestError = Divmod.Error.subclass("TestError");
+    var NotTestError = Divmod.Error.subclass("NotTestError");
+    var trapfailed;
+    var f = Divmod.Defer.Failure(TestError("Message"));
+    assert(f.trap(Divmod.Error) === Divmod.Error);
+    assert(f.trap(TestError) === TestError);
+    try {
+        f.trap(NotTestError);
+        assert(false, "Trap failed to re-throw error");
+    } catch (e) {
+        // Hooray, it worked.
+    }
 }
 
 function callThisDontCallThat() {
@@ -175,7 +186,12 @@ function fireOnOneErrback() {
         result = err;
     });
     assert(result instanceof Divmod.Defer.Failure);
-    assert(result.error instanceof Divmod.Defer.FirstError);
+    assert(result.error instanceof Divmod.Defer.FirstError,
+           "result.error was " + typeof result.error + " instead of Divmod.Defer.FirstError");
+
+    print("MSG: " + result.getErrorMessage());
+    print("TB: " + result.getTraceback());
+    print("STR: " + result.toString());
 };
 
 function gatherResults() {
@@ -193,6 +209,7 @@ function gatherResults() {
 
 runTests([succeedDeferred,
           failDeferred,
+          failureTrapping,
           callThisDontCallThat,
           callbackResultPassedToNextCallback,
           addCallbacksAfterResult,
