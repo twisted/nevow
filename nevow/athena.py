@@ -2,7 +2,7 @@
 
 import itertools, os, re
 
-from zope.interface import implements
+from zope.interface import advice, implements
 
 from twisted.internet import defer, error, reactor
 from twisted.python import log, failure
@@ -845,14 +845,14 @@ class LiveFragment(rend.Fragment):
     between '//' and 'import'.  There must be no preceeding whitespace
     on the line.
 
-    Methods defined on this class which are named in the
-    C{allowedMethods} mapping may be invoked by the client using
-    C{Nevow.Athena.Widget.callRemote}.  Similarly, calling
-    C{callRemote} on the LiveFragment will invoke a method defined on
-    the Widget class in the browser.
+    Methods defined on this class which are named in the C{allowedMethods}
+    container (see L{expose} for a way to populate this container) may be
+    invoked by the client using C{Nevow.Athena.Widget.callRemote}. 
+    Similarly, calling C{callRemote} on the LiveFragment will invoke a
+    method defined on the Widget class in the browser.
     """
 
-    allowedMethods = {}
+    allowedMethods = ()
 
     jsClass = u'Nevow.Athena.Widget'
 
@@ -975,5 +975,35 @@ class IntrospectionFragment(LiveFragment):
         href="#DEBUG_ME",
         class_='toggle-debug')["Debug"]])
 
+
+
+def expose(*funcObjs):
+    """
+    Allow one or more methods to be invoked by the client.
+
+    This is a class advisor, similar to L{zope.interface.implements}.  Use
+    it like this::
+
+    | class Foo(LiveFragment):
+    |     def twiddle(self, x, y):
+    |         ...
+    |     def frob(self, a, b):
+    |         ...
+    |     expose(twiddle, frob)
+
+    @param funcObjs: One or more function objects which will be exposed to
+    the client.
+
+    @return: The first of C{funcObjs}.
+    """
+    if not funcObjs:
+        return
+    def exposedMethodAdvice(cls):
+        if 'allowedMethods' not in cls.__dict__:
+            cls.allowedMethods = []
+        cls.allowedMethods.extend([fObj.func_name for fObj in funcObjs])
+        return cls
+    advice.addClassAdvisor(exposedMethodAdvice)
+    return funcObjs[0]
 
 handler = stan.Proto('athena:handler')

@@ -69,6 +69,30 @@ the end
                 # that depends upon them.
                 self.failUnless(allDeps.index(d) < allDeps.index(m))
 
+
+    def testExpose(self):
+        class Foo(object):
+            def bar(self):
+                return 'baz'
+            athena.expose(bar)
+        self.assertEquals(Foo.allowedMethods, ['bar'])
+        self.assertEquals(Foo().bar(), 'baz')
+
+        class Quux(object):
+            def smokey(self):
+                return 'stover'
+            def pogo(self):
+                return 'kelly'
+            def albert(self):
+                return 'alligator'
+            athena.expose(smokey, pogo)
+        self.assertEquals(Quux.allowedMethods, ['smokey', 'pogo'])
+        self.assertEquals(Quux().smokey(), 'stover')
+        self.assertEquals(Quux().pogo(), 'kelly')
+        self.assertEquals(Quux().albert(), 'alligator')
+
+
+
 class TestFragment(athena.LiveFragment):
     pass
 

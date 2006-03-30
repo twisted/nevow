@@ -42,6 +42,6 @@ class InitializationBenchmark(athena.LiveFragment):
         self.page = page
 
 
-    allowedMethods = {'activate': True}
     def activate(self):
         pass
+    athena.expose(activate)

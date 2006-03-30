@@ -20,7 +20,6 @@ class TypeAheadPage(athena.LivePage):
 
 class TypeAheadFieldFragment(athena.LiveFragment):
     docFactory = loaders.stan(T.input(type="text", id="typehere", render=T.directive('liveFragment')))
-    allowedMethods =  { 'loadDescription' : True }
 
     def loadDescription(self, typed):
         if typed == u'':
@@ -35,6 +34,7 @@ class TypeAheadFieldFragment(athena.LiveFragment):
             return None, u"(Multiple found)"
         else:
             return None, u'--'
+    athena.expose(loadDescription)
 
 class DataEntry(rend.Page):
     """Add Animal"""
