@@ -66,7 +66,7 @@ class FormBuilder(rend.Page):
         self.clearForm()
 
     def configurable_formBuilder(self, ctx):
-        return self
+        return configurable.TypedInterfaceConfigurable(self)
 
     def configurable_dynamicForm(self, ctx):
         return self.builderCore
