@@ -97,3 +97,66 @@ class Range(unittest.TestCase):
         return deferredRender(self.file, self.request).addCallback(
             lambda r: self.assertEquals(r.headers.get('content-range'),
                                         'bytes 3-10/8000'))
+
+    def testBodyLength_end(self):
+        self.request._headers['range'] = 'bytes=7991-7999'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(len(r.v), 9))
+
+    def testBodyContent_end(self):
+        self.request._headers['range'] = 'bytes=7991-7999'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.v, '123456789'))
+
+    def testContentLength_end(self):
+        self.request._headers['range'] = 'bytes=7991-7999'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.headers['content-length'], '9'))
+
+    def testContentRange_end(self):
+        self.request._headers['range'] = 'bytes=7991-7999'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.headers.get('content-range'),
+                                        'bytes 7991-7999/8000'))
+
+    def testBodyLength_openEnd(self):
+        self.request._headers['range'] = 'bytes=7991-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(len(r.v), 9))
+
+    def testBodyContent_openEnd(self):
+        self.request._headers['range'] = 'bytes=7991-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.v, '123456789'))
+
+    def testContentLength_openEnd(self):
+        self.request._headers['range'] = 'bytes=7991-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.headers['content-length'], '9'))
+
+    def testContentRange_openEnd(self):
+        self.request._headers['range'] = 'bytes=7991-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.headers.get('content-range'),
+                                        'bytes 7991-7999/8000'))
+
+    def testBodyLength_fullRange(self):
+        self.request._headers['range'] = 'bytes=0-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(len(r.v), 8000))
+
+    def testBodyContent_fullRange(self):
+        self.request._headers['range'] = 'bytes=0-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.v, 800 * '0123456789'))
+
+    def testContentLength_fullRange(self):
+        self.request._headers['range'] = 'bytes=0-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.headers['content-length'], '8000'))
+
+    def testContentRange_fullRange(self):
+        self.request._headers['range'] = 'bytes=0-'
+        return deferredRender(self.file, self.request).addCallback(
+            lambda r: self.assertEquals(r.headers.get('content-range'),
+                                        'bytes 0-7999/8000'))

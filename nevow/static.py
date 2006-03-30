@@ -312,7 +312,7 @@ class File:
                 if end:
                     end = int(end)
                 else:
-                    end = fsize
+                    end = fsize-1
                 request.setResponseCode(http.PARTIAL_CONTENT)
                 request.setHeader('content-range',"bytes %s-%s/%s" % (
                     str(start), str(end), str(fsize)))
