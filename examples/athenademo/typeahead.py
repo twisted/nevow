@@ -23,7 +23,7 @@ class TypeAheadFieldFragment(athena.LiveFragment):
     allowedMethods =  { 'loadDescription' : True }
 
     def loadDescription(self, typed):
-        if typed == '':
+        if typed == u'':
             return None, u'--'
         matches = []
         for key in animals:

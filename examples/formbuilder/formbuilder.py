@@ -49,7 +49,7 @@ class IFormBuilder(annotate.TypedInterface):
         pass
     addElement = annotate.autocallable(addElement)
 
-    def clearForm(self):
+    def clearForm():
         """Clear Form
         
         Clear this form.

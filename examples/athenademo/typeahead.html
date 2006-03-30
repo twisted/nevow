@@ -75,10 +75,13 @@ function loadDescription(ev)
     var d = Nevow.Athena.Widget.get(node).callRemote('loadDescription', typed);
     d.addCallback(replaceDescription);
 }
+MochiKit.DOM.addToCallStack(window, 'onload', function() {
+    xbAddEvent($('typehere'), 'keyup', loadDescription, 1);
+});
 // ]]>
     </script>
   </head>
-  <body onload="xbAddEvent($('typehere'), 'keyup', loadDescription, 1)">
+  <body>
     <h2>Start typing an animal to see the description.</h2>
     <n:invisible n:render="typehereField" />
     <h3 id="description"></h3>
