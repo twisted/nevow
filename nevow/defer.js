@@ -9,11 +9,43 @@ Divmod.Defer.AlreadyCalledError = Divmod.Class.subclass("Divmod.Defer.AlreadyCal
 Divmod.Defer.Failure = Divmod.Class.subclass("Divmod.Defer.Failure");
 Divmod.Defer.Failure.methods(
     function __init__(self, error) {
+        if (!(error instanceof Error)) {
+            error = Error.apply(null, arguments);
+        }
         self.error = error;
     },
 
+    function trap(self) {
+        for (var i = 1; i < arguments.length; ++i) {
+            if (self.error instanceof arguments[i]) {
+                return arguments[i];
+            }
+        }
+        throw self.error;
+    },
+
+    function check(self) {
+        for (var i = 1; i < arguments.length; ++i) {
+            if (self.error instanceof arguments[i]) {
+                return arguments[i];
+            }
+        }
+        return null;
+    },
+
+    function getErrorMessage(self) {
+        return self.error.message;
+    },
+
+    function getTraceback(self) {
+        if (self.error.stack) {
+            return self.error.stack.split('\n').reverse().join('\n');
+        }
+        return self.getErrorMessage() + '<No Stack Available>';
+    },
+
     function toString(self) {
-        return 'Failure: ' + self.error;
+        return '<Failure: ' + self.error + '>';
     });
 
 Divmod.Defer.Deferred = Divmod.Class.subclass("Divmod.Defer.Deferred");

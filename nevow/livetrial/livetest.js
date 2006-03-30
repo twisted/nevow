@@ -89,5 +89,5 @@ Nevow.Athena.Test.TestRunner.methods(
     function reportFailure(self, err) {
         self._failureCount += 1;
         self._failureNode.innerHTML = self._failureCount;
-        Divmod.log('test-result', err.message);
+        Divmod.err(Divmod.Defer.Failure(err), 'test-result');
     });

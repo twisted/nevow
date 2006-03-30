@@ -33,13 +33,17 @@ function failDeferred() {
     assert(error.error.message == "failure", "Error message was not failure but instead: " + error.error.message);
 }
 
+function failureTrapping() {
+    var f = Divmod.Defer.Failure(Error(""));
+}
+
 function callThisDontCallThat() {
     var thisCalled = false;
     var thatCalled = false;
     var thisCaller = function (rlst) { thisCalled = true; }
     var thatCaller = function (err) { thatCalled = true; }
 
-    var d = new Divmod.Defer.Deferred();
+    var d = Divmod.Defer.Deferred();
 
     d.addCallbacks(thisCaller, thatCaller);
     d.callback(true);
@@ -49,9 +53,9 @@ function callThisDontCallThat() {
 
     thisCalled = thatCalled = false;
 
-    d = new Divmod.Defer.Deferred();
+    d = Divmod.Defer.Deferred();
     d.addCallbacks(thisCaller, thatCaller);
-    d.errback(new Divmod.Defer.Failure(Error("Test error for errback testing")));
+    d.errback(Divmod.Defer.Failure(Error("Test error for errback testing")));
 
     assert(!thisCalled);
     assert(thatCalled);
@@ -61,7 +65,7 @@ function callbackResultPassedToNextCallback() {
     var interimResult = null;
     var finalResult = null;
 
-    var d = new Divmod.Defer.Deferred();
+    var d = Divmod.Defer.Deferred();
     d.addCallback(function(result) {
             interimResult = result;
             return "final result";
@@ -77,7 +81,7 @@ function callbackResultPassedToNextCallback() {
 
 function addCallbacksAfterResult() {
     var callbackResult = null;
-    var d = new Divmod.Defer.Deferred();
+    var d = Divmod.Defer.Deferred();
     d.callback("callback");
     d.addCallbacks(
         function(result) {
@@ -89,8 +93,8 @@ function addCallbacksAfterResult() {
 
 function deferredReturnedFromCallback() {
     var theResult = null;
-    var interimDeferred = new Divmod.Defer.Deferred();
-    var outerDeferred = new Divmod.Defer.Deferred();
+    var interimDeferred = Divmod.Defer.Deferred();
+    var outerDeferred = Divmod.Defer.Deferred();
 
     outerDeferred.addCallback(
         function(ignored) {
@@ -111,10 +115,10 @@ function deferredReturnedFromCallback() {
 }
 
 function deferredList() {
-    var defr1 = new Divmod.Defer.Deferred();
-    var defr2 = new Divmod.Defer.Deferred();
-    var defr3 = new Divmod.Defer.Deferred();
-    var dl = new Divmod.Defer.DeferredList([defr1, defr2, defr3]);
+    var defr1 = Divmod.Defer.Deferred();
+    var defr2 = Divmod.Defer.Deferred();
+    var defr3 = Divmod.Defer.Deferred();
+    var dl = Divmod.Defer.DeferredList([defr1, defr2, defr3]);
 
     var result;
     function cb(resultList) {
@@ -141,7 +145,7 @@ function deferredList() {
 
 function emptyDeferredList() {
     var result = null;
-    var dl = new Divmod.Defer.DeferredList([]).addCallback(function(res) {
+    var dl = Divmod.Defer.DeferredList([]).addCallback(function(res) {
         result = res;
     });
     assert(result instanceof Array);
@@ -150,8 +154,8 @@ function emptyDeferredList() {
 
 function fireOnOneCallback() {
     var result = null;
-    var dl = new Divmod.Defer.DeferredList(
-        [new Divmod.Defer.Deferred(), Divmod.Defer.succeed("success")],
+    var dl = Divmod.Defer.DeferredList(
+        [Divmod.Defer.Deferred(), Divmod.Defer.succeed("success")],
         true, false, false);
     dl.addCallback(function(res) {
         result = res;
@@ -164,8 +168,8 @@ function fireOnOneCallback() {
 
 function fireOnOneErrback() {
     var result = null;
-    var dl = new Divmod.Defer.DeferredList(
-        [new Divmod.Defer.Deferred(), Divmod.Defer.fail(new Error("failure"))],
+    var dl = Divmod.Defer.DeferredList(
+        [Divmod.Defer.Deferred(), Divmod.Defer.fail(new Error("failure"))],
         false, true, false);
     dl.addErrback(function(err) {
         result = err;

@@ -789,12 +789,16 @@ Nevow.Athena.IntrospectionWidget.methods(
         var document = self._logWindow.document;
 
         var div = document.createElement('div');
+        div.appendChild(document.createTextNode(event['message']));
+
         if (event['isError']) {
             div.setAttribute('class', 'log-message-error');
+            var tb = document.createElement('pre');
+            tb.appendChild(document.createTextNode(event['error'].getTraceback()));
+            div.appendChild(tb);
         } else if (event['channel']) {
             div.setAttribute('class', 'log-message-' + event['channel']);
         }
-        div.appendChild(document.createTextNode(event['message']));
         node.appendChild(div);
         div.scrollIntoView(false);
     },
