@@ -40,6 +40,7 @@ class TestRunner(TestSuiteFragment):
                 tags.input(type='submit', value='Run Tests')],
             tags.div['Tests passed: ', tags.span(_class='test-success-count')[0]],
             tags.div['Tests failed: ', tags.span(_class='test-failure-count')[0]],
+            tags.div['Tests completed in: ', tags.span(_class='test-time')['-']],
             tags.invisible(render=tags.directive('tests'))])
 
     def __init__(self, suite):

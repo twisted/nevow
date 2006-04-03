@@ -57,13 +57,17 @@ Nevow.Athena.Test.TestSuite.methods(
     },
 
     function _run(self, reporter) {
-        // For each child invoke the _run method
+        var allTests = [];
         for (var i = 0; i < self.childWidgets.length; ++i) {
             var widget = self.childWidgets[i];
             if (widget._run) {
-                widget._run(reporter);
+                var result = widget._run(reporter);
+                if (result instanceof Divmod.Defer.Deferred) {
+                    allTests.push(result);
+                }
             }
         }
+        return Divmod.Defer.DeferredList(allTests);
     });
 
 Nevow.Athena.Test.TestRunner = Nevow.Athena.Test.TestSuite.subclass('Nevow.Athena.Test.TestRunner');
@@ -72,12 +76,19 @@ Nevow.Athena.Test.TestRunner.methods(
         Nevow.Athena.Test.TestRunner.upcall(self, '__init__', node);
         self._successNode = self.nodeByAttribute('class', 'test-success-count');
         self._failureNode = self.nodeByAttribute('class', 'test-failure-count');
+        self._timingNode = self.nodeByAttribute('class', 'test-time');
     },
 
     function run(self) {
         self._successCount = 0;
         self._failureCount = 0;
-        self._run(self);
+        var testsStarted = new Date();
+        self._timingNode.innerHTML = '-';
+        var d = self._run(self);
+        d.addCallback(function(result) {
+            var now = new Date();
+            self._timingNode.innerHTML = (now.getTime() - testsStarted.getTime()) / 1000.0 + ' seconds';
+        });
         return false;
     },
 

@@ -215,7 +215,7 @@ Divmod.Defer.DeferredList.methods(
         }
 
         if (consumeErrors == undefined) {
-            self.consumeErrors == false;
+            consumeErrors = false;
         }
 
         /* These flags need to be set *before* attaching callbacks to the
