@@ -291,11 +291,13 @@ Nevow.Athena._actionHandlers = {
     },
 
     call: function(functionName, requestId, funcArgs) {
-        var funcObj = Divmod.namedAny(functionName);
+        var path = [null];
+        var funcObj = Divmod.namedAny(functionName, path);
+        var self = path.pop();
         var result = undefined;
         var success = true;
         try {
-            result = funcObj.apply(null, funcArgs);
+            result = funcObj.apply(self, funcArgs);
         } catch (error) {
             result = error;
             success = false;

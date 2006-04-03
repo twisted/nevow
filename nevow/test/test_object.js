@@ -86,6 +86,14 @@ function testUtil() {
     assert(Divmod.namedAny('not.a.real.package.or.name') == undefined);
     assert(Divmod.namedAny('Divmod') == Divmod);
     assert(Divmod.namedAny('Divmod.namedAny') == Divmod.namedAny);
+
+    var path = [];
+    assert(Divmod.namedAny('Divmod', path) == Divmod);
+    assert(path.length == 0);
+
+    assert(Divmod.namedAny('Divmod.namedAny', path) == Divmod.namedAny);
+    assert(path.length == 1);
+    assert(path[0] == Divmod);
 }
 
 function testMethod() {

@@ -38,7 +38,18 @@ Divmod.importURL = function(moduleName) {
 Divmod._global = this;
 
 
-Divmod.namedAny = function(name) {
+/* Retrieve an object via its fully-qualified javascript name.
+ *
+ * @type name: C{string}
+ * @param name: The name of an object.  For example, "Divmod.namedAny".
+ *
+ * @type path: C{array}
+ * @param path: An optional output array.  If provided, it will have the
+ * superior objects on the path to the given object pushed onto it.  For
+ * example, for "foo.bar.baz", C{foo} and then C{foo.bar} will be pushed
+ * onto it.
+ */
+Divmod.namedAny = function(name, /* optional output */ path) {
     var namedParts = name.split('.');
     var obj = Divmod._global;
     for (var i = 0; i < namedParts.length; ++i) {
@@ -46,6 +57,9 @@ Divmod.namedAny = function(name) {
         if (obj == undefined) {
             Divmod.debug('widget', 'Failed in namedAny for ' + name + 'at ' + namedParts[i]);
             break;
+        }
+        if (i != namedParts.length - 1 && path != undefined) {
+            path.push(obj);
         }
     }
     return obj;
