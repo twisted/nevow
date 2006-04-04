@@ -14,7 +14,49 @@ Divmod.Runtime.Platform.method(
         self.name = name;
     });
 
+Divmod.Runtime.Platform._EVAL_PROLOGUE = (
+    '<div xmlns="http://www.w3.org/1999/xhtml">' +
+        '<script id="athenaLargePayload" type="text/javascript">' +
+            '<![CDATA[' +
+                'function __athenaEval() {' +
+                    'return ');
+
+Divmod.Runtime.Platform._EVAL_EPILOGUE = (
+                           ';' +
+                '}' +
+            ']]>' +
+        '</script>' +
+    '</div>');
+
 Divmod.Runtime.Platform.methods(
+    function _evalScriptNode(self, expr) {
+        return (Divmod.Runtime.Platform._EVAL_PROLOGUE +
+                expr +
+                Divmod.Runtime.Platform._EVAL_EPILOGUE);
+    },
+
+    function eval(self, expr) {
+        /*
+         * For larger JSON payloads, inserting a script element is faster
+         * than using eval; ~20k seems to be a good threshhold.
+         */
+        if (expr.length > 20000) {
+            var head = document.getElementsByTagName('head').item(0);
+            var scriptHTML = self._evalScriptNode(expr);
+            Divmod.Runtime.theRuntime.appendNodeContent(head, scriptHTML);
+            var payload = __athenaEval();
+            __athenaEval = null;
+            /*
+             * Don't let the document fill up with script nodes!
+             */
+            var scriptNode = document.getElementById('athenaLargePayload');
+            scriptNode.parentNode.removeChild(scriptNode);
+            return payload;
+        } else {
+            return eval('(' + expr + ')');
+        }
+    },
+
     function getAttribute(self, node, namespaceURI, namespaceIdentifier, localName) {
         if (node.hasAttributeNS) {
             if (node.hasAttributeNS(namespaceURI, localName)) {
