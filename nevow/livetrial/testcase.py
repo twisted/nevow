@@ -1,6 +1,6 @@
-import inspect, types, unittest, os
+import inspect, types, os
 
-from twisted.trial import runner
+from twisted.trial import runner, unittest
 
 from nevow import athena
 
