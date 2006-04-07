@@ -231,7 +231,7 @@ Nevow.Athena.HTTPRequestOutput.methods(
             response[0], response[1]);
         requestWrapper.deferred.addCallback(function(result) {
             if (result.status == 200) {
-                return Divmod.Runtime.theRuntime.eval(result.response);
+                return Divmod.Runtime.theRuntime.evaluate(result.response);
             }
             throw new Error("Request failed: " + result.status);
         });
@@ -672,7 +672,7 @@ Nevow.Athena.Widget.get = function(node) {
         var widgetClass = Nevow.Athena.athenaClassFromNode(widgetNode);
         var initNode = document.getElementById('athena-init-args-' + widgetId);
         var initText = initNode.value;
-        var initArgs = Divmod.Runtime.theRuntime.eval(initText);
+        var initArgs = Divmod.Runtime.theRuntime.evaluate(initText);
         initArgs.unshift(widgetNode);
         Nevow.Athena.Widget._athenaWidgets[widgetId] = widgetClass.apply(null, initArgs);
     }

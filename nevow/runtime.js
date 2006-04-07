@@ -35,7 +35,7 @@ Divmod.Runtime.Platform.methods(
                 Divmod.Runtime.Platform._EVAL_EPILOGUE);
     },
 
-    function eval(self, expr) {
+    function evaluate(self, expr) {
         /*
          * For larger JSON payloads, inserting a script element is faster
          * than using eval; ~20k seems to be a good threshhold.
