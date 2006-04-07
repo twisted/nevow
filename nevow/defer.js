@@ -122,7 +122,7 @@ Divmod.Defer.Deferred.methods(
 
         if (self._isFailure(self._result)) {
             // This might be spurious
-            Divmod.err(self._result);
+            Divmod.err(self._result.error);
         }
     },
     function _startRunCallbacks(self, result) {
