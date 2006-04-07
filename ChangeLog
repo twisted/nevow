@@ -1,3 +1,23 @@
+2006-03-30  Tommi Virtanen <tv@twistedmatrix.com>
+
+       * nevow/static.py: Fix handling of range requests on static files.
+
+2006-03-30  Jp Calderone <exarkun@divmod.com>
+
+       * formless/freeform-defaults.css, formless/annotate.py: Style and
+       feedback improvements.
+
+2006-03-29  Jp Calderone <exarkun@divmod.com>
+
+       * examples/formbuilder/: Apply Cory Dodt's patch to make this
+       example work again.
+
+2006-03-27  Jp Calderone <exarkun@divmod.com>
+
+       * nevow/athena.py: Add getInitialArguments method which will be
+       invoked during rendering and may return a list or tuple of objects
+       which will be be passed to the client-side Widget's __init__ method.
+
 2006-03-24  Allen Short <washort@divmod.com>
 
 	* Upgrade MochiKit to 1.2
@@ -9,7 +29,7 @@
 
 2006-03-17  Jp Calderone <exarkun@divmod.com>
 
-	* nevow/json.py: Improved (hopefully correct this time ;) unicode
+	* nevow/json.py: Improve (hopefully correct this time ;) unicode
 	support.
 
 2006-03-08  Valentino Volonghi <dialtone@divmod.com>
