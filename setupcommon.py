@@ -1,9 +1,9 @@
 name='Nevow'
-version='0.7.0'
+version='0.8.0'
 maintainer = 'Divmod, Inc.'
 maintainer_email = 'support@divmod.org'
 description = 'Web Application Construction Kit'
-url='http://divmod.org/projects/nevow'
+url='http://divmod.org/trac/wiki/DivmodNevow'
 license='MIT'
 platforms=["any"]
 classifiers=[

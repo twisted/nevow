@@ -1,3 +1,7 @@
+2006-04-07  Jp Calderone <exarkun@divmod.com>
+
+	* Nevow 0.8.0 released
+
 2006-03-30  Tommi Virtanen <tv@twistedmatrix.com>
 
        * nevow/static.py: Fix handling of range requests on static files.

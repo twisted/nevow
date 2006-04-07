@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.3
+#!/usr/bin/python
 # -*- test-case-name: "nevow.test -xformless.test" -*-
 
 import os.path
