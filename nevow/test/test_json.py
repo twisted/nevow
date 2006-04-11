@@ -37,6 +37,7 @@ TEST_STRINGLIKE_OBJECTS = [
     u"string with trailing accented vowels: \xe1\xe9\xed\xf3\xfa\xfd\xff",
     u"string with trailing control characters: \f\b\n\t\r",
     u'string with high codepoint characters: \u0111\u2222\u3333\u4444\uffff',
+    u'string with very high codepoint characters: \U00011111\U00022222\U00033333\U00044444\U000fffff',
     ]
 
 
@@ -63,9 +64,6 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
                     struct, unstruct, bytes)
             self.assertEquals(unstruct, struct, failMsg)
             self.assert_(isinstance(unstruct, unicode), failMsg)
-
-    def testOrdinalRange(self):
-        self.assertRaises(ValueError, json.serialize, u'\U00010000')
 
     def testScientificNotation(self):
         self.assertEquals(json.parse('1e10'), 10**10)

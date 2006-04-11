@@ -148,13 +148,13 @@ _stringExpr = re.compile(
     re.VERBOSE)
 
 _controlMap = {
-    '\\f': '\f',
-    '\\b': '\b',
-    '\\n': '\n',
-    '\\t': '\t',
-    '\\r': '\r',
-    '\\"': '"',
-    '\\\\': '\\',
+    u'\\f': u'\f',
+    u'\\b': u'\b',
+    u'\\n': u'\n',
+    u'\\t': u'\t',
+    u'\\r': u'\r',
+    u'\\"': u'"',
+    u'\\\\': u'\\',
     }
 
 def _stringSub(m):
@@ -227,31 +227,20 @@ def parse(s):
 class CycleError(Exception):
     pass
 
-_lowChars = [r'\x%02x' % (n,) for n in range(256)]
-_passthru = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&()*+,-./:;<=>?@[]^_`{|}~ '
-for c in _passthru:
-    _lowChars[ord(c)] = c
-_lowChars[ord('\0')] = '\\0'
-_lowChars[ord('\b')] = '\\b'
-_lowChars[ord('\t')] = '\\t'
-_lowChars[ord('\n')] = '\\n'
-_lowChars[ord('\v')] = '\\v'
-_lowChars[ord('\f')] = '\\f'
-_lowChars[ord('\r')] = '\\r'
-_lowChars[ord('\\')] = '\\\\'
-_lowChars[ord('"')] = '\\"'
+_translation = dict([(o, u'\\x%02x' % (o,)) for o in range(0x20)])
+
+_translation.update({
+    ord(u'\\'): u'\\\\',
+    ord(u'"'): ur'\"',
+    ord(u'\f'): ur'\f',
+    ord(u'\b'): ur'\b',
+    ord(u'\n'): ur'\n',
+    ord(u'\t'): ur'\t',
+    ord(u'\r'): ur'\r',
+    })
 
 def stringEncode(s):
-    out = []
-    for c in s:
-        o = ord(c)
-        if o <= 0xff:
-            out.append(_lowChars[o])
-        elif o <= 0xffff:
-            out.append(r'\u%04x' % (o,))
-        else:
-            raise ValueError('Character ordinals greater than 0xffff are not supported: %r' % (c,))
-    return ''.join(out)
+    return s.translate(_translation).encode('utf-8')
 
 def _serialize(obj, w, seen):
     if isinstance(obj, types.BooleanType):
