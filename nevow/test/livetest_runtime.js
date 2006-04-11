@@ -27,8 +27,13 @@ Divmod.Runtime.Tests.SetNodeContent.methods(
 Divmod.Runtime.Tests.AppendNodeContentScripts = Nevow.Athena.Test.TestCase.subclass('AppendNodeContentScripts');
 Divmod.Runtime.Tests.AppendNodeContentScripts.methods(
     function run(self) {
-        Divmod.Runtime.Tests.AppendNodeContentScripts.scriptRan = false;
-        var html = '<div xmlns="http://www.w3.org/1999/xhtml"><script type="text/javascript">Divmod.Runtime.Tests.AppendNodeContentScripts.scriptRan = true;</script></div>';
+        Divmod.Runtime.Tests.AppendNodeContentScripts.runCount = 0;
+        var html = (
+            '<div xmlns="http://www.w3.org/1999/xhtml">' +
+                '<script type="text/javascript">Divmod.Runtime.Tests.AppendNodeContentScripts.runCount++;</script>' +
+                '<script type="text/javascript">Divmod.Runtime.Tests.AppendNodeContentScripts.runCount++;</script>' +
+                '<script type="text/javascript">Divmod.Runtime.Tests.AppendNodeContentScripts.runCount++;</script>' +
+           '</div>');
         Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
-        self.assertEquals(Divmod.Runtime.Tests.AppendNodeContentScripts.scriptRan, true);
+        self.assertEquals(Divmod.Runtime.Tests.AppendNodeContentScripts.runCount, 3);
     });

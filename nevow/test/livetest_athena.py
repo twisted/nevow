@@ -237,10 +237,14 @@ class ChildFragment(athena.LiveFragment):
     def getChildCount(self):
         return self.childCount
 
+
+
 class AutomaticClass(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.AutomaticClass'
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AutomaticClass'])
+
+
 
 class AthenaHandler(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.AthenaHandler'
@@ -250,6 +254,25 @@ class AthenaHandler(testcase.TestCase):
             '<athena:handler>',
             athena.handler(event='onclick', handler='handler')]])
 
+
+
 class FirstNodeByAttribute(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.FirstNodeByAttribute'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['FirstNodeByAttribute'])
+
+
+
+class DynamicWidgetInstantiation(testcase.TestCase):
+    jsClass = u'Nevow.Athena.Tests.DynamicWidgetInstantiation'
+
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['Dynamic Widget Instantiation'])
+
+    def getWidgets(self):
+        widgets = []
+        f = athena.LiveFragment(docFactory=loaders.stan(tags.div[widgets]))
+        f.setFragmentParent(self)
+        for i in xrange(5):
+            widgets.append(athena.LiveFragment(docFactory=loaders.stan(tags.span(render=tags.directive('liveFragment')))))
+            widgets[-1].setFragmentParent(f)
+        return f
+    athena.expose(getWidgets)

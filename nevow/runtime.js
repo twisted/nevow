@@ -58,6 +58,21 @@ Divmod.Runtime.Platform.methods(
                  */
                 return;
             }
+            if (typeof Divmod == 'undefined') {
+                /*
+                 * If I am invoked _after_ onunload is fired, the JS
+                 * environment has been torn down, and there is basically
+                 * nothing useful that any callbacks could do.  You can detect
+                 * this environment brokenness by looking at a top-level module
+                 * object (such as our own, Divmod).
+                 *
+                 * I also eliminate myself as the onreadystatechange handler of
+                 * this request, since at no future point will the execution
+                 * context magically be restored to a working state.
+                 */
+                req.onreadystatechange = null;
+                return;
+            }
             if (req.readyState == 4) {
                 var result = null;
                 try {
@@ -201,7 +216,21 @@ Divmod.Runtime.Firefox.methods(
 
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
-        var scripts = doc.getElementsByTagName('script');
+        var scriptsPileOfCrap = doc.getElementsByTagName('script');
+
+        /*
+         * scriptsPileOfCrap is a NODE LIST, not a LIST.  That means that the
+         * call to oldScript.parentNode.removeChild below will MUTATE it.
+         * Here we make a copy because we would actually like to iterate over
+         * all the nodes we just found.
+         */
+
+        var scripts = [];
+
+        for (var i = 0; i < scriptsPileOfCrap.length; i++) {
+            scripts.push(scriptsPileOfCrap[i]);
+        }
+
         var oldScript;
         var newScript;
         var newAttr;

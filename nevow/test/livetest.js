@@ -231,7 +231,7 @@ Nevow.Athena.Tests.AthenaHandler.methods(
         return false;
     });
 
-Nevow.Athena.Tests.FirstNodeByAttribute = Nevow.Athena.Test.TestCase.subclass('FirstNodeByAttribute');
+Nevow.Athena.Tests.FirstNodeByAttribute = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.FirstNodeByAttribute');
 Nevow.Athena.Tests.FirstNodeByAttribute.methods(
     function run(self) {
         var html = '<div xmlns="http://www.w3.org/1999/xhtml" class="foo" />';
@@ -239,4 +239,36 @@ Nevow.Athena.Tests.FirstNodeByAttribute.methods(
         var node = self.firstNodeByAttribute("class", "foo");
         self.assertEquals(node.className, "foo");
         self.assertEquals(node.tagName.toLowerCase(), "div");
+    });
+
+
+/**
+ * Test that retrieving several LiveFragments from the server using a
+ * method call returns something which can be passed to
+ * L{Divmod.Runtime.Platform.setNodeContent} to add new widgets to the
+ * page.
+ */
+Nevow.Athena.Tests.DynamicWidgetInstantiation = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.DynamicWidgetInstantiation');
+Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
+    function __init__(self, node, childCount) {
+        Nevow.Athena.Tests.DynamicWidgetInstantiation.upcall(self, '__init__', node);
+        self.expectedChildCount = childCount;
+    },
+
+    function run(self) {
+        var d = self.callRemote('getWidgets');
+        d.addCallback(function(result) {
+            self.waiting = Divmod.Defer.Deferred();
+            self.waitingCount = self.expectedChildCount;
+            Divmod.Runtime.theRuntime.setNodeContent(self.node, result);
+        });
+        return d;
+    },
+
+    function addChildWidget(self, newChild) {
+        Nevow.Athena.Tests.DynamicWidgetInstantiation.upcall(self, 'addChildWidget', newChild);
+        self.waitingCount--;
+        if (self.waitingCount == 0) {
+            self.waiting.callback(null);
+        }
     });
