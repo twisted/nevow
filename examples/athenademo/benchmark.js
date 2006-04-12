@@ -1,8 +1,6 @@
 
 // import Nevow.Athena
 
-Nevow.Benchmarks = {};
-
 function timer() {
     var d = new Date();
     return d.getSeconds() + ':' + d.getMilliseconds();

@@ -1,8 +1,6 @@
 
 // import Nevow.Athena
 
-Nevow.Athena.Tests = {};
-
 Nevow.Athena.Tests.WidgetInitializerArguments = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.WidgetInitializerArguments');
 Nevow.Athena.Tests.WidgetInitializerArguments.methods(
     function __init__(self, node) {

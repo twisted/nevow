@@ -1,5 +1,4 @@
 
-var Divmod = {};
 Divmod.debugging = false;
 
 Divmod.baseURL = function() {

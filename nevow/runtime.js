@@ -2,8 +2,6 @@
 // import Divmod
 // import Divmod.Defer
 
-Divmod.Runtime = {};
-
 Divmod.Runtime.Platform = Divmod.Class.subclass("Divmod.Runtime.Platform");
 
 Divmod.Runtime.Platform.DOM_DESCEND = 'Divmod.Runtime.Platform.DOM_DESCEND';

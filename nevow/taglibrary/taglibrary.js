@@ -1,4 +1,3 @@
 
 // import Nevow
 
-Nevow.TagLibrary = {};

@@ -1,10 +1,6 @@
 
 // import Nevow.Athena
 
-if (Nevow.Athena.Test == undefined) {
-    Nevow.Athena.Test = {};
-}
-
 Nevow.Athena.Test.TestCase = Nevow.Athena.Widget.subclass('Nevow.Athena.Test.TestCase');
 Nevow.Athena.Test.TestCase.methods(
     function fail(self, msg) {

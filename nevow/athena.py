@@ -575,6 +575,9 @@ class LivePage(rend.Page):
 
     page = property(lambda self: self)
 
+    # Modules needed to bootstrap
+    BOOTSTRAP_MODULES = ['MochiKit', 'Divmod', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
+
     def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, transportRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
 
@@ -588,7 +591,7 @@ class LivePage(rend.Page):
             transportRoot = url.here
         self.transportRoot = transportRoot
         self.liveFragmentChildren = []
-        self._includedModules = ['MochiKit', 'Divmod', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
+        self._includedModules = self.BOOTSTRAP_MODULES[:]
         self._disconnectNotifications = []
 
 
@@ -722,14 +725,18 @@ class LivePage(rend.Page):
         return self.jsModuleRoot.child(moduleName)
 
 
+    def getImportStan(self, moduleName):
+        var = ''
+        if '.' not in moduleName:
+            var = 'var '
+        moduleDef = '%s%s = {};' % (var, moduleName)
+        return [tags.script(type='text/javascript')[tags.raw(moduleDef)],
+                tags.script(type='text/javascript', src=self.getJSModuleURL(moduleName))]
+
+
     def render_liveglue(self, ctx, data):
         return ctx.tag[
-            tags.script(type='text/javascript', src=self.getJSModuleURL('MochiKit')),
-            tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod')),
-            tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod.Defer')),
-            tags.script(type='text/javascript', src=self.getJSModuleURL('Divmod.Runtime')),
-            tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow')),
-            tags.script(type='text/javascript', src=self.getJSModuleURL('Nevow.Athena')),
+            [self.getImportStan(mod) for mod in self.BOOTSTRAP_MODULES],
             tags.script(type='text/javascript')[tags.raw("""
                 Divmod._location = '%(baseURL)s';
                 Nevow.Athena.livepageId = '%(clientID)s';
@@ -916,11 +923,8 @@ class LiveFragment(rend.Fragment):
         modules = [dep.name for dep in self._getModuleForClass().allDependencies()]
 
         return (
-
             # Import stuff
-            [tags.script(type='text/javascript',
-                         src=self.getJSModuleURL(mod))
-             for mod in modules if self.page._shouldInclude(mod)],
+            [self.getImportStan(mod) for mod in modules if self.page._shouldInclude(mod)],
 
             # Dump some data for our client-side __init__ into a text area
             # where it can easily be found.
@@ -942,8 +946,8 @@ class LiveFragment(rend.Fragment):
             )
 
 
-    def getJSModuleURL(self, moduleName):
-        return self.page.getJSModuleURL(moduleName)
+    def getImportStan(self, moduleName):
+        return self.page.getImportStan(moduleName)
 
 
     def locateMethod(self, ctx, methodName):

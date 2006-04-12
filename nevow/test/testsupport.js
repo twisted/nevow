@@ -40,8 +40,11 @@ function setTimeout(f, n) {
  */
 
 
+var Divmod = {};
 load("../divmod.js");
 
+Divmod.Defer = {};
 load("../defer.js");
 
+var Nevow = {};
 load("../nevow.js");

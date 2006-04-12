@@ -1,8 +1,6 @@
 
 // import Nevow.Athena
 
-var WidgetDemo = {};
-
 WidgetDemo.Clock = Nevow.Athena.Widget.subclass('WidgetDemo.Clock');
 WidgetDemo.Clock.methods(
     function start(self, node, event) {

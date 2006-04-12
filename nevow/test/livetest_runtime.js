@@ -2,8 +2,6 @@
 // import Nevow.Athena.Test
 // import Divmod.Runtime
 
-Divmod.Runtime.Tests = {};
-
 Divmod.Runtime.Tests.AppendNodeContent = Nevow.Athena.Test.TestCase.subclass('AppendNodeContent');
 Divmod.Runtime.Tests.AppendNodeContent.methods(
     function run(self) {

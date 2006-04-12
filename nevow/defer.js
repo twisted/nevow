@@ -2,8 +2,6 @@
 
 // import Divmod
 
-Divmod.Defer = {};
-
 Divmod.Defer.AlreadyCalledError = Divmod.Class.subclass("Divmod.Defer.AlreadyCalledError");
 
 Divmod.Defer.Failure = Divmod.Class.subclass("Divmod.Defer.Failure");

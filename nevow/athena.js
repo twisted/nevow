@@ -5,8 +5,6 @@
 
 // import Nevow
 
-Nevow.Athena = {};
-
 Nevow.Athena.NAME = 'Nevow.Athena';
 Nevow.Athena.__repr__ = function() {
     return '[' + this.NAME + ']';
