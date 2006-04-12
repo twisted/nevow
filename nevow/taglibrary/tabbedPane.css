@@ -31,13 +31,15 @@
 .tabbedPane > div
 {
   clear: both;
-  display: none;
-  border: 1px solid #666;
-  margin-bottom: 1em;
-  padding: 0 1em;
+  position: absolute;
+  top: -1000px;
+  left: -1000px;
 }
 
 .tabbedPane > div.selected
 {
-  display: block;
+  position: static;
+  border: 1px solid #666;
+  margin-bottom: 1em;
+  padding: 1em;
 }
