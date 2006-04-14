@@ -1,5 +1,5 @@
 from twisted.python.components import registerAdapter
-from nevow import appserver, rend, loaders, tags as t, inevow, accessors
+from nevow import rend, loaders, tags as t, inevow, accessors
 
 class Edge(object):
     pass

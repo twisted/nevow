@@ -8,12 +8,12 @@ from twisted.trial import unittest
 from nevow import context
 from nevow import flat
 from nevow import loaders
-from nevow.tags import *
+from nevow import tags as t
 
 class TestDocFactories(unittest.TestCase):
 
     def test_stan(self):
-        doc = ul(id='nav')[li['one'], li['two'], li['three']]
+        doc = t.ul(id='nav')[t.li['one'], t.li['two'], t.li['three']]
         df = loaders.stan(doc)
         self.assertEquals(df.load()[0], '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>')
 
@@ -57,7 +57,7 @@ class TestDocFactories(unittest.TestCase):
     def test_patterned(self):
         """Test fetching a specific part (a pattern) of the document.
         """
-        doc = div[p[span(pattern='inner')['something']]]
+        doc = t.div[t.p[t.span(pattern='inner')['something']]]
         df = loaders.stan(doc, pattern='inner')
         self.assertEquals(df.load()[0].tagName, 'span')
         self.assertEquals(df.load()[0].children[0], 'something')
@@ -89,7 +89,7 @@ class TestDocFactoriesCache(unittest.TestCase):
     </div>
     '''
 
-    stan = div[p(pattern='1')['one'],p(pattern='2')['two']]
+    stan = t.div[t.p(pattern='1')['one'],t.p(pattern='2')['two']]
         
     def test_stan(self):
 
@@ -248,7 +248,7 @@ class TestContext(unittest.TestCase):
     """
     
     def test_stan(self):
-        doc = p['hello']
+        doc = t.p['hello']
         self._withAndWithout(loaders.stan(doc))
         
     def test_xmlstr(self):

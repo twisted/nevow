@@ -5,7 +5,7 @@ from twisted.python import log
 from zope.interface import implements
 from nevow import loaders, rend, inevow
 from nevow.stan import directive
-from nevow.tags import *
+from nevow import tags
 
 class VirtualHostList(rend.Page):
     def __init__(self, nvh):
@@ -36,7 +36,7 @@ class VirtualHostList(rend.Page):
 
         link += req.path
 
-        return context.tag[a(href=link)[ host ]]
+        return context.tag[tags.a(href=link)[ host ]]
  
     def render_title(self, context, data):
         req = context.locate(inevow.IRequest)
@@ -45,18 +45,18 @@ class VirtualHostList(rend.Page):
         return context.tag[ "Virtual Host Listing for %s://%s" % (proto, host) ]
 
     def render_stylesheet(self, context, data):
-        return style(type="text/css")[self.getStyleSheet()]
+        return tags.style(type="text/css")[self.getStyleSheet()]
         
     docFactory = loaders.stan(
-        html[
-            head[
-                title(render=render_title),
-                directive('stylesheet'),
+        tags.html[
+            tags.head[
+                tags.title(render=render_title),
+                tags.directive('stylesheet'),
             ],
-            body[
-                h1(render=render_title),
-                ul(data=directive("hostlist"), render=directive("sequence"))[
-                    li(pattern="item", render=render_hostlist)]]])
+            tags.body[
+                tags.h1(render=render_title),
+                tags.ul(data=directive("hostlist"), render=directive("sequence"))[
+                    tags.li(pattern="item", render=render_hostlist)]]])
  
 class NameVirtualHost(rend.Page):
     """I am a resource which represents named virtual hosts. 

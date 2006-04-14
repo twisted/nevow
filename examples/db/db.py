@@ -4,9 +4,8 @@ from zope.interface import implements
 from nevow import inevow
 from nevow import loaders
 from nevow import rend
+from nevow import tags
 from nevow.url import here
-
-from nevow.tags import *
 
 from formless import annotate
 from formless import webform
@@ -60,15 +59,15 @@ class DBBrowser(rend.Page):
     def render_row(self, context, data):
         theId, theSubj = data
         return context.tag[ # put our anchor in the li provided by the template
-            a(href=theId)[ theSubj ]
+            tags.a(href=theId)[ theSubj ]
         ]
 
     docFactory = loaders.stan(
-        html[
-            body[
-                h1["Welcome, user"],
-                ul(data=directive("queryDatabase"), render=directive("sequence"))[
-                    li(pattern="item", render=render_row)
+        tags.html[
+            tags.body[
+                tags.h1["Welcome, user"],
+                tags.ul(data=tags.directive("queryDatabase"), render=tags.directive("sequence"))[
+                    tags.li(pattern="item", render=render_row)
                     ],
                 webform.renderForms()
                 ]
@@ -107,25 +106,25 @@ class DBItem(rend.Page):
         args = inevow.IRequest(context).args
         view = args.get('view', ['view'])[0]
         if view == 'view':
-            selector = "View | ", a(href=here.add('view','edit'))[ "Edit" ]
+            selector = "View | ", tags.a(href=here.add('view','edit'))[ "Edit" ]
             editor = ''
         else:
-            selector = a(href=here.add('view','view'))["View"], " | Edit"
+            selector = tags.a(href=here.add('view','view'))["View"], " | Edit"
             editor = context.onePattern('edit')() # get one copy of the edit pattern
         viewer = context.onePattern('view')() # get one copy of the view pattern
         return selector, viewer, editor
 
     def render_itemDetail(self, context, data):
         theId, theSubject = doQuery('select * from foo where id = %s', self.original)[0]
-        return h2["Object ", theId], span["Subject: ", theSubject]
+        return tags.h2["Object ", theId], tags.span["Subject: ", theSubject]
 
     docFactory = loaders.stan(
-        html[
-            body[
-                p[a(href=here.parent())["Up"]],
-                div(render=render_viewSelector)[
-                    p(pattern="edit")[webform.renderForms()],
-                    p(pattern="view")[render_itemDetail]
+        tags.html[
+            tags.body[
+                tags.p[tags.a(href=here.parent())["Up"]],
+                tags.div(render=render_viewSelector)[
+                    tags.p(pattern="edit")[webform.renderForms()],
+                    tags.p(pattern="view")[render_itemDetail]
                     ]
                 ]
             ]

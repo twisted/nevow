@@ -1,6 +1,5 @@
 ## formbuilder
 
-from os.path import join as J, split as S
 from zope.interface import implements
 
 from nevow import rend

@@ -1,7 +1,7 @@
 
 from twisted.trial import unittest
 
-from nevow import livepage, tags, events, util, flat, inevow, loaders
+from nevow import livepage, tags, util, flat, inevow, loaders, context
 
 
 def makeCtx(inString=None, inAttribute=None):
@@ -93,10 +93,6 @@ class TestQuoting(unittest.TestCase):
 
 
 
-
-from twisted.trial import unittest
-
-from nevow import livepage, tags, context, events, util
 
 
 fakeId = '--handler-fake-id'

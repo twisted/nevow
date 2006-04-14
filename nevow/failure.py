@@ -7,7 +7,7 @@ import types
 import linecache
 import re
 
-from nevow.tags import *
+from nevow import tags as t
 from twisted.python import failure
 
 
@@ -155,14 +155,14 @@ def saferepr(x):
 
 
 def htmlDict(d):
-    return div(_class="dict")[
-        span(_class="heading")[
+    return t.div(_class="dict")[
+        t.span(_class="heading")[
             "Dictionary instance @ 0x%x" % id(d)
         ],
-        table(_class="dict")[[
-            tr[
-                td(_class="dictKey")[ k == '__builtins__' and 'builtin dictionary' or htmlrepr(k) ],
-                td(_class="dictValue")[ htmlrepr(v) ]
+        t.table(_class="dict")[[
+            t.tr[
+                t.td(_class="dictKey")[ k == '__builtins__' and 'builtin dictionary' or htmlrepr(k) ],
+                t.td(_class="dictValue")[ htmlrepr(v) ]
             ]
             for k, v in d.items()
         ]]
@@ -170,26 +170,16 @@ def htmlDict(d):
                 
 
 def htmlList(l):
-    io = StringIO()
-    w = io.write
-    w('<div class="list"><span class="heading">List instance @ %s</span>' % hex(id(l)))
-    for i in l:
-        w('<div class="listItem">%s</div>' % htmlrepr(i))
-    w('</div>')
-    return io.getvalue()
-
-
-def htmlList(l):
-    return div(_class="list")[
-        span(_class="heading")[ "List instance @ 0x%x" % id(l) ],
-        [div(_class="listItem")[ htmlrepr(i) ] for i in l]
+    return t.div(_class="list")[
+        t.span(_class="heading")[ "List instance @ 0x%x" % id(l) ],
+        [t.div(_class="listItem")[ htmlrepr(i) ] for i in l]
     ]
 
 
 def htmlInst(i):
-    return div(_class="instance")[
-        span(_class="instanceName")[ "%s instance at 0x%x" % (i.__class__, id(i)) ],
-        span(_class="instanceRepr")[ saferepr(i) ]
+    return t.div(_class="instance")[
+        t.span(_class="instanceName")[ "%s instance at 0x%x" % (i.__class__, id(i)) ],
+        t.span(_class="instanceRepr")[ saferepr(i) ]
     ]
 
 
@@ -198,18 +188,18 @@ def htmlString(s):
 
 
 def htmlFunc(f):
-    return div(_class="function")[
+    return t.div(_class="function")[
         "Function %s in file %s at line %s" % (f.__name__, f.func_code.co_filename, f.func_code.co_firstlineno)
     ]
 
 
 def htmlMeth(m):
-    return div(_class="method")[
+    return t.div(_class="method")[
         "Method %s in file %s at line %s" % (m.im_func.__name__, m.im_func.func_code.co_filename, m.im_func.func_code.co_firstlineno)
     ]
 
 def htmlUnknown(u):
-    return pre[
+    return t.pre[
         saferepr(u)
     ]
 
@@ -229,10 +219,10 @@ def htmlrepr(x):
 
 
 def varTable(usedVars):
-    return table(_class="variables")[[
-        tr(_class="varRow")[
-            td(_class="varName")[ key ],
-            td(_class="varValue")[ htmlrepr(value) ]
+    return t.table(_class="variables")[[
+        t.tr(_class="varRow")[
+            t.td(_class="varName")[ key ],
+            t.td(_class="varValue")[ htmlrepr(value) ]
         ]
         for (key, value) in usedVars
     ]]
@@ -240,18 +230,18 @@ def varTable(usedVars):
 
 def formatFailure(myFailure):
     if not isinstance(myFailure, failure.Failure):
-        return pre[ str(myFailure) ]
+        return t.pre[ str(myFailure) ]
 
-    stackTrace = div(_class="stackTrace")
-    failureOverview = p(_class="error")[ str(myFailure.type), ": ", str(myFailure.value) ]
+    stackTrace = t.div(_class="stackTrace")
+    failureOverview = t.p(_class="error")[ str(myFailure.type), ": ", str(myFailure.value) ]
 
     result = [
-        style(type="text/css")[
+        t.style(type="text/css")[
             stylesheet,
         ],
-        a(href="#tracebackEnd")[ failureOverview ],
+        t.a(href="#tracebackEnd")[ failureOverview ],
         stackTrace,
-        a(name="tracebackEnd")[ failureOverview ]
+        t.a(name="tracebackEnd")[ failureOverview ]
     ]
 
     first = 1
@@ -260,16 +250,16 @@ def formatFailure(myFailure):
         #if filename == '<string>':
         #    continue
         if first:
-            frame = div(_class="firstFrame")
+            frame = t.div(_class="firstFrame")
             first = 0
         else:
-            frame = div(_class="frame")
+            frame = t.div(_class="frame")
         stackTrace[ frame ]
 
-        snippet = div(_class="snippet")
+        snippet = t.div(_class="snippet")
         frame[
-            div(_class="location")[
-                filename, ", line ", lineno, " in ", span(_class="function")[ method ]
+            t.div(_class="location")[
+                filename, ", line ", lineno, " in ", t.span(_class="function")[ method ]
             ],
             snippet,
         ]
@@ -283,9 +273,9 @@ def formatFailure(myFailure):
             else:
                 snippetClass = "snippetLine"
             snippet[
-                div(_class=snippetClass)[
-                    span(_class="lineno")[ snipLineNo ],
-                    pre(_class="code")[ snipLine ]
+                t.div(_class=snippetClass)[
+                    t.span(_class="lineno")[ snipLineNo ],
+                    t.pre(_class="code")[ snipLine ]
                 ]
             ]
 
@@ -296,8 +286,8 @@ def formatFailure(myFailure):
                              if re.search(r'\Wself.%s\W' % (re.escape(key),), textSnippet) ]
                 if usedVars:
                     frame[
-                        div(_class="variables")[
-                            strong(_class="variableClass")[ "Self" ],
+                        t.div(_class="variables")[
+                            t.strong(_class="variableClass")[ "Self" ],
                             varTable(usedVars)
                         ]
                     ]
@@ -309,7 +299,7 @@ def formatFailure(myFailure):
                          if re.search(r'\W%s\W' % (re.escape(name),), textSnippet) ]
             if usedVars:
                 frame[
-                    div(_class="variables")[ strong(_class="variableClass")[ nm ] ],
+                    t.div(_class="variables")[ t.strong(_class="variableClass")[ nm ] ],
                     varTable(usedVars)
                 ]
 

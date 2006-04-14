@@ -16,7 +16,6 @@ from nevow import flat
 from nevow import rend
 from nevow.testutil import FakeRequest, TestCase
 
-from twisted.trial import util
 from nevow.flat import twist
 
 proto = stan.Proto('hello')
@@ -472,7 +471,7 @@ class TestDeferFlatten(Base):
         # A generator that raises an error
         def gen(ctx, data):
             yield 1
-            pop
+            raise Exception('This is an exception!')
             yield 2
             
         # Hacky imports
@@ -491,7 +490,7 @@ class TestDeferFlatten(Base):
         def error(failure):
             notquiteglobals['exception'] = failure.value
         def checker(result):
-            if not isinstance(notquiteglobals['exception'], NameError):
+            if not isinstance(notquiteglobals['exception'], Exception):
                 self.fail('deferflatten did not errback with the correct failure')
             return result
         d = twist.deferflatten(gen, ctx, io.write)

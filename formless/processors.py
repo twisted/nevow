@@ -8,15 +8,14 @@ from twisted.python import components
 
 from nevow.util import Deferred, DeferredList, getPOSTCharset
 
-from nevow.tags import *
-from nevow import inevow
+from nevow import inevow, tags
 from nevow.context import WovenContext
 
 import formless
 from formless.formutils import enumerate
 from formless import iformless
 
-faketag = html()
+faketag = tags.html()
 
 
 def exceptblock(f, handler, exception, *a, **kw):

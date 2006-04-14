@@ -7,7 +7,7 @@ from twisted.web import static
 
 from nevow import loaders
 from nevow import rend
-from nevow.tags import *
+from nevow import tags
 from nevow import url
 
 from formless import annotate
@@ -71,8 +71,8 @@ def render_pastingText(text):
     def _(context, data):
         colouriser = _colourisers.get('python')
         if colouriser:
-            return xml(colouriser(text))
-        return pre[xml(text)]
+            return tags.xml(colouriser(text))
+        return tags.pre[tags.xml(text)]
     return _
 
 def render_pasting(version):
@@ -205,7 +205,7 @@ class Version(BasePage):
 
     def render_version(self, context, data):
         version, author, theTime = data
-        context.fillSlots('link', a(href=[url.here.sibling(str(version))])[
+        context.fillSlots('link', tags.a(href=[url.here.sibling(str(version))])[
             render_time(theTime), ' (',author,')'
             ])
         return context.tag

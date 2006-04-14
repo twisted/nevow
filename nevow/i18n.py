@@ -1,7 +1,6 @@
-import errno
 from zope.interface import implements
 
-from nevow import inevow, flat
+from nevow import inevow
 
 
 def languagesFactory(ctx):

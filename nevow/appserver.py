@@ -63,7 +63,7 @@ class DefaultExceptionHandler:
     def renderInlineException(self, context, reason):
         from nevow import failure
         formatted = failure.formatFailure(reason)
-        desc = str(e)
+        desc = str(reason)
         return flat.serialize([
             stan.xml("""<div style="border: 1px dashed red; color: red; clear: both" onclick="this.childNodes[1].style.display = this.childNodes[1].style.display == 'none' ? 'block': 'none'">"""),
             desc,

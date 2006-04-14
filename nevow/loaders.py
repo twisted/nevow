@@ -30,14 +30,7 @@ from nevow import tags
 from nevow import flat
 from nevow.flat import flatsax
 
-try:
-    from twisted.python.reflect import getClass
-except ImportError:
-    def getClass(obj):
-        if hasattr(obj, '__class__'):
-            return obj.__class__
-        else:
-            return type(obj)
+from twisted.python.reflect import getClass
 
 
 class DocFactory:

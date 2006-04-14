@@ -1,6 +1,6 @@
-from zope.interface import implements, Interface
+from zope.interface import Interface
 from twisted.python.components import registerAdapter
-from nevow import athena, inevow, loaders, tags, util
+from nevow import athena, inevow, loaders, util
 
 class ICalculator(Interface):
     def buttonClicked(button):

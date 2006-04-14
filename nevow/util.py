@@ -3,7 +3,6 @@
 
 
 import os.path
-import sys
 
 
 def escapeToXML(text, isattrib = False):

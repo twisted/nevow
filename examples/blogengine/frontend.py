@@ -1,4 +1,3 @@
-import time
 from time import time as now
 from zope.interface import implements, Interface
 

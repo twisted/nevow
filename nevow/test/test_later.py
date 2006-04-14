@@ -5,7 +5,6 @@
 from twisted.internet import defer
 
 from nevow import context
-from nevow.tags import *
 from nevow import testutil
 from nevow.util import Deferred
 
@@ -34,8 +33,8 @@ class LaterRenderTest(RenderHelper):
         self.d2 = Deferred()
         self.r = rend.Page(
             docFactory=loaders.stan(
-                html(data=self)[
-                    'Hello ', invisible[invisible[invisible[invisible[deferit]]]],
+                tags.html(data=self)[
+                    'Hello ', tags.invisible[tags.invisible[tags.invisible[tags.invisible[deferit]]]],
                     deferdot,
                     ]
                 )
@@ -79,10 +78,10 @@ class LaterDataTest(RenderHelper):
         self.d = Deferred()
         self.d2 = Deferred()
         self.r = rend.Page(docFactory=loaders.stan(
-            html(data=self.data_later)[
+            tags.html(data=self.data_later)[
                 'Hello ', str, ' and '
                 'goodbye ',str,
-                span(data=self.data_later2, render=str)]))
+                tags.span(data=self.data_later2, render=str)]))
 
     def test_deferredSupport(self):
         req = self.renderIt()

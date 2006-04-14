@@ -9,6 +9,8 @@ from urllib import unquote, quote
 
 from zope.interface import implements
 
+from twisted.web.http import stringToDatetime
+
 from nevow import context, flat, inevow, util
 from nevow import __version__ as nevowversion
 

@@ -12,7 +12,7 @@ import stat
 from nevow import inevow
 from nevow import rend
 from nevow import loaders
-from nevow.tags import *
+from nevow import tags
 
 def formatFileSize(size):
     if size < 1024:
@@ -83,7 +83,7 @@ class DirectoryLister(rend.Page):
         return "Directory listing for %s" % urllib.unquote(request.uri)
 
     def render_tableLink(self, context, data):
-        return a(href=data['link'])[data['linktext']]
+        return tags.a(href=data['link'])[data['linktext']]
 
     def __repr__(self):  
         return '<DirectoryLister of %r>' % self.path
@@ -91,10 +91,10 @@ class DirectoryLister(rend.Page):
     __str__ = __repr__
 
 
-    docFactory = loaders.stan(html[
-      head[
-        title(data=directive('header'))[str],
-        style['''
+    docFactory = loaders.stan(tags.html[
+      tags.head[
+        tags.title(data=tags.directive('header'))[str],
+        tags.style['''
           th, .even td, .odd td { padding-right: 0.5em; }
           .even-dir { background-color: #efe0ef }
           .even { background-color: #eee }
@@ -112,26 +112,26 @@ class DirectoryLister(rend.Page):
           h1 {padding: 0.1em; background-color: #777; color: white; border-bottom: thin white dashed;}
           ''']
       ],
-      body[div(_class='directory-listing')[
-        h1(data=directive('header'))[str],
-        table(render=rend.sequence, data=directive('listing'))[
-          tr(pattern="header")[
-            th["Filename"],
-            th["Size"],
-            th["Content type"],
-            th["Content encoding"],
+      tags.body[tags.div(_class='directory-listing')[
+        tags.h1(data=tags.directive('header'))[str],
+        tags.table(render=rend.sequence, data=tags.directive('listing'))[
+          tags.tr(pattern="header")[
+            tags.th["Filename"],
+            tags.th["Size"],
+            tags.th["Content type"],
+            tags.th["Content encoding"],
           ],
-          tr(_class="even", pattern="item")[
-            td[a(render=directive("tableLink"))],
-            td(data=directive("filesize"))[str],
-            td(data=directive("type"))[str],
-            td(data=directive("encoding"))[str],
+          tags.tr(_class="even", pattern="item")[
+            tags.td[tags.a(render=tags.directive("tableLink"))],
+            tags.td(data=tags.directive("filesize"))[str],
+            tags.td(data=tags.directive("type"))[str],
+            tags.td(data=tags.directive("encoding"))[str],
           ],
-          tr(_class="odd", pattern="item")[
-            td[a(render=directive("tableLink"))],
-            td(data=directive("filesize"))[str],
-            td(data=directive("type"))[str],
-            td(data=directive("encoding"))[str],
+          tags.tr(_class="odd", pattern="item")[
+            tags.td[tags.a(render=tags.directive("tableLink"))],
+            tags.td(data=tags.directive("filesize"))[str],
+            tags.td(data=tags.directive("type"))[str],
+            tags.td(data=tags.directive("encoding"))[str],
           ]
         ]
       ]]

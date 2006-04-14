@@ -8,11 +8,9 @@ from zope.interface import implements
 from twisted.python import components
 
 from nevow import inevow
-from nevow.tags import *
+from nevow import tags
 
 from formless import iformless
-
-import os.path
 
 
 try:
@@ -142,4 +140,4 @@ def getError(context):
     err = errors.getError(context.key)
     if err is not None:
         return err
-    return comment["\nNo error for error key: %s\n" % context.key]
+    return tags.comment["\nNo error for error key: %s\n" % context.key]

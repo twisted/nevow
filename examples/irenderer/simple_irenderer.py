@@ -1,4 +1,4 @@
-from zope.interface import implements, Interface
+from zope.interface import implements
 
 from twisted.python.components import registerAdapter, Adapter
 

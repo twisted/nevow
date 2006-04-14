@@ -11,9 +11,9 @@ from nevow import guard
 from nevow import context
 from nevow import appserver
 
-from twisted.cred.checkers import *
-from twisted.cred.portal import *
-from twisted.cred.credentials import *
+from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse, AllowAnonymousAccess, ANONYMOUS
+from twisted.cred.portal import Portal, IRealm
+from twisted.cred.credentials import IUsernamePassword, IAnonymous
 from twisted.internet import address
 
 from nevow.testutil import TestCase

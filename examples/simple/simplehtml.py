@@ -1,9 +1,5 @@
-from twisted.application import service
-from twisted.application import internet
-
 from twisted.python import util
 
-from nevow import appserver
 from nevow import inevow
 from nevow import loaders
 from nevow import rend

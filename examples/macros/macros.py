@@ -1,5 +1,5 @@
 from twisted.python import util
-from nevow import rend, inevow, tags as t, loaders
+from nevow import rend, tags as t, loaders
 
 import itertools
 counter1 = itertools.count()

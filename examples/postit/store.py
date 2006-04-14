@@ -1,7 +1,7 @@
 from zope.interface import implements, Interface
 
 from axiom import item, store
-from axiom.attributes import text, integer, timestamp
+from axiom.attributes import text, timestamp
 from epsilon.extime import Time
 
 class IPostit(Interface):

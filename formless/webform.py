@@ -6,7 +6,6 @@
 
 from __future__ import generators
 
-import os.path
 import warnings
 from zope.interface import implements, Interface
 
@@ -14,7 +13,7 @@ from twisted.python import components
 
 from nevow import inevow
 from nevow.stan import slot
-from nevow.tags import *
+from nevow import tags
 from nevow import util
 from nevow.context import NodeNotFound
 
@@ -22,22 +21,7 @@ from formless import iformless
 from formless.formutils import FormDefaults, FormErrors, calculatePostURL, keyToXMLID, getError
 
 
-try:
-    from nevow.static import File
-except ImportError:
-    class File(object):
-        implements(inevow.IResource)
-        def __init__(self, path, content_type='text/plain'):
-            self.path = path
-            self.content_type = content_type
-
-        def locateChild(self, *args):
-            from nevow import rend
-            return rend.NotFound
-
-        def renderHTTP(self, ctx):
-            inevow.IRequest(ctx).setHeader('Content-type', self.content_type)
-            return open(self.path).read()
+from nevow.static import File
 
 defaultCSS = File(util.resource_filename('formless', 'freeform-default.css'), 'text/css')
 
@@ -60,12 +44,12 @@ class BaseInputRenderer(components.Adapter):
         context.remember(data.typedValue, iformless.ITyped)
 
         if data.typedValue.getAttribute('immutable'):
-            inp = span(id=keyToXMLID(context.key))[value]
+            inp = tags.span(id=keyToXMLID(context.key))[value]
         else:
             ##value may be a deferred; make sure to wait on it properly before calling self.input
             ## TODO: If flattening this results in an empty string, return an empty string
-            inp = invisible(
-                render=lambda c, value: self.input( context, invisible(), data, data.name, value ),
+            inp = tags.invisible(
+                render=lambda c, value: self.input( context, tags.invisible(), data, data.name, value ),
                 data=value)
 
         if data.typedValue.getAttribute('hidden') or data.typedValue.getAttribute('compact'):
@@ -87,16 +71,16 @@ class BaseInputRenderer(components.Adapter):
 class PasswordRenderer(BaseInputRenderer):
     def input(self, context, slot, data, name, value):
         return [
-            input(id=keyToXMLID(context.key), name=name, type="password", _class="freeform-input-password"),
+            tags.input(id=keyToXMLID(context.key), name=name, type="password", _class="freeform-input-password"),
             " Again ",
-            input(name="%s____2" % name, type="password", _class="freeform-input-password"),
+            tags.input(name="%s____2" % name, type="password", _class="freeform-input-password"),
         ]
 
 
 class PasswordEntryRenderer(BaseInputRenderer):
     def input(self, context, slot, data, name, value):
         return slot[
-            input(id=keyToXMLID(context.key), type='password', name=name,
+            tags.input(id=keyToXMLID(context.key), type='password', name=name,
                   _class='freeform-input-password')]
 
 
@@ -107,14 +91,14 @@ class StringRenderer(BaseInputRenderer):
         else:
             T="text"
         return slot[
-            input(id=keyToXMLID(context.key), type=T, name=name, value=value,
+            tags.input(id=keyToXMLID(context.key), type=T, name=name, value=value,
                   _class='freeform-input-%s' % T)]
 
 
 class TextRenderer(BaseInputRenderer):
     def input(self, context, slot, data, name, value):
         return slot[
-            textarea(id=keyToXMLID(context.key), name=name, _class="freeform-textarea", rows=8, cols=40)[
+            tags.textarea(id=keyToXMLID(context.key), name=name, _class="freeform-textarea", rows=8, cols=40)[
                 value or '']]
 
 
@@ -123,7 +107,7 @@ class BooleanRenderer(BaseInputRenderer):
         ## The only difference here is the "checked" attribute; the value is still the same because
         ## we want true to be passed to the server when the checkbox is checked and the form
         ## is posted.
-        node = input(id=keyToXMLID(context.key), type="checkbox", name=name, value='True', _class="freeform-input-checkbox")
+        node = tags.input(id=keyToXMLID(context.key), type="checkbox", name=name, value='True', _class="freeform-input-checkbox")
         if value:
             node(checked="checked")
 
@@ -131,12 +115,12 @@ class BooleanRenderer(BaseInputRenderer):
         # in request.args with the name data.name. So let's force the value False to always
         # be in request.args[data.name]. If the checkbox is checked, the value True will
         # be first, and we will find that.
-        return slot[node, input(type="hidden", name=name, value="False")]
+        return slot[node, tags.input(type="hidden", name=name, value="False")]
 
 
 class FileUploadRenderer(BaseInputRenderer):
     def input(self, context, slot, data, name, value):
-        return slot[input(id=keyToXMLID(context.key), type="file", name=name,
+        return slot[tags.input(id=keyToXMLID(context.key), type="file", name=name,
                           _class='freeform-input-file')]
 
 
@@ -163,8 +147,8 @@ def isChecked(c, d):
 
 
 class ChoiceRenderer(BaseInputRenderer):
-    default_select = select(id=slot('id'), name=slot('name'), render=directive('sequence'))[
-        option(pattern="item", 
+    default_select = tags.select(id=slot('id'), name=slot('name'), render=tags.directive('sequence'))[
+        tags.option(pattern="item", 
             value=valToKey, 
             render=isSelected)[
             lambda c, d: iformless.ITyped(c).stringify(d)]]
@@ -187,9 +171,9 @@ class ChoiceRenderer(BaseInputRenderer):
 
 
 class RadioRenderer(ChoiceRenderer):
-    default_select = span(id=slot('id'), render=directive('sequence'))[
-        div(pattern="item", _class="freeform-radio-option")[
-            input(type="radio", name=slot('name'), value=valToKey, render=isChecked)[
+    default_select = tags.span(id=slot('id'), render=tags.directive('sequence'))[
+        tags.div(pattern="item", _class="freeform-radio-option")[
+            tags.input(type="radio", name=slot('name'), value=valToKey, render=isChecked)[
                 lambda c, d: iformless.ITyped(c).stringify(d)]]]
 
 
@@ -228,22 +212,22 @@ class GroupBindingRenderer(components.Adapter):
                 renderer = iformless.IBindingRenderer(bnd, defaultBindingRenderer)
                 renderer.isGrouped = True
                 renderer.needsSkin = True
-                yield invisible(
+                yield tags.invisible(
                     data=bnd,
                     render=renderer,
                     key=name)
 
-        return getError(context), form(
+        return getError(context), tags.form(
             id=keyToXMLID(context.key),
             enctype="multipart/form-data",
             action=calculatePostURL(context, data),
             method="post",
             **{'accept-charset':'utf-8'})[
-                fieldset[
-                    legend(_class="freeform-form-label")[data.label],
-                    input(type='hidden', name='_charset_'),
+                tags.fieldset[
+                    tags.legend(_class="freeform-form-label")[data.label],
+                    tags.input(type='hidden', name='_charset_'),
                     generateBindings(),
-                    input(type="submit")]]
+                    tags.input(type="submit")]]
 
 
 class BaseBindingRenderer(components.Adapter):
@@ -253,11 +237,11 @@ class BaseBindingRenderer(components.Adapter):
     needsSkin = False
     def calculateDefaultSkin(self, context):
         if self.isGrouped:
-            frm = invisible
+            frm = tags.invisible
             butt = ''
-            fld = invisible
+            fld = tags.invisible
         else:
-            frm = form(
+            frm = tags.form(
                 id=slot('form-id'),
                 name=slot('form-id'),
                 action=slot('form-action'),
@@ -266,13 +250,13 @@ class BaseBindingRenderer(components.Adapter):
                 **{'accept-charset':'utf-8'}
                 )
             butt = slot('form-button')
-            fld = fieldset[input(type='hidden', name='_charset_')]
+            fld = tags.fieldset[tags.input(type='hidden', name='_charset_')]
 
         ## Provide default skin since no skin was provided for us.
         context.tag.clear()[
-            frm[fld[legend(_class="freeform-form-label")[ slot('form-label') ],
-                    div(_class="freeform-form-description")[slot('form-description')],
-                    div(_class="freeform-form-error")[ slot('form-error') ],
+            frm[fld[tags.legend(_class="freeform-form-label")[ slot('form-label') ],
+                    tags.div(_class="freeform-form-description")[slot('form-description')],
+                    tags.div(_class="freeform-form-error")[ slot('form-error') ],
 
                     slot('form-arguments'), butt ]]]
 
@@ -289,7 +273,7 @@ class PropertyBindingRenderer(BaseBindingRenderer):
         context.remember(data.typedValue, iformless.ITyped)
         typedRenderer = iformless.ITypedRenderer(data.typedValue, defaultBindingRenderer)
         if typedRenderer.complexType:
-            return invisible(data=data, render=typedRenderer)
+            return tags.invisible(data=data, render=typedRenderer)
 
         if self.needsSkin or not context.tag.children:
             self.calculateDefaultSkin(context)
@@ -297,7 +281,7 @@ class PropertyBindingRenderer(BaseBindingRenderer):
         if self.isGrouped or data.typedValue.getAttribute('immutable'):
             subm = ''
         else:
-            subm = input(type="submit", name="change", value="Change")
+            subm = tags.input(type="submit", name="change", value="Change")
 
         self.fillForm(context, data)
         context.fillSlots( 'form-label', '' )
@@ -318,11 +302,11 @@ class PropertyBindingRenderer(BaseBindingRenderer):
         return context.tag
 
 
-freeformDefaultContentPattern = invisible[
-    label(_class="freeform-label", _for=slot('id'))[ slot('label') ],
-    span(_class="freeform-input")[ slot('input') ],
-    div(_class="freeform-error")[ slot('error') ],
-    div(_class="freeform-description")[label(_for=slot('id'))[ slot('description') ]]].freeze()
+freeformDefaultContentPattern = tags.invisible[
+    tags.label(_class="freeform-label", _for=slot('id'))[ slot('label') ],
+    tags.span(_class="freeform-input")[ slot('input') ],
+    tags.div(_class="freeform-error")[ slot('error') ],
+    tags.div(_class="freeform-description")[tags.label(_for=slot('id'))[ slot('description') ]]].freeze()
 
 
 class MethodBindingRenderer(BaseBindingRenderer):
@@ -344,9 +328,9 @@ class MethodBindingRenderer(BaseBindingRenderer):
             try:
                 button_pattern = context.tag.onePattern( 'form-button' )
             except NodeNotFound:
-                button_pattern = invisible[ slot('input') ]
+                button_pattern = tags.invisible[ slot('input') ]
 
-            button_pattern.fillSlots( 'input', input(type='submit', value=data.action or data.label, name=data.name, class_="freeform-button") )
+            button_pattern.fillSlots( 'input', tags.input(type='submit', value=data.action or data.label, name=data.name, class_="freeform-button") )
 
             context.fillSlots( 'form-button', button_pattern )
 
@@ -380,10 +364,10 @@ class ButtonRenderer(components.Adapter):
     implements(inevow.IRenderer)
 
     def rend(self, context, data):
-        return input(id=keyToXMLID(context.key), type='submit', value=data.label, name=data.name, class_="freeform-button")
+        return tags.input(id=keyToXMLID(context.key), type='submit', value=data.label, name=data.name, class_="freeform-button")
 
 
-freeformDefaultForm = div(_class="freeform-form").freeze()
+freeformDefaultForm = tags.div(_class="freeform-form").freeze()
 
 
 def renderForms(configurableKey='', bindingNames=None, bindingDefaults=None):
@@ -479,5 +463,5 @@ def renderForms(configurableKey='', bindingNames=None, bindingDefaults=None):
                 yield d
 
         return _innerFormRenderIt
-    return invisible(render=formRenderer)
+    return tags.invisible(render=formRenderer)
 

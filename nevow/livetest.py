@@ -11,9 +11,6 @@ XPathResult = js.XPathResult
 null = js.null
 
 
-import os.path
-
-
 class xpath(object):
     def __init__(self, path):
         self.path = path

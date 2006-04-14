@@ -2,7 +2,7 @@ import os, string, random
 
 from twisted.internet import task
 
-from nevow import canvas, rend, static
+from nevow import canvas, rend
 
 
 DEBUG = False
@@ -139,6 +139,7 @@ class CanvasDemo(canvas.Canvas):
                 I.move(*rndpt(self.width, self.height))
 
     # See above comment
+    #from nevow import static
     #child_images = static.File('images')
 
     def onMouseDown(self, canvas, x, y):

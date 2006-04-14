@@ -2,7 +2,6 @@
 # See LICENSE for details.
 
 from zope.interface import implements, Interface
-from twisted.python.components import registerAdapter
 
 from twisted.internet import defer
 from twisted.trial import unittest
@@ -14,7 +13,8 @@ from nevow import flat
 from nevow import rend
 from nevow import loaders
 from nevow.stan import slot
-from nevow.tags import *
+from nevow.tags import directive, p, html, ul, li, span, table, tr, th, td
+from nevow.tags import div, invisible, head, title, strong, body, a
 from nevow import testutil
 from nevow import url
 from nevow import util

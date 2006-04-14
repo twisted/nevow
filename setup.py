@@ -2,7 +2,6 @@
 # -*- test-case-name: "nevow.test -xformless.test" -*-
 
 import os.path
-from distutils.command import install
 from distutils.core import setup
 import glob
 import sys

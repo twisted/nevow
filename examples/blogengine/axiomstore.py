@@ -1,4 +1,4 @@
-from iblogengine import *
+from iblogengine import IBlog
 from zope.interface import implements
 from axiom import item, store, attributes, sequence
 from epsilon.extime import Time

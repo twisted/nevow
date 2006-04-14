@@ -18,7 +18,6 @@ Mostly, you'll use the renderers:
 """
 
 from cStringIO import StringIO
-import os.path
 from zope.interface import implements, providedBy
 import twisted.python.components as tpc
 

@@ -3,8 +3,6 @@
 
 import urlparse, urllib
 
-from twisted.trial import unittest
-
 from nevow import context, url, inevow, util, loaders
 from nevow import tags
 from nevow.testutil import TestCase, FakeRequest

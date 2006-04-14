@@ -1,5 +1,5 @@
 from twisted.internet import task
-from nevow import rend, loaders, livepage, tags as t
+from nevow import loaders, livepage, tags as t
 from nevow.taglibrary.livetags import component, componentGlue
 from nevow.taglibrary.progressbar import progressBar, progressBarGlue
 

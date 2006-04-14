@@ -1,8 +1,6 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-import os
-
 from zope.interface import implements
 
 from twisted.internet import defer

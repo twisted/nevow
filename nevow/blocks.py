@@ -38,9 +38,9 @@ from zope.interface import implements
 
 from nevow import static
 from nevow import inevow
-from nevow.tags import *
+from nevow import tags
 
-boxStyle = xml("""
+boxStyle = tags.xml("""
 span.nevow-blocks-block {
     display: inline-block;
     -moz-binding: url('/mozbinding#inlineblock'); }
@@ -58,7 +58,7 @@ div.nevow-blocks-line {
     margin-right: 5px; }
 """)
 
-js =xml( """
+js = tags.xml( """
 function collapse(node, collapsedText, expandedText) {
     for (var i = 0; i < node.childNodes.length; i++) {
         var childNode = node.childNodes[i]
@@ -86,8 +86,8 @@ function collapse(node, collapsedText, expandedText) {
 }//""")
 
 blocks_glue = [
-    style(type="text/css")[ boxStyle ],
-    script(type="text/javascript")[ comment[js] ]]
+    tags.style(type="text/css")[ boxStyle ],
+    tags.script(type="text/javascript")[ tags.comment[js] ]]
 
 
 mozBinding = """<?xml version="1.0"?>
@@ -143,8 +143,8 @@ class _Blocks(object):
                 for (k, v) in kw.items()]))
 
 
-block = _Blocks(span, 'nevow-blocks-block')
-line = _Blocks(div, 'nevow-blocks-line')
+block = _Blocks(tags.span, 'nevow-blocks-block')
+line = _Blocks(tags.div, 'nevow-blocks-line')
 
 
 class collapser(object):
@@ -171,7 +171,7 @@ class collapser(object):
             self.collapsed = 'expanded'
 
     def rend(self, ctx, data):
-        return (span(
+        return (tags.span(
             _class="collapser-line",
             onclick=(
                 "collapse(this, '",
@@ -179,12 +179,12 @@ class collapser(object):
                 "', '",
                 self.headExpanded,
                 "');"))[
-            img(_class="visibilityImage", src="/images/outline-%s.png" % self.collapsed),
-            span(_class="headText", style="color: blue; text-decoration: underline; cursor: pointer;")[
+            tags.img(_class="visibilityImage", src="/images/outline-%s.png" % self.collapsed),
+            tags.span(_class="headText", style="color: blue; text-decoration: underline; cursor: pointer;")[
                 self.collapsed == 'collapsed' and self.headCollapsed or self.headExpanded ]
         ],
-        xml('&nbsp;'),
-        div(_class=self.collapsed)[
+        tags.xml('&nbsp;'),
+        tags.div(_class=self.collapsed)[
             self.body
         ])
 

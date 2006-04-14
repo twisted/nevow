@@ -1,7 +1,6 @@
 from xml.dom import pulldom
 from cStringIO import StringIO
 from twisted.python import usage
-from twisted.application import app
 import nevow
 
 class LineBasedStream(object):
