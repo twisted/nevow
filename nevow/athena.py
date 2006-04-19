@@ -863,6 +863,10 @@ class LiveFragment(rend.Fragment):
 
     jsClass = u'Nevow.Athena.Widget'
 
+    fragmentParent = None
+
+    page = None
+
     def __init__(self, *a, **k):
         super(LiveFragment, self).__init__(*a, **k)
         self.liveFragmentChildren = []
