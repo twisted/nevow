@@ -17,6 +17,15 @@ class LivePageError(Exception):
     """base exception for livepage errors"""
 
 
+
+class OrphanedFragment(Exception):
+    """
+    Raised if you try to render a L{LiveFragment} without somehow first setting
+    its fragment parent.
+    """
+
+
+
 def neverEverCache(request):
     """
     Set headers to indicate that the response to this request should never,
@@ -887,6 +896,8 @@ class LiveFragment(rend.Fragment):
 
 
     def rend(self, context, data):
+        if self.page is None:
+            raise OrphanedFragment(self)
         self._athenaID = self.page.addLocalObject(self)
         context.fillSlots('athena:id', self._athenaID)
         return super(LiveFragment, self).rend(context, data)
