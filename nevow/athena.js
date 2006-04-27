@@ -268,8 +268,7 @@ Nevow.Athena._notifyOnDisconnectCounter = 0;
  * indicating the reason the connection was lost.
  */
 Nevow.Athena.notifyOnDisconnect = function(callback) {
-    var d;
-    d = new Divmod.Defer.Deferred();
+    var d = Divmod.Defer.Deferred();
     /*
      * Cheat a little bit.  Add a Deferred to the remoteCalls object
      * (DICTIONARY NGNGRNGRNGNRN) so that when the connection is lost, we
@@ -279,6 +278,7 @@ Nevow.Athena.notifyOnDisconnect = function(callback) {
      * colliding with an actual remote call.
      */
     Nevow.Athena.remoteCalls['notifyOnDisconnect-' + Nevow.Athena._notifyOnDisconnectCounter] = d;
+    Nevow.Athena._notifyOnDisconnectCounter++;
     d.addBoth(callback);
 };
 
