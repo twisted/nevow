@@ -38,16 +38,10 @@ def deferflatten(stan, ctx, writer):
     return finished
     
 
-class ContextualClosure(object):
-    __slots__ = ['cell', 'context']
-    def __init__(self, cell, context):
-        self.cell = cell
-        self.context = context
-
-def ContextualClosureSerializer(original, context):
-    return flat.serialize(original.cell, original.context)
-
 def DeferredSerializer(original, context):
-    return original.addCallback(lambda r: (flat.serialize(r, context), ContextualClosure(r, context))[1])
-
-flat.registerFlattener(ContextualClosureSerializer, ContextualClosure)
+    d = Deferred()
+    def cb(result):
+        d.callback(flat.serialize(result, context))
+        return result
+    original.addCallback(cb)
+    return d

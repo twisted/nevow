@@ -93,13 +93,29 @@ class LaterDataTest(RenderHelper):
 
 
 class SuperLaterDataTest(RenderHelper):
-    def setUp(self):
+    def test_realDeferredSupport(self):
         doc = tags.html[
             tags.slot('foo'), tags.slot('foo')]
         doc.fillSlots('foo', defer.succeed(tags.span['Foo!!!']))
         self.r = rend.Page(docFactory=loaders.stan(doc))
-
-
-    def test_realDeferredSupport(self):
         req = self.renderIt()
         self.assertEquals(req.v, '<html><span>Foo!!!</span><span>Foo!!!</span></html>')
+
+
+    def test_rendererCalledOnce(self):
+        """
+        Make sure that if a Deferred fires with a render function that the
+        render function is called only once.
+        """
+        calls = []
+        def renderer(ctx, data):
+            calls.append(None)
+            return str(len(calls))
+        doc = tags.html[tags.directive('renderer')]
+        class RendererPage(rend.Page):
+            docFactory = loaders.stan(doc)
+            def render_renderer(self, ctx, data):
+                return defer.succeed(renderer)
+        self.r = RendererPage()
+        req = self.renderIt()
+        self.assertEquals(req.v, '<html>1</html>')
