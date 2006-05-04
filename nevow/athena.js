@@ -678,9 +678,13 @@ Nevow.Athena.Widget.get = function(node) {
 };
 
 /**
- * Search the whole document for a particular widget id.
+ * Retrieve the Widget with the given widget id.
  */
 Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
+    var widget = Nevow.Athena.Widget._athenaWidgets[widgetId];
+    if (widget != undefined) {
+        return widget;
+    }
     var visitor = function(node) {
         return (Nevow.Athena.athenaIDFromNode(node) == widgetId);
     }
