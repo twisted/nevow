@@ -4,6 +4,17 @@ Nevow.TagLibrary.TabbedPane = Nevow.Athena.Widget.subclass("Nevow.TabbedPane");
 
 Nevow.TagLibrary.TabbedPane.methods(
     function __init__(self, node) {
+        self._loaded = false;
+        self._pendingTabSwitch = null;
+        MochiKit.DOM.addLoadEvent(function() {
+            self.node.style.opacity = "";
+            self._loaded = true;
+            if(self._pendingTabSwitch) {
+                /* switch to the tab that was most recently clicked
+                   while we were busy loading */
+                self.tabClicked(self._pendingTabSwitch);
+            }
+        });
         var name = node.getAttribute("name");
         self._tabPrefix = "taglibrary-tabbedpane-" + name + "-tabname-";
         self._pagePrefix = "taglibrary-tabbedpane-" + name + "-tabdata-";
@@ -21,6 +32,10 @@ Nevow.TagLibrary.TabbedPane.methods(
     },
 
     function tabClicked(self, tab) {
+        if(!self._loaded) {
+            self._pendingTabSwitch = tab;
+            return;
+        }
 
         if(!self.lastSelectedTab) {
             var selected = self.nodesByAttribute("class", "selected");
@@ -42,7 +57,7 @@ Nevow.TagLibrary.TabbedPane.methods(
 
         self.lastSelectedTab.className = self._tabPrefix + self.lastSelectedOffset;
         self.lastSelectedPage.className = self._pagePrefix + self.lastSelectedOffset;
-            
+
         var tabOffset = tab.className.substr(self._tabPrefix.length, tab.className.length);
         var page = self._getHandyNode(self._pagePrefix + tabOffset);
         tab.className = page.className = self._selectedClassName;

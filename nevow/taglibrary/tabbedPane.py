@@ -67,7 +67,10 @@ class TabbedPaneFragment(athena.LiveFragment):
     jsClass = u'Nevow.TagLibrary.TabbedPane'
 
     docFactory = loaders.xmlstr("""
-<div class="tabbedPane" xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:render="liveFragment">
+<div class="tabbedPane"
+  xmlns:nevow="http://nevow.com/ns/nevow/0.1"
+  nevow:render="liveFragment"
+  style="opacity: .3">
     <nevow:attr name="name"><nevow:invisible nevow:render="name" /></nevow:attr>
     <ul class="tabs">
         <nevow:invisible nevow:render="tabs" />
