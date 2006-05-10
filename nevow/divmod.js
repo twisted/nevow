@@ -314,9 +314,38 @@ Divmod.Logger.methods(
 
 
 Divmod.logger = new Divmod.Logger();
-Divmod.msg = function() { return Divmod.logger.msg.apply(Divmod.logger, arguments); };
-Divmod.err = function() { return Divmod.logger.err.apply(Divmod.logger, arguments); };
-Divmod.debug = function(kind, msg) {
-    Divmod.logger.emit({'isError': false, 'message': msg, 'debug': true, 'channel': kind});
+Divmod.msg = function() {
+    return Divmod.logger.msg.apply(Divmod.logger, arguments);
 };
+
+Divmod.err = function() {
+    return Divmod.logger.err.apply(Divmod.logger, arguments);
+};
+
+Divmod.debug = function(kind, msg) {
+    Divmod.logger.emit({'isError': false,
+            'message': msg, 'debug': true,
+            'channel': kind});
+};
+
 Divmod.log = Divmod.debug;
+
+// This function is copied from
+
+// http://www.joehewitt.com/software/firebug/faq.php
+
+// I know it violates the emerging JS coding standard, but I don't want to
+// mess with it because I don't understand how it works yet.  -glyph
+
+function printfire() {
+    if (document.createEvent) {
+        printfire.args = arguments;
+        var ev = document.createEvent("Events");
+        ev.initEvent("printfire", false, true);
+        dispatchEvent(ev);
+    }
+}
+
+Divmod.logger.addObserver(function (evt) {
+    printfire("Divmod log: " + evt.message);
+});

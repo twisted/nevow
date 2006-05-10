@@ -501,14 +501,18 @@ Nevow.Athena.FirstNodeByAttribute = function(root, attrName, attrValue) {
  * throw an error.  Note: you probably don't want to call this
  * directly; instead, see C{Nevow.Athena.Widget.nodeByAttribute}.
  */
-Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue) {
+Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue, /* optional */ defaultNode) {
     var nodes = Nevow.Athena.NodesByAttribute(root, attrName, attrValue);
     if (nodes.length > 1) {
         throw new Error("Found too many " + attrName + " = " + attrValue);
     } else if (nodes.length < 1) {
-        throw new Error("Failed to discover node with class value " +
-                        attrValue + " beneath " + root +
-                        " (programmer error).");
+        if (defaultNode === undefined) {
+            throw new Error("Failed to discover node with class value " +
+                            attrValue + " beneath " + root +
+                            " (programmer error).");
+        } else {
+            return defaultNode;
+        }
 
     } else {
         var result = nodes[0];
@@ -642,8 +646,8 @@ Nevow.Athena.Widget.methods(
         });
     },
 
-    function nodeByAttribute(self, attrName, attrValue) {
-        return Nevow.Athena.NodeByAttribute(self.node, attrName, attrValue);
+    function nodeByAttribute(self, attrName, attrValue, /* optional */ defaultNode) {
+        return Nevow.Athena.NodeByAttribute(self.node, attrName, attrValue, defaultNode);
     },
 
 
