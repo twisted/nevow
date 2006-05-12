@@ -270,3 +270,23 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
             self.waiting.callback(null);
         }
     });
+
+/**
+ * Test that calling Widget.get() on a node which is not part of any Widget
+ * throws an error.
+ */
+Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException');
+Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException.methods(
+    function run(self) {
+        var result;
+        var threw;
+        try {
+            result = Nevow.Athena.Widget.get(document.head);
+            threw = false;
+        } catch (err) {
+            threw = true;
+        }
+        if (!threw) {
+            self.fail("No error thrown by Widget.get() - returned " + result + " instead.");
+        }
+    });

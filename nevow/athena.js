@@ -263,7 +263,7 @@ Nevow.Athena._connectionLost = function(reason) {
 Nevow.Athena._notifyOnDisconnectCounter = 0;
 /*
  * Set up to have a function called when the LivePage connection has been
- * lost, either due to an explicit close, a timeout, or some other error. 
+ * lost, either due to an explicit close, a timeout, or some other error.
  * The function will be invoked with one argument, probably a Failure
  * indicating the reason the connection was lost.
  */
@@ -354,33 +354,6 @@ Nevow.Athena._rf = (function() {
     };
 })();
 
-Nevow.Athena._walkDOM = function(parent, test, memo, onlyOne) {
-    if (memo == undefined) {
-        memo = [];
-    }
-    /* alert(parent); */
-    if ((parent == undefined) ||
-        (parent.childNodes == undefined)) {
-        return null;
-    }
-    var child;
-    var len = parent.childNodes.length;
-    for (var i = 0; i < len; i++) {
-        child = parent.childNodes[i];
-        if (test(child)) {
-            memo.push(child);
-        }
-        if(onlyOne && memo.length) {
-            return memo[0];
-        }
-        Nevow.Athena._walkDOM(child, test, memo, onlyOne);
-    }
-    if(onlyOne) {
-        return null;
-    }
-    return memo;
-};
-
 Nevow.Athena._rdm = new Nevow.Athena.ReliableMessageDelivery(Nevow.Athena._rf, Nevow.Athena._connectionLost);
 
 Nevow.Athena.getAttribute = function() {
@@ -389,12 +362,14 @@ Nevow.Athena.getAttribute = function() {
 };
 
 Nevow.Athena.athenaIDFromNode = function(n) {
-    var athenaID = Divmod.Runtime.theRuntime.getAttribute(n, Nevow.Athena.XMLNS_URI, 'athena', 'id');
-    if (athenaID != null) {
-        return parseInt(athenaID);
-    } else {
-        return null;
+    var athenaID = n.id;
+    if (athenaID != undefined) {
+        var junk = athenaID.split(":");
+        if (junk[0] === 'athena' ) {
+            return parseInt(junk[1]);
+        }
     }
+    return null;
 };
 
 Nevow.Athena.athenaClassFromNode = function(n) {
@@ -471,27 +446,44 @@ Nevow.Athena.RemoteReference.methods(
  * C{Nevow.Athena.Widget.nodesByAttribute}.
  */
 Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
-    var visitor = function(node) {
-        return (attrValue == MochiKit.DOM.getNodeAttribute(node, attrName));
-    }
-    return Nevow.Athena._walkDOM(root, visitor);
+    var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+    var results = [];
+    Divmod.Runtime.theRuntime.traverse(
+        root,
+        function(node) {
+            if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+                results.push(node);
+            }
+            return descend;
+        });
+    return results;
 };
 
 Nevow.Athena.FirstNodeByAttribute = function(root, attrName, attrValue) {
     /* duplicate this here rather than adding an "onlyOne" arg to
-       NodesByAttribute so adding an extra arg accidentally doesn't
-       change it's behaviour if called directly
+       NodesByAttribute so adding an extra arg accidentally doesn't change
+       it's behaviour if called directly
     */
-    var visitor = function(node) {
-        return (attrValue == MochiKit.DOM.getNodeAttribute(node, attrName));
-    }
-    var node = Nevow.Athena._walkDOM(root, visitor, undefined, true);
-    if(!node) {
+    var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+    var terminate = Divmod.Runtime.Platform.DOM_TERMINATE;
+    var xmlns = Nevow.Athena.XMLNS_URI;
+
+    var result = null;
+    Divmod.Runtime.theRuntime.traverse(
+        root,
+        function(node) {
+            if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+                result = node;
+                return terminate;
+            }
+            return descend;
+        });
+    if (result === null) {
         throw new Error("Failed to discover node with " + attrName +
                         " value " + attrValue + " beneath " + root +
                         " (programmer error).");
     }
-    return node;
+    return result;
 };
 
 /**
@@ -635,17 +627,6 @@ Nevow.Athena.Widget.methods(
         self.widgetParent = widgetParent;
     },
 
-    function visitNodes(self, visitor) {
-        Nevow.Athena._walkDOM(self.node, function(node) {
-            var result = visitor(node);
-            if (result || result == undefined) {
-                return true;
-            } else {
-                return false;
-            }
-        });
-    },
-
     function nodeByAttribute(self, attrName, attrValue, /* optional */ defaultNode) {
         return Nevow.Athena.NodeByAttribute(self.node, attrName, attrValue, defaultNode);
     },
@@ -675,7 +656,7 @@ Nevow.Athena.Widget.get = function(node) {
         var initNode = document.getElementById('athena-init-args-' + widgetId);
         var initText = initNode.value;
         var initArgs = eval(initText);
-	initArgs.unshift(widgetNode);
+        initArgs.unshift(widgetNode);
         Nevow.Athena.Widget._athenaWidgets[widgetId] = widgetClass.apply(null, initArgs);
     }
     return Nevow.Athena.Widget._athenaWidgets[widgetId];
@@ -689,16 +670,9 @@ Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
     if (widget != undefined) {
         return widget;
     }
-    var visitor = function(node) {
-        return (Nevow.Athena.athenaIDFromNode(node) == widgetId);
-    }
-    var nodes = Nevow.Athena._walkDOM(document, visitor);
 
-    if (nodes.length != 1) {
-        throw new Error(nodes.length + " nodes with athena id " + widgetId);
-    };
-
-    return Nevow.Athena.Widget.get(nodes[0]);
+    return Nevow.Athena.Widget.get(
+        document.getElementById('athena:' + widgetId));
 };
 
 
@@ -888,18 +862,11 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
 
     Nevow.Athena.Widget._instantiationTimer = null;
 
-    Nevow.Athena._walkDOM(
-        document.documentElement,
-        function(node) {
-            var cls = Nevow.Athena.athenaClassFromNode(node);
-            if (cls) {
-                var widgetId = Nevow.Athena.athenaIDFromNode(node);
-                if (widgetId != null && widgetId in widgetIds) {
-                    Nevow.Athena.Widget._instantiateOneWidget(cls, node);
-                }
-            }
-            return false;
-        });
+    for (var widgetId in widgetIds) {
+        var node = document.getElementById('athena:' + widgetId);
+        var cls = Nevow.Athena.athenaClassFromNode(node);
+        Nevow.Athena.Widget._instantiateOneWidget(cls, node);
+    }
 };
 
 

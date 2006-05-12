@@ -35,3 +35,24 @@ Divmod.Runtime.Tests.AppendNodeContentScripts.methods(
         Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
         self.assertEquals(Divmod.Runtime.Tests.AppendNodeContentScripts.runCount, 3);
     });
+
+
+Divmod.Runtime.Tests.TraversalOrdering = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.TraversalOrdering');
+Divmod.Runtime.Tests.TraversalOrdering.methods(
+    function run(self) {
+        var classes = [];
+        Divmod.Runtime.theRuntime.traverse(
+            self.node,
+            function(node) {
+                if (node.className) {
+                    classes.push(node.className);
+                }
+                return Divmod.Runtime.Platform.DOM_DESCEND;
+            });
+
+        self.assertEquals(classes[1], 'container');
+        self.assertEquals(classes[2], 'left_child');
+        self.assertEquals(classes[3], 'left_grandchild');
+        self.assertEquals(classes[4], 'right_child');
+        self.assertEquals(classes[5], 'right_grandchild');
+    });

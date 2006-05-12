@@ -12,3 +12,13 @@ class AppendNodeContent(testcase.TestCase):
 class AppendNodeContentScripts(testcase.TestCase):
     jsClass = u'Divmod.Runtime.Tests.AppendNodeContentScripts'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AppendNodeContentScripts'])
+
+class TraversalOrdering(testcase.TestCase):
+    jsClass = u'Divmod.Runtime.Tests.TraversalOrdering'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))[
+        'TraversalOrdering',
+        tags.div(_class='container')[
+            tags.div(_class='left_child')[
+                tags.div(_class='left_grandchild')],
+            tags.div(_class='right_child')[
+                tags.div(_class='right_grandchild')]]])

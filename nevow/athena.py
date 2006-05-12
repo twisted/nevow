@@ -955,7 +955,7 @@ class LiveFragment(rend.Fragment):
 
             # Okay, application stuff, plus metadata
             ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
-                       'athena:id': self._athenaID,
+                       'id': 'athena:%d' % self._athenaID,
                        'athena:class': self.jsClass}),
 
             )

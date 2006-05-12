@@ -6,6 +6,7 @@ Divmod.Runtime.Platform = Divmod.Class.subclass("Divmod.Runtime.Platform");
 
 Divmod.Runtime.Platform.DOM_DESCEND = 'Divmod.Runtime.Platform.DOM_DESCEND';
 Divmod.Runtime.Platform.DOM_CONTINUE = 'Divmod.Runtime.Platform.DOM_CONTINUE';
+Divmod.Runtime.Platform.DOM_TERMINATE = 'Divmod.Runtime.Platform.DOM_TERMINATE';
 
 Divmod.Runtime.Platform.method(
     function __init__(self, name) {
@@ -134,11 +135,11 @@ Divmod.Runtime.Platform.methods(
     function traverse(self, rootNode, visitor) {
         var deque = [rootNode];
         while (deque.length != 0) {
-            var curnode = deque.shift();
+            var curnode = deque.pop();
             var visitorResult = visitor(curnode);
             switch (visitorResult) {
             case Divmod.Runtime.Platform.DOM_DESCEND:
-                for (var i = 0; i < curnode.childNodes.length; i++) {
+                for (var i = curnode.childNodes.length - 1; i > -1 ; i--) {
                     // "maybe you could make me care about how many stop
                     // bits my terminal has!  that would be so retro!"
                     deque.push(curnode.childNodes[i]);
@@ -147,6 +148,9 @@ Divmod.Runtime.Platform.methods(
 
             case Divmod.Runtime.Platform.DOM_CONTINUE:
                 break;
+
+            case Divmod.Runtime.Platform.DOM_TERMINATE:
+                return;
 
             default :
                 throw new Error(

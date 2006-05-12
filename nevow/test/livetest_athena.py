@@ -276,3 +276,8 @@ class DynamicWidgetInstantiation(testcase.TestCase):
             widgets[-1].setFragmentParent(f)
         return f
     athena.expose(getWidgets)
+
+
+class GettingWidgetlessNodeRaisesException(testcase.TestCase):
+    jsClass = u'Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['Widget.get() Handling'])
