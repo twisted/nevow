@@ -199,7 +199,7 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
     def comment(self, content):
         if self.ignoreComment:
             return
-        self.current.append( (xml('<!-- '),xml(content),xml(' -->')) )
+        self.current.append( (xml('<!--'),xml(content),xml('-->')) )
 
 
 def parse(fl, ignoreDocType=False, ignoreComment=False):
