@@ -14,6 +14,53 @@ Divmod.Runtime.Platform.method(
     });
 
 Divmod.Runtime.Platform.methods(
+    /*
+     Determine the dimensions of the page (browser viewport).
+     This method only considers the visible portion of the page
+     (i.e. how much of it can fit on the screen at once).
+
+     @return: object with "w" and "h" attributes
+     */
+    function getPageSize(self) {
+        var w, h;
+
+        /* slightly modified version of code from
+         * http://www.quirksmode.org/viewport/compatibility.html */
+
+	if(window.innerHeight) {
+            /* all except Explorer */
+	    w = window.innerWidth;
+	    h = window.innerHeight;
+	} else if(document.documentElement
+                    && document.documentElement.clientHeight) {
+            /* Explorer 6 Strict Mode */
+	    w = document.documentElement.clientWidth;
+	    h = document.documentElement.clientHeight;
+	} else if (document.body) {
+            /* other Explorers */
+	    w = document.body.clientWidth;
+            h = document.body.clientHeight;
+	}
+
+        return new (function() {
+                        this.w = w;
+                        this.h = h;
+                    })();
+    },
+
+    /*
+     Calculate the size of the given element, including padding
+     but excluding scrollbars, borders and margins
+
+     @return: object with "w" and "h" attributes
+     */
+    function getElementSize(self, e) {
+        return new (function() {
+                        this.w = e.clientWidth;
+                        this.h = e.clientHeight;
+                    })();
+    },
+
     function getAttribute(self, node, namespaceURI, namespaceIdentifier, localName) {
         if (node.hasAttributeNS) {
             if (node.hasAttributeNS(namespaceURI, localName)) {
@@ -340,3 +387,4 @@ Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
 
 Divmod.Runtime.theRuntimeType = Divmod.Runtime.Platform.determinePlatform();
 Divmod.Runtime.theRuntime = new Divmod.Runtime.theRuntimeType;
+

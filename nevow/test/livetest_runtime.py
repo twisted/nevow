@@ -13,6 +13,14 @@ class AppendNodeContentScripts(testcase.TestCase):
     jsClass = u'Divmod.Runtime.Tests.AppendNodeContentScripts'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AppendNodeContentScripts'])
 
+class ElementSize(testcase.TestCase):
+    jsClass = u'Divmod.Runtime.Tests.ElementSize'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ElementSize'])
+
+class PageSize(testcase.TestCase):
+    jsClass = u'Divmod.Runtime.Tests.PageSize'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['PageSize'])
+
 class TraversalOrdering(testcase.TestCase):
     jsClass = u'Divmod.Runtime.Tests.TraversalOrdering'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))[

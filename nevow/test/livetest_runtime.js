@@ -36,6 +36,56 @@ Divmod.Runtime.Tests.AppendNodeContentScripts.methods(
         self.assertEquals(Divmod.Runtime.Tests.AppendNodeContentScripts.runCount, 3);
     });
 
+Divmod.Runtime.Tests.ElementSize = Nevow.Athena.Test.TestCase.subclass('ElementSize');
+/* Tests for Runtime's getElementSize() method */
+Divmod.Runtime.Tests.ElementSize.methods(
+    function run(self) {
+        var html = ['<div xmlns="http://www.w3.org/1999/xhtml">',
+                        '<div class="foo" style="height: 126px; width: 1px" />',
+                        '<div class="bar" style="padding: 1px 2px 3px 4px; height: 12px; width: 70px" />',
+                    '</div>'];
+
+        Divmod.Runtime.theRuntime.appendNodeContent(self.node, html.join(''));
+
+        var foo = self.nodeByAttribute("class", "foo");
+        var size = Divmod.Runtime.theRuntime.getElementSize(foo);
+
+        self.assertEquals(size.w, 1);
+        self.assertEquals(size.h, 126);
+
+        var bar = self.nodeByAttribute("class", "bar");
+
+        size = Divmod.Runtime.theRuntime.getElementSize(bar);
+
+        self.assertEquals(size.w, 2 + 70 + 4);
+        self.assertEquals(size.h, 1 + 12 + 3);
+    });
+
+Divmod.Runtime.Tests.PageSize = Nevow.Athena.Test.TestCase.subclass('PageSize');
+/* Tests for Runtime's getPageSize() method */
+Divmod.Runtime.Tests.PageSize.methods(
+    function run(self) {
+        var wsize = Divmod.Runtime.theRuntime.getPageSize();
+        var esize = Divmod.Runtime.theRuntime.getElementSize(self.node);
+
+        /* resizeTo isn't going to work for this, because of button panels
+           and stuff - we know the viewport size, but we are changing the
+           window size */
+
+        window.resizeBy(-16, -43);
+
+        var newsize = Divmod.Runtime.theRuntime.getPageSize();
+
+        self.assertEquals(newsize.w, wsize.w-16);
+        self.assertEquals(newsize.h, wsize.h-43);
+
+        window.resizeBy(16, 43);
+
+        newsize = Divmod.Runtime.theRuntime.getPageSize();
+
+        self.assertEquals(newsize.w, wsize.w);
+        self.assertEquals(newsize.h, wsize.h);
+    });
 
 Divmod.Runtime.Tests.TraversalOrdering = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.TraversalOrdering');
 Divmod.Runtime.Tests.TraversalOrdering.methods(

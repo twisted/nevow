@@ -7,9 +7,21 @@ Nevow.Athena.Test.TestCase.methods(
         throw new Error('Test Failure: ' + msg);
     },
 
-    function assertEquals(self, a, b) {
+    function assertEquals(self, a, b, msg) {
         if (!(a == b)) {
-            self.fail(a + ' != ' + b);
+            if(msg == undefined) {
+                msg = a + ' != ' + b;
+            }
+            self.fail(msg);
+        }
+    },
+
+    function failUnless(self, a, msg) {
+        if(!a) {
+            if(msg == undefined) {
+                msg = a;
+            }
+            self.fail(msg);
         }
     },
 
