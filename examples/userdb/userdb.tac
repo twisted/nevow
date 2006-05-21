@@ -451,8 +451,8 @@ class SimpleRealm:
                     resc.realm = self
                     return (inevow.IResource, resc, noLogout)
                 else:
-                    user = userdb.findUser(avatarId)
-                    resc = UserBrowserPage(userdb, user)
+                    user = self.userdb.findUser(avatarId)
+                    resc = UserBrowserPage(self.userdb, user)
                     resc.realm = self
                     return (inevow.IResource, resc, noLogout)
 
@@ -461,23 +461,25 @@ class SimpleRealm:
 #=============================================================================
 # Initialization
 #=============================================================================
-userdb = UserDictDB()
-userdb.users["admin"] = User("admin", "admin", "admin@blah.com", role="ADMIN")
-userdb.users["foo"] = User("foo", "foo", "foo@blah.com")
-userdb.users["bar"] = User("bar", "bar", "bar@blah.com")
+def main():
+    userdb = UserDictDB()
+    userdb.users["admin"] = User("admin", "admin", "admin@blah.com", role="ADMIN")
+    userdb.users["foo"] = User("foo", "foo", "foo@blah.com")
+    userdb.users["bar"] = User("bar", "bar", "bar@blah.com")
 
 
-realm = SimpleRealm(userdb)
-ptl = portal.Portal(realm)
-myChecker = SimpleChecker(userdb)
-# Allow anonymous access.  Needed for access to NotLoggedIn
-ptl.registerChecker(checkers.AllowAnonymousAccess(), credentials.IAnonymous)
-# Allow users registered in the userdb
-ptl.registerChecker(myChecker)
+    realm = SimpleRealm(userdb)
+    ptl = portal.Portal(realm)
+    myChecker = SimpleChecker(userdb)
+    # Allow anonymous access.  Needed for access to NotLoggedIn
+    ptl.registerChecker(checkers.AllowAnonymousAccess(), credentials.IAnonymous)
+    # Allow users registered in the userdb
+    ptl.registerChecker(myChecker)
 
-site = appserver.NevowSite(
-    resource=guard.SessionWrapper(ptl)
-)
+    site = appserver.NevowSite(
+        resource=guard.SessionWrapper(ptl)
+    )
+    return strports.service("8080", site)
 
 application = service.Application("UserManager1")
-strports.service("8080", site).setServiceParent(application)
+main().setServiceParent(application)
