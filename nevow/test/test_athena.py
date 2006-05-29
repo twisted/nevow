@@ -1,7 +1,9 @@
 
+import os
 from itertools import izip
 
 from twisted.trial import unittest
+from twisted.python import util
 
 from nevow import athena
 
@@ -10,7 +12,7 @@ class Utilities(unittest.TestCase):
     testModuleImpl = '''\
 lalal this is javascript honest
 // uh oh!  a comment!  gee I wish javascript had an import system
-// import Example.Module
+// import ExampleModule
 here is some more javascript code
 // import Another
 // import Module
@@ -24,25 +26,25 @@ the end
         testModule.write(self.testModuleImpl)
         testModule.close()
 
-        modules = {'test.module': testModuleFilename}
-        m1 = athena.JSModule.getOrCreate('test.module', modules)
-        m2 = athena.JSModule.getOrCreate('test.module', modules)
-        self.assertEquals(m1.name, 'test.module')
+        modules = {'testmodule': testModuleFilename}
+        m1 = athena.JSModule.getOrCreate('testmodule', modules)
+        m2 = athena.JSModule.getOrCreate('testmodule', modules)
+        self.assertEquals(m1.name, 'testmodule')
 
         self.assertIdentical(m1, m2)
 
         deps = [d.name for d in m1.dependencies()]
         deps.sort()
-        self.assertEquals(deps, ['Another', 'Example.Module', 'Module'])
+        self.assertEquals(deps, ['Another', 'ExampleModule', 'Module'])
 
         modules['Another'] = self.mktemp()
         anotherModule = file(modules['Another'], 'w')
-        anotherModule.write('// import Secondary.Dependency\n')
+        anotherModule.write('// import SecondaryDependency\n')
         anotherModule.close()
 
-        modules['Example.Module'] = self.mktemp()
-        exampleModule = file(modules['Example.Module'], 'w')
-        exampleModule.write('// import Example.Dependency\n')
+        modules['ExampleModule'] = self.mktemp()
+        exampleModule = file(modules['ExampleModule'], 'w')
+        exampleModule.write('// import ExampleDependency\n')
         exampleModule.close()
 
         modules['Module'] = self.mktemp()
@@ -50,16 +52,16 @@ the end
         moduleModule.close()
 
         # Stub these out with an empty file
-        modules['Secondary.Dependency'] = modules['Module']
-        modules['Example.Dependency'] = modules['Module']
+        modules['SecondaryDependency'] = modules['Module']
+        modules['ExampleDependency'] = modules['Module']
 
         depgraph = {
-            'Another': ['Secondary.Dependency'],
-            'Example.Module': ['Example.Dependency'],
+            'Another': ['SecondaryDependency'],
+            'ExampleModule': ['ExampleDependency'],
             'Module': [],
-            'test.module': ['Another', 'Example.Module', 'Module'],
-            'Secondary.Dependency': [],
-            'Example.Dependency': []}
+            'testmodule': ['Another', 'ExampleModule', 'Module'],
+            'SecondaryDependency': [],
+            'ExampleDependency': []}
 
         allDeps = [d.name for d in m1.allDependencies()]
         for m in allDeps:
@@ -67,6 +69,8 @@ the end
             for d in modDeps:
                 # All dependencies should be loaded before the module
                 # that depends upon them.
+                self.assertIn(d, allDeps)
+                self.assertIn(m, allDeps)
                 self.failUnless(allDeps.index(d) < allDeps.index(m))
 
 
@@ -90,6 +94,32 @@ the end
         self.assertEquals(Quux().smokey(), 'stover')
         self.assertEquals(Quux().pogo(), 'kelly')
         self.assertEquals(Quux().albert(), 'alligator')
+
+
+    def testPackage(self):
+        baseDir = util.sibpath(__file__, 'test_package')
+        package = athena.AutoJSPackage(baseDir)
+
+        def _f(*sib):
+            return os.path.join(baseDir, *sib)
+
+        expected = {u'Foo': _f('Foo', '__init__.js'),
+                    u'Foo.Bar': _f('Foo', 'Bar.js'),
+                    u'Foo.Baz': util.sibpath(athena.__file__, 'empty.js'),
+                    u'Foo.Baz.Quux': _f('Foo', 'Baz', 'Quux.js')}
+
+        for module, path in expected.iteritems():
+            self.assertIn(module, package.mapping)
+            self.assertEquals(package.mapping[module], path)
+
+
+    def testPackageDeps(self):
+        modules = {u'Foo': self.mktemp(), u'Foo.Bar': self.mktemp()}
+        file(modules[u'Foo'], 'wb').close()
+        file(modules[u'Foo.Bar'], 'wb').close()
+        foo = athena.JSModule.getOrCreate(u'Foo', modules)
+        bar = athena.JSModule.getOrCreate(u'Foo.Bar', modules)
+        self.assertIn(foo, bar.allDependencies())
 
 
 

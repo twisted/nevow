@@ -6,6 +6,7 @@ from zope.interface import advice, implements
 
 from twisted.internet import defer, error, reactor
 from twisted.python import log, failure
+from twisted.python.util import sibpath
 from twisted import plugin
 
 from nevow import inevow, plugins, flat
@@ -95,6 +96,7 @@ class JSModule(object):
 
     lastModified = 0
     deps = None
+    packageDeps = []
 
     def getOrCreate(cls, name, mapping):
         # XXX This implementation of getOrCreate precludes the
@@ -111,6 +113,10 @@ class JSModule(object):
         self.name = name
         self.mapping = mapping
 
+        if '.' in name:
+            parent = '.'.join(name.split('.')[:-1])
+            self.packageDeps = [self.getOrCreate(parent, mapping)]
+
 
     _importExpression = re.compile('^// import (.+)$', re.MULTILINE)
     def _extractImports(self, fileObj):
@@ -126,7 +132,7 @@ class JSModule(object):
         mtime = os.path.getmtime(jsFile)
         if mtime >= self.lastModified:
             depgen = self._extractImports(file(jsFile, 'r'))
-            self.deps = dict.fromkeys(depgen).keys()
+            self.deps = self.packageDeps + dict.fromkeys(depgen).keys()
             self.lastModified = mtime
         return self.deps
 
@@ -150,6 +156,46 @@ class JSPackage(object):
         implementations.
         """
         self.mapping = mapping
+
+
+
+class AutoJSPackage(object):
+    """
+    An IJavascriptPackage implementation that scans an on-disk hierarchy
+    locating modules and packages.
+    """
+    implements(plugin.IPlugin, inevow.IJavascriptPackage)
+
+    def __init__(self, baseDir):
+        """
+        @param baseDir: A path to the root of a JavaScript packages/modules
+        filesystem hierarchy.
+        """
+        self.mapping = {}
+        EMPTY = sibpath(__file__, 'empty.js')
+
+        _revMap = {baseDir: ''}
+        for root, dirs, filenames in os.walk(baseDir):
+            stem = _revMap[root]
+
+            for dir in dirs:
+                name = stem + dir
+                path = os.path.join(root, dir, '__init__.js')
+                if not os.path.exists(path):
+                    path = EMPTY
+                self.mapping[unicode(name, 'ascii')] = path
+                _revMap[os.path.join(root, dir)] = name + '.'
+
+            for fn in filenames:
+                if fn == '__init__.js':
+                    continue
+
+                if fn[-3:] != '.js':
+                    continue
+
+                name = stem + fn[:-3]
+                path = os.path.join(root, fn)
+                self.mapping[unicode(name, 'ascii')] = path
 
 
 
