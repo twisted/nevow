@@ -180,6 +180,9 @@ Divmod.Runtime.Platform.methods(
     },
 
     function traverse(self, rootNode, visitor) {
+        if(rootNode == undefined) {
+            throw new Error("traverse() passed bad rootNode");
+        }
         var deque = [rootNode];
         while (deque.length != 0) {
             var curnode = deque.pop();
