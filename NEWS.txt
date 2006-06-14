@@ -1,0 +1,13 @@
+0.9.0 (2006-06-12):
+  - Fixed a bug where nested fragment sending rarely worked.
+  - Sending large strings in Athena arguments and results is now faster due to
+    less unnecessary unicode character quoting.
+  - Module objects are now automatically created for all Athena imports.
+  - Better error reporting for fragments which are rendered without a parent.
+  - Disconnect notifiers in Athena pages will no longer clobber each other.
+  - Many optimizations to javascript initialization.
+  - Javascript packages are now defined with less boilerplate: a filesystem
+    convention similar to Python's for module naming, plus one declaration in a
+    Nevow plugin which indicates the directory, rather than a declaration for
+    each module.
+  - Updated README to refer to Athena rather than LivePage

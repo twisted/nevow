@@ -2,10 +2,9 @@
 # Copyright (c) 2004-2006 Divmod.
 # See LICENSE for details.
 
-__version_info__ = (0, 8, 0)
-__version__ = '.'.join([str(i) for i in __version_info__[:3]])
-if __version_info__[3:]:
-    __version__ = '-'.join((__version__, '-'.join(__version_info__[3:])))
+from nevow._version import version
+__version_info__ = (version.major, version.minor, version.micro)
+__version__ = version.short()
 
 import sys
 from twisted.python.components import registerAdapter

@@ -6,6 +6,7 @@ include LICENSE
 include zomne.c
 include formless/freeform-default.css
 include nevow/Canvas.swf
+include nevow/athena_private/*.png
 include debian/*
 recursive-include nevow *.css *.js
 include bin/nevow-xmlgettext 

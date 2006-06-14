@@ -1,5 +1,5 @@
 name='Nevow'
-version='0.8.0'
+from nevow import __version__ as version
 maintainer = 'Divmod, Inc.'
 maintainer_email = 'support@divmod.org'
 description = 'Web Application Construction Kit'
@@ -17,10 +17,12 @@ package_data={
             'freeform-default.css'
             ],
         'nevow': [
-            'athena_private/*',
             'Canvas.swf',
             '*.css',
             '*.js',
+            ],
+        'nevow.athena_private': [
+            '*.png'
             ],
         'nevow.taglibrary': [
             '*.css',
@@ -31,6 +33,12 @@ package_data={
             '*.js'
             ],
         'nevow.test': [
+            '*.js'
+            ],
+        'nevow.test.test_package.Foo': [
+            '*.js'
+            ],
+        'nevow.test.test_package.Foo.Baz': [
             '*.js'
             ],
         }
