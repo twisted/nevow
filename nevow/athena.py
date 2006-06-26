@@ -534,6 +534,8 @@ class ReliableMessageDelivery(object):
             timeout.cancel()
             self._sendMessagesToOutput(output)
         self.outputs = None
+        if self._transportlessTimeoutCall is not None:
+            self._transportlessTimeoutCall.cancel()
 
 
     def _unregisterDeferredAsOutputChannel(self, deferred):
