@@ -21,31 +21,32 @@ Divmod.Runtime.Platform.methods(
 
      @return: object with "w" and "h" attributes
      */
-    function getPageSize(self) {
-        var w, h;
+    function getPageSize(self, /* optional */ win) {
+        var w, h
+        var theWindow = win || window;
 
         /* slightly modified version of code from
          * http://www.quirksmode.org/viewport/compatibility.html */
 
-	if(window.innerHeight) {
+        if (theWindow.innerHeight) {
             /* all except Explorer */
-	    w = window.innerWidth;
-	    h = window.innerHeight;
-	} else if(document.documentElement
-                    && document.documentElement.clientHeight) {
+            w = theWindow.innerWidth;
+            h = theWindow.innerHeight;
+        } else if(theWindow.document.documentElement &&
+                  theWindow.document.documentElement.clientHeight) {
             /* Explorer 6 Strict Mode */
-	    w = document.documentElement.clientWidth;
-	    h = document.documentElement.clientHeight;
-	} else if (document.body) {
+            w = theWindow.document.documentElement.clientWidth;
+            h = theWindow.document.documentElement.clientHeight;
+        } else if (theWindow.document.body) {
             /* other Explorers */
-	    w = document.body.clientWidth;
-            h = document.body.clientHeight;
-	}
+            w = theWindow.document.body.clientWidth;
+            h = theWindow.document.body.clientHeight;
+        }
 
         return new (function() {
-                        this.w = w;
-                        this.h = h;
-                    })();
+                this.w = w;
+                this.h = h;
+            })();
     },
 
     /*
@@ -325,6 +326,22 @@ Divmod.Runtime.InternetExplorer.isThisTheOne = function isThisTheOne() {
 Divmod.Runtime.InternetExplorer.methods(
     function __init__(self) {
         Divmod.Runtime.InternetExplorer.upcall(self, '__init__', 'Internet Explorer');
+        // IE has no equivalent to the stacktrace that FF provides, so this
+        // JSON adapter will provide a dummy object to make Athena happy when
+        // it tries to send exceptions from the client to the server
+        MochiKit.Base.registerJSON(
+            'Error', 
+            function(obj) {
+                return obj instanceof Error;
+            },
+            function(obj) {
+                return {
+                    'name': obj.name,
+                    'message': obj.message,
+                    'stack': 'No stacktrace available\n'
+                };
+            }
+        );
     },
 
     function parseXHTMLString(self, s) {
@@ -378,8 +395,70 @@ Divmod.Runtime.InternetExplorer.methods(
         }
     });
 
+
+Divmod.Runtime.Opera = Divmod.Runtime.Platform.subclass("Divmod.Runtime.Opera");
+
+Divmod.Runtime.Opera.isThisTheOne = function isThisTheOne() {
+    return navigator.userAgent.indexOf('Opera') != -1;
+};
+
+Divmod.Runtime.Opera.methods(
+    function __init__(self) {
+        Divmod.Runtime.Opera.upcall(self, '__init__', 'Opera');
+        self.lp = document.implementation.createLSParser(DOMImplementationLS.MODE_SYNCHRONOUS, null);
+        self.ls = document.implementation.createLSSerializer();
+
+        // Provide a JSON adapter for client-side errors, to make Athena happy
+        // when it tries to send exceptions from the client to the server
+
+        // TODO: Convert Opera's backtrace string to FF's stacktrace format
+        MochiKit.Base.registerJSON(
+            'Error', 
+            function(obj) {
+                return obj instanceof Error;
+            },
+            function(obj) {
+                var stack = 'No stacktrace available\n';
+                var message = obj.message;
+                var backtrace = message.indexOf('Backtrace:');
+                if(backtrace != -1) {
+                    stack = message.slice(backtrace);
+                    message = message.slice(0, backtrace);
+                }
+                return {
+                    'name': obj.name,
+                    'message': message,
+                    'stack': stack
+                };
+            }
+        );
+    },
+
+    function parseXHTMLString(self, s) {
+        var lsi = document.implementation.createLSInput();
+        lsi.stringData = s;
+        return self.lp.parse(lsi);
+    },
+
+    function appendNodeContent(self, node, innerHTML) {
+        var doc = self.parseXHTMLString(innerHTML);
+        node.appendChild(document.importNode(doc.documentElement, true));
+    },
+
+    function setNodeContent(self, node, innerHTML) {
+        while (node.childNodes.length) {
+            node.removeChild(node.firstChild);
+        }
+        self.appendNodeContent(node, innerHTML);
+    },
+
+    function makeHTTPRequest(self) {
+        return new XMLHttpRequest();
+    });
+
+
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
-    var platforms = [Divmod.Runtime.Firefox, Divmod.Runtime.InternetExplorer];
+    var platforms = [Divmod.Runtime.Firefox, Divmod.Runtime.InternetExplorer, Divmod.Runtime.Opera];
     for (var cls = 0; cls < platforms.length; ++cls) {
         if (platforms[cls].isThisTheOne()) {
             return platforms[cls];

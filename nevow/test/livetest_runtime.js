@@ -65,23 +65,27 @@ Divmod.Runtime.Tests.PageSize = Nevow.Athena.Test.TestCase.subclass('PageSize');
 /* Tests for Runtime's getPageSize() method */
 Divmod.Runtime.Tests.PageSize.methods(
     function run(self) {
-        var wsize = Divmod.Runtime.theRuntime.getPageSize();
-        var esize = Divmod.Runtime.theRuntime.getElementSize(self.node);
-
         /* resizeTo isn't going to work for this, because of button panels
            and stuff - we know the viewport size, but we are changing the
            window size */
 
-        window.resizeBy(-16, -43);
+        var testWindow = window.open('', 'testWindow', 'width=480,height=640');
+        var wsize = Divmod.Runtime.theRuntime.getPageSize(testWindow);
 
-        var newsize = Divmod.Runtime.theRuntime.getPageSize();
+        self.assertEquals(wsize.w, 480);
+        self.assertEquals(wsize.h, 640);
+
+        testWindow.resizeBy(-16, -43);
+
+        var newsize = Divmod.Runtime.theRuntime.getPageSize(testWindow);
 
         self.assertEquals(newsize.w, wsize.w-16);
         self.assertEquals(newsize.h, wsize.h-43);
 
-        window.resizeBy(16, 43);
+        testWindow.resizeBy(16, 43);
 
-        newsize = Divmod.Runtime.theRuntime.getPageSize();
+        newsize = Divmod.Runtime.theRuntime.getPageSize(testWindow);
+        testWindow.close();
 
         self.assertEquals(newsize.w, wsize.w);
         self.assertEquals(newsize.h, wsize.h);
