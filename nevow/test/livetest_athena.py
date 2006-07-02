@@ -1,6 +1,7 @@
 from twisted.internet import defer
 
 from nevow import loaders, tags, athena
+from nevow.athena import expose
 from nevow.livetrial import testcase
 from nevow.test import test_json
 
@@ -19,9 +20,9 @@ class WidgetInitializerArguments(testcase.TestCase):
     def getInitialArguments(self):
         return self._args
 
-    allowedMethods = {'test': True}
     def test(self, args):
         self.assertEquals(self._args, args)
+    expose(test)
 
 
 class ClientToServerArgumentSerialization(testcase.TestCase):
@@ -34,7 +35,6 @@ class ClientToServerArgumentSerialization(testcase.TestCase):
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ClientToServerArgumentSerialization'])
 
-    allowedMethods = {'test': True}
     def test(self, i, f, s, l, d):
         self.assertEquals(i, 1)
         self.assertEquals(f, 1.5)
@@ -45,6 +45,8 @@ class ClientToServerArgumentSerialization(testcase.TestCase):
         self.assertEquals(d, {u'hello world': u'object value'})
         self.failUnless(isinstance(d.keys()[0], unicode))
         self.failUnless(isinstance(d.values()[0], unicode))
+    expose(test)
+
 
 class ClientToServerResultSerialization(testcase.TestCase):
     """
@@ -56,9 +58,9 @@ class ClientToServerResultSerialization(testcase.TestCase):
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ClientToServerResultSerialization'])
 
-    allowedMethods = {'test': True}
     def test(self, i, f, s, l, d):
         return (i, f, s, l, d)
+    expose(test)
 
 class JSONRoundtrip(testcase.TestCase):
     """
@@ -68,7 +70,6 @@ class JSONRoundtrip(testcase.TestCase):
 
     jsClass = u'Nevow.Athena.Tests.JSONRoundtrip'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['JSONRoundtrip'])
-    allowedMethods = {'test': True}
 
     def test(self):
         cases = test_json.TEST_OBJECTS + test_json.TEST_STRINGLIKE_OBJECTS
@@ -76,6 +77,9 @@ class JSONRoundtrip(testcase.TestCase):
             for v1, v2 in zip(cases, _cases):
                 self.assertEquals(v1, v2)
         return self.callRemote('identity', cases).addCallback(_verifyRoundtrip)
+    expose(test)
+
+
 
 class ExceptionFromServer(testcase.TestCase):
     """
@@ -87,9 +91,11 @@ class ExceptionFromServer(testcase.TestCase):
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ExceptionFromServer'])
 
-    allowedMethods = {'testSync': True}
     def testSync(self, s):
         raise Exception(s)
+    expose(testSync)
+
+
 
 class AsyncExceptionFromServer(testcase.TestCase):
     """
@@ -101,9 +107,11 @@ class AsyncExceptionFromServer(testcase.TestCase):
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AsyncExceptionFromServer'])
 
-    allowedMethods = {'testAsync': True}
     def testAsync(self, s):
         return defer.fail(Exception(s))
+    expose(testAsync)
+
+
 
 class ExceptionFromClient(testcase.TestCase):
     """
@@ -114,9 +122,10 @@ class ExceptionFromClient(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.ExceptionFromClient'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ExceptionFromClient'])
 
-    allowedMethods = dict(loopbackError=True)
     def loopbackError(self):
         return self.callRemote('generateError').addErrback(self.checkError)
+    expose(loopbackError)
+
 
     def checkError(self, f):
         f.trap(athena.JSException)
@@ -134,9 +143,10 @@ class AsyncExceptionFromClient(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.AsyncExceptionFromClient'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['AsyncExceptionFromClient'])
 
-    allowedMethods = dict(loopbackError=True)
     def loopbackError(self):
         return self.callRemote('generateError').addErrback(self.checkError)
+    expose(loopbackError)
+
 
     def checkError(self, f):
         f.trap(athena.JSException)
@@ -155,9 +165,11 @@ class ServerToClientArgumentSerialization(testcase.TestCase):
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ServerToClientArgumentSerialization'])
 
-    allowedMethods = {'test': True}
     def test(self):
         return self.callRemote('reverse', 1, 1.5, u'hello', {u'world': u'value'});
+    expose(test)
+
+
 
 class ServerToClientResultSerialization(testcase.TestCase):
     """
@@ -169,7 +181,6 @@ class ServerToClientResultSerialization(testcase.TestCase):
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['ServerToClientResultSerialization'])
 
-    allowedMethods = {'test': True}
     def test(self):
         def cbResults(result):
             self.assertEquals(result[0], 1)
@@ -179,6 +190,9 @@ class ServerToClientResultSerialization(testcase.TestCase):
         d = self.callRemote('reverse')
         d.addCallback(cbResults)
         return d
+    expose(test)
+
+
 
 class WidgetInATable(testcase.TestCase):
     jsClass = u"Nevow.Athena.Tests.WidgetInATable"
@@ -211,9 +225,11 @@ class ParentChildRelationshipTest(testcase.TestCase):
             yield ChildFragment(self.page, i)
 
 
-    allowedMethods = {'getChildCount': True}
     def getChildCount(self):
         return 3
+    expose(getChildCount)
+
+
 
 class ChildFragment(athena.LiveFragment):
     jsClass = u'Nevow.Athena.Tests.ChildParentRelationshipTest'
@@ -233,10 +249,9 @@ class ChildFragment(athena.LiveFragment):
         for i in xrange(self.childCount):
             yield ChildFragment(self.page, self.childCount - 1)
 
-    allowedMethods = {'getChildCount': True}
     def getChildCount(self):
         return self.childCount
-
+    expose(getChildCount)
 
 
 class AutomaticClass(testcase.TestCase):

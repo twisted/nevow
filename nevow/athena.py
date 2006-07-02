@@ -1,8 +1,8 @@
 # -*- test-case-name: nevow.test.test_athena -*-
 
-import itertools, os, re
+import itertools, os, re, warnings
 
-from zope.interface import advice, implements
+from zope.interface import implements
 
 from twisted.internet import defer, error, reactor
 from twisted.python import log, failure
@@ -10,9 +10,26 @@ from twisted.python.util import sibpath
 from twisted import plugin
 
 from nevow import inevow, plugins, flat
-from nevow import rend, loaders, url, static, json, util, tags, guard, stan
+from nevow import rend, loaders, url, static
+from nevow import json, util, tags, guard, stan
+
+from nevow.page import Element, renderer
 
 ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
+
+expose = util.Expose(
+    """
+    Allow one or more methods to be invoked by the client::
+
+    | class Foo(LiveElement):
+    |     def twiddle(self, x, y):
+    |         ...
+    |     def frob(self, a, b):
+    |         ...
+    |     expose(twiddle, frob)
+
+    The Widget for Foo will be allowed to invoke C{twiddle} and C{frob}.
+    """)
 
 class LivePageError(Exception):
     """base exception for livepage errors"""
@@ -534,6 +551,9 @@ class ReliableMessageDelivery(object):
             timeout.cancel()
             self._sendMessagesToOutput(output)
         self.outputs = None
+        if self._transportlessTimeoutCall is not None:
+            self._transportlessTimeoutCall.cancel()
+            self._transportlessTimeoutCall = None
 
 
     def _unregisterDeferredAsOutputChannel(self, deferred):
@@ -871,8 +891,147 @@ class LivePage(rend.Page):
         self._disconnected(error.ConnectionDone("Connection closed"))
 
 
+class _LiveMixin(object):
+    jsClass = u'Nevow.Athena.Widget'
 
-class LiveFragment(rend.Fragment):
+    fragmentParent = None
+
+    _page = None
+
+    def __init__(self, *a, **k):
+        super(_LiveMixin, self).__init__(*a, **k)
+        self.liveFragmentChildren = []
+
+    def page():
+        def get(self):
+            if self._page is None:
+                if self.fragmentParent is not None:
+                    self._page = self.fragmentParent.page
+            return self._page
+        def set(self, value):
+            self._page = value
+        doc = """
+        The L{LivePage} instance which is the topmost container of this
+        fragment.
+        """
+        return get, set, None, doc
+    page = property(*page())
+
+
+    def getInitialArguments(self):
+        """
+        Return a C{tuple} or C{list} of arguments to be passed to this
+        C{LiveFragment}'s client-side Widget.
+
+        This will be called during the rendering process.  Whatever it
+        returns will be serialized into the page and passed to the
+        C{__init__} method of the widget specified by C{jsClass}.
+
+        @rtype: C{list} or C{tuple}
+        """
+        return ()
+
+
+    def rend(self, context, data):
+        if self.page is None:
+            raise OrphanedFragment(self)
+        self._athenaID = self.page.addLocalObject(self)
+        context.fillSlots('athena:id', self._athenaID)
+        return super(_LiveMixin, self).rend(context, data)
+
+
+    def setFragmentParent(self, fragmentParent):
+        """
+        Sets the L{LiveFragment} (or L{LivePage}) which is the logical parent
+        of this fragment.  This should parallel the client-side hierarchy.
+
+        All LiveFragments must have setFragmentParent called on them before
+        they are rendered for the client; otherwise, they will be unable to
+        properly hook up to the page.
+
+        LiveFragments should have their own setFragmentParent called before
+        calling setFragmentParent on any of their own children.  The normal way
+        to accomplish this is to instantiate your fragment children during the
+        render pass.
+
+        If that isn't feasible, instead override setFragmentParent and
+        instantiate your children there.
+
+        This architecture might seem contorted, but what it allows that is
+        interesting is adaptation of foreign objects to LiveFragment.  Anywhere
+        you adapt to LiveFragment, setFragmentParent is the next thing that
+        should be called.
+        """
+        self.fragmentParent = fragmentParent
+        self.page = fragmentParent.page
+        fragmentParent.liveFragmentChildren.append(self)
+
+
+    def _getModuleForClass(self):
+        return jsDeps.getModuleForClass(self.jsClass)
+
+
+    def liveElement(self, request, tag):
+        """
+        Render framework-level boilerplate for making sure the Widget for this
+        Element is created and added to the page properly.
+        """
+        modules = [dep.name
+                   for dep
+                   in self._getModuleForClass().allDependencies()]
+
+        return (
+            # Import stuff
+            [self.getImportStan(mod)
+             for mod
+             in modules
+             if self.page._shouldInclude(mod)],
+
+            # Dump some data for our client-side __init__ into a text area
+            # where it can easily be found.
+            tags.textarea(id='athena-init-args-' + str(self._athenaID),
+                          style="display: none")[
+                json.serialize(self.getInitialArguments())],
+
+            # Arrange to be instantiated
+            tags.script(type='text/javascript')[
+                """
+                Nevow.Athena.Widget._widgetNodeAdded(%(athenaID)d);
+                """ % {'athenaID': self._athenaID}],
+
+            # Okay, application stuff, plus metadata
+            tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
+                   'id': 'athena:%d' % self._athenaID,
+                   'athena:class': self.jsClass}),
+            )
+    renderer(liveElement)
+
+
+    def render_liveFragment(self, ctx, data):
+        return self.liveElement(inevow.IRequest(ctx), ctx.tag)
+
+
+    def getImportStan(self, moduleName):
+        return self.page.getImportStan(moduleName)
+
+
+    def locateMethod(self, ctx, methodName):
+        remoteMethod = expose.get(self, methodName, None)
+        if remoteMethod is None:
+            raise AttributeError(self, methodName)
+        return remoteMethod
+
+
+    def callRemote(self, methodName, *varargs):
+        return self.page.callRemote(
+            "Nevow.Athena.callByAthenaID",
+            self._athenaID,
+            unicode(methodName, 'ascii'),
+            varargs)
+
+
+
+class LiveFragment(_LiveMixin, rend.Fragment):
     """
     Base-class for fragments of a LivePage.  When being rendered, a
     LiveFragment has a special ID attribute added to its top-level
@@ -907,123 +1066,75 @@ class LiveFragment(rend.Fragment):
     between '//' and 'import'.  There must be no preceeding whitespace
     on the line.
 
-    Methods defined on this class which are named in the C{allowedMethods}
-    container (see L{expose} for a way to populate this container) may be
-    invoked by the client using C{Nevow.Athena.Widget.callRemote}. 
-    Similarly, calling C{callRemote} on the LiveFragment will invoke a
-    method defined on the Widget class in the browser.
+    C{Nevow.Athena.Widget.callRemote} can be given permission to invoke methods
+    on L{LiveFragment} instances by passing the functions which implement those
+    methods to L{nevow.athena.expose} in this way::
+
+        class SomeFragment(LiveFragment):
+            def someMethod(self, ...):
+                ...
+            expose(someMethod)
+
+    Only methods exposed in this way will be accessible.
+
+    L{LiveFragment.callRemote} can be used to invoke any method of the widget
+    on the client.
     """
-
-    allowedMethods = ()
-
-    jsClass = u'Nevow.Athena.Widget'
-
-    fragmentParent = None
-
-    page = None
-
-    def __init__(self, *a, **k):
-        super(LiveFragment, self).__init__(*a, **k)
-        self.liveFragmentChildren = []
+    def __init__(self, *a, **kw):
+        super(LiveFragment, self).__init__(*a, **kw)
+        warnings.warn("[v0.10] LiveFragment has been superceded by LiveElement.",
+                      category=PendingDeprecationWarning,
+                      stacklevel=2)
 
 
-    def getInitialArguments(self):
-        """
-        Return a C{tuple} or C{list} of arguments to be passed to this
-        C{LiveFragment}'s client-side Widget.
 
-        This will be called during the rendering process.  Whatever it
-        returns will be serialized into the page and passed to the
-        C{__init__} method of the widget specified by C{jsClass}.
+class LiveElement(_LiveMixin, Element):
+    """
+    Base-class for a portion of a LivePage.  When being rendered, a LiveElement
+    has a special ID attribute added to its top-level tag.  This attribute is
+    used to dispatch calls from the client onto the correct object (this one).
 
-        @rtype: C{list} or C{tuple}
-        """
-        return ()
+    A LiveElement must use the `liveElement' renderer somewhere in its document
+    template.  The node given this renderer will be the node used to construct
+    a Widget instance in the browser (where it will be saved as the `node'
+    property on the widget object).
 
+    JavaScript handlers for elements inside this node can use
+    C{Nevow.Athena.Widget.get} to retrieve the widget associated with this
+    LiveElement.  For example:
 
-    def rend(self, context, data):
-        if self.page is None:
-            raise OrphanedFragment(self)
-        self._athenaID = self.page.addLocalObject(self)
-        context.fillSlots('athena:id', self._athenaID)
-        return super(LiveFragment, self).rend(context, data)
+        <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
 
+    The C{jsClass} attribute of a LiveElement instance determines the
+    JavaScript class used to construct its corresponding Widget.  This appears
+    as the 'athena:class' attribute.
 
-    def setFragmentParent(self, fragmentParent):
-        """
-        Sets the L{LiveFragment} (or L{LivePage}) which is the logical parent
-        of this fragment.  This should parallel the client-side hierarchy.
+    JavaScript modules may import other JavaScript modules by using a special
+    comment which Athena recognizes:
 
-        All LiveFragments must have setFragmentParent called on them before
-        they are rendered for the client; otherwise, they will be unable to
-        properly hook up to the page.
+        // import Module.Name
 
-        LiveFragments should have their own setFragmentParent called before
-        calling setFragmentParent on any of their own children.  The normal way
-        to accomplish this is to instantiate your fragment children during the
-        render pass.
+    Different imports must be placed on different lines.  No other comment
+    style is supported for these directives.  Only one space character must
+    appear between the string 'import' and the name of the module to be
+    imported.  No trailing whitespace or non-whitespace is allowed.  There must
+    be exactly one space between '//' and 'import'.  There must be no
+    preceeding whitespace on the line.
 
-        If that isn't feasible, instead override setFragmentParent and
-        instantiate your children there.
+    C{Nevow.Athena.Widget.callRemote} can be given permission to invoke methods
+    on L{LiveElement} instances by passing the functions which implement those
+    methods to L{nevow.athena.expose} in this way::
 
-        This architecture might seem contorted, but what it allows that is
-        interesting is adaptation of foreign objects to LiveFragment.  Anywhere
-        you adapt to LiveFragment, setFragmentParent is the next thing that
-        should be called.
-        """
-        self.fragmentParent = fragmentParent
-        self.page = fragmentParent.page
-        fragmentParent.liveFragmentChildren.append(self)
+        class SomeElement(LiveElement):
+            def someMethod(self, ...):
+                ...
+            expose(someMethod)
 
+    Only methods exposed in this way will be accessible.
 
-    def _getModuleForClass(self):
-        return jsDeps.getModuleForClass(self.jsClass)
-
-
-    def render_liveFragment(self, ctx, data):
-        modules = [dep.name for dep in self._getModuleForClass().allDependencies()]
-
-        return (
-            # Import stuff
-            [self.getImportStan(mod) for mod in modules if self.page._shouldInclude(mod)],
-
-            # Dump some data for our client-side __init__ into a text area
-            # where it can easily be found.
-            tags.textarea(id='athena-init-args-' + str(self._athenaID),
-                          style="display: none")[
-                json.serialize(self.getInitialArguments())],
-
-            # Arrange to be instantiated
-            tags.script(type='text/javascript')[
-                """
-                Nevow.Athena.Widget._widgetNodeAdded(%(athenaID)d);
-                """ % {'athenaID': self._athenaID}],
-
-            # Okay, application stuff, plus metadata
-            ctx.tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
-                       'id': 'athena:%d' % self._athenaID,
-                       'athena:class': self.jsClass}),
-
-            )
-
-
-    def getImportStan(self, moduleName):
-        return self.page.getImportStan(moduleName)
-
-
-    def locateMethod(self, ctx, methodName):
-        if methodName in self.allowedMethods:
-            return getattr(self, methodName)
-        raise AttributeError(self, methodName)
-
-
-    def callRemote(self, methodName, *varargs):
-        return self.page.callRemote(
-            "Nevow.Athena.callByAthenaID",
-            self._athenaID,
-            unicode(methodName, 'ascii'),
-            varargs)
-
+    L{LiveElement.callRemote} can be used to invoke any method of the widget on
+    the client.
+    """
 
 
 class IntrospectionFragment(LiveFragment):
@@ -1042,33 +1153,5 @@ class IntrospectionFragment(LiveFragment):
 
 
 
-def expose(*funcObjs):
-    """
-    Allow one or more methods to be invoked by the client.
-
-    This is a class advisor, similar to L{zope.interface.implements}.  Use
-    it like this::
-
-    | class Foo(LiveFragment):
-    |     def twiddle(self, x, y):
-    |         ...
-    |     def frob(self, a, b):
-    |         ...
-    |     expose(twiddle, frob)
-
-    @param funcObjs: One or more function objects which will be exposed to
-    the client.
-
-    @return: The first of C{funcObjs}.
-    """
-    if not funcObjs:
-        return
-    def exposedMethodAdvice(cls):
-        if 'allowedMethods' not in cls.__dict__:
-            cls.allowedMethods = []
-        cls.allowedMethods.extend([fObj.func_name for fObj in funcObjs])
-        return cls
-    advice.addClassAdvisor(exposedMethodAdvice)
-    return funcObjs[0]
 
 handler = stan.Proto('athena:handler')

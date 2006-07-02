@@ -5,7 +5,8 @@ from itertools import izip
 from twisted.trial import unittest
 from twisted.python import util
 
-from nevow import athena
+from nevow import athena, context, loaders, tags
+from nevow.test.test_rend import req as makeRequest
 
 class Utilities(unittest.TestCase):
 
@@ -74,28 +75,6 @@ the end
                 self.failUnless(allDeps.index(d) < allDeps.index(m))
 
 
-    def testExpose(self):
-        class Foo(object):
-            def bar(self):
-                return 'baz'
-            athena.expose(bar)
-        self.assertEquals(Foo.allowedMethods, ['bar'])
-        self.assertEquals(Foo().bar(), 'baz')
-
-        class Quux(object):
-            def smokey(self):
-                return 'stover'
-            def pogo(self):
-                return 'kelly'
-            def albert(self):
-                return 'alligator'
-            athena.expose(smokey, pogo)
-        self.assertEquals(Quux.allowedMethods, ['smokey', 'pogo'])
-        self.assertEquals(Quux().smokey(), 'stover')
-        self.assertEquals(Quux().pogo(), 'kelly')
-        self.assertEquals(Quux().albert(), 'alligator')
-
-
     def testPackage(self):
         baseDir = util.sibpath(__file__, 'test_package')
         package = athena.AutoJSPackage(baseDir)
@@ -144,6 +123,27 @@ class Nesting(unittest.TestCase):
 
         self.assertEquals(tf2.page, lp)
         self.assertEquals(tf1.page, lp)
+
+
+    def testInsideOutFragmentNesting(self):
+        """
+        Test that even if LiveFragments have their parents assigned from the
+        inside out, parent/child relationships still end up correct.
+        """
+        innerFragment = TestFragment()
+        outerFragment = TestFragment()
+        page = athena.LivePage()
+
+        innerFragment.setFragmentParent(outerFragment)
+        outerFragment.setFragmentParent(page)
+
+        self.assertEquals(page.liveFragmentChildren, [outerFragment])
+        self.assertEquals(outerFragment.fragmentParent, page)
+        self.assertEquals(outerFragment.page, page)
+
+        self.assertEquals(outerFragment.liveFragmentChildren, [innerFragment])
+        self.assertEquals(innerFragment.fragmentParent, outerFragment)
+        self.assertEquals(innerFragment.page, page)
 
 
 
@@ -529,3 +529,12 @@ class Transport(unittest.TestCase):
         self.transport = []
         self.rdm.addOutput(mappend(self.transport))
         self.assertEquals(self.transport, [[(0, (athena.CLOSE, []))]])
+
+
+    def testCloseBeforeConnect(self):
+        """
+        Test that closing the reliable message deliverer before a connection is
+        ever established properly cleans up any timeouts.
+        """
+        self.rdm.close()
+        self.failIf(self.scheduled, "Expected no scheduled calls.")
