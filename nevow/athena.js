@@ -424,7 +424,82 @@ Nevow.Athena.RemoteReference.methods(
 
         Nevow.Athena._rdm.addMessage(['call', [requestId, methodName, self.objectID, args, kwargs]]);
 
+        setTimeout(function() {
+            resultDeferred.addErrback(
+                function(err) {
+                    self.showErrorDialog(methodName, err);
+                });
+            }, 0);
+
         return resultDeferred;
+    },
+
+    /**
+     * Display an error dialog to the user, containing some information
+     * about the uncaught error C{err}, which occured while trying to call
+     * the remote method C{methodName}.  To avoid this happening, errbacks
+     * should be added synchronously to the deferred returned by L{callRemote}
+     * (the errback that triggers this dialog is added via setTimeout(..., 0))
+     */
+    function showErrorDialog(self, methodName, err) {
+        var e = document.createElement("div");
+        e.style.padding = "12px";
+        e.style.border = "solid 1px #666666";
+        e.style.position = "absolute";
+        e.style.whiteSpace = "nowrap";
+        e.style.backgroundColor = "#FFFFFF";
+        e.style.zIndex = 99;
+        e.className = "athena-error-dialog-" + Nevow.Athena.athenaIDFromNode(self.node);
+
+        var titlebar = document.createElement("div");
+        titlebar.style.borderBottom = "solid 1px #333333";
+
+        var title = document.createElement("div");
+        title.style.fontSize = "1.4em";
+        title.style.color = "red";
+        title.appendChild(
+            document.createTextNode("Error"));
+
+        titlebar.appendChild(title);
+
+        e.appendChild(titlebar);
+
+        e.appendChild(
+            document.createTextNode("Your action could not be completed because an error occured."));
+
+
+        var errorLine = document.createElement("div");
+        errorLine.style.fontStyle = "italic";
+        errorLine.appendChild(
+            document.createTextNode(
+                err.toString() + ' caught while calling method "' + methodName + '"'));
+        e.appendChild(errorLine);
+
+        var line2 = document.createElement("div");
+        line2.appendChild(
+            document.createTextNode("Please retry."));
+        e.appendChild(line2);
+
+        var close = document.createElement("a");
+        close.href = "#";
+        close.onclick = function() {
+            document.body.removeChild(e);
+            return false;
+        }
+        close.style.display = "block";
+
+        close.appendChild(
+            document.createTextNode("Click here to close."));
+
+        e.appendChild(close);
+
+        document.body.appendChild(e);
+
+        var elemDimensions = Divmod.Runtime.theRuntime.getElementSize(e);
+        var pageDimensions = Divmod.Runtime.theRuntime.getPageSize();
+
+        e.style.top  = Math.round(pageDimensions.h / 2 - elemDimensions.h / 2) + "px";
+        e.style.left = Math.round(pageDimensions.w / 2 - elemDimensions.w / 2) + "px";
     },
 
     function callRemote(self, methodName /*, ... */) {

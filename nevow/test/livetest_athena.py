@@ -296,3 +296,14 @@ class DynamicWidgetInstantiation(testcase.TestCase):
 class GettingWidgetlessNodeRaisesException(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest'))['Widget.get() Handling'])
+
+class RemoteMethodErrorShowsDialog(testcase.TestCase):
+    jsClass = u'Nevow.Athena.Tests.RemoteMethodErrorShowsDialog'
+
+    docFactory = loaders.stan(
+                    tags.div(render=tags.directive('liveTest'))['Error Dialog'])
+
+    def raiseValueError(self):
+        raise ValueError('hi')
+
+    athena.expose(raiseValueError)

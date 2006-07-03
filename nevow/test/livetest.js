@@ -290,3 +290,51 @@ Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException.methods(
             self.fail("No error thrown by Widget.get() - returned " + result + " instead.");
         }
     });
+
+Nevow.Athena.Tests.RemoteMethodErrorShowsDialog = Nevow.Athena.Test.TestCase.subclass('RemoteMethodErrorShowsDialog');
+Nevow.Athena.Tests.RemoteMethodErrorShowsDialog.methods(
+    function run(self) {
+        var getDialogs = function() {
+            return Nevow.Athena.NodesByAttribute(
+                        document.body,
+                        "class",
+                        "athena-error-dialog-" + Nevow.Athena.athenaIDFromNode(self.node));
+        }
+
+        return self.callRemote("raiseValueError").addErrback(
+            function(err) {
+                /* we added the errback before the setTimeout()
+                   in callRemote() fired, so it won't get the error */
+
+                self.assertEquals(getDialogs().length, 0);
+
+                var D = self.callRemote("raiseValueError");
+
+                /* we make another deferred to return from this method
+                   because the test machinery will add callbacks to D,
+                   which will get run before athena adds the errback,
+                   resulting in a test failure */
+
+                var waitD = Divmod.Defer.Deferred();
+
+                /* setTimeout() the callback-adding, because we want
+                   the callback to run after athena has added the
+                   error dialog errback to the callRemote() deferred */
+
+                setTimeout(function() {
+                    D.addCallback(
+                        function() {
+                            var dialogs = getDialogs();
+
+                            if(dialogs.length == 1) {
+                                document.body.removeChild(dialogs[0]);
+                                waitD.callback(null);
+                            } else {
+                                waitD.errback(
+                                    new Error("expected 1 dialog, got " + dialogs.length));
+                            }
+                        });
+                    }, 0);
+                return waitD;
+            });
+    });
