@@ -19,7 +19,11 @@ class TypeAheadPage(athena.LivePage):
         return frag
 
 class TypeAheadFieldFragment(athena.LiveFragment):
-    docFactory = loaders.stan(T.input(type="text", id="typehere", render=T.directive('liveFragment')))
+    docFactory = loaders.stan(
+            T.span(render=T.directive('liveFragment'))[ '\n',
+                T.input(type="text", _class="typehere"), '\n',
+                T.h3(_class="description"),
+                ])
 
     def loadDescription(self, typed):
         if typed == u'':
