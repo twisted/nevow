@@ -7,7 +7,7 @@
 
 import re, types
 
-from nevow import rend, flat, tags
+from nevow import rend, page, flat, tags
 
 class ParseError(ValueError):
     pass
@@ -274,7 +274,7 @@ def _serialize(obj, w, seen):
             if n != len(obj) - 1:
                 w(',')
         w('}')
-    elif isinstance(obj, rend.Fragment):
+    elif isinstance(obj, (rend.Fragment, page.Element)):
         w('"')
         w(stringEncode(flat.flatten(tags.div(xmlns="http://www.w3.org/1999/xhtml")[obj]).decode('utf-8')))
         w('"')

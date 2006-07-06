@@ -3,7 +3,7 @@
 
 from twisted.trial import unittest
 
-from nevow import json
+from nevow import json, rend, page, loaders, tags
 
 TEST_OBJECTS = [
     0,
@@ -24,7 +24,8 @@ TEST_OBJECTS = [
     {u'foo': None},
     {u'bar': True},
     {u'baz': [1, 2, 3]},
-    {u'quux': {u'bar': u'foo'}}]
+    {u'quux': {u'bar': u'foo'}},
+    ]
 
 TEST_STRINGLIKE_OBJECTS = [
     u'',
@@ -79,3 +80,27 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         self.assertEquals(
             json.parse('"\\f\\b\\n\\t\\r"'),
             u"\f\b\n\t\r")
+
+
+    def _rendererTest(self, cls):
+        self.assertEquals(
+            json.serialize(
+                cls(
+                    docFactory=loaders.stan(tags.p['Hello, world.']))),
+            '"<div xmlns=\\"http://www.w3.org/1999/xhtml\\"><p>Hello, world.</p></div>"')
+
+
+    def test_fragmentSerialization(self):
+        """
+        Test that instances of L{nevow.rend.Fragment} serialize as an xhtml
+        string.
+        """
+        return self._rendererTest(rend.Fragment)
+
+
+    def test_elementSerialization(self):
+        """
+        Test that instances of L{nevow.page.Element} serialize as an xhtml
+        string.
+        """
+        return self._rendererTest(page.Element)
