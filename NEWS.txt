@@ -1,4 +1,4 @@
-0.9.1 (XXXX-XX-XX):
+0.9.1 (2006-07-05):
   - Made nevow.athena.expose the mandatory means of publishing a method to
     the browser.  The allowedMethods dictionary will no longer be respected.
   - Added nevow.page.Element and nevow.athena.LiveElement: these are
