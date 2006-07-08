@@ -1,3 +1,7 @@
+0.9.2 (2006-07-08):
+  - Fixes to the typeahead demo.
+  - Elements are now automatically serialized by json, just like Fragments.
+
 0.9.1 (2006-07-05):
   - Made nevow.athena.expose the mandatory means of publishing a method to
     the browser.  The allowedMethods dictionary will no longer be respected.
