@@ -5,7 +5,6 @@ from zope.interface import implements, Interface
 
 from twisted.internet import defer
 from twisted.trial import unittest
-from twisted.trial.util import suppress as SUPPRESS
 
 from nevow import appserver
 from nevow import inevow
@@ -68,12 +67,6 @@ class TestPage(unittest.TestCase):
         r = rend.Page(docFactory=loaders.htmlstr(xhtml))
         return deferredRender(r).addCallback(
             lambda result: self.assertEquals(result, xhtml))
-    test_simple.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
-
 
     def test_extend(self):
         xhtml = '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'
@@ -82,17 +75,10 @@ class TestPage(unittest.TestCase):
         r = R()
         return deferredRender(r).addCallback(
             lambda result: self.assertEquals(result, xhtml))
-    test_extend.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
 
     def test_data(self):
-        xhtml = (
-            '<ul id="nav" nevow:data="numbers" nevow:render="sequence">'
-            '<li nevow:pattern="item" nevow:render="string">number</li>'
-            '</ul>')
+
+        xhtml = '<ul id="nav" nevow:data="numbers" nevow:render="sequence"><li nevow:pattern="item" nevow:render="string">number</li></ul>'
 
         class R(rend.Page):
             docFactory = loaders.htmlstr(xhtml)
@@ -103,11 +89,6 @@ class TestPage(unittest.TestCase):
             lambda result: self.assertEquals(
             result,
             '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'))
-    test_data.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
 
     def test_noData(self):
         """Test when data is missing, i.e. self.original is None and no data
@@ -119,13 +100,9 @@ class TestPage(unittest.TestCase):
         r = R()
         return deferredRender(r).addCallback(
             lambda result: self.assertIn('None', result))
-    test_noData.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
 
     def test_render(self):
+
         xhtml = '<span nevow:render="replace">replace this</span>'
 
         class R(rend.Page):
@@ -136,13 +113,9 @@ class TestPage(unittest.TestCase):
         r = R()
         return deferredRender(r).addCallback(
             lambda result: self.assertEquals(result, '<span>abc</span>'))
-    test_render.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
 
     def test_dataAndRender(self):
+
         xhtml = '''
         <table nevow:data="numbers" nevow:render="sequence">
         <tr nevow:pattern="header"><th>English</th><th>French</th></tr>
@@ -164,23 +137,11 @@ class TestPage(unittest.TestCase):
                 return context.tag
 
         r = R()
-        d = deferredRender(r)
-        d.addCallback(
-            lambda result: self.assertEquals(
-                result,
-                '<table>'
-                '<tr><th>English</th><th>French</th></tr>'
-                '<tr><td>one</td><td>un/une</td></tr>'
-                '<tr><td>two</td><td>deux</td></tr>'
-                '<tr><td>three</td><td>trois</td></tr>'
-                '</table>'))
-    test_dataAndRender.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
+        return deferredRender(r).addCallback(
+            lambda result: self.assertEquals(result, '<table><tr><th>English</th><th>French</th></tr><tr><td>one</td><td>un/une</td></tr><tr><td>two</td><td>deux</td></tr><tr><td>three</td><td>trois</td></tr></table>'))
 
     def test_stanData(self):
+
         class R(rend.Page):
             def data_numbers(context, data):
                 return ['one', 'two', 'three']
@@ -250,6 +211,7 @@ class TestPage(unittest.TestCase):
             lambda result: self.assertEquals(result, '<div id="outer"><div id="inner"></div></div>'))
 
     def test_docFactoryInStanTree(self):
+
         class Page(rend.Page):
 
             def __init__(self, included):
@@ -283,17 +245,10 @@ class TestPage(unittest.TestCase):
             deferredRender(Page(loaders.xmlfile(temp))).addCallback(
             lambda result: self.assertEquals(result, '<div><p>fum</p></div>'))],
                                   fireOnOneErrback=True)
-    test_docFactoryInStanTree.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr."),
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlfile is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr."),
-        ]
 
 
     def test_buffered(self):
+
         class Page(rend.Page):
             buffered = True
             docFactory = loaders.stan(html[head[title['test']]])
@@ -913,4 +868,3 @@ class TestMacro(unittest.TestCase):
         p2_str = p2.renderSynchronously(ctx2)
 
         self.assertEquals(p1_str, p2_str)
-

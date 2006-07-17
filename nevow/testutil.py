@@ -35,11 +35,9 @@ class FakeRequest(tpc.Componentized):
     context = None
     redirected_to = None
 
-    method = 'GET'
-
     def __init__(self, headers=None, args=None, avatar=None, uri='/', currentSegments=None):
         """Create a FakeRequest instance.
-
+        
         headers:
             dict of headers
         args:
@@ -86,7 +84,7 @@ class FakeRequest(tpc.Componentized):
         d = {
             'referer': '/',
             }
-        return d.get(key)
+        return d[key]
 
     def setHeader(self, key, val):
         self.headers[key] = val
@@ -102,7 +100,7 @@ class FakeRequest(tpc.Componentized):
 
     def setResponseCode(self, code):
         self.code = code
-
+        
     def prePathURL(self):
         return 'http://localhost/%s'%'/'.join(self.prepath)
 

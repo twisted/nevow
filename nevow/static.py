@@ -38,30 +38,19 @@ def isDangerous(path):
     return path == '..' or '/' in path or os.sep in path
 
 class Data:
+    implements(inevow.IResource)
+
     """
     This is a static, in-memory resource.
     """
-    implements(inevow.IResource)
 
     def __init__(self, data, type, expires=None):
         self.data = data
         self.type = type
         self.expires = expires
 
-
-    def time(self):
-        """
-        Return the current time as a float.
-
-        The default implementation simply uses L{time.time}.  This is mainly
-        provided as a hook for tests to override.
-        """
-        return time.time()
-
-
     def locateChild(self, ctx, segments):
         return appserver.NotFound
-
 
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
@@ -69,7 +58,7 @@ class Data:
         request.setHeader("content-length", str(len(self.data)))
         if self.expires is not None:
             request.setHeader("expires",
-                              http.datetimeToString(self.time() + self.expires))
+                              http.datetimeToString(time.time() + self.expires))
         if request.method == "HEAD":
             return ''
         return self.data
