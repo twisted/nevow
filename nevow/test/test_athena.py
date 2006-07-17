@@ -5,8 +5,8 @@ from itertools import izip
 from twisted.trial import unittest
 from twisted.python import util
 
-from nevow import athena, context, loaders, tags
-from nevow.test.test_rend import req as makeRequest
+from nevow import athena, rend
+
 
 class Utilities(unittest.TestCase):
 
@@ -73,6 +73,36 @@ the end
                 self.assertIn(d, allDeps)
                 self.assertIn(m, allDeps)
                 self.failUnless(allDeps.index(d) < allDeps.index(m))
+
+
+    def test_renderJavascriptModules(self):
+        """
+        The parent of the javascript modules is not renderable itself.  Make
+        sure it's a 404.
+        """
+        m = athena.JSModules({})
+        self.failUnless(isinstance(m.renderHTTP(None), rend.FourOhFour))
+
+
+    def test_lookupNonExistentJavascriptModule(self):
+        """
+        Test that the parent resource for all JavaScript modules returns the
+        correct thing when asked for a module.
+        """
+        m = athena.JSModules({'name': 'value'})
+        self.assertEquals(m.locateChild(None, ('key',)), rend.NotFound)
+
+
+    def test_lookupJavascriptModule(self):
+        """
+        Test that retrieving a JavaScript module which actually exists returns
+        whatever the resourceFactory method produces.
+        """
+        m = athena.JSModules({'name': 'value'})
+        m.resourceFactory = set
+        resource, segments = m.locateChild(None, ('name',))
+        self.assertEquals(segments, [])
+        self.assertEquals(resource, set('value'))
 
 
     def testPackage(self):

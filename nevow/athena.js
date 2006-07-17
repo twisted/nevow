@@ -711,10 +711,15 @@ Nevow.Athena.Widget.methods(
         return Nevow.Athena.FirstNodeByAttribute(self.node, attrName, attrValue);
     },
 
+//     function elementById(self, id) {
+//         return document.getElementByID(self.objectID + '-' + id);
+//     },
 
     function nodesByAttribute(self, attrName, attrValue) {
         return Nevow.Athena.NodesByAttribute(self.node, attrName, attrValue);
     });
+
+
 
 Nevow.Athena.Widget._athenaWidgets = {};
 

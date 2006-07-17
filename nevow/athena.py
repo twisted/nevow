@@ -76,8 +76,18 @@ class JSModules(object):
     def __init__(self, mapping):
         self.mapping = mapping
 
+
     def renderHTTP(self, ctx):
         return rend.FourOhFour()
+
+
+    def resourceFactory(self, fileName):
+        """
+        Retrieve an L{inevow.IResource} which will render the contents of
+        C{fileName}.
+        """
+        return static.File(fileName)
+
 
     def locateChild(self, ctx, segments):
         if len(segments) != 1:
@@ -87,7 +97,7 @@ class JSModules(object):
         except KeyError:
             return rend.NotFound
         else:
-            return static.File(impl), []
+            return self.resourceFactory(impl), []
 
 
 
@@ -891,8 +901,26 @@ class LivePage(rend.Page):
         self._disconnected(error.ConnectionDone("Connection closed"))
 
 
+
+# Nevow.Athena.Widget.method(
+#     'getElementById',
+#     function (self, id) {
+#         return document.getElementById(self.widgetId + '-' + id);
+#     });
+
+# def _mangleId(document):
+#     if 'id' in document.attributes:
+#         document.attributes['id'] = [nevow.slot('athena:id'), '-', document.attributes['id']]
+#     for ch in document.children:
+#         _mangleId(ch)
+#     return document
+
+
+
 class _LiveMixin(object):
     jsClass = u'Nevow.Athena.Widget'
+
+#     preprocessors = [_mangleId]
 
     fragmentParent = None
 

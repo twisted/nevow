@@ -16,7 +16,6 @@ try:
     bad_version = pyxml.version_info < (0,8,2)
     ## before 0.8.3, startDTD was passed the args in the wrong order
     bad_startdtd_args = pyxml.version_info < (0,8,3)
-        
 except:
     ## we're using core python xml library
     import sys
@@ -66,7 +65,7 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
 
     def skippedEntity(self, name):
         self.current.append(xml("&%s;"%name))
-        
+
     def startDocument(self):
         self.document = []
         self.current = self.document
@@ -109,7 +108,7 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
                 self.current.append(el)
                 self.current = el.children
                 return
-        
+
         attrs = dict(attrs)
         specials = {}
         attributes = self.attributeList
@@ -203,24 +202,24 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
 
 
 def parse(fl, ignoreDocType=False, ignoreComment=False):
-    ## Earlier PyXMLs don't handle non-standard entities (e.g. &copy;) 
+    ## Earlier PyXMLs don't handle non-standard entities (e.g. &copy;)
     ## correctly. They will either give an error or simply ignore the
     ## entity producing bad output.
-    
+
     if bad_version:
         raise Exception("Please use PyXML later than 0.8.2 or python later than 2.3. Earlier ones are too buggy.")
-    
+
     parser = make_parser()
     parser.setFeature(handler.feature_validation, 0)
     parser.setFeature(handler.feature_namespaces, 1)
     parser.setFeature(handler.feature_external_ges, 0)
     parser.setFeature(handler.feature_external_pes, 0)
-    
+
     s = ToStan(ignoreDocType, ignoreComment)
     parser.setContentHandler(s)
     parser.setEntityResolver(s)
     parser.setProperty(handler.property_lexical_handler, s)
-    
+
     parser.parse(fl)
 
     return s.document
