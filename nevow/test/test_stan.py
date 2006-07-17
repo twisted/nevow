@@ -54,10 +54,34 @@ class TestTag(TestCase):
         self.assertEquals(tag.remember, "stuff")
         self.assertEquals(tag.key, "myKey")
         self.assertEquals(tag.pattern, "item")
-        
-        
+
+
+    def test_visit(self):
+        """
+        Test that L{nevow.stan.visit} invokes the visitor it is given with all
+        the nodes in the DOM it is given in pre-order.
+        """
+        visited = []
+        def visitor(t):
+            visited.append(t)
+        root = stan.Proto('root')()
+        firstChild = stan.Proto('firstChild')()
+        secondChild = stan.Proto('secondChild')()
+        firstGrandchild = stan.Proto('firstGrandchild')()
+        secondGrandchild = stan.Proto('secondGrandchild')()
+        thirdGrandchild = 'thirdGrandchild'
+        root[firstChild, secondChild]
+        secondChild[firstGrandchild, secondGrandchild, thirdGrandchild]
+        stan.visit(root, visitor)
+        self.assertEquals(
+            visited,
+            [root, firstChild, secondChild,
+             firstGrandchild, secondGrandchild, thirdGrandchild])
+
+
+
 class TestComment(TestCase):
-    
+
     def test_notCallable(self):
         comment = stan.CommentProto()
         self.assertRaises(NotImplementedError, comment, id='oops')

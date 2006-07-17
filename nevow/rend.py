@@ -19,7 +19,9 @@ Mostly, you'll use the renderers:
 
 from cStringIO import StringIO
 from zope.interface import implements, providedBy
+
 import twisted.python.components as tpc
+from twisted.python.reflect import accumulateClassList
 
 from nevow.context import WovenContext, NodeNotFound, PageContext
 from nevow import inevow, tags, flat, util, url
@@ -32,6 +34,22 @@ from time import time as now
 import random
 
 import warnings
+
+
+def _getPreprocessors(inst):
+    """
+    Accumulate elements from the sequences bound at the C{preprocessors}
+    attribute on all classes in the inheritence hierarchy of the class of
+    C{inst}.
+    """
+    preprocessors = []
+    accumulateClassList(
+        inst.__class__,
+        'preprocessors',
+        preprocessors)
+    return preprocessors
+
+
 
 class RenderFactory(object):
     implements(inevow.IRendererFactory)
@@ -371,6 +389,8 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
         # Remember me as lots of things
         self.rememberStuff(context)
 
+        preprocessors = _getPreprocessors(self)
+
         # This tidbit is to enable us to include Page objects inside
         # stan expressions and render_* methods and the like. But
         # because of the way objects can get intertwined, we shouldn't
@@ -380,7 +400,7 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
         self.docFactory.precompiledDoc = None
         try:
             try:
-                doc = self.docFactory.load(context)
+                doc = self.docFactory.load(context, preprocessors)
             finally:
                 self.docFactory.pattern = old
                 self.docFactory.precompiledDoc = None
@@ -391,9 +411,9 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
             # matter until it's all removed. ;-).
             if 'nevow.inevow.IQ' not in str(e):
                 raise
-            doc = self.docFactory.load(context)
+            doc = self.docFactory.load(context, preprocessors)
         except NodeNotFound:
-            doc = self.docFactory.load(context)
+            doc = self.docFactory.load(context, preprocessors)
         else:
             if old == 'content':
                 import warnings
@@ -539,7 +559,8 @@ class Page(Fragment, ConfigurableFactory, ChildLookupMixin):
             def finisher(result):
                 return util.maybeDeferred(finishRequest).addCallback(lambda r: result)
 
-        doc = self.docFactory.load(ctx)
+        preprocessors = _getPreprocessors(self)
+        doc = self.docFactory.load(ctx, preprocessors)
         ctx =  WovenContext(ctx, tags.invisible[doc])
 
         return self.flattenFactory(doc, ctx, writer, finisher)

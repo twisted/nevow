@@ -14,6 +14,7 @@ from nevow.tags import invisible
 from nevow.errors import MissingRenderMethod, MissingDocumentFactory
 
 from nevow.util import Expose
+from nevow.rend import _getPreprocessors
 
 renderer = Expose(
     """
@@ -63,6 +64,7 @@ class Element(object):
     implements(IRendererFactory, IRenderer)
 
     docFactory = None
+    preprocessors = ()
 
     def __init__(self, docFactory=None):
         if docFactory is not None:
@@ -87,7 +89,10 @@ class Element(object):
 
         if self.docFactory is None:
             raise MissingDocumentFactory(self)
-        doc = self.docFactory.load(context)
+
+        preprocessors = _getPreprocessors(self)
+
+        doc = self.docFactory.load(context, preprocessors)
 
         context.remember(self, IData)
         context.remember(self, IRenderer)

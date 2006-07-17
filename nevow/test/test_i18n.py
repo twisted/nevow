@@ -5,7 +5,7 @@ from cStringIO import StringIO
 from nevow import inevow, flat, context, tags, loaders, rend
 from nevow import i18n
 
-def mockTranslator(s, domain=None):
+def mockTranslator(s, languages=None, domain=None):
     args = {}
     if domain is not None:
         args['domain'] = domain

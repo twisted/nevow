@@ -268,11 +268,14 @@ class IRequest(IComponentized):
     # Methods for received request
     def getHeader(key):
         """Get a header that was sent from the network.
+
+        Return C{None} if the header is not present.
         """
-        
+
+
     def getCookie(key):
         """Get a cookie that was sent from the network.
-        """    
+        """
 
 
     def getAllHeaders():
@@ -465,20 +468,24 @@ class IEventMaster(Interface):
 class IDocFactory(Interface):
     """Interface for objects that load and parse templates for Nevow's
     renderers.
-    
+
     The load method's context arg is optional. Loaders should be written to cope
     with no context arg and either create a new context (if necessary) or raise
     a ValueError if the context of the caller is important.
-    
+
     If a context is passed to load() it should *not* be passed on to the
     flattener/precompiler; a new context should be created if necessary. This
     measure is to ensure that nothing remembered in the caller's context, i.e.
     personal information in the session, leaks into the template until it is
     actually rendered.
     """
-    
-    def load(ctx=None):
-        """Load a template and return a stan document tree.
+
+    def load(ctx=None, preprocessors=()):
+        """
+        Load a template and return a stan document tree.
+
+        @param preprocessors: An iterable of one-argument callables which will
+        be given the stan document tree to transform before it is compiled.
         """
 
 
