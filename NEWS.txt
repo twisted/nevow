@@ -1,3 +1,6 @@
+0.9.3 (2006-07-17):
+  - Page rendering now supports preprocessors.
+
 0.9.2 (2006-07-08):
   - Fixes to the typeahead demo.
   - Elements are now automatically serialized by json, just like Fragments.
