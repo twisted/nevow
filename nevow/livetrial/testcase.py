@@ -13,7 +13,7 @@ class TestCase(athena.LiveFragment, unittest.TestCase):
         return object.__repr__(self)
 
 class TestSuite(object):
-    def __init__(self, name):
+    def __init__(self, name="Live Tests"):
         self.tests = []
         self.name = name
 
@@ -21,7 +21,7 @@ class TestSuite(object):
         self.tests.append(test)
 
 class TestLoader(runner.TestLoader):
-    moduleGlob = 'livetest_*.py'
+    modulePrefix = 'livetest_'
 
     def __init__(self):
         runner.TestLoader.__init__(self)
@@ -47,22 +47,6 @@ class TestLoader(runner.TestLoader):
         suite = self.suiteFactory(module.__name__)
         for testClass in self._findTestClasses(module):
             suite.addTest(self.loadClass(testClass))
-        return suite
-
-    def loadPackage(self, package, recurse=False):
-        if not runner.isPackage(package):
-            raise TypeError("%r is not a package" % (package,))
-        if recurse:
-            return self.loadPackageRecursive(package)
-        suite = self.suiteFactory(package.__name__)
-        for moduleName in self.sort(self._findTestModules(package)):
-            suite.addTest(self.loadByName(moduleName))
-        return suite
-
-    def loadPackageRecursive(self, package):
-        packageDir = os.path.dirname(package.__file__)
-        suite = self.suiteFactory(package.__name__)
-        os.path.walk(packageDir, self._packageRecurse, suite)
         return suite
 
     def isTestCase(self, obj):
