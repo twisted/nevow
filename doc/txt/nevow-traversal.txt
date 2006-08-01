@@ -14,6 +14,7 @@ on top of this to satisfy common use cases.
 * `childFactory method`_
 * `child_* methods and attributes`_
 * `Dots in child names`_
+* `children dictionary`_
 * `The default trailing slash handler`_
 * `ICurrentSegments and IRemainingSegments`_
 
@@ -184,7 +185,7 @@ implementation and overrides the ``childFactory`` hook instead::
 
       def childFactory(self, ctx, name):
           if name not in self.dataDict:
-              return None # 404
+              return rend.NotFound # 404
           return DictTree(self.dataDict[name])
 
 As you can see, the ``childFactory`` implementation is considerably shorter than the
@@ -250,6 +251,36 @@ using ``child``-prefixed methods. The solution is really quite simple::
 
 The same technique could be used to install a child method with a dot in the
 name.
+
+children dictionary
+-------------------
+
+The final hook supported by the default implementation of locateChild is the
+``rend.Page.children`` dictionary::
+
+  class Main(rend.Page):
+      children = {
+          'people': People(),
+          'jobs': Jobs(),
+          'events': Events()}
+
+      def renderHTTP(self, ctx):
+          return """\
+<html>
+    <head>
+        <title>Our Site</title>
+    </head>
+    <body>
+        <p>bla bla bla</p>
+    </body>
+</html>"""
+
+
+Hooks are checked in the following order:
+
+  1. ``self.dictionary``
+  2. ``self.child_*``
+  3. ``self.childFactory``
 
 The default trailing slash handler
 ----------------------------------
