@@ -17,6 +17,7 @@ syntax is generally going to be much more verbose.
 * `nevow:pattern`_
 * `nevow:slot`_
 * `nevow:attr`_
+* `nevow:invisible`_
 * `xmlstr, htmlfile, and htmlstr`_
 
 loaders.xmlfile
@@ -235,6 +236,29 @@ This document will be produced::
 While this syntax is somewhat awkward, every other type of nevow tag and
 attribute may be used inside the nevow:attr node. This makes setting attributes
 of tags uniform with every other method of manipulating the XML template.
+
+nevow:invisible
+---------------
+
+Sometimes you need to group some elements, because you need to use a
+renderer for a group of children.
+
+However, it may not be desirable to give these elements a parent/child
+relationship in your XML structure.  For these cases, use nevow:invisible.
+
+As suggested by the name, a nevow:invisible tag is removed in the rendered
+XML. Here is an example::
+ 
+  <html><nevow:invisible nevow:data="name" nevow:render="data" /></html>
+
+With the data_name method::
+
+  def data_name(self, ctx, data):
+      return "Hello!"
+
+Will result in the document::
+
+ <html>Hello!</html>
 
 xmlstr, htmlfile, and htmlstr
 -----------------------------
