@@ -1,6 +1,7 @@
 // -*- test-case-name: nevow.test.test_javascript -*-
 
 // import Divmod
+// import Divmod.Base
 // import Divmod.Runtime
 
 // import Nevow
@@ -218,7 +219,7 @@ Nevow.Athena.HTTPRequestOutput.methods(
     },
 
     function send(self, ack, message) {
-        var serialized = MochiKit.Base.serializeJSON([ack, message]);
+        var serialized = Divmod.Base.serializeJSON([ack, message]);
         var response = Divmod.Runtime.theRuntime.getPage(
             self.baseURL,
             self.queryArgs,
@@ -374,7 +375,7 @@ Nevow.Athena.athenaIDFromNode = function(n) {
 
 Nevow.Athena.athenaClassFromNode = function(n) {
     var athenaClass = Divmod.Runtime.theRuntime.getAttribute(
-        n, Nevow.Athena.XMLNS_URI, 'athena', 'class');
+        n, 'class', Nevow.Athena.XMLNS_URI, 'athena');
     if (athenaClass != null) {
         var cls = Divmod.namedAny(athenaClass);
         if (cls == undefined) {
@@ -526,7 +527,7 @@ Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
     Divmod.Runtime.theRuntime.traverse(
         root,
         function(node) {
-            if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+            if (Divmod.Runtime.theRuntime.getAttribute(node, attrName) == attrValue) {
                 results.push(node);
             }
             return descend;
@@ -547,7 +548,7 @@ Nevow.Athena.FirstNodeByAttribute = function(root, attrName, attrValue) {
     Divmod.Runtime.theRuntime.traverse(
         root,
         function(node) {
-            if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+            if (Divmod.Runtime.theRuntime.getAttribute(node, attrName) == attrValue) {
                 result = node;
                 return terminate;
             }
@@ -617,10 +618,10 @@ Nevow.Athena._checkEscape = function(event) {
  *
  */
 Nevow.Athena._initialize = function() {
-    MochiKit.DOM.addToCallStack(window, 'onunload', Nevow.Athena._unloaded, true);
+    Divmod.Base.addToCallStack(window, 'onunload', Nevow.Athena._unloaded, true);
 
-    MochiKit.DOM.addToCallStack(window, 'onkeypress', Nevow.Athena._checkEscape, false);
-    MochiKit.DOM.addToCallStack(window, 'onkeyup', Nevow.Athena._checkEscape, false);
+    Divmod.Base.addToCallStack(window, 'onkeypress', Nevow.Athena._checkEscape, false);
+    Divmod.Base.addToCallStack(window, 'onkeyup', Nevow.Athena._checkEscape, false);
 
     /**
      * Delay initialization for just a moment so that Safari stops whirling
@@ -1015,6 +1016,6 @@ Nevow.Athena.Widget._initialize = function() {
     Divmod.debug("transport", "Finished setting up page disconnect notifier");
 };
 
-MochiKit.DOM.addLoadEvent(Nevow.Athena._initialize);
-MochiKit.DOM.addLoadEvent(Nevow.Athena.Widget._initialize);
+Divmod.Base.addLoadEvent(Nevow.Athena._initialize);
+Divmod.Base.addLoadEvent(Nevow.Athena.Widget._initialize);
 

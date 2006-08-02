@@ -6,7 +6,7 @@ Nevow.TagLibrary.TabbedPane.methods(
     function __init__(self, node) {
         self._loaded = false;
         self._pendingTabSwitch = null;
-        MochiKit.DOM.addLoadEvent(function() {
+        Divmod.Base.addLoadEvent(function() {
             self.node.style.opacity = "";
             self._loaded = true;
             if(self._pendingTabSwitch) {

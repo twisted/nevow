@@ -1,5 +1,6 @@
 
 // import Divmod
+// import Divmod.Base
 // import Divmod.Defer
 
 Divmod.Runtime.Platform = Divmod.Class.subclass("Divmod.Runtime.Platform");
@@ -62,7 +63,7 @@ Divmod.Runtime.Platform.methods(
                     })();
     },
 
-    function getAttribute(self, node, namespaceURI, namespaceIdentifier, localName) {
+    function getAttribute(self, node, localName, namespaceURI, namespaceIdentifier) {
         if (node.hasAttributeNS) {
             if (node.hasAttributeNS(namespaceURI, localName)) {
                 return node.getAttributeNS(namespaceURI, localName);
@@ -71,7 +72,7 @@ Divmod.Runtime.Platform.methods(
             }
         }
         if (node.hasAttribute) {
-            var r = namespaceURI + ':' + localName;
+            var r = (typeof namespaceURI != 'undefined') ? namespaceURI + ':' + localName : localName;
             if (node.hasAttribute(r)) {
                 return node.getAttribute(r);
             }
@@ -329,7 +330,7 @@ Divmod.Runtime.InternetExplorer.methods(
         // IE has no equivalent to the stacktrace that FF provides, so this
         // JSON adapter will provide a dummy object to make Athena happy when
         // it tries to send exceptions from the client to the server
-        MochiKit.Base.registerJSON(
+        Divmod.Base.registerJSON(
             'Error', 
             function(obj) {
                 return obj instanceof Error;
@@ -412,7 +413,7 @@ Divmod.Runtime.Opera.methods(
         // when it tries to send exceptions from the client to the server
 
         // TODO: Convert Opera's backtrace string to FF's stacktrace format
-        MochiKit.Base.registerJSON(
+        Divmod.Base.registerJSON(
             'Error', 
             function(obj) {
                 return obj instanceof Error;

@@ -82,7 +82,7 @@ function loadDescription(ev)
     d.addCallback(replaceDescription, typehere);
 }
 
-MochiKit.DOM.addToCallStack(window, 'onload', function() {
+Divmod.Base.addToCallStack(window, 'onload', function() {
     typeheres = MochiKit.DOM.getElementsByTagAndClassName('input', 'typehere');
     for (n=0; n<typeheres.length; n++) {
       xbAddEvent(typeheres[n], 'keyup', loadDescription, 1);

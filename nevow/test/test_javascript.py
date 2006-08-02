@@ -62,6 +62,10 @@ class JavaScriptTestSuite(unittest.TestCase):
         return self.onetest('test_object.js')
 
 
+    def testJSBase(self):
+        return self.onetest('test_base.js')
+
+
 
 _jsInterps = procutils.which('smjs')
 if _jsInterps:

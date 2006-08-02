@@ -26,9 +26,10 @@ function assert (cond, err) {
 }
 
 
-MochiKit = {};
-MochiKit.DOM = {};
-MochiKit.DOM.addLoadEvent = function () {};
+Divmod = {};
+Divmod.Base = {};
+Divmod.Base.helpers = {};
+Divmod.Base.helpers.addLoadEvent = function () {};
 
 _testsupportDummyScheduler = [];
 function setTimeout(f, n) {
@@ -48,3 +49,6 @@ load("../defer.js");
 
 var Nevow = {};
 load("../nevow.js");
+
+Divmod.Base = {};
+load("../base.js");

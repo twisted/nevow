@@ -253,6 +253,7 @@ class JSDependencies(object):
         if mapping is None:
             self.mapping = {
                 u'Divmod': util.resource_filename('nevow', 'divmod.js'),
+                u'Divmod.Base': util.resource_filename('nevow', 'base.js'),
                 u'Divmod.Defer': util.resource_filename('nevow', 'defer.js'),
                 u'Divmod.Runtime': util.resource_filename('nevow', 'runtime.js'),
                 u'Divmod.Runtime.Tests': util.resource_filename('nevow.test', 'livetest_runtime.js'),
@@ -262,8 +263,7 @@ class JSDependencies(object):
                 u'Nevow.Athena.Test': util.resource_filename('nevow.livetrial', 'livetest.js'),
                 u'Nevow.Athena.Tests': util.resource_filename('nevow.test', 'livetest.js'),
                 u'Nevow.TagLibrary': util.resource_filename('nevow.taglibrary', 'taglibrary.js'),
-                u'Nevow.TagLibrary.TabbedPane': util.resource_filename('nevow.taglibrary', 'tabbedPane.js'),
-                u'MochiKit': util.resource_filename('nevow', 'MochiKit.js')}
+                u'Nevow.TagLibrary.TabbedPane': util.resource_filename('nevow.taglibrary', 'tabbedPane.js')}
             self._loadPlugins = True
         else:
             self.mapping = mapping
@@ -661,7 +661,7 @@ class LivePage(rend.Page):
     page = property(lambda self: self)
 
     # Modules needed to bootstrap
-    BOOTSTRAP_MODULES = ['MochiKit', 'Divmod', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
+    BOOTSTRAP_MODULES = ['Divmod', 'Divmod.Base', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
 
     def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, transportRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
