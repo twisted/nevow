@@ -330,22 +330,6 @@ Divmod.debug = function(kind, msg) {
 
 Divmod.log = Divmod.debug;
 
-// This function is copied from
-
-// http://www.joehewitt.com/software/firebug/faq.php
-
-// I know it violates the emerging JS coding standard, but I don't want to
-// mess with it because I don't understand how it works yet.  -glyph
-
-function printfire() {
-    if (document.createEvent) {
-        printfire.args = arguments;
-        var ev = document.createEvent("Events");
-        ev.initEvent("printfire", false, true);
-        dispatchEvent(ev);
-    }
-}
-
 Divmod.logger.addObserver(function (evt) {
-    printfire("Divmod log: " + evt.message);
+    console.log("Divmod log: " + evt.message);
 });
