@@ -28,17 +28,32 @@ def _drive(iterable, finished):
     else:
         deferred, returner = next
         def cb(result):
+            """
+            Pass the result of a Deferred on to the callable which is
+            waiting for it and then resume driving the iterable.
+
+            No one has any business whatsoever being on the callback chain
+            after this callback, so we can swallow the Deferred's result to
+            ease the garbage collector's job and for consistency with C{eb}
+            below.
+            """
             returner(result)
             _drive(iterable, finished)
-            return result
+
         def eb(failure):
+            """
+            Handle asynchronous failures in the iterable by passing them on
+            to the outer Deferred.  The iterable will not be resumed by this
+            driver any further.
+
+            Like C{cb} above, we swallow this result intentionally.  The
+            only thing that could reasonably happen to it were we to return
+            it here is for it to be logged as an unhandled Deferred, since
+            we are supposed to be the last errback on the chain.
+            """
             finished.errback(failure)
-            return failure
-        cfac = getCtx('CursorFactory')
-        if cfac:
-            deferred.addCallback(cfac.store.transback, cb).addErrback(cfac.store.transback, eb)
-        else:
-            deferred.addCallback(cb).addErrback(eb)
+
+        deferred.addCallback(cb).addErrback(eb)
 
 
 def deferflatten(stan, ctx, writer):
@@ -51,7 +66,8 @@ def deferflatten(stan, ctx, writer):
 def DeferredSerializer(original, context):
     d = defer.Deferred()
     def cb(result):
-        d.callback(flat.serialize(result, context))
+        d2 = defer.maybeDeferred(flat.serialize, result, context)
+        d2.chainDeferred(d)
         return result
     original.addCallback(cb)
     return d

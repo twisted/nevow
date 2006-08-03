@@ -4,8 +4,9 @@
 
 from twisted.internet import defer
 
-from nevow import context
+from nevow import context, inevow
 from nevow import testutil
+from nevow.flat import twist
 from nevow.util import Deferred
 
 from nevow import rend, loaders, tags
@@ -65,6 +66,50 @@ class LaterRenderTest(RenderHelper):
         self.assertEquals(req.v, '')
         self.d2.callback(".")
         self.assertEquals(req.v, '<html>Hello world.</html>')
+
+    def test_renderNestedDeferredCallables(self):
+        """
+        Test flattening of a renderer which returns a Deferred which fires with
+        a renderer which returns a Deferred.
+        """
+        def render_inner(ctx, data):
+            return defer.succeed('')
+
+        def render_outer(ctx, data):
+            return defer.succeed(render_inner)
+
+        ctx = context.WovenContext()
+        ctx.remember(None, inevow.IData)
+
+        out = []
+        d = twist.deferflatten(render_outer, ctx, out.append)
+        def flattened(ign):
+            self.assertEquals(out, [''])
+        d.addCallback(flattened)
+        return d
+
+
+    def test_renderNestedDeferredErrorHandling(self):
+        """
+        Test that flattening a renderer which returns a Deferred which fires
+        with a renderer which raises an exception causes the outermost Deferred
+        to errback.
+        """
+        class NestedException(Exception):
+            pass
+
+        def render_inner(ctx, data):
+            raise NestedException()
+
+        def render_outer(ctx, data):
+            return defer.succeed(render_inner)
+
+        ctx = context.WovenContext()
+        ctx.remember(None, inevow.IData)
+
+        out = []
+        d = twist.deferflatten(render_outer, ctx, out.append)
+        return self.assertFailure(d, NestedException)
 
 
 class LaterDataTest(RenderHelper):
