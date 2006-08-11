@@ -137,6 +137,7 @@ Divmod.Class.subclass = function(/* optional */ className) {
          * instance's C{__init__}.
          */
         if (asConstructor !== Divmod._CONSTRUCTOR) {
+            self.__class__ = subClass;
             self.__init__.apply(self, arguments);
         }
 
@@ -160,6 +161,11 @@ Divmod.Class.subclass = function(/* optional */ className) {
     subClass.subclass = Divmod.Class.subclass;
 
     /*
+     * Make the subclass identifiable somehow.
+     */
+    subClass.__name__ = className;
+
+    /*
      * Copy class methods and attributes, so that you can do
      * polymorphism on class methods (useful for things like
      * Nevow.Athena.Widget.get in widgets.js).
@@ -167,6 +173,7 @@ Divmod.Class.subclass = function(/* optional */ className) {
     for (var varname in superClass) {
         if ((varname != 'prototype') &&
             (varname != 'constructor') &&
+            (varname != '__name__') &&
             (superClass[varname] != undefined)) {
             subClass[varname] = superClass[varname];
         }

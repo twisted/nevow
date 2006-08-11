@@ -1,6 +1,6 @@
 // -*- test-case-name: nevow.test.test_javascript.JavaScriptTestSuite.testJSBase
 
-load("testsupport.js")
+load("testsupport.js");
 
 // import Divmod
 // import Divmod.Base

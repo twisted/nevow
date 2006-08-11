@@ -145,6 +145,10 @@ class JSModule(object):
             self.packageDeps = [self.getOrCreate(parent, mapping)]
 
 
+    def __repr__(self):
+        return 'JSModule(%r)' % (self.name,)
+
+
     _importExpression = re.compile('^// import (.+)$', re.MULTILINE)
     def _extractImports(self, fileObj):
         s = fileObj.read()
@@ -255,6 +259,7 @@ class JSDependencies(object):
                 u'Divmod': util.resource_filename('nevow', 'divmod.js'),
                 u'Divmod.Base': util.resource_filename('nevow', 'base.js'),
                 u'Divmod.Defer': util.resource_filename('nevow', 'defer.js'),
+                u'Divmod.Inspect': util.resource_filename('nevow', 'inspect.js'),
                 u'Divmod.Runtime': util.resource_filename('nevow', 'runtime.js'),
                 u'Divmod.Runtime.Tests': util.resource_filename('nevow.test', 'livetest_runtime.js'),
                 u'Divmod.XML': util.resource_filename('nevow', 'xml.js'),
@@ -269,7 +274,10 @@ class JSDependencies(object):
             self.mapping = mapping
 
 
-    def getModuleForClass(self, className):
+    def getModuleForName(self, className):
+        """
+        Return the L{JSModule} most likely to define the given name.
+        """
         if self._loadPlugins:
             self.mapping.update(allJavascriptPackages())
             self._loadPlugins = False
@@ -285,6 +293,9 @@ class JSDependencies(object):
             else:
                 return JSModule.getOrCreate(jsMod, self.mapping)
         raise RuntimeError("Unknown class: %r" % (className,))
+    getModuleForClass = getModuleForName
+
+
 jsDeps = JSDependencies()
 
 

@@ -11,13 +11,13 @@ Nevow.Athena.Tests.WidgetInitializerArguments.methods(
         }
     },
 
-    function run(self) {
+    function test_widgetInitializationArguments(self) {
         return self.callRemote('test', self.args);
     });
 
 Nevow.Athena.Tests.ClientToServerArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerArgumentSerialization');
 Nevow.Athena.Tests.ClientToServerArgumentSerialization.methods(
-    function run(self) {
+    function test_clientToServerArgumentSerialization(self) {
         var L = [1, 1.5, 'Hello world'];
         var O = {'hello world': 'object value'};
         return self.callRemote('test', 1, 1.5, 'Hello world', L, O);
@@ -25,7 +25,7 @@ Nevow.Athena.Tests.ClientToServerArgumentSerialization.methods(
 
 Nevow.Athena.Tests.ClientToServerResultSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerResultSerialization');
 Nevow.Athena.Tests.ClientToServerResultSerialization.methods(
-    function run(self) {
+    function test_clientToServerResultSerialization(self) {
         var L = [1, 1.5, 'Hello world'];
         var O = {'hello world': 'object value'};
         var d = self.callRemote('test', 1, 1.5, 'Hello world', L, O);
@@ -43,7 +43,7 @@ Nevow.Athena.Tests.ClientToServerResultSerialization.methods(
 
 Nevow.Athena.Tests.ExceptionFromServer = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ExceptionFromServer');
 Nevow.Athena.Tests.ExceptionFromServer.methods(
-    function run(self) {
+    function test_exceptionFromServer(self) {
         var d;
         var s = 'This exception should appear on the client.';
         d = self.callRemote('testSync', s);
@@ -62,7 +62,7 @@ Nevow.Athena.Tests.ExceptionFromServer.methods(
 
 Nevow.Athena.Tests.JSONRoundtrip = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.JSONRoundtrip');
 Nevow.Athena.Tests.JSONRoundtrip.methods(
-    function run(self) {
+    function test_jsonRoundTrip(self) {
         return self.callRemote('test');
     },
 
@@ -72,7 +72,7 @@ Nevow.Athena.Tests.JSONRoundtrip.methods(
 
 Nevow.Athena.Tests.AsyncExceptionFromServer = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AsyncExceptionFromServer');
 Nevow.Athena.Tests.AsyncExceptionFromServer.methods(
-    function run(self) {
+    function test_asyncExceptionFromServer(self) {
         var d;
         var s = 'This exception should appear on the client.';
         d = self.callRemote('testAsync', s);
@@ -91,7 +91,7 @@ Nevow.Athena.Tests.AsyncExceptionFromServer.methods(
 
 Nevow.Athena.Tests.ExceptionFromClient = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ExceptionFromClient');
 Nevow.Athena.Tests.ExceptionFromClient.methods(
-    function run(self) {
+    function test_exceptionFromClient(self) {
         var d;
         d = self.callRemote('loopbackError');
         d.addCallbacks(
@@ -109,7 +109,7 @@ Nevow.Athena.Tests.ExceptionFromClient.methods(
 
 Nevow.Athena.Tests.AsyncExceptionFromClient = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AsyncExceptionFromClient');
 Nevow.Athena.Tests.AsyncExceptionFromClient.methods(
-    function run(self) {
+    function test_asyncExceptionFromClient(self) {
         var d;
         d = self.callRemote('loopbackError');
         d.addCallbacks(
@@ -130,7 +130,7 @@ Nevow.Athena.Tests.AsyncExceptionFromClient.methods(
 
 Nevow.Athena.Tests.ServerToClientArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientArgumentSerialization');
 Nevow.Athena.Tests.ServerToClientArgumentSerialization.methods(
-    function run(self) {
+    function test_serverToClientArgumentSerialization(self) {
         return self.callRemote('test');
     },
 
@@ -143,7 +143,7 @@ Nevow.Athena.Tests.ServerToClientArgumentSerialization.methods(
 
 Nevow.Athena.Tests.ServerToClientResultSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientResultSerialization');
 Nevow.Athena.Tests.ServerToClientResultSerialization.methods(
-    function run(self) {
+    function test_serverToClientResultSerialization(self) {
         return self.callRemote('test');
     },
 
@@ -153,13 +153,13 @@ Nevow.Athena.Tests.ServerToClientResultSerialization.methods(
 
 Nevow.Athena.Tests.WidgetInATable = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.WidgetInATable');
 Nevow.Athena.Tests.WidgetInATable.methods(
-    function run(self) {
+    function test_widgetInATable(self) {
         // Nothing to do
     });
 
 Nevow.Athena.Tests.WidgetIsATable = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.WidgetIsATable');
 Nevow.Athena.Tests.WidgetIsATable.methods(
-    function run(self) {
+    function test_widgetIsATable(self) {
         // Nothing to do
     });
 
@@ -169,7 +169,7 @@ Nevow.Athena.Tests.ChildParentRelationshipTest.methods(
         self.assertEquals(self.widgetParent, proposedParent);
     },
 
-    function run(self) {
+    function test_childParentRelationship(self) {
         var deferredList = function(finalDeferred, counter) {
             if (counter == 0) {
                 finalDeferred.callback(null);
@@ -195,7 +195,7 @@ Nevow.Athena.Tests.ChildParentRelationshipTest.methods(
             for (var i = 0; i < self.childWidgets.length; i++) {
                 var childWidget = self.childWidgets[i];
                 childWidget.checkParent(self);
-                childWidget.run().addCallback(cb).addErrback(function(err) { d.errback(err); });
+                childWidget.test_childParentRelationship().addCallback(cb).addErrback(function(err) { d.errback(err); });
             }
             return d;
         });
@@ -204,20 +204,20 @@ Nevow.Athena.Tests.ChildParentRelationshipTest.methods(
 
 Nevow.Athena.Tests.AutomaticClass = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AutomaticClass');
 Nevow.Athena.Tests.AutomaticClass.methods(
-    function run(self) {
+    function test_automaticClass(self) {
         // Nothing to do here
     });
 
 
 Nevow.Athena.Tests.ImportBeforeLiteralJavaScript = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ImportBeforeLiteralJavaScript');
 Nevow.Athena.Tests.ImportBeforeLiteralJavaScript.methods(
-    function run(self) {
+    function test_importBeforeLiteralJavaScript(self) {
         self.assertEquals(importBeforeLiteralJavaScriptResult, false);
     });
 
 Nevow.Athena.Tests.AthenaHandler = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AthenaHandler');
 Nevow.Athena.Tests.AthenaHandler.methods(
-    function run(self) {
+    function test_athenaHandler(self) {
         self.handled = false;
         var onsubmit = self.node.getElementsByTagName('button')[0].onclick;
         self.assertEquals(onsubmit(), false);
@@ -231,7 +231,7 @@ Nevow.Athena.Tests.AthenaHandler.methods(
 
 Nevow.Athena.Tests.FirstNodeByAttribute = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.FirstNodeByAttribute');
 Nevow.Athena.Tests.FirstNodeByAttribute.methods(
-    function run(self) {
+    function test_firstNodeByAttribute(self) {
         var html = '<div xmlns="http://www.w3.org/1999/xhtml" class="foo" />';
         Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
         var node = self.firstNodeByAttribute("class", "foo");
@@ -253,7 +253,7 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
         self.expectedChildCount = childCount;
     },
 
-    function run(self) {
+    function test_dynamicWidgetInstantiation(self) {
         var d = self.callRemote('getWidgets');
         d.addCallback(function(result) {
             self.waiting = Divmod.Defer.Deferred();
@@ -277,7 +277,7 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
  */
 Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException');
 Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException.methods(
-    function run(self) {
+    function test_gettingWidgetlessNodeRaisesException(self) {
         var result;
         var threw;
         try {
@@ -293,7 +293,7 @@ Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException.methods(
 
 Nevow.Athena.Tests.RemoteMethodErrorShowsDialog = Nevow.Athena.Test.TestCase.subclass('RemoteMethodErrorShowsDialog');
 Nevow.Athena.Tests.RemoteMethodErrorShowsDialog.methods(
-    function run(self) {
+    function test_remoteMethodErrorShowsDialog(self) {
         var getDialogs = function() {
             return Nevow.Athena.NodesByAttribute(
                         document.body,

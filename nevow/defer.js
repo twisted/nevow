@@ -141,13 +141,13 @@ Divmod.Defer.Deferred.methods(
         self._startRunCallbacks(err);
     });
 
-Divmod.Defer.succeed = function(result) {
+Divmod.Defer.succeed = function succeed(result) {
     var d = new Divmod.Defer.Deferred();
     d.callback(result);
     return d;
 };
 
-Divmod.Defer.fail = function(err) {
+Divmod.Defer.fail = function fail(err) {
     var d = new Divmod.Defer.Deferred();
     d.errback(err);
     return d;

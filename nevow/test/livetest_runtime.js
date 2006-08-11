@@ -4,7 +4,7 @@
 
 Divmod.Runtime.Tests.AppendNodeContent = Nevow.Athena.Test.TestCase.subclass('AppendNodeContent');
 Divmod.Runtime.Tests.AppendNodeContent.methods(
-    function run(self) {
+    function test_appendNodeContent(self) {
         var html = '<div xmlns="http://www.w3.org/1999/xhtml">foo</div>';
         Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
         self.assertEquals(self.node.lastChild.tagName.toLowerCase(), 'div');
@@ -14,7 +14,7 @@ Divmod.Runtime.Tests.AppendNodeContent.methods(
 
 Divmod.Runtime.Tests.SetNodeContent = Nevow.Athena.Test.TestCase.subclass('SetNodeContent');
 Divmod.Runtime.Tests.SetNodeContent.methods(
-    function run(self) {
+    function test_setNodeContent(self) {
         var html = '<div xmlns="http://www.w3.org/1999/xhtml">foo</div>';
         Divmod.Runtime.theRuntime.setNodeContent(self.node, html);
         self.assertEquals(self.node.childNodes.length, 1);
@@ -24,7 +24,7 @@ Divmod.Runtime.Tests.SetNodeContent.methods(
 
 Divmod.Runtime.Tests.AppendNodeContentScripts = Nevow.Athena.Test.TestCase.subclass('AppendNodeContentScripts');
 Divmod.Runtime.Tests.AppendNodeContentScripts.methods(
-    function run(self) {
+    function test_appendNodeContentScripts(self) {
         Divmod.Runtime.Tests.AppendNodeContentScripts.runCount = 0;
         var html = (
             '<div xmlns="http://www.w3.org/1999/xhtml">' +
@@ -39,14 +39,7 @@ Divmod.Runtime.Tests.AppendNodeContentScripts.methods(
 Divmod.Runtime.Tests.ElementSize = Nevow.Athena.Test.TestCase.subclass('ElementSize');
 /* Tests for Runtime's getElementSize() method */
 Divmod.Runtime.Tests.ElementSize.methods(
-    function run(self) {
-        var html = ['<div xmlns="http://www.w3.org/1999/xhtml">',
-                        '<div class="foo" style="height: 126px; width: 1px" />',
-                        '<div class="bar" style="padding: 1px 2px 3px 4px; height: 12px; width: 70px" />',
-                    '</div>'];
-
-        Divmod.Runtime.theRuntime.appendNodeContent(self.node, html.join(''));
-
+    function test_getElementSize(self) {
         var foo = self.nodeByAttribute("class", "foo");
         var size = Divmod.Runtime.theRuntime.getElementSize(foo);
 
@@ -64,7 +57,7 @@ Divmod.Runtime.Tests.ElementSize.methods(
 Divmod.Runtime.Tests.PageSize = Nevow.Athena.Test.TestCase.subclass('PageSize');
 /* Tests for Runtime's getPageSize() method */
 Divmod.Runtime.Tests.PageSize.methods(
-    function run(self) {
+    function test_getPageSize(self) {
         /* resizeTo isn't going to work for this, because of button panels
            and stuff - we know the viewport size, but we are changing the
            window size */
@@ -93,7 +86,7 @@ Divmod.Runtime.Tests.PageSize.methods(
 
 Divmod.Runtime.Tests.TraversalOrdering = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.TraversalOrdering');
 Divmod.Runtime.Tests.TraversalOrdering.methods(
-    function run(self) {
+    function test_traversalOrdering(self) {
         var classes = [];
         Divmod.Runtime.theRuntime.traverse(
             self.node,
@@ -104,9 +97,9 @@ Divmod.Runtime.Tests.TraversalOrdering.methods(
                 return Divmod.Runtime.Platform.DOM_DESCEND;
             });
 
-        self.assertEquals(classes[1], 'container');
-        self.assertEquals(classes[2], 'left_child');
-        self.assertEquals(classes[3], 'left_grandchild');
-        self.assertEquals(classes[4], 'right_child');
-        self.assertEquals(classes[5], 'right_grandchild');
+        self.assertEquals(classes[0], 'container');
+        self.assertEquals(classes[1], 'left_child');
+        self.assertEquals(classes[2], 'left_grandchild');
+        self.assertEquals(classes[3], 'right_child');
+        self.assertEquals(classes[4], 'right_grandchild');
     });

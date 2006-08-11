@@ -1,38 +1,109 @@
-import inspect, types, os
+import inspect, types, warnings
 
 from twisted.trial import runner, unittest
+from twisted.python import log
 
-from nevow import athena
+from nevow import athena, loaders, tags
+
 
 class TestCase(athena.LiveFragment, unittest.TestCase):
+    """
+    Server-side component of a B{N}evow B{I}nteractive B{T}est.
+
+    TestCases are L{athena.LiveFragment}s which correspond to one or more test
+    methods which will be invoked on the client.  They are responsible for
+    specifying a JavaScript widget class which defines the client portion of
+    this set of tests, specifying a document which will be rendered for that
+    JavaScript widget, and defining any methods which the client may need to
+    invoke during the test.
+    """
+    docFactory = loaders.stan(tags.div(render=tags.directive('testWidget')))
+
     def render_liveTest(self, ctx, data):
-        ctx.tag(_class='test-unrun')
+        warnings.warn(
+            "liveTest renderer is deprecated, use the default "
+            "docFactory and override getWidgetTag, getTestContainer, "
+            "and/or getWidgetDocument instead",
+            category=DeprecationWarning)
         return self.render_liveFragment(ctx, data)
+
+
+    def render_testWidget(self, ctx, data):
+        container = self.getTestContainer()
+        widget = self.getWidgetTag()(render=tags.directive('liveFragment'))
+        container.fillSlots('widget', widget[self.getWidgetDocument()])
+        return ctx.tag[container]
+
+
+    def getWidgetTag(self):
+        """
+        Return a Nevow tag object which will be used as the top-level widget
+        node for this test case.
+
+        Subclasses may want to override this.
+        """
+        return tags.div
+
+
+    def getTestContainer(self):
+        """
+        Return a Nevow DOM object (generally a tag) with a C{widget} slot in
+        it.  This will be used as the top-level DOM for this test case, and the
+        actual widget will be used to fill the C{widget} slot.
+
+        Subclasses may want to override this.
+        """
+        return tags.invisible[tags.slot('widget')]
+
+
+    def getWidgetDocument(self):
+        """
+        Retrieve a Nevow DOM object (generally a tag) which will be placed
+        inside this TestCase's widget node.
+
+        Subclasses may want to override this.
+        """
+        return u''
+
 
     def __repr__(self):
         return object.__repr__(self)
 
+
+
 class TestSuite(object):
+    """
+    A collection of test cases.
+    """
     def __init__(self, name="Live Tests"):
         self.tests = []
         self.name = name
 
+
     def addTest(self, test):
         self.tests.append(test)
 
+
+
 class TestLoader(runner.TestLoader):
+    """
+    An object which discovers test cases and collects them into a suite.
+    """
     modulePrefix = 'livetest_'
 
     def __init__(self):
         runner.TestLoader.__init__(self)
         self.suiteFactory = TestSuite
 
+
     def loadByName(self, name, recurse=False):
         thing = self.findByName(name)
         return self.loadAnything(thing, recurse)
 
+
     def loadMethod(self, method):
         raise NotImplementedError, 'livetests must be classes'
+
 
     def loadClass(self, klass):
         if not (isinstance(klass, type) or isinstance(klass, types.ClassType)):
@@ -40,6 +111,7 @@ class TestLoader(runner.TestLoader):
         if not self.isTestCase(klass):
             raise ValueError("%r is not a test case" % (klass,))
         return klass
+
 
     def loadModule(self, module):
         if not isinstance(module, types.ModuleType):
@@ -49,8 +121,10 @@ class TestLoader(runner.TestLoader):
             suite.addTest(self.loadClass(testClass))
         return suite
 
+
     def isTestCase(self, obj):
         return isinstance(obj, (type, types.ClassType)) and issubclass(obj, TestCase) and obj is not TestCase
+
 
     def _findTestClasses(self, module):
         classes = []

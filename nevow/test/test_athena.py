@@ -131,6 +131,97 @@ the end
         self.assertIn(foo, bar.allDependencies())
 
 
+class StandardLibraryTestCase(unittest.TestCase):
+    """
+    Test all the Nevow JavaScript "standard library" modules.
+    """
+    def setUp(self):
+        self.deps = athena.JSDependencies()
+
+
+    def _importTest(self, moduleName):
+        mod = self.deps.getModuleForName(moduleName)
+        inspect = [dep for dep in mod.allDependencies() if dep.name == moduleName]
+        self.failUnless(inspect)
+
+
+    def test_divmodImport(self):
+        """
+        Test that Divmod can be imported.
+        """
+        return self._importTest('Divmod')
+
+
+    def test_baseImport(self):
+        """
+        Test that Divmod.Base can be imported.
+        """
+        return self._importTest('Divmod.Base')
+
+
+    def test_deferImport(self):
+        """
+        Test that Divmod.Defer can be imported.
+        """
+        return self._importTest('Divmod.Defer')
+
+
+    def test_inspectImport(self):
+        """
+        Test that Divmod.Inspect can be imported.
+        """
+        return self._importTest('Divmod.Inspect')
+
+
+    def test_runtimeImport(self):
+        """
+        Test that Divmod.Runtime can be imported.
+        """
+        return self._importTest('Divmod.Runtime')
+
+
+    def test_xmlImport(self):
+        """
+        Test that Divmod.XML can be imported.
+        """
+        return self._importTest('Divmod.XML')
+
+
+    def test_nevowImport(self):
+        """
+        Test that Nevow can be imported.
+        """
+        return self._importTest('Nevow')
+
+
+    def test_athenaImport(self):
+        """
+        Test that Nevow.Athena can be imported.
+        """
+        return self._importTest('Nevow.Athena')
+
+
+    def test_testImport(self):
+        """
+        Test that Nevow.Athena can be imported.
+        """
+        return self._importTest('Nevow.Athena.Test')
+
+
+    def test_tagLibraryImport(self):
+        """
+        Test that Nevow.TagLibrary can be imported.
+        """
+        return self._importTest('Nevow.TagLibrary')
+
+
+    def test_tabbedPaneImport(self):
+        """
+        Test that Nevow.TagLibrary.TabbedPane can be imported.
+        """
+        return self._importTest('Nevow.TagLibrary.TabbedPane')
+
+
 
 class TestFragment(athena.LiveFragment):
     pass

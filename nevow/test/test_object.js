@@ -53,7 +53,43 @@ function testClass() {
 
     assert(Eater.classCounter == 3, 'classmethod fuckup');
     assert(BetterEater.classCounter == 2, 'classmethod fuckup');
-}
+};
+
+
+/**
+ * Test that Divmod.Class subclasses have a __name__ attribute which gives
+ * their name.
+ */
+function test_className(self) {
+    var cls = Divmod.Class.subclass("test_object.test_className.cls");
+    assertEqual(cls.__name__, "test_object.test_className.cls");
+
+    /* Make sure subclasses don't inherit __name__ from their superclass.
+     */
+    var subcls = cls.subclass("test_object.test_className.subcls");
+    assertEqual(subcls.__name__, "test_object.test_className.subcls");
+};
+
+/**
+ * Test that instances of Divmod.Class have a __class__ attribute which refers
+ * to their class.
+ */
+function test_instanceClassReference() {
+    var cls = Divmod.Class.subclass("test_object.test_instanceClassReference.cls");
+    var instance;
+
+    instance = cls();
+    assertEqual(instance.__class__, cls);
+
+    instance = new cls();
+    assertEqual(instance.__class__, cls);
+
+    instance = cls.apply(null, []);
+    assertEqual(instance.__class__, cls);
+
+    instance = cls.call(null);
+    assertEqual(instance.__class__, cls);
+};
 
 function testNewlessInstantiation() {
     /*
@@ -185,6 +221,8 @@ Divmod.logger.addObserver(function(event) {
 
 var testFunctions = [
     testClass,
+    test_className,
+    test_instanceClassReference,
     testNewlessInstantiation,
     testUtil,
     testMethod,
