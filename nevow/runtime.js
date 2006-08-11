@@ -12,6 +12,7 @@ Divmod.Runtime.Platform.DOM_TERMINATE = 'Divmod.Runtime.Platform.DOM_TERMINATE';
 Divmod.Runtime.Platform.method(
     function __init__(self, name) {
         self.name = name;
+        self.attrNameToMangled = {};
     });
 
 Divmod.Runtime.Platform.methods(
@@ -63,7 +64,26 @@ Divmod.Runtime.Platform.methods(
                     })();
     },
 
+    /**
+     * Some browsers rewrite attribute names.  This method is responsible
+     * for transforming canonical attribute names into their browser-specific
+     * names.  It gets called by L{Divmod.Runtime.Platform.getAttribute}
+     * when it encounters a namespace-less attribute.
+     */
+    function _mangleAttributeName(self, localName) {
+        if(localName in self.attrNameToMangled) {
+            return self.attrNameToMangled[localName];
+        }
+        return localName;
+    },
+
+    /**
+     * This is _the_way_ to get the value of an attribute off of node
+     */
     function getAttribute(self, node, localName, namespaceURI, namespaceIdentifier) {
+        if(namespaceURI == undefined && namespaceIdentifier == undefined) {
+            localName = self._mangleAttributeName(localName);
+        }
         if (node.hasAttributeNS) {
             if (node.hasAttributeNS(namespaceURI, localName)) {
                 return node.getAttributeNS(namespaceURI, localName);
@@ -78,7 +98,12 @@ Divmod.Runtime.Platform.methods(
             }
         }
         if (node.getAttribute) {
-            var s = namespaceIdentifier + ':' + localName;
+            var s;
+            if(namespaceIdentifier == undefined) {
+                s = localName;
+            } else {
+                s = namespaceIdentifier + ':' + localName;
+            }
             try {
                 return node.getAttribute(s);
             } catch(err) {
@@ -331,7 +356,7 @@ Divmod.Runtime.InternetExplorer.methods(
         // JSON adapter will provide a dummy object to make Athena happy when
         // it tries to send exceptions from the client to the server
         Divmod.Base.registerJSON(
-            'Error', 
+            'Error',
             function(obj) {
                 return obj instanceof Error;
             },
@@ -343,6 +368,15 @@ Divmod.Runtime.InternetExplorer.methods(
                 };
             }
         );
+
+        /* IE rewrites attributes with names matching these
+           keys to their corresponding values.
+           e.g. class -> className, etc
+         */
+        self.attrNameToMangled = {"class": "className",
+                                  "checked": "defaultChecked",
+                                  "usemap": "useMap",
+                                  "for": "htmlFor"};
     },
 
     function parseXHTMLString(self, s) {
@@ -414,7 +448,7 @@ Divmod.Runtime.Opera.methods(
 
         // TODO: Convert Opera's backtrace string to FF's stacktrace format
         Divmod.Base.registerJSON(
-            'Error', 
+            'Error',
             function(obj) {
                 return obj instanceof Error;
             },
@@ -470,4 +504,3 @@ Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
 
 Divmod.Runtime.theRuntimeType = Divmod.Runtime.Platform.determinePlatform();
 Divmod.Runtime.theRuntime = new Divmod.Runtime.theRuntimeType;
-

@@ -103,3 +103,36 @@ Divmod.Runtime.Tests.TraversalOrdering.methods(
         self.assertEquals(classes[3], 'right_child');
         self.assertEquals(classes[4], 'right_grandchild');
     });
+
+Divmod.Runtime.Tests.GetAttribute = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.GetAttribute');
+Divmod.Runtime.Tests.GetAttribute.methods(
+    /**
+     * Ensure that explicitly namespaced attributes and attributes whose
+     * names get rewritten by IE can be correctly retrieved, and that they
+     * don't interfere with each other if the local names are the same
+     * (e.g. "class" and "athena:class" on a single node)
+     */
+    function test_getAttribute(self) {
+        var node = document.createElement("div");
+        node.className = "the class";
+        self.node.appendChild(node);
+
+        self.assertEquals(
+            Divmod.Runtime.theRuntime.getAttribute(node, "class"),
+            "the class");
+
+        node.setAttribute("athena:class", "the athena class");
+
+        self.assertEquals(
+            Divmod.Runtime.theRuntime.getAttribute(node, "class"),
+            "the class");
+
+        self.assertEquals(
+            Divmod.Runtime.theRuntime.getAttribute(
+                node, "class", Nevow.Athena.XMLNS_URI, "athena"),
+            "the athena class");
+
+        self.assertEquals(
+            Divmod.Runtime.theRuntime.getAttribute(node, "athena:class"),
+            "the athena class");
+    });
