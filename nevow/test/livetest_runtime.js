@@ -136,3 +136,14 @@ Divmod.Runtime.Tests.GetAttribute.methods(
             Divmod.Runtime.theRuntime.getAttribute(node, "athena:class"),
             "the athena class");
     });
+
+Divmod.Runtime.Tests.FindInRootNode = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.FindInRootNode');
+Divmod.Runtime.Tests.FindInRootNode.methods(
+    function run(self) {
+        var node = Divmod.Runtime.theRuntime.nodeByAttribute(self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
+        self.assertEquals(self.node.id, node.id);
+        var firstNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
+        self.assertEquals(self.node.id, firstNode.id);
+        var nodes = Divmod.Runtime.theRuntime.nodesByAttribute(self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
+        self.assertEquals(self.node.id, nodes[0].id);
+    });

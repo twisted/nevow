@@ -522,44 +522,11 @@ Nevow.Athena.RemoteReference.methods(
  * C{Nevow.Athena.Widget.nodesByAttribute}.
  */
 Nevow.Athena.NodesByAttribute = function(root, attrName, attrValue) {
-    var descend = Divmod.Runtime.Platform.DOM_DESCEND;
-    var results = [];
-    Divmod.Runtime.theRuntime.traverse(
-        root,
-        function(node) {
-            if (Divmod.Runtime.theRuntime.getAttribute(node, attrName) == attrValue) {
-                results.push(node);
-            }
-            return descend;
-        });
-    return results;
+    return Divmod.Runtime.theRuntime.nodesByAttribute(root, attrName, attrValue);
 };
 
 Nevow.Athena.FirstNodeByAttribute = function(root, attrName, attrValue) {
-    /* duplicate this here rather than adding an "onlyOne" arg to
-       NodesByAttribute so adding an extra arg accidentally doesn't change
-       it's behaviour if called directly
-    */
-    var descend = Divmod.Runtime.Platform.DOM_DESCEND;
-    var terminate = Divmod.Runtime.Platform.DOM_TERMINATE;
-    var xmlns = Nevow.Athena.XMLNS_URI;
-
-    var result = null;
-    Divmod.Runtime.theRuntime.traverse(
-        root,
-        function(node) {
-            if (Divmod.Runtime.theRuntime.getAttribute(node, attrName) == attrValue) {
-                result = node;
-                return terminate;
-            }
-            return descend;
-        });
-    if (result === null) {
-        throw new Error("Failed to discover node with " + attrName +
-                        " value " + attrValue + " beneath " + root +
-                        " (programmer error).");
-    }
-    return result;
+    return Divmod.Runtime.theRuntime.firstNodeByAttribute(root, attrName, attrValue);
 };
 
 /**
@@ -570,22 +537,7 @@ Nevow.Athena.FirstNodeByAttribute = function(root, attrName, attrValue) {
  * directly; instead, see C{Nevow.Athena.Widget.nodeByAttribute}.
  */
 Nevow.Athena.NodeByAttribute = function(root, attrName, attrValue, /* optional */ defaultNode) {
-    var nodes = Nevow.Athena.NodesByAttribute(root, attrName, attrValue);
-    if (nodes.length > 1) {
-        throw new Error("Found too many " + attrName + " = " + attrValue);
-    } else if (nodes.length < 1) {
-        if (defaultNode === undefined) {
-            throw new Error("Failed to discover node with class value " +
-                            attrValue + " beneath " + root +
-                            " (programmer error).");
-        } else {
-            return defaultNode;
-        }
-
-    } else {
-        var result = nodes[0];
-        return result;
-    }
+    return Divmod.Runtime.theRuntime.nodeByAttribute(root, attrName, attrValue, defaultNode);
 };
 
 Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
@@ -704,12 +656,11 @@ Nevow.Athena.Widget.methods(
     },
 
     function nodeByAttribute(self, attrName, attrValue, /* optional */ defaultNode) {
-        return Nevow.Athena.NodeByAttribute(self.node, attrName, attrValue, defaultNode);
+        return Divmod.Runtime.theRuntime.nodeByAttribute(self.node, attrName, attrValue, defaultNode);
     },
 
-
     function firstNodeByAttribute(self, attrName, attrValue) {
-        return Nevow.Athena.FirstNodeByAttribute(self.node, attrName, attrValue);
+        return Divmod.Runtime.theRuntime.firstNodeByAttribute(self.node, attrName, attrValue);
     },
 
 //     function elementById(self, id) {
@@ -717,7 +668,7 @@ Nevow.Athena.Widget.methods(
 //     },
 
     function nodesByAttribute(self, attrName, attrValue) {
-        return Nevow.Athena.NodesByAttribute(self.node, attrName, attrValue);
+        return Divmod.Runtime.theRuntime.nodesByAttribute(self.node, attrName, attrValue);
     });
 
 

@@ -16,6 +16,89 @@ Divmod.Runtime.Platform.method(
     });
 
 Divmod.Runtime.Platform.methods(
+    function _nsResolver(self, prefix) {
+        var ns;
+        switch(prefix) {
+            case 'html':
+                ns = 'http://www.w3.org/1999/xhtml';
+                break;
+            case 'athena':
+                ns = 'http://divmod.org/ns/athena/0.7';
+                break;
+            default:
+                // this should never happen, but browsers still suck...
+                ns = null;
+        }
+        return ns;
+    },
+
+    function firstNodeByAttribute(self, root, attrName, attrValue) {
+        /* duplicate this here rather than adding an "onlyOne" arg to
+           nodesByAttribute so adding an extra arg accidentally doesn't change
+           it's behaviour if called directly
+        */
+        var xpath = ".//*[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "']";
+        var node = document.evaluate(
+            xpath,
+            root,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null
+        ).singleNodeValue;
+        if (!node) {
+            throw new Error("Failed to discover node with " + attrName +
+                            " value " + attrValue + " beneath " + root +
+                            " (programmer error).");
+        }
+        return node;
+    },
+
+    function nodeByAttribute(self, root, attrName, attrValue, /* optional */ defaultNode){
+        var xpath = ".//*[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "']";
+        var nodes = document.evaluate(
+            xpath,
+            root,
+            null,
+            XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
+            null
+        );
+        if (nodes.snapshotLength > 1) {
+            throw new Error("Found too many " + attrName + " = " + attrValue);
+        }
+        else if (nodes.snapshotLength < 1) {
+            if (defaultNode === undefined) {
+                throw new Error("Failed to discover node with " + attrName +
+                                " value " + attrValue + " beneath " + root +
+                                " (programmer error).");
+            }
+            else {
+                return defaultNode;
+            }
+        }
+        else {
+            var result = nodes.snapshotItem(0);
+            return result;
+        }
+    },
+
+    function nodesByAttribute(self, root, attrName, attrValue) {
+        var results = [];
+        var xpath = ".//*[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "']";;
+        var nodes = document.evaluate(
+            xpath,
+            root,
+            null,
+            XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+            null
+        );
+        var node = nodes.iterateNext();
+        while(node){
+            results.push(node);
+            node = nodes.iterateNext();
+        }
+        return results;
+    },
+
     /*
      Determine the dimensions of the page (browser viewport).
      This method only considers the visible portion of the page
@@ -294,28 +377,19 @@ Divmod.Runtime.Firefox.methods(
     },
 
     function appendNodeContent(self, node, innerHTML) {
+        var xpath = "//html:script";
         var doc = self.parseXHTMLString(innerHTML);
-        var scriptsPileOfCrap = doc.getElementsByTagName('script');
-
-        /*
-         * scriptsPileOfCrap is a NODE LIST, not a LIST.  That means that the
-         * call to oldScript.parentNode.removeChild below will MUTATE it.
-         * Here we make a copy because we would actually like to iterate over
-         * all the nodes we just found.
-         */
-
-        var scripts = [];
-
-        for (var i = 0; i < scriptsPileOfCrap.length; i++) {
-            scripts.push(scriptsPileOfCrap[i]);
-        }
-
+        var scripts = doc.evaluate(
+            xpath,
+            doc,
+            self._nsResolver,
+            XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null
+        );
         var oldScript;
         var newScript;
         var newAttr;
-
-        for (var i = 0; i < scripts.length; ++i) {
-            oldScript = scripts[i];
+        for (var i = 0; i < scripts.snapshotLength; ++i) {
+            oldScript = scripts.snapshotItem(i);
             newScript = document.createElement('script');
             for (var j = 0; j < oldScript.attributes.length; ++j) {
                 newAttr = oldScript.attributes[j];
@@ -427,6 +501,65 @@ Divmod.Runtime.InternetExplorer.methods(
             throw Error("No support XML HTTP Request thingy on this platform");
         } else {
             return new ActiveXObject(self._xmlhttpname);
+        }
+    },
+
+    function firstNodeByAttribute(self, root, attrName, attrValue) {
+        /* duplicate this here rather than adding an "onlyOne" arg to
+           nodesByAttribute so adding an extra arg accidentally doesn't change
+           it's behaviour if called directly
+        */
+        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+        var terminate = Divmod.Runtime.Platform.DOM_TERMINATE;
+
+        var result = null;
+        self.traverse(
+            root,
+            function(node) {
+                if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+                    result = node;
+                    return terminate;
+                }
+                return descend;
+            });
+        if (result === null) {
+            throw new Error("Failed to discover node with " + attrName +
+                            " value " + attrValue + " beneath " + root +
+                            " (programmer error).");
+        }
+        return result;
+    },
+
+    function nodesByAttribute(self, root, attrName, attrValue) {
+        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+        var results = [];
+        self.traverse(
+            root,
+            function(node) {
+                if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+                    results.push(node);
+                }
+                return descend;
+            });
+        return results;
+    },
+
+    function nodeByAttribute(self, root, attrName, attrValue, /* optional */ defaultNode) {
+        var nodes = self.nodesByAttribute(root, attrName, attrValue);
+        if (nodes.length > 1) {
+            throw new Error("Found too many " + attrName + " = " + attrValue);
+        } else if (nodes.length < 1) {
+            if (defaultNode === undefined) {
+                throw new Error("Failed to discover node with class value " +
+                                attrValue + " beneath " + root +
+                                " (programmer error).");
+            } else {
+                return defaultNode;
+            }
+
+        } else {
+            var result = nodes[0];
+            return result;
         }
     });
 

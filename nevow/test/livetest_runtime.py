@@ -56,3 +56,7 @@ class TraversalOrdering(testcase.TestCase):
 
 class GetAttribute(testcase.TestCase):
     jsClass = u'Divmod.Runtime.Tests.GetAttribute'
+
+
+class FindInRootNode(testcase.TestCase):
+    jsClass = u'Divmod.Runtime.Tests.FindInRootNode'
