@@ -90,8 +90,6 @@ class JSModules(object):
 
 
     def locateChild(self, ctx, segments):
-        if len(segments) != 1:
-            return rend.NotFound
         try:
             impl = self.mapping[segments[0]]
         except KeyError:
