@@ -23,17 +23,17 @@ class TabbedPane(object):
     """
     Data
     ----
-    
+
     name     : name for this component (default 'theTabbedPane')
     pages    : sequence of (tab, page) (mandatory)
     selected : index of the selected tab (default 0)
 
-    
+
     Live component interface
     ------------------------
-    
+
     None currently.
-    
+
     """
 
     def tabbedPane(self, ctx, data):
@@ -45,8 +45,8 @@ class TabbedPane(object):
             for n, (tab, page) in enumerate(pages):
                 tID = '%s_tab_%i'%(name, n)
                 pID = '%s_page_%i'%(name, n)
-                yield (t.li(id_=tID)[tab],
-                       t.div(id_=pID)[page],
+                yield (t.li(class_='nevow-tabbedpane-tab', id_=tID)[tab],
+                       t.div(class_='nevow-tabbedpane-pane', id_=pID)[page],
                        flt(js[tID,pID], quote = False))
 
         tabs, pages, j = zip(*_())
@@ -54,8 +54,8 @@ class TabbedPane(object):
             selected = 0
 
         return t.invisible[
-            t.div(class_='tabbedPane',id_=name)[
-                t.ul(class_='tabs')[tabs], pages
+            t.div(class_='nevow-tabbedpane',id_=name)[
+                t.ul(class_='nevow-tabbedpane-tabs')[tabs], pages
               ],
             t.inlineJS('setupTabbedPane([' + ','.join(j) + '], %i);'%selected)
             ]
@@ -67,19 +67,17 @@ class TabbedPaneFragment(athena.LiveFragment):
     jsClass = u'Nevow.TagLibrary.TabbedPane'
 
     docFactory = loaders.xmlstr("""
-<div class="tabbedPane"
+<div class="nevow-tabbedpane"
   xmlns:nevow="http://nevow.com/ns/nevow/0.1"
   nevow:render="liveFragment"
   style="opacity: .3">
-    <nevow:attr name="name"><nevow:invisible nevow:render="name" /></nevow:attr>
-    <ul class="tabs">
+    <ul class="nevow-tabbedpane-tabs">
         <nevow:invisible nevow:render="tabs" />
     </ul>
     <li nevow:pattern="tab"
-     onclick="Nevow.TagLibrary.TabbedPane.get(this).tabClicked(this); return false">
-        <nevow:attr name="class"><nevow:slot name="class" /></nevow:attr>
-        <nevow:slot name="tab-name" />
-    </li>
+     onclick="Nevow.TagLibrary.TabbedPane.get(this).tabClicked(this); return false"
+     ><nevow:attr name="class"><nevow:slot
+     name="class" /></nevow:attr><nevow:slot name="tab-name" /></li>
     <div nevow:pattern="page">
         <nevow:attr name="class"><nevow:slot name="class" /></nevow:attr>
         <nevow:slot name="page-content" />
@@ -94,16 +92,16 @@ class TabbedPaneFragment(athena.LiveFragment):
 
         super(TabbedPaneFragment, self).__init__()
 
-    def render_name(self, ctx, data):
-        return self.name
+    def getInitialArguments(self):
+        return (unicode(self.pages[self.selected][0], 'utf-8'),)
 
     def render_tabs(self, ctx, data):
         tabPattern = inevow.IQ(self.docFactory).patternGenerator('tab')
         for (i, (name, content)) in enumerate(self.pages):
             if self.selected == i:
-                cls = 'selected'
+                cls = 'nevow-tabbedpane-selected-tab'
             else:
-                cls = 'taglibrary-tabbedpane-' + self.name + '-tabname-' + str(i)
+                cls = 'nevow-tabbedpane-tab'
             yield tabPattern.fillSlots(
                       'tab-name', name).fillSlots(
                       'class', cls)
@@ -112,9 +110,9 @@ class TabbedPaneFragment(athena.LiveFragment):
         pagePattern = inevow.IQ(self.docFactory).patternGenerator('page')
         for (i, (name, content)) in enumerate(self.pages):
             if self.selected == i:
-                cls = 'selected'
+                cls = 'nevow-tabbedpane-selected-pane'
             else:
-                cls = 'taglibrary-tabbedpane-'  + self.name + '-tabdata-' + str(i)
+                cls = 'nevow-tabbedpane-pane'
             yield pagePattern.fillSlots(
                     'page-content', content).fillSlots(
                     'class', cls)

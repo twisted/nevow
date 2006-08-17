@@ -66,6 +66,16 @@ class TestCase(athena.LiveFragment, unittest.TestCase):
         return u''
 
 
+    def head(self):
+        """
+        Return objects that should be rendered inside the <head> tag of the
+        document for the test suite that this test case belongs to.  Typically
+        instances of tags from L{nevow.tags}.
+
+        Subclasses may want to override this
+        """
+
+
     def __repr__(self):
         return object.__repr__(self)
 
@@ -82,6 +92,17 @@ class TestSuite(object):
 
     def addTest(self, test):
         self.tests.append(test)
+
+
+    def gatherInstances(self):
+        l = []
+        for test in self.tests:
+            if isinstance(test, TestSuite):
+                l.extend(test.gatherInstances())
+            else:
+                test.name = '%s.%s' % (self.name, test.__name__)
+                l.append(test())
+        return l
 
 
 

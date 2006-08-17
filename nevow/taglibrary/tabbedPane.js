@@ -3,7 +3,7 @@
 Nevow.TagLibrary.TabbedPane = Nevow.Athena.Widget.subclass("Nevow.TabbedPane");
 
 Nevow.TagLibrary.TabbedPane.methods(
-    function __init__(self, node) {
+    function __init__(self, node, selectedTabName) {
         self._loaded = false;
         self._pendingTabSwitch = null;
         Divmod.Base.addLoadEvent(function() {
@@ -15,20 +15,23 @@ Nevow.TagLibrary.TabbedPane.methods(
                 self.tabClicked(self._pendingTabSwitch);
             }
         });
+
         var name = node.getAttribute("name");
-        self._tabPrefix = "taglibrary-tabbedpane-" + name + "-tabname-";
-        self._pagePrefix = "taglibrary-tabbedpane-" + name + "-tabdata-";
-        self._selectedClassName = "selected";
-        self._elements = {};
+        var getElementsByTagNameShallow = function(root, tagName) {
+            return Divmod.Runtime.theRuntime.getElementsByTagNameShallow(root, tagName);
+        }
+        var tabContainer = getElementsByTagNameShallow(node, "ul")[0];
+        var tabs = getElementsByTagNameShallow(tabContainer, "li");
+        var panes = getElementsByTagNameShallow(node, "div");
+        var elems = {};
+        for(var i = 0; i < tabs.length; i++) {
+            elems[tabs[i].firstChild.nodeValue] = [tabs[i], panes[i]];
+        }
+        /* this is a mapping of tab offsets to [tab-element, pane-element] */
+        self._elements = elems;
+        self._lastSelectedTabName = selectedTabName;
 
         Nevow.TagLibrary.TabbedPane.upcall(self, "__init__", node);
-    },
-
-    function _getHandyNode(self, classValue) {
-        if(!(classValue in self._elements)) {
-            self._elements[classValue] = self.nodeByAttribute('class', classValue);
-        }
-        return self._elements[classValue];
     },
 
     function tabClicked(self, tab) {
@@ -37,34 +40,18 @@ Nevow.TagLibrary.TabbedPane.methods(
             return;
         }
 
-        if(!self.lastSelectedTab) {
-            var selected = self.nodesByAttribute("class", "selected");
-            if(selected[0].parentNode.className == "tabs") {
-                self.lastSelectedTab = selected[0];
-                self.lastSelectedPage = selected[1];
-            } else {
-                self.lastSelectedTab = selected[1];
-                self.lastSelectedPage = selected[0];
-            }
-            var tabs = self.lastSelectedTab.parentNode.getElementsByTagName("li");
-            for(var i = 0; i < tabs.length; i++) {
-                if(tabs[i] == self.lastSelectedTab) {
-                    self.lastSelectedOffset = i;
-                    break;
-                }
-            }
-        }
+        var lastSelected = self._elements[self._lastSelectedTabName],
+            lastSelectedTab = lastSelected[0],
+            lastSelectedPane = lastSelected[1];
 
-        self.lastSelectedTab.className = self._tabPrefix + self.lastSelectedOffset;
-        self.lastSelectedPage.className = self._pagePrefix + self.lastSelectedOffset;
+        lastSelectedTab.className = "nevow-tabbedpane-tab";
+        lastSelectedPane.className = "nevow-tabbedpane-pane";
 
-        var tabOffset = tab.className.substr(self._tabPrefix.length, tab.className.length);
-        var page = self._getHandyNode(self._pagePrefix + tabOffset);
-        tab.className = page.className = self._selectedClassName;
+        tab.className = "nevow-tabbedpane-selected-tab";
+        var tabName = tab.firstChild.nodeValue, pane = self._elements[tabName][1];
+        pane.className = "nevow-tabbedpane-selected-pane";
 
-        self.lastSelectedTab = tab;
-        self.lastSelectedPage = page;
-        self.lastSelectedOffset = tabOffset;
+        self._lastSelectedTabName = tabName;
     });
 
 // backward compatability
@@ -76,8 +63,8 @@ function setupTabbedPane(data, selectedTab) {
         page = document.getElementById(data[i][1]);
 
         if(i == selectedTab) {
-            tab.className = 'selected'
-            page.className = 'selected';
+            tab.className = 'nevow-tabbedpane-selected-tab'
+            page.className = 'nevow-tabbedpane-selected-pane';
         }
 
         tab.onclick = function() {
@@ -87,12 +74,12 @@ function setupTabbedPane(data, selectedTab) {
                 page = document.getElementById(data[i][1]);
 
                 if(tab.id == this.id) {
-                    tab.className = 'selected';
-                    page.className = 'selected';
+                    tab.className = 'nevow-tabbedpane-selected-tab';
+                    page.className = 'nevow-tabbedpane-selected-pane';
                 }
                 else {
-                    tab.className = '';
-                    page.className = '';
+                    tab.className = 'nevow-tabbedpane-tab';
+                    page.className = 'nevow-tabbedpane-pane';
                 }
             }
         }

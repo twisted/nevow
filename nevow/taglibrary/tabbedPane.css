@@ -1,5 +1,4 @@
-.tabbedPane > .tabs
-{
+.nevow-tabbedpane-tabs {
   display: inline;
   list-style: none;
   padding: 0;
@@ -7,8 +6,8 @@
   margin-left: 0.1em;
 }
 
-.tabbedPane > .tabs > li
-{
+.nevow-tabbedpane-tab,
+.nevow-tabbedpane-selected-tab {
   display: inline;
   padding: 0 2em;
   border: 1px solid #666;
@@ -17,27 +16,23 @@
   margin-right: 0.25em;
 }
 
-.tabbedPane > .tabs > li:hover
-{ 
+.nevow-tabbedpane-tab:hover {
   background: #f5f5f5;
 }
 
-.tabbedPane > .tabs > li.selected
-{
+.nevow-tabbedpane-selected-tab {
   border-bottom: 1px solid #fff;
   background: #fff;
 }
 
-.tabbedPane > div
-{
+.nevow-tabbedpane-pane {
   clear: both;
   position: absolute;
   top: -1000px;
   left: -1000px;
 }
 
-.tabbedPane > div.selected
-{
+.nevow-tabbedpane-selected-pane {
   position: static;
   border: 1px solid #666;
   margin-bottom: 1em;

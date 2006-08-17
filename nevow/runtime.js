@@ -99,12 +99,38 @@ Divmod.Runtime.Platform.methods(
         return results;
     },
 
-    /*
-     Determine the dimensions of the page (browser viewport).
-     This method only considers the visible portion of the page
-     (i.e. how much of it can fit on the screen at once).
+    /**
+     * Calculate the X/Y coordinates of event C{event} on the
+     * page in a cross-browser fashion.  If C{event} is not defined,
+     * then window.event will be used.
+     *
+     * @return: object with "x" and "y" slots
+     */
+    function getEventCoords(self, event) {
+        if(!event) {
+            event = window.event;
+        }
+        var x = 0, y = 0;
+        if(event.pageX || event.pageY) {
+            x = event.pageX;
+            y = event.pageY;
+        } else if(event.clientX || event.clientY) {
+            x = event.clientX +
+                document.body.scrollLeft +
+                document.documentElement.scrollLeft;
+            y = event.clientY +
+                document.body.scrollTop +
+                document.documentElement.scrollTop;
+        }
+        return {x: x, y: y};
+    },
 
-     @return: object with "w" and "h" attributes
+    /**
+     * Determine the dimensions of the page (browser viewport).
+     * This method only considers the visible portion of the page
+     * (i.e. how much of it can fit on the screen at once).
+     *
+     * @return: object with "w" and "h" attributes
      */
     function getPageSize(self, /* optional */ win) {
         var w, h
@@ -128,23 +154,31 @@ Divmod.Runtime.Platform.methods(
             h = theWindow.document.body.clientHeight;
         }
 
-        return new (function() {
-                this.w = w;
-                this.h = h;
-            })();
+        return {w: w, h: h};
     },
 
-    /*
-     Calculate the size of the given element, including padding
-     but excluding scrollbars, borders and margins
-
-     @return: object with "w" and "h" attributes
+    /**
+     * Calculate the size of the given element, including padding
+     * but excluding scrollbars, borders and margins
+     *
+     * @return: object with "w" and "h" attributes
      */
     function getElementSize(self, e) {
-        return new (function() {
-                        this.w = e.clientWidth;
-                        this.h = e.clientHeight;
-                    })();
+        return {w: e.clientWidth, h: e.clientHeight};
+    },
+
+    /**
+     * Return all immediate children of C{root} that have tag name C{tagName}
+     */
+    function getElementsByTagNameShallow(self, root, tagName) {
+        var child, result = [];
+        for(var i = 0; i < root.childNodes.length; i++) {
+            child = root.childNodes[i];
+            if(child.tagName && child.tagName.toLowerCase() == tagName) {
+                result.push(child);
+            }
+        }
+        return result;
     },
 
     /**

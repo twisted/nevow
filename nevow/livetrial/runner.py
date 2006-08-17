@@ -12,24 +12,34 @@ class TestSuiteFragment(athena.LiveFragment):
     def __init__(self, suite):
         super(TestSuiteFragment, self).__init__()
         self.suite = suite
+        self.testInstances = suite.gatherInstances()
 
 
-    def gatherTests(self, suite):
+    def gatherTests(self, testInstances):
         suiteTag = tags.div()
-        for test in suite.tests:
-            if isinstance(test, testcase.TestSuite):
-                suite = test
-                suiteTag[self.gatherTests(suite)]
+        for test in testInstances:
+            if isinstance(test, list):
+                suiteTag[self.gatherTests(testInstances)]
             else:
-                t = test()
-                t.name = '%s.%s' % (suite.name, test.__name__)
-                t.setFragmentParent(self)
-                suiteTag[t]
+                test.setFragmentParent(self)
+                suiteTag[test]
         return suiteTag
 
 
+    def gatherHead(self):
+        head = []
+        def gather(testInstances):
+            for test in testInstances:
+                if isinstance(test, list):
+                    head.extend(gather(test))
+                else:
+                    head.append(test.head())
+        gather(self.testInstances)
+        return filter(None, head)
+
+
     def render_tests(self, ctx, data):
-        return ctx.tag[self.gatherTests(self.suite)]
+        return ctx.tag[self.gatherTests(self.testInstances)]
 
 
 
@@ -51,9 +61,6 @@ class TestRunner(TestSuiteFragment):
                 tags.hr,
                 tags.div(render=tags.directive('tests'))]])
 
-    def __init__(self, suite):
-        super(TestRunner, self).__init__(suite)
-
 
     def render_debug(self, ctx, data):
         f = athena.IntrospectionFragment()
@@ -72,7 +79,8 @@ class TestFramework(athena.LivePage):
         tags.xml(DOCTYPE_XHTML),
         tags.html[
             tags.head(render=tags.directive('liveglue'))[
-                tags.link(rel='stylesheet', href='livetest.css')],
+                tags.link(rel='stylesheet', href='livetest.css'),
+                tags.directive('head')],
             tags.body[
                 tags.invisible(render=tags.directive('runner'))]]])
 
@@ -83,11 +91,18 @@ class TestFramework(athena.LivePage):
             'livetest.css': static.File(util.resource_filename('nevow.livetrial', 'livetest.css')),
         }
 
-    def render_runner(self, ctx, data):
-        f = TestRunner(self.testSuite)
-        f.setFragmentParent(self)
-        return f
 
+    def beforeRender(self, ctx):
+        self.runner = TestRunner(self.testSuite)
+
+
+    def render_runner(self, ctx, data):
+        self.runner.setFragmentParent(self)
+        return self.runner
+
+
+    def render_head(self, ctx, data):
+        return self.runner.gatherHead()
 
 
 class TestFrameworkRoot(rend.Page):
