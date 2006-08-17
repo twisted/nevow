@@ -1,3 +1,17 @@
+0.9.4 (2006-08-14):
+  - Added test method discovery to nit test cases, so multiple test methods
+    may be put in a single test case.
+  - use XPath for certain DOM traversals when available. This yields 
+    significant speedups on Opera.
+  - Made Divmod.Runtime.Platform.getAttribute deal with IE attribute
+    name-mangling properly.
+  - Javascript logging is now done in Firebug 0.4 style rather than 0.3.
+  - Some cases where Deferred-returning render methods raised
+    exceptions or buried failures were fixed.
+  - Removed MochiKit. The pieces Nevow depends on have been moved to 
+    Divmod.Base in nevow/base.js.
+  - Various doc fixes.
+  
 0.9.3 (2006-07-17):
   - Page rendering now supports preprocessors.
 
