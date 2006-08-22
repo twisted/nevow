@@ -66,24 +66,20 @@ class Expose(object):
         Return an iterator of the names of the methods which are exposed on the
         given instance.
         """
-        for cls in inspect.getmro(instance.__class__):
-            attrs = cls.__dict__.items()
-            attrs.sort()
-            for (k, v) in attrs:
-                if self in getattr(v, 'exposedThrough', []):
-                    yield k
+        for k, callable in inspect.getmembers(instance, inspect.isroutine):
+            if self in getattr(callable, 'exposedThrough', []):
+                yield k
 
 
     _nodefault = object()
     def get(self, instance, methodName, default=_nodefault):
         """
-        Retrieve an exposed bound method with the given name from the given
-        instance.
+        Retrieve an exposed method with the given name from the given instance.
 
         @raise UnexposedMethodError: Raised if C{default} is not specified and
         there is no exposed method with the given name.
 
-        @return: A method object for the named method bound to the given
+        @return: A callable object for the named method assigned to the given
         instance.
         """
         method = getattr(instance, methodName, None)

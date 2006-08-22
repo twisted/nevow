@@ -83,7 +83,7 @@ class ExposeTestCase(TestCase):
             def bar(self):
                 return 'BAZ'
 
-        self.assertEquals(list(expose.exposedMethodNames(Quux())), ['bar'])
+        self.assertEquals(list(expose.exposedMethodNames(Quux())), [])
         self.assertRaises(UnexposedMethodError, expose.get, Quux(), 'bar')
 
 
@@ -128,7 +128,7 @@ class ExposeTestCase(TestCase):
                 return 'alligator'
             expose(smokey, pogo)
 
-        self.assertEquals(list(expose.exposedMethodNames(Quux())), ['pogo', 'smokey', 'bar'])
+        self.assertEquals(set(expose.exposedMethodNames(Quux())), set(['pogo', 'smokey', 'bar']))
         self.assertEquals(expose.get(Quux(), 'bar')(), 'baz')
         self.assertEquals(expose.get(Quux(), 'smokey')(), 'stover')
         self.assertEquals(expose.get(Quux(), 'pogo')(), 'kelly')
@@ -158,7 +158,7 @@ class ExposeTestCase(TestCase):
                 pass
             expose(quux)
 
-        self.assertEquals(list(expose.exposedMethodNames(C())), ['quux', 'foo', 'baz'])
+        self.assertEquals(set(expose.exposedMethodNames(C())), set(['quux', 'foo', 'baz']))
         self.assertEquals(expose.get(C(), 'foo')(), 'bar')
         self.assertEquals(expose.get(C(), 'baz')(), 'quux')
 
@@ -183,7 +183,7 @@ class ExposeTestCase(TestCase):
         class C(A, B):
             pass
 
-        self.assertEquals(list(expose.exposedMethodNames(C())), ['foo', 'baz'])
+        self.assertEquals(set(expose.exposedMethodNames(C())), set(['foo', 'baz']))
         self.assertEquals(expose.get(C(), 'foo')(), 'bar')
         self.assertEquals(expose.get(C(), 'baz')(), 'quux')
 
@@ -240,3 +240,27 @@ class ExposeTestCase(TestCase):
         """
         expose = Expose()
         self.assertRaises(TypeError, expose)
+
+
+    def test_exposedInstanceAttribute(self):
+        """
+        Test that exposing an instance attribute works in basically the same
+        way as exposing a class method and that the two do not interfer with
+        each other.
+        """
+        expose = Expose()
+
+        class Foo(object):
+            def __init__(self):
+                # Add an exposed instance attribute
+                self.bar = expose(lambda: 'baz')
+
+            def quux(self):
+                return 'quux'
+            expose(quux)
+
+        self.assertEquals(
+            set(expose.exposedMethodNames(Foo())),
+            set(['bar', 'quux']))
+        self.assertEquals(expose.get(Foo(), 'bar')(), 'baz')
+        self.assertEquals(expose.get(Foo(), 'quux')(), 'quux')
