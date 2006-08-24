@@ -550,7 +550,7 @@ Divmod.Runtime.InternetExplorer.methods(
         self.traverse(
             root,
             function(node) {
-                if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+                if (self.getAttribute(node, attrName) == attrValue) {
                     result = node;
                     return terminate;
                 }
@@ -570,7 +570,7 @@ Divmod.Runtime.InternetExplorer.methods(
         self.traverse(
             root,
             function(node) {
-                if (MochiKit.DOM.getNodeAttribute(node, attrName) == attrValue) {
+                if (self.getAttribute(node, attrName) == attrValue) {
                     results.push(node);
                 }
                 return descend;
