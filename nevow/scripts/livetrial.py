@@ -10,9 +10,16 @@ from nevow.livetrial import runner, testcase
 if platform.isWinNT():
     from twisted.scripts import _twistw as twistd
 else:
-    from twisted.scripts import twistd
+    try:
+        from twisted.scripts import _twistd_unix as twistd
+    except ImportError:
+        from twisted.scripts import twistd
 
 class Options(twistd.ServerOptions):
+    def noSubCommands(self):
+        raise AttributeError()
+    subCommands = property(noSubCommands)
+
     def opt_port(self, value):
         """Specify the TCP port to which to bind the test server (defaults to 8080).
         """
