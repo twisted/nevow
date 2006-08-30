@@ -12,6 +12,65 @@ Divmod.Defer.Failure.methods(
 
     function toString(self) {
         return 'Failure: ' + self.error;
+    },
+
+    function parseStack(self, stackString) {
+        var frames = [];
+
+        var line;
+        var parts;
+        var func;
+        var rest;
+        var divide;
+        var fname;
+        var lineNumber;
+        var lines = stackString.split('\n');
+        for (var i = 0, line = lines[i]; i < lines.length; ++i, line = lines[i]) {
+            if (line.indexOf('@') == -1) {
+                continue;
+            }
+
+            parts = line.split('@', 2);
+            func = parts.shift();
+            rest = parts.shift();
+
+            divide = rest.lastIndexOf(':');
+            if (divide == -1) {
+                fname = rest;
+                lineNumber = 0;
+            } else {
+                fname = rest.substr(0, divide);
+                lineNumber = parseInt(rest.substr(divide + 1, rest.length));
+            }
+            frames.unshift({func: func, fname: fname, lineNumber: lineNumber});
+        }
+        return frames;
+    },
+
+    function toPrettyNode(self) {
+        var stack = self.error.stack;
+        if (!stack) {
+            return document.createTextNode(self.toString());
+        }
+
+        var frames = self.parseStack(stack);
+        var resultNode = document.createElement('div');
+        resultNode.style.overflow = 'scroll';
+        resultNode.style.height = 640;
+        resultNode.style.width = 480;
+        var frameNode;
+        for (var i = 0, f = frames[i]; i < frames.length; ++i, f = frames[i]) {
+            if (f.lineNumber == 0) {
+                continue;
+            }
+            frameNode = document.createElement('div');
+            frameNode.appendChild(document.createTextNode(f.fname + '|' + f.lineNumber));
+            resultNode.appendChild(frameNode);
+            frameNode = document.createElement('div');
+            frameNode.appendChild(document.createTextNode(f.func));
+            resultNode.appendChild(frameNode);
+        }
+        return resultNode;
     });
 
 Divmod.Defer.Deferred = Divmod.Class.subclass("Divmod.Defer.Deferred");

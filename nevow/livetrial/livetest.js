@@ -17,10 +17,14 @@
  */
 Nevow.Athena.Test._TestMethod = Divmod.Class.subclass('Nevow.Athena.Test._TestMethod');
 Nevow.Athena.Test._TestMethod.methods(
-    function __init__(self, testCase, testMethodName) {
+    function __init__(self, testCase, testMethodName, /* optional */ timeout) {
         self.testCase = testCase;
         self.testMethodName = testMethodName;
         self.fullyQualifiedName = self.testCase.__class__.__name__ + '.' + self.testMethodName;
+        if (timeout == undefined) {
+            timeout = 10;
+        }
+        self.timeout = timeout;
     },
 
     function toString(self) {
@@ -54,6 +58,19 @@ Nevow.Athena.Test._TestMethod.methods(
                 result = Divmod.Defer.succeed(result);
             }
         }
+
+        var timeoutCall = setTimeout(
+            function() {
+                timeoutCall = null;
+                result.errback(new Error("Timeout"));
+            }, self.timeout * 1000);
+
+        result.addBoth(function(passthrough) {
+                if (timeoutCall != null) {
+                    clearTimeout(timeoutCall);
+                }
+                return passthrough;
+            });
         result.addCallback(function(result) {
                 reporter.addSuccess(self);
             });
@@ -70,24 +87,147 @@ Nevow.Athena.Test._TestMethod.methods(
 Nevow.Athena.Test.TestCase = Nevow.Athena.Widget.subclass('Nevow.Athena.Test.TestCase');
 Nevow.Athena.Test.TestCase.methods(
     function fail(self, msg) {
+        if (self.debug) {
+            debugger;
+        }
         throw new Error('Test Failure: ' + msg);
     },
 
-    function assertEquals(self, a, b, msg) {
-        if (!(a == b)) {
-            if(msg == undefined) {
-                msg = a + ' != ' + b;
+    function assertNotEqual(self, a, b, msg) {
+        if (!(a != b)) {
+            if (msg == undefined) {
+                msg = a + " == " + b;
+            } else {
+                msg = a + " == " + b + ": " + msg;
             }
             self.fail(msg);
         }
     },
 
-    function failUnless(self, a, msg) {
-        if(!a) {
-            if(msg == undefined) {
+    function assertEqual(self, a, b, msg) {
+        if (!(a == b)) {
+            if (msg == undefined) {
+                msg = a + ' != ' + b;
+            } else {
+                msg = a + ' != ' + b + ': ' + msg;
+            }
+            self.fail(msg);
+        }
+    },
+
+    function assertEquals(self, a, b, msg) {
+        return self.assertEqual(a, b, msg);
+    },
+
+    /**
+     * Throw an error unless a given function throws a particular error.
+     *
+     * @param expectedError: The error type (class or prototype) which is
+     * expected to be thrown.
+     *
+     * @param callable: A no-argument callable which is expected to throw
+     * C{expectedError}.
+     *
+     * @throw Error: If no error is thrown or the wrong error is thrown, an error
+     * is thrown.
+     *
+     * @return: The error instance which was thrown.
+     */
+    function assertThrows(self, expectedError, callable) {
+        var threw;
+        try {
+            callable();
+        } catch (error) {
+            threw = error;
+            self.failUnless(error instanceof expectedError, "Wrong error type thrown: " + error);
+        }
+        self.failUnless(threw !== undefined, "Callable threw no error.");
+        return threw;
+    },
+
+    /**
+     * Throw an error if the given object is true.
+     *
+     * @param a: The object of which to test the truth value.
+     *
+     * @param msg: An optional string which will used to create the thrown
+     * Error if specified.
+     *
+     * @throw Error: If the given object is true, an error is thrown.
+     *
+     * @return: C{undefined}
+     */
+    function failIf(self, a, msg) {
+        if (a) {
+            if (msg == undefined) {
                 msg = a;
             }
             self.fail(msg);
+        }
+    },
+
+    /**
+     * Throw an error if the given object is false.
+     *
+     * @param a: The object of which to test the truth value.
+     *
+     * @param msg: An optional string which will used to create the thrown
+     * Error if specified.
+     *
+     * @throw Error: If the given object is false, an error is thrown.
+     *
+     * @return: C{undefined}
+     */
+    function failUnless(self, a, msg) {
+        if(!a) {
+            if (msg == undefined) {
+                msg = a;
+            }
+            self.fail(msg);
+        }
+    },
+
+    /**
+     * Throw an error unless two arrays are equal to each other.
+     *
+     * @type a: C{Array}
+     * @param a: An array to compare to C{b}.
+     *
+     * @type b: C{Array}
+     * @param b: An array to compare to C{a}.
+     *
+     * @param elementComparison: A three-argument callable which, if specified,
+     * will be used to compare the elements of the array to each other.  If not
+     * specified, the == operator will be used.  The arguments should be like those
+     * of C{assertEqual}.
+     *
+     * @throw Error: Thrown if either C{a} or C{b} is not an Array or if
+     * C{a.length} is not equal to C{b.length} or if any of C{a[i]} is not equal to
+     * C{b[i]} for C{0 <= i < a.length}.
+     *
+     * @return C{undefined}
+     */
+    function assertArraysEqual(self, a, b, /* optional */ elementComparison) {
+        self.failUnless(a instanceof Array, "First argument not an Array (" + a + ")");
+        self.failUnless(b instanceof Array, "Second argument not an Array (" + b + ")");
+
+        var msg;
+        if (a.toSource && b.toSource) {
+            msg = a.toSource() + " != " + b.toSource();
+        } else {
+            msg = a.toString() + " != " + b.toString();
+        }
+
+        self.assertEqual(a.length, b.length, msg);
+
+        if (elementComparison == undefined) {
+            elementComparison = function assertEqual(a, b, msg) {
+                self.assertEqual(a, b, msg);
+            }
+        }
+
+        for (var i = 0; i < a.length; ++i) {
+            elementComparison(a[i], b[i], "Element " + i + " not equal: " + a[i] + " != " + b[i]);
         }
     },
 
@@ -168,7 +308,7 @@ Nevow.Athena.Test.TestRunner.methods(
 
         var started = new Date();
         var completionDeferred = self.run(
-            Nevow.Athena.Test.ConcurrentVisitor(),
+            Nevow.Athena.Test.SerialVisitor(),
             Nevow.Athena.Test.TestReporter(
                 self._successNode,
                 self._failureNode,
@@ -233,7 +373,7 @@ Nevow.Athena.Test.TestRunner.methods(
  * @ivar testMethodName: A string naming the test method for which this
  * represents the results.
  */
-Nevow.Athena.Test.TestResult = Divmod.Class.subclass('Nevow.Athean.Test.TestResult');
+Nevow.Athena.Test.TestResult = Divmod.Class.subclass('Nevow.Athena.Test.TestResult');
 Nevow.Athena.Test.TestResult.methods(
     function __init__(self, node, testMethodName) {
         self.node = node;
@@ -266,10 +406,25 @@ Nevow.Athena.Test.TestResult.methods(
     },
 
     function testFailed(self, failure) {
+        var message = failure.error.message;
+        var stack = failure.error.stack;
+        if (stack) {
+            var frames = stack.split('\n');
+            for (var i = 0; i < frames.length; ++i) {
+                if (frames[i].length > 1024) {
+                    /*
+                     * Most versions of Firefox will crash if you display very long
+                     * lines.
+                     */
+                    frames[i] = frames[i].slice(0, 1024) + '<... truncated>';
+                }
+            }
+            stack = frames.join('\n');
+        }
         self.node.setAttribute('class', 'test-failure');
         self.node.appendChild(
             self._createTraceback(
-                failure.error.message + '\n' + failure.error.stack + '\n'));
+                message + '\n' + stack + '\n'));
     });
 
 
@@ -325,7 +480,7 @@ Nevow.Athena.Test.TestReporter.methods(
             throw new Error("Completely invalid duplicate testMethod: " + testMethod.fullyQualifiedName);
         }
         var node = self._createResultNode(testMethod);
-        self.resultsNode.appendChild(node);
+        self.resultsNode.insertBefore(node, self.resultsNode.firstChild);
         var result = Nevow.Athena.Test.TestResult(node, testMethod.fullyQualifiedName);
         self._knownTestMethods[testMethod.fullyQualifiedName] = result;
         result.startTest();
@@ -359,7 +514,6 @@ Nevow.Athena.Test.ConcurrentVisitor.methods(
         for (var i = 0; i < methods.length; ++i) {
             deferreds.push(visitor(methods[i]));
         }
-        Divmod.msg("DeferredList(" + deferreds + ")");
         return Divmod.Defer.DeferredList(deferreds);
     });
 
@@ -382,7 +536,7 @@ Nevow.Athena.Test.SerialVisitor.methods(
             method = methods.shift();
             result = visitor(method);
             result.addCallback(function(ignored) {
-                    self._traverse(visitor, methods);
+                    return self._traverse(visitor, methods);
                 });
             return result;
         }

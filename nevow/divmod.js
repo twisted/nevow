@@ -34,6 +34,35 @@ Divmod.importURL = function(moduleName) {
 };
 
 
+/**
+ * Create an object with properties from C{keys} bound to the corresponding
+ * objects from C{values}.  This is like C{dict(zip(keys, values))} in Python.
+ *
+ * @type keys: Array of strings
+ * @param keys: The names of the properties to bind on the resulting object.
+ *
+ * @type values: Array of anything
+ * @param values: The values to which to bind the properties.
+ *
+ * @rtype: object
+ * @return: An object where C{o[keys[i]] == values[i]} for all values of C{i}
+ * from C{[i..keys.length)}.
+ *
+ * @throw Error: Thrown if C{keys.length != values.length}.
+ */
+Divmod.objectify = function objectify(keys, values) {
+    if (keys.length != values.length) {
+        throw Error("Lengths of keys and values must be the same.");
+    }
+
+    var result = {};
+    for (var i = 0; i < keys.length; ++i) {
+        result[keys[i]] = values[i];
+    }
+    return result;
+};
+
+
 Divmod._global = this;
 
 

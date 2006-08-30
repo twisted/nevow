@@ -70,7 +70,8 @@ function assertEqual(a, b, msg) {
 /**
  * Throw an error unless a given function throws a particular error.
  *
- * @param expectedError: The error which is expected to be thrown.
+ * @param expectedError: The error type (class or prototype) which is
+ * expected to be thrown.
  *
  * @param callable: A no-argument callable which is expected to throw
  * C{expectedError}.
@@ -78,20 +79,19 @@ function assertEqual(a, b, msg) {
  * @throw Error: If no error is thrown or the wrong error is thrown, an error
  * is thrown.
  *
- * @return: C{undefined}
+ * @return: The error instance which was thrown.
  */
 function assertThrows(expectedError, callable) {
-    var threw = false;
+    var threw;
     try {
         callable();
     } catch (error) {
-        threw = true;
-        assertEqual(error, expectedError, "Wrong error thrown: " + error);
+        threw = error;
+        assert(error instanceof expectedError, "Wrong error type thrown: " + error);
     }
-    if (!threw) {
-        throw new Error("Callable threw no error.");
-    }
-}
+    assert(threw !== undefined, "Callable threw no error.");
+    return threw;
+};
 
 
 /**

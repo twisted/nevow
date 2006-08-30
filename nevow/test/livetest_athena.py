@@ -117,7 +117,7 @@ class ExceptionFromClient(testcase.TestCase):
 
     def checkError(self, f):
         f.trap(athena.JSException)
-        if len(f.frames) > 0 and u'This is a test exception' in f.value.args[0]:
+        if u'This is a test exception' in f.value.args[0]:
             return True
         else:
             raise f
@@ -139,7 +139,7 @@ class AsyncExceptionFromClient(testcase.TestCase):
 
     def checkError(self, f):
         f.trap(athena.JSException)
-        if len(f.frames) > 0 and u'This is a deferred test exception' in f.value.args[0]:
+        if u'This is a deferred test exception' in f.value.args[0]:
             return True
         else:
             raise f

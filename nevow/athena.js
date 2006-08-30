@@ -468,6 +468,13 @@ Nevow.Athena.RemoteReference.methods(
         e.appendChild(
             document.createTextNode("Your action could not be completed because an error occured."));
 
+// Useful for debugging sometimes, except it really isn't very pretty.
+// toPrettyNode needs unit tests or something, though.
+//         try {
+//             e.appendChild(err.toPrettyNode());
+//         } catch (err) {
+//             alert(err);
+//         }
 
         var errorLine = document.createElement("div");
         errorLine.style.fontStyle = "italic";

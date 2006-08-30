@@ -132,6 +132,32 @@ function testUtil() {
     assert(path[0] == Divmod);
 }
 
+/**
+ * Test that L{Divmod.objectify} properly zips two lists into an object with
+ * properties from the first list bound to the objects from the second.
+ */
+function test_objectify() {
+    var keys = ["one", "two", "red", "blue"];
+    var values = [1, 2, [255, 0, 0], [0, 0, 255]];
+    var obj = Divmod.objectify(keys, values);
+    assertEqual(obj.one, 1);
+    assertEqual(obj.two, 2);
+    assertArraysEqual(obj.red, [255, 0, 0]);
+    assertArraysEqual(obj.blue, [0, 0, 255]);
+
+    /*
+     * Test that it fails loudly on invalid input, too.
+     */
+    var msg = "Lengths of keys and values must be the same.";
+    var error;
+
+    error = assertThrows(Error, function() { Divmod.objectify([], ["foo"]); });
+    assertEqual(error.message, msg);
+
+    error = assertThrows(Error, function() { Divmod.objectify(["foo"], []); });
+    assertEqual(error.message, msg);
+}
+
 function testMethod() {
     var MethodClassTest = Divmod.Class.subclass('MethodClassTest');
 
@@ -225,6 +251,7 @@ var testFunctions = [
     test_instanceClassReference,
     testNewlessInstantiation,
     testUtil,
+    test_objectify,
     testMethod,
     testLogger];
 

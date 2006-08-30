@@ -42,37 +42,43 @@ function test_methods() {
  * are requested.
  */
 function test_methodsAgainstInstance() {
-    var msg = "Error: Only classes have methods.";
+    var msg = "Only classes have methods.";
+    var error;
 
-    assertThrows(
-        msg,
+    error = assertThrows(
+        Error,
         function() {
             return Divmod.Inspect.methods([]);
         });
+    assertEqual(error.message, msg);
 
-    assertThrows(
-        msg,
+    error = assertThrows(
+        Error,
         function() {
             return Divmod.Inspect.methods({});
         });
+    assertEqual(error.message, msg);
 
-    assertThrows(
-        msg,
+    error = assertThrows(
+        Error,
         function() {
             return Divmod.Inspect.methods(0);
         });
+    assertEqual(error.message, msg);
 
-    assertThrows(
-        msg,
+    error = assertThrows(
+        Error,
         function() {
             return Divmod.Inspect.methods("");
         });
+    assertEqual(error.message, msg);
 
-    assertThrows(
-        msg,
+    error = assertThrows(
+        Error,
         function() {
             return Divmod.Inspect.methods(Divmod.Class());
         });
+    assertEqual(error.message, msg);
 };
 
 runTests([test_methods,
