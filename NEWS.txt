@@ -1,3 +1,7 @@
+0.9.5 (2006-08-22):
+  - Instance attributes can now be exposed to Athena with nevow.utils.Expose
+    and Expose.exposedMethodNames() no longer returns unexposed names.
+
 0.9.4 (2006-08-14):
   - Added test method discovery to nit test cases, so multiple test methods
     may be put in a single test case.
