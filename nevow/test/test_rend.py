@@ -45,20 +45,22 @@ class req(testutil.FakeRequest):
         pass
 
 
-def deferredRender(res):
-    defres = req()
+def deferredRender(res, request=None):
+    if request is None:
+        request = req()
+
     d = util.maybeDeferred(res.renderHTTP,
         context.PageContext(
             tag=res, parent=context.RequestContext(
-                tag=defres)))
+                tag=request)))
 
     def done(result):
         if isinstance(result, str):
-            defres.write(result)
-        defres.d.callback(defres.accumulator)
+            request.write(result)
+        request.d.callback(request.accumulator)
         return result
     d.addCallback(done)
-    return defres.d
+    return request.d
 
 
 class TestPage(unittest.TestCase):
