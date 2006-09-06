@@ -159,12 +159,24 @@ Divmod.Runtime.Platform.methods(
 
     /**
      * Calculate the size of the given element, including padding
-     * but excluding scrollbars, borders and margins
+     * but excluding scrollbars, borders and margins.  If the
+     * element is invisible (i.e. display: none) is set, the it
+     * will be made visible for the purpose of obtaining its
+     * dimensions (sufficiently quickly that the viewport will not
+     * update).
      *
      * @return: object with "w" and "h" attributes
      */
     function getElementSize(self, e) {
-        return {w: e.clientWidth, h: e.clientHeight};
+        var hidden = e.style.display == "none";
+        if(hidden) {
+            e.style.display = "";
+        }
+        var size = {w: e.clientWidth, h: e.clientHeight};
+        if(hidden) {
+            e.style.display = "none";
+        }
+        return size;
     },
 
     /**
