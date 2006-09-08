@@ -926,10 +926,41 @@ class LivePage(rend.Page):
 
 
 
+handler = stan.Proto('athena:handler')
+_handlerFormat = "return Nevow.Athena.Widget.handleEvent(this, %(event)s, %(handler)s);"
+
+def _rewriteEventHandlerToAttribute(tag):
+    """
+    Replace athena:handler children of the given tag with attributes on the tag
+    which correspond to those event handlers.
+    """
+    if isinstance(tag, stan.Tag):
+        extraAttributes = {}
+        for i in xrange(len(tag.children) - 1, -1, -1):
+            if isinstance(tag.children[i], stan.Tag) and tag.children[i].tagName == 'athena:handler':
+                info = tag.children.pop(i)
+                name = info.attributes['event'].encode('ascii')
+                handler = info.attributes['handler']
+                extraAttributes[name] = _handlerFormat % {
+                    'handler': json.serialize(handler.decode('ascii')),
+                    'event': json.serialize(name.decode('ascii'))}
+                tag(**extraAttributes)
+    return tag
+
+
+def rewriteEventHandlerNodes(root):
+    """
+    Replace all the athena:handler nodes in a given document with onfoo
+    attributes.
+    """
+    stan.visit(root, _rewriteEventHandlerToAttribute)
+    return root
+
+
 class _LiveMixin(object):
     jsClass = u'Nevow.Athena.Widget'
 
-#     preprocessors = [_mangleId]
+    preprocessors = [rewriteEventHandlerNodes]
 
     fragmentParent = None
 
@@ -1086,6 +1117,21 @@ class LiveFragment(_LiveMixin, rend.Fragment):
 
         <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
 
+    Methods of the JavaScript widget class can also be bound as event
+    handlers using the handler tag type in the Athena namespace:
+
+        <form xmlns:athena="http://divmod.org/ns/athena/0.7">
+            <athena:handler event="onsubmit" handler="doFoo" />
+        </form>
+
+    This will invoke the C{doFoo} method of the widget which contains the
+    form node.
+
+    Because this mechanism sets up error handling and otherwise reduces the
+    required boilerplate for handling events, it is preferred and
+    recommended over directly including JavaScript in the event handler
+    attribute of a node.
+
     The C{jsClass} attribute of a LiveFragment instance determines the
     JavaScript class used to construct its corresponding Widget.  This
     appears as the 'athena:class' attribute.
@@ -1142,6 +1188,21 @@ class LiveElement(_LiveMixin, Element):
 
         <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
 
+    Methods of the JavaScript widget class can also be bound as event
+    handlers using the handler tag type in the Athena namespace:
+
+        <form xmlns:athena="http://divmod.org/ns/athena/0.7">
+            <athena:handler event="onsubmit" handler="doFoo" />
+        </form>
+
+    This will invoke the C{doFoo} method of the widget which contains the
+    form node.
+
+    Because this mechanism sets up error handling and otherwise reduces the
+    required boilerplate for handling events, it is preferred and
+    recommended over directly including JavaScript in the event handler
+    attribute of a node.
+
     The C{jsClass} attribute of a LiveElement instance determines the
     JavaScript class used to construct its corresponding Widget.  This appears
     as the 'athena:class' attribute.
@@ -1191,4 +1252,15 @@ class IntrospectionFragment(LiveFragment):
 
 
 
-handler = stan.Proto('athena:handler')
+__all__ = [
+    'ATHENA_XMLNS_URI',
+
+    'LivePageError', 'OrphanedFragment', 'ConnectFailed', 'ConnectionLost'
+
+    'JSModules', 'JSModule', 'JSPackage', 'AutoJSPackage', 'allJavascriptPackages',
+    'JSDependencies', 'JSException', 'JSCode', 'JSFrame', 'JSTraceback',
+
+    'LivePage', 'LiveFragment', 'LiveElement', 'IntrospectionFragment',
+
+    'expose', 'handler',
+    ]

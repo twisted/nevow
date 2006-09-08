@@ -4,8 +4,12 @@ from itertools import izip
 
 from twisted.trial import unittest
 from twisted.python import util
+from twisted.web import microdom
 
-from nevow import athena, rend
+from nevow import athena, rend, tags, flat, loaders
+from nevow.inevow import IRequest
+from nevow.context import WovenContext
+from nevow.testutil import FakeRequest
 
 
 class Utilities(unittest.TestCase):
@@ -129,6 +133,94 @@ the end
         foo = athena.JSModule.getOrCreate(u'Foo', modules)
         bar = athena.JSModule.getOrCreate(u'Foo.Bar', modules)
         self.assertIn(foo, bar.allDependencies())
+
+
+
+    def test_preprocessorCollection(self):
+        """
+        Test that preprocessors from all the base classes of an instance are
+        found, and that a preprocessor instance attribute overrides all of
+        these.
+        """
+        a, b, c = object(), object(), object()
+
+        class Base(object):
+            preprocessors = [a]
+
+        class OtherBase(object):
+            preprocessors = [b]
+
+        class Derived(Base, OtherBase):
+            preprocessors = [c]
+
+        inst = Derived()
+        self.assertEqual(
+            rend._getPreprocessors(inst),
+            [a, b, c])
+
+        d = object()
+        inst.preprocessors = [d]
+        self.assertEqual(
+            rend._getPreprocessors(inst),
+            [d])
+
+
+    def test_handlerMacro(self):
+        """
+        Test that the handler macro rewrites athena:handler nodes to the
+        appropriate JavaScript.
+        """
+        expectedOutput = (
+            'return Nevow.Athena.Widget.handleEvent('
+            'this, &quot;onclick&quot;, &quot;bar&quot;);')
+        tag = tags.span[athena.handler(event='onclick', handler='bar')]
+        mutated = athena._rewriteEventHandlerToAttribute(tag)
+        output = flat.flatten(mutated)
+        self.assertEquals(
+            output,
+            '<span onclick="' + expectedOutput + '"></span>')
+
+
+    def test_handlerMacroAgainstList(self):
+        """
+        Macros need to be runnable on lists of things.  Make sure the handler
+        macro is.
+        """
+        tag = ["hello", " ", "world"]
+        self.assertEquals(
+            athena._rewriteEventHandlerToAttribute(tag),
+            tag)
+
+
+    def _render(self, page):
+        """
+        Test helper which tries to render the given page.
+        """
+        ctx = WovenContext()
+        req = FakeRequest()
+        ctx.remember(req, IRequest)
+        return page.renderHTTP(ctx).addCallback(lambda ign: req.v)
+
+
+    def test_elementPreprocessors(self):
+        """
+        Make sure that LiveElements have their preprocessors applied to their
+        document.
+        """
+        preprocessed = []
+
+        tag = tags.span
+        element = athena.LiveElement(docFactory=loaders.stan(tag))
+        page = athena.LivePage(docFactory=loaders.stan(element))
+        element.preprocessors = [preprocessed.append]
+        element.setFragmentParent(page)
+        renderDeferred = self._render(page)
+        def rendered(result):
+            page.action_close(None)
+            self.assertEquals(preprocessed, [[tag]])
+        renderDeferred.addCallback(rendered)
+        return renderDeferred
+
 
 
 class StandardLibraryTestCase(unittest.TestCase):

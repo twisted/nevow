@@ -275,6 +275,7 @@ Divmod.Class.prototype.__init__ = function() {
      */
 };
 
+Divmod.Error = Divmod.Class.subclass("Divmod.Error");
 
 Divmod.Module = Divmod.Class.subclass('Divmod.Module');
 Divmod.Module.method(

@@ -610,47 +610,7 @@ Nevow.Athena.Widget.methods(
         self.node = widgetNode;
         self.childWidgets = [];
         self.widgetParent = null;
-        self.createEventBindings();
         Nevow.Athena.Widget.upcall(self, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
-    },
-
-    function createEventBindings(self) {
-        if (self.node.getElementsByTagNameNS) {
-            var events = self.node.getElementsByTagNameNS(Nevow.Athena.XMLNS_URI, 'handler');
-            if (events.length == 0) {
-                // Maybe namespaces aren't being handled properly, let's check
-                events = self.node.getElementsByTagName('athena:handler');
-            }
-        } else {
-            // We haven't even heard of namespaces, so do without
-            events = self.node.getElementsByTagName('athena:handler');
-        }
-
-        function makeHandler(evtHandler) {
-            return function (e) {
-                Divmod.debug("widget", "Handling an event.");
-                var success = false;
-                var result = false;
-                Nevow.Athena._rdm.pause();
-                try {
-                    result = self[evtHandler](this, e);
-                } catch (e) {
-                    success = false;
-                    Divmod.err(e);
-                }
-                Nevow.Athena._rdm.unpause();
-                Divmod.debug("widget", "Finished handling event.");
-                return result;
-            };
-        };
-
-        for (var i = 0; i < events.length; ++i) {
-            var event = events[i];
-            var evtName = event.getAttribute('event');
-            var evtHandler = event.getAttribute('handler');
-            event.parentNode[evtName] = makeHandler(evtHandler);
-            Divmod.msg("Hooked " + evtName + " up to " + evtHandler + " on " + self);
-        }
     },
 
     function addChildWidget(self, newChild) {
@@ -679,7 +639,6 @@ Nevow.Athena.Widget.methods(
     });
 
 
-
 Nevow.Athena.Widget._athenaWidgets = {};
 
 /**
@@ -699,6 +658,42 @@ Nevow.Athena.Widget.get = function(node) {
         Nevow.Athena.Widget._athenaWidgets[widgetId] = widgetClass.apply(null, initArgs);
     }
     return Nevow.Athena.Widget._athenaWidgets[widgetId];
+};
+
+/**
+ * Given a node and a method name in an event handling context, dispatch the
+ * event to the named method on the widget which owns the given node.  This
+ * also sets up error handling and does return value translation as
+ * appropriate for an event handler.  It also pauses the outgoing message
+ * queue to allow multiple messages from the event handler to be batched up
+ * into a single request.
+ */
+Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerName) {
+    var widget = Nevow.Athena.Widget.get(node);
+    var method = widget[handlerName];
+    var result = false;
+    if (method === undefined) {
+        Divmod.msg("Undefined event handler: " + handlerName);
+    } else {
+        Nevow.Athena._rdm.pause();
+        try {
+            try {
+                result = method.call(widget, node);
+            } catch (err) {
+                Divmod.err(
+                    err,
+                    "Dispatching " + eventName +
+                    " to " + handlerName +
+                    " on " + widget +
+                    " failed.");
+            }
+        } catch (err) {
+            Nevow.Athena._rdm.unpause();
+            throw err;
+        }
+        Nevow.Athena._rdm.unpause();
+    }
+    return result;
 };
 
 /**
@@ -903,8 +898,12 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
 
     for (var widgetId in widgetIds) {
         var node = document.getElementById('athena:' + widgetId);
-        var cls = Nevow.Athena.athenaClassFromNode(node);
-        Nevow.Athena.Widget._instantiateOneWidget(cls, node);
+        if (node == null) {
+            Divmod.debug("widget", "Widget scheduled for addition was missing.  Id = " + widgetId);
+        } else {
+            var cls = Nevow.Athena.athenaClassFromNode(node);
+            Nevow.Athena.Widget._instantiateOneWidget(cls, node);
+        }
     }
 };
 

@@ -93,58 +93,6 @@ Nevow.Athena.Test.TestCase.methods(
         throw new Error('Test Failure: ' + msg);
     },
 
-    function assertNotEqual(self, a, b, msg) {
-        if (!(a != b)) {
-            if (msg == undefined) {
-                msg = a + " == " + b;
-            } else {
-                msg = a + " == " + b + ": " + msg;
-            }
-            self.fail(msg);
-        }
-    },
-
-    function assertEqual(self, a, b, msg) {
-        if (!(a == b)) {
-            if (msg == undefined) {
-                msg = a + ' != ' + b;
-            } else {
-                msg = a + ' != ' + b + ': ' + msg;
-            }
-            self.fail(msg);
-        }
-    },
-
-    function assertEquals(self, a, b, msg) {
-        return self.assertEqual(a, b, msg);
-    },
-
-    /**
-     * Throw an error unless a given function throws a particular error.
-     *
-     * @param expectedError: The error type (class or prototype) which is
-     * expected to be thrown.
-     *
-     * @param callable: A no-argument callable which is expected to throw
-     * C{expectedError}.
-     *
-     * @throw Error: If no error is thrown or the wrong error is thrown, an error
-     * is thrown.
-     *
-     * @return: The error instance which was thrown.
-     */
-    function assertThrows(self, expectedError, callable) {
-        var threw;
-        try {
-            callable();
-        } catch (error) {
-            threw = error;
-            self.failUnless(error instanceof expectedError, "Wrong error type thrown: " + error);
-        }
-        self.failUnless(threw !== undefined, "Callable threw no error.");
-        return threw;
-    },
-
     /**
      * Throw an error if the given object is true.
      *
@@ -179,12 +127,95 @@ Nevow.Athena.Test.TestCase.methods(
      * @return: C{undefined}
      */
     function failUnless(self, a, msg) {
-        if(!a) {
+        if (!a) {
             if (msg == undefined) {
                 msg = a;
             }
             self.fail(msg);
         }
+    },
+
+    /**
+     * Throw an error unless two objects compare equal.
+     *
+     * @param a: An object to compare to C{b}.
+     *
+     * @param b: An object to compare to C{a}.
+     *
+     * @param msg: An optional string which will used to create the thrown
+     * Error if specified.
+     *
+     * @throw Error: If the two objects do not compare equal, an error is thrown.
+     *
+     * @return: C{undefined}
+     */
+    function assertEqual(self, a, b, msg) {
+        if (!(a == b)) {
+            if (msg == undefined) {
+                msg = a + ' != ' + b;
+            } else {
+                msg = a + ' != ' + b + ': ' + msg;
+            }
+            self.fail(msg);
+        }
+    },
+
+    /**
+     * Pointless deprecated synonym for assertEqual.
+     */
+    function assertEquals(self, a, b, msg) {
+        return self.assertEqual(a, b, msg);
+    },
+
+    /**
+     * Throw an error if two objects compare equal.
+     *
+     * @param a: An object to compare to C{b}.
+     *
+     * @param b: An object to compare to C{a}.
+     *
+     * @param msg: An optional string which will used to create the thrown
+     * Error if specified.
+     *
+     * @throw Error: If the two objects compare equal, an error is thrown.
+     *
+     * @return: C{undefined}
+     */
+    function assertNotEqual(self, a, b, msg) {
+        if (!(a != b)) {
+            if (msg == undefined) {
+                msg = a + " == " + b;
+            } else {
+                msg = a + " == " + b + ": " + msg;
+            }
+            self.fail(msg);
+        }
+    },
+
+    /**
+     * Throw an error unless a given function throws a particular error.
+     *
+     * @param expectedError: The error type (class or prototype) which is
+     * expected to be thrown.
+     *
+     * @param callable: A no-argument callable which is expected to throw
+     * C{expectedError}.
+     *
+     * @throw Error: If no error is thrown or the wrong error is thrown, an error
+     * is thrown.
+     *
+     * @return: The error instance which was thrown.
+     */
+    function assertThrows(self, expectedError, callable) {
+        var threw;
+        try {
+            callable();
+        } catch (error) {
+            threw = error;
+            self.failUnless(error instanceof expectedError, "Wrong error type thrown: " + error);
+        }
+        self.failUnless(threw !== undefined, "Callable threw no error.");
+        return threw;
     },
 
     /**
@@ -232,23 +263,48 @@ Nevow.Athena.Test.TestCase.methods(
     },
 
     /**
-     * Return an Array of ITestMethod providers.
+     * Throw an error unless one object is contained within another object.
+     *
+     * @param containee: The object which should be in another object.
+     *
+     * @param container: The object which should contain the other object.
+     *
      */
-    function getTestMethods(self) {
+    function assertIn(self, containee, container, msg) {
+        if (msg === undefined) {
+            msg = containee + " not in " + container;
+        }
+        self.failUnless(containee in container, msg);
+    },
+
+    /**
+     * Return an Array of strings naming test methods.
+     */
+    function getTestMethodNames(self) {
         var tests = [];
         var methods = Divmod.Inspect.methods(self.__class__);
         for (var i = 0; i < methods.length; ++i) {
             if (methods[i].slice(0, 4) == "test") {
-                tests.push(Nevow.Athena.Test._TestMethod(self, methods[i]));
+                tests.push(methods[i]);
             }
         }
-
         /*
          * A bit of backwards compatibility
          */
         if (self['run'] != undefined) {
             Divmod.msg("TestCase.run() is deprecated: define methods with a 'test' prefix.");
-            tests.push(Nevow.Athena.Test._TestMethod(self, 'run'));
+            tests.push('run');
+        }
+        return tests;
+    },
+
+    /**
+     * Return an Array of ITestMethod providers.
+     */
+    function getTestMethods(self) {
+        var tests = self.getTestMethodNames();
+        for (var i = 0; i < tests.length; ++i) {
+            tests[i] = Nevow.Athena.Test._TestMethod(self, tests[i]);
         }
         return tests;
     });

@@ -1,7 +1,8 @@
 from twisted.internet import defer
 
 from nevow import loaders, tags, athena
-from nevow.athena import expose
+from nevow.page import Element
+from nevow.athena import expose, LiveElement
 from nevow.livetrial import testcase
 from nevow.test import test_json
 
@@ -262,6 +263,17 @@ class AutomaticClass(testcase.TestCase):
 
 
 
+class ButtonElement(Element):
+    """
+    A button with an automatic Athena event handler.
+    """
+    preprocessors = LiveElement.preprocessors
+    docFactory = loaders.stan(
+        tags.button[
+            athena.handler(event='onclick', handler='handler')])
+
+
+
 class AthenaHandler(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.AthenaHandler'
 
@@ -270,9 +282,7 @@ class AthenaHandler(testcase.TestCase):
         Return a button with an automatic athena handler attached to its
         onclick event.
         """
-        return tags.button[
-            '<athena:handler>',
-            athena.handler(event='onclick', handler='handler')]
+        return ButtonElement()
 
 
 

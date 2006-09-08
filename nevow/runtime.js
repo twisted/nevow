@@ -3,6 +3,26 @@
 // import Divmod.Base
 // import Divmod.Defer
 
+
+Divmod.Runtime.NodeNotFound = Divmod.Error.subclass("Divmod.Runtime.NodeNotFound");
+
+Divmod.Runtime.TooManyNodes = Divmod.Error.subclass("Divmod.Runtime.TooManyNodes");
+
+Divmod.Runtime.NodeAttributeError = Divmod.Runtime.NodeNotFound.subclass("Divmod.Runtime.NodeAttributeError");
+Divmod.Runtime.NodeAttributeError.methods(
+    function __init__(self, root, attribute, value) {
+        self.root = root;
+        self.attribute = attribute;
+        self.value = value;
+    },
+
+    function toString(self) {
+        return (
+            "Failed to discover node with " + self.attribute +
+            " value " + self.value + " beneath " + self.root +
+            " (programmer error).");
+    });
+
 Divmod.Runtime.Platform = Divmod.Class.subclass("Divmod.Runtime.Platform");
 
 Divmod.Runtime.Platform.DOM_DESCEND = 'Divmod.Runtime.Platform.DOM_DESCEND';
@@ -32,12 +52,22 @@ Divmod.Runtime.Platform.methods(
         return ns;
     },
 
+    function _xpathNodeByAttribute(self, attrName, attrValue) {
+        var upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        var lower = upper.toLowerCase();
+        return (
+            ".//*[@*[translate(name(),'" + upper + "', '" + lower + "')='" +
+            attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'" +
+            upper + "', '" + lower + "')='" + attrName + "']='" + attrValue +
+            "']");
+    },
+
     function firstNodeByAttribute(self, root, attrName, attrValue) {
         /* duplicate this here rather than adding an "onlyOne" arg to
            nodesByAttribute so adding an extra arg accidentally doesn't change
            it's behaviour if called directly
         */
-        var xpath = ".//*[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "']";
+        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
         var node = document.evaluate(
             xpath,
             root,
@@ -46,15 +76,13 @@ Divmod.Runtime.Platform.methods(
             null
         ).singleNodeValue;
         if (!node) {
-            throw new Error("Failed to discover node with " + attrName +
-                            " value " + attrValue + " beneath " + root +
-                            " (programmer error).");
+            throw new Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
         }
         return node;
     },
 
     function nodeByAttribute(self, root, attrName, attrValue, /* optional */ defaultNode){
-        var xpath = ".//*[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "']";
+        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
         var nodes = document.evaluate(
             xpath,
             root,
@@ -67,9 +95,7 @@ Divmod.Runtime.Platform.methods(
         }
         else if (nodes.snapshotLength < 1) {
             if (defaultNode === undefined) {
-                throw new Error("Failed to discover node with " + attrName +
-                                " value " + attrValue + " beneath " + root +
-                                " (programmer error).");
+                throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
             }
             else {
                 return defaultNode;
@@ -83,7 +109,7 @@ Divmod.Runtime.Platform.methods(
 
     function nodesByAttribute(self, root, attrName, attrValue) {
         var results = [];
-        var xpath = ".//*[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='" + attrName + "']='" + attrValue + "']";;
+        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
         var nodes = document.evaluate(
             xpath,
             root,

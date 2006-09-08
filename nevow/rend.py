@@ -40,8 +40,11 @@ def _getPreprocessors(inst):
     """
     Accumulate elements from the sequences bound at the C{preprocessors}
     attribute on all classes in the inheritence hierarchy of the class of
-    C{inst}.
+    C{inst}.  A C{preprocessors} attribute on the given instance overrides
+    all preprocessors from the class inheritance hierarchy.
     """
+    if 'preprocessors' in vars(inst):
+        return inst.preprocessors
     preprocessors = []
     accumulateClassList(
         inst.__class__,

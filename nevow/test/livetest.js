@@ -217,10 +217,29 @@ Nevow.Athena.Tests.ImportBeforeLiteralJavaScript.methods(
 
 Nevow.Athena.Tests.AthenaHandler = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.AthenaHandler');
 Nevow.Athena.Tests.AthenaHandler.methods(
+    /**
+     * Call the given object if it is a function.  eval() it if it is a string.
+     */
+    function _execute(self, thisObject, stringOrFunction) {
+        if (typeof stringOrFunction === 'string') {
+            return (
+                function() {
+                    return eval(stringOrFunction);
+                }).call(thisObject);
+        } else if (typeof stringOrFunction === 'function') {
+            return stringOrFunction.call(thisObject);
+        } else {
+            self.fail(
+                "_execute() given something that is neither a " +
+                "string nor a function: " + stringOrFunction);
+        }
+    },
+
     function test_athenaHandler(self) {
         self.handled = false;
-        var onsubmit = self.node.getElementsByTagName('button')[0].onclick;
-        self.assertEquals(onsubmit(), false);
+        var button = self.node.getElementsByTagName('button')[0];
+        var onclick = button.onclick;
+        self.assertEquals(self._execute(button, onclick), false);
         self.assertEquals(self.handled, true);
     },
 

@@ -139,11 +139,53 @@ Divmod.Runtime.Tests.GetAttribute.methods(
 
 Divmod.Runtime.Tests.FindInRootNode = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.FindInRootNode');
 Divmod.Runtime.Tests.FindInRootNode.methods(
-    function run(self) {
-        var node = Divmod.Runtime.theRuntime.nodeByAttribute(self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
+    function test_nodeByAttribute(self) {
+        var node = Divmod.Runtime.theRuntime.nodeByAttribute(
+            self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
         self.assertEquals(self.node.id, node.id);
-        var firstNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
+    },
+
+    function test_firstNodeByAttribute(self) {
+        var firstNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(
+            self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
         self.assertEquals(self.node.id, firstNode.id);
-        var nodes = Divmod.Runtime.theRuntime.nodesByAttribute(self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
+    },
+
+    function test_nodesByAttribute(self) {
+        var nodes = Divmod.Runtime.theRuntime.nodesByAttribute(
+            self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');
         self.assertEquals(self.node.id, nodes[0].id);
+    },
+
+    /**
+     * Assert that using nodeByAttribute to look for a node with an attribute
+     * value which is not present throws the proper error, NodeAttributeError.
+     */
+    function test_nodeByAttributeMissing(self) {
+        var error = self.assertThrows(
+            Divmod.Runtime.NodeAttributeError,
+            function() {
+                Divmod.Runtime.theRuntime.nodeByAttribute(
+                    self.node, 'foo', 'bar');
+            });
+        self.assertEqual(error.root, self.node);
+        self.assertEqual(error.attribute, 'foo');
+        self.assertEqual(error.value, 'bar');
+    },
+
+    /**
+     * Assert that using firstNodeByAttribute to look for a node with an
+     * attribute value which is not present throws the proper error,
+     * NodeAttributeError.
+     */
+    function test_firstNodeByAttributeMissing(self) {
+        var error = self.assertThrows(
+            Divmod.Runtime.NodeAttributeError,
+            function() {
+                Divmod.Runtime.theRuntime.firstNodeByAttribute(
+                    self.node, 'foo', 'bar');
+            });
+        self.assertEqual(error.root, self.node);
+        self.assertEqual(error.attribute, 'foo');
+        self.assertEqual(error.value, 'bar');
     });
