@@ -1,3 +1,7 @@
+0.9.6 (2008-08-30):
+  - Fixed a bug in the IE implementation of the runtime.js node fetching 
+    functions.
+
 0.9.5 (2006-08-22):
   - Instance attributes can now be exposed to Athena with nevow.utils.Expose
     and Expose.exposedMethodNames() no longer returns unexposed names.
