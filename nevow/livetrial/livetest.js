@@ -411,7 +411,7 @@ Nevow.Athena.Test.TestRunner.methods(
                     result = Divmod.Defer.fail(err);
                 }
                 if (!failed) {
-                    if (!result instanceof Divmod.Defer.Deferred) {
+                    if (!(result instanceof Divmod.Defer.Deferred)) {
                         result = Divmod.Defer.succeed(result);
                     }
                 }
@@ -582,19 +582,21 @@ Nevow.Athena.Test.ConcurrentVisitor.methods(
 Nevow.Athena.Test.SerialVisitor = Divmod.Class.subclass('Nevow.Athena.Test.SerialVisitor');
 Nevow.Athena.Test.SerialVisitor.methods(
     function traverse(self, visitor, suite) {
-        return self._traverse(visitor, suite.getTestMethods());
+        var completionDeferred = Divmod.Defer.Deferred();
+        self._traverse(visitor, suite.getTestMethods(), completionDeferred);
+        return completionDeferred;
     },
 
-    function _traverse(self, visitor, methods) {
+    function _traverse(self, visitor, methods, completionDeferred) {
         var method;
         var result;
         if (methods.length) {
             method = methods.shift();
             result = visitor(method);
             result.addCallback(function(ignored) {
-                    return self._traverse(visitor, methods);
+                    self._traverse(visitor, methods, completionDeferred);
                 });
-            return result;
+        } else {
+            completionDeferred.callback(null);
         }
-        return Divmod.Defer.succeed(null);
     });
