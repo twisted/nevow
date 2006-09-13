@@ -5,6 +5,11 @@ Test module for L{nevow.utils}
 
 """
 
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 from twisted.trial.unittest import TestCase
 
 from nevow.util import UnexposedMethodError, Expose
