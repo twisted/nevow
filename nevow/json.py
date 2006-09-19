@@ -243,6 +243,8 @@ def stringEncode(s):
     return s.translate(_translation).encode('utf-8')
 
 def _serialize(obj, w, seen):
+    from nevow import athena
+
     if isinstance(obj, types.BooleanType):
         if obj:
             w('true')
@@ -274,6 +276,13 @@ def _serialize(obj, w, seen):
             if n != len(obj) - 1:
                 w(',')
         w('}')
+    elif isinstance(obj, (athena.LiveFragment, athena.LiveElement)):
+        widgetInfo = obj._structured()
+        widgetInfo[u'markup'] = (
+            u'<div xmlns="http://www.w3.org/1999/xhtml">' +
+            widgetInfo[u'markup'] +
+            u'</div>')
+        _serialize(widgetInfo, w, seen)
     elif isinstance(obj, (rend.Fragment, page.Element)):
         w('"')
         w(stringEncode(flat.flatten(tags.div(xmlns="http://www.w3.org/1999/xhtml")[obj]).decode('utf-8')))

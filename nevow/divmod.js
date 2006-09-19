@@ -275,7 +275,24 @@ Divmod.Class.prototype.__init__ = function() {
      */
 };
 
+/**
+ * Base class for all error classes.
+ *
+ * @ivar stack: On Firefox, a string describing the call stack at the time the
+ * error was instantiated (/not/ thrown).
+ */
 Divmod.Error = Divmod.Class.subclass("Divmod.Error");
+Divmod.Error.methods(
+    function __init__(self, /* optional */ message) {
+        self.message = message;
+        self.stack = Error().stack;
+    });
+
+/**
+ * Base class for all warning classes.
+ */
+Divmod.Warning = Divmod.Class.subclass("Divmod.Warning");
+Divmod.DeprecationWarning = Divmod.Warning.subclass("Divmod.DeprecationWarning");
 
 Divmod.Module = Divmod.Class.subclass('Divmod.Module');
 Divmod.Module.method(
@@ -367,6 +384,32 @@ Divmod.debug = function(kind, msg) {
 
 Divmod.log = Divmod.debug;
 
+/**
+ * Emit a warning log event.  Warning events have four keys::
+ *
+ *   isError, which is always C{false}.
+ *
+ *   message, which is a human-readable explanation of the warning.
+ *
+ *   category, which is a L{Divmod.Warning} subclass categorizing the warning.
+ *
+ *   channel, which is always C{'warning'}.
+ */
+Divmod.warn = function warn(message, category) {
+    Divmod.logger.emit({'isError': false,
+                'message': message,
+                'category': category,
+                'channel': 'warning'});
+};
+
+/*
+ * Set up the Firebug console as a Divmod log observer.
+ */
 Divmod.logger.addObserver(function (evt) {
-    console.log("Divmod log: " + evt.message);
+        if (evt.isError) {
+            console.log("Divmod error: " + evt.message);
+            console.log(evt.error);
+        } else {
+            console.log("Divmod log: " + evt.message);
+        }
 });

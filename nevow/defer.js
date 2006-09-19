@@ -172,7 +172,7 @@ Divmod.Defer.Deferred.methods(
                         break;
                     }
                 } catch (e) {
-                    self._result = new Divmod.Defer.Failure(e);
+                    self._result = Divmod.Defer.Failure(e);
                 }
             }
         }
@@ -213,11 +213,24 @@ Divmod.Defer.fail = function fail(err) {
 };
 
 
-Divmod.Defer.FirstError = Divmod.Class.subclass('Divmod.Defer.FirstError');
+/**
+ * First error to occur in a DeferredList if fireOnOneErrback is set.
+ *
+ * @ivar err: the L{Divmod.Defer.Failure} that occurred.
+ *
+ * @ivar index: the index of the Deferred in the DeferredList where it
+ * happened.
+ */
+Divmod.Defer.FirstError = Divmod.Error.subclass('Divmod.Defer.FirstError');
 Divmod.Defer.FirstError.methods(
     function __init__(self, err, index) {
+        Divmod.Defer.FirstError.upcall(self, '__init__');
         self.err = err;
         self.index = index;
+    },
+
+    function toString(self) {
+        return '<FirstError @ ' + self.index + ': ' + self.err.toString() + '>';
     });
 
 /*

@@ -259,6 +259,17 @@ Nevow.Athena.Tests.FirstNodeByAttribute.methods(
     });
 
 
+Nevow.Athena.Tests.DynamicWidgetClass = Nevow.Athena.Widget.subclass('Nevow.Athena.Tests.DynamicWidgetClass');
+Nevow.Athena.Tests.DynamicWidgetClass.methods(
+    function someMethod(self) {
+        /*
+         * Do something that hits our Fragment on the server to make sure we
+         * can.
+         */
+        return self.callRemote('someMethod');
+    });
+
+
 /**
  * Test that retrieving several LiveFragments from the server using a
  * method call returns something which can be passed to
@@ -267,28 +278,73 @@ Nevow.Athena.Tests.FirstNodeByAttribute.methods(
  */
 Nevow.Athena.Tests.DynamicWidgetInstantiation = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.DynamicWidgetInstantiation');
 Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
-    function __init__(self, node, childCount) {
-        Nevow.Athena.Tests.DynamicWidgetInstantiation.upcall(self, '__init__', node);
-        self.expectedChildCount = childCount;
+    /**
+     * Test the API for adding a widget based on an ID, class name, and
+     * __init__ arguments to an existing page.
+     */
+    function test_addChildWidgetFromComponents(self) {
+        var widgetID;
+        var widgetClass;
+
+        /*
+         * Get a widget from the server
+         */
+        var result = self.callRemote('getDynamicWidgetInfo');
+        result.addCallback(
+            function(widgetInfo) {
+                widgetID = widgetInfo.id;
+                widgetClass = widgetInfo.klass;
+
+                /*
+                 * Server isn't going to give us any markup because markup is
+                 * fugly.  So, construct the widget's root node ourselves.  It
+                 * still needs to have all the special attributes for anything
+                 * to work right.
+                 */
+                return self._addChildWidgetFromComponents(
+                    [], widgetID, widgetClass, [], [],
+                    '<span xmlns="http://www.w3.org/1999/xhtml" id="athena:' +
+                    widgetID + '" class="' + widgetClass + '" />');
+            });
+        result.addCallback(
+            function(childWidget) {
+                self.assertEqual(Nevow.Athena.Widget.get(childWidget.node), childWidget);
+                self.assertEqual(childWidget.widgetParent, self);
+                self.assertEqual(self.childWidgets[self.childWidgets.length - 1], childWidget);
+                return childWidget.someMethod();
+            });
+        result.addCallback(
+            function(methodResult) {
+                self.assertEqual(methodResult, 'foo');
+            });
+        return result;
     },
 
-    function test_dynamicWidgetInstantiation(self) {
-        var d = self.callRemote('getWidgets');
-        d.addCallback(function(result) {
-            self.waiting = Divmod.Defer.Deferred();
-            self.waitingCount = self.expectedChildCount;
-            Divmod.Runtime.theRuntime.setNodeContent(self.node, result);
-        });
-        return d;
-    },
+    /**
+     * Test the API for adding a widget based on a messy pile of data.
+     */
+    function test_addChildWidgetFromWidgetInfo(self) {
+        var result = self.callRemote('getDynamicWidget');
+        result.addCallback(
+            function(widget) {
+                return self.addChildWidgetFromWidgetInfo(widget);
+            });
+        result.addCallback(
+            function(widget) {
+                self.assertEqual(Nevow.Athena.Widget.get(widget.node), widget);
+                self.assertEqual(widget.node.parentNode.parentNode, null);
+                self.assertEqual(widget.widgetParent, self);
+                self.assertEqual(self.childWidgets[self.childWidgets.length - 1], widget);
 
-    function addChildWidget(self, newChild) {
-        Nevow.Athena.Tests.DynamicWidgetInstantiation.upcall(self, 'addChildWidget', newChild);
-        self.waitingCount--;
-        if (self.waitingCount == 0) {
-            self.waiting.callback(null);
-        }
-    });
+                return widget.someMethod();
+            });
+        result.addCallback(
+            function(methodResult) {
+                self.assertEqual(methodResult, 'foo');
+            });
+        return result;
+    }
+    );
 
 /**
  * Test that calling Widget.get() on a node which is not part of any Widget

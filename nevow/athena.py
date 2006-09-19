@@ -5,7 +5,7 @@ import itertools, os, re, warnings
 from zope.interface import implements
 
 from twisted.internet import defer, error, reactor
-from twisted.python import log, failure
+from twisted.python import log, failure, context
 from twisted.python.util import sibpath
 from twisted import plugin
 
@@ -1039,21 +1039,73 @@ class _LiveMixin(object):
         return jsDeps.getModuleForClass(self.jsClass)
 
 
+    def _getRequiredModules(self):
+        """
+        Return a list of two-tuples containing module names and URLs at which
+        those modules are accessible.  All of these modules must be loaded into
+        the page before this Fragment's widget can be instantiated.  modules
+        are accessible.
+        """
+        return [
+            (dep.name, self.page.getJSModuleURL(dep.name))
+            for dep
+            in self._getModuleForClass().allDependencies()
+            if self.page._shouldInclude(dep.name)]
+
+
+    def _structured(self):
+        """
+        Retrieve an opaque object which may be usable to construct the
+        client-side Widgets which correspond to this fragment and all of its
+        children.
+        """
+        children = []
+        requiredModules = []
+
+        # Using the context here is terrible but basically necessary given the
+        # /current/ architecture of Athena and flattening.  A better
+        # implementation which was not tied to the rendering system could avoid
+        # this.
+        markup = context.call(
+            {'children': children,
+             'requiredModules': requiredModules},
+            flat.flatten, self).decode('utf-8')
+
+        del children[0]
+
+        return {
+            u'requiredModules': requiredModules,
+            u'class': self.jsClass,
+            u'id': self._athenaID,
+            u'initArguments': self.getInitialArguments(),
+            u'markup': markup,
+            u'children': children}
+
+
     def liveElement(self, request, tag):
         """
         Render framework-level boilerplate for making sure the Widget for this
         Element is created and added to the page properly.
         """
-        modules = [dep.name
-                   for dep
-                   in self._getModuleForClass().allDependencies()]
+        requiredModules = self._getRequiredModules()
+
+        # Add required attributes to the top widget node
+        tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
+               'id': 'athena:%d' % self._athenaID,
+               'athena:class': self.jsClass})
+
+        # This will only be set if _structured() is being run.
+        if context.get('children') is not None:
+            context.get('children').append({
+                    u'class': self.jsClass,
+                    u'id': self._athenaID,
+                    u'initArguments': self.getInitialArguments()})
+            context.get('requiredModules').extend(requiredModules)
+            return tag
 
         return (
             # Import stuff
-            [self.getImportStan(mod)
-             for mod
-             in modules
-             if self.page._shouldInclude(mod)],
+            [self.getImportStan(name) for (name, url) in requiredModules],
 
             # Dump some data for our client-side __init__ into a text area
             # where it can easily be found.
@@ -1065,12 +1117,11 @@ class _LiveMixin(object):
             tags.script(type='text/javascript')[
                 """
                 Nevow.Athena.Widget._widgetNodeAdded(%(athenaID)d);
-                """ % {'athenaID': self._athenaID}],
+                """ % {'athenaID': self._athenaID,
+                       'pythonClass': self.__class__.__name__}],
 
             # Okay, application stuff, plus metadata
-            tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
-                   'id': 'athena:%d' % self._athenaID,
-                   'athena:class': self.jsClass}),
+            tag,
             )
     renderer(liveElement)
 

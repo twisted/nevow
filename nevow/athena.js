@@ -405,6 +405,9 @@ Nevow.Athena.nodeByDOM = function(node) {
 Nevow.Athena.RemoteReference = Divmod.Class.subclass('Nevow.Athena.RemoteReference');
 Nevow.Athena.RemoteReference.methods(
     function __init__(self, objectID) {
+        if (typeof objectID != "number") {
+            throw new Error("Invalid object identifier: " + objectID);
+        }
         self.objectID = objectID;
     },
 
@@ -595,6 +598,19 @@ Nevow.Athena._initialize = function() {
 
 
 /**
+ * Invoke the loaded method of the given widget and all of its child widgets.
+ */
+Nevow.Athena._recursivelyLoad = function _recursivelyLoad(widget) {
+    if (widget.loaded) {
+        widget.loaded();
+    }
+    for (var i = 0; i < widget.childWidgets.length; ++i) {
+        Nevow.Athena._recursivelyLoad(widget.childWidgets[i]);
+    }
+};
+
+
+/**
  * Athena Widgets
  *
  * This module defines a base class useful for adding behaviors to
@@ -616,6 +632,111 @@ Nevow.Athena.Widget.methods(
     function addChildWidget(self, newChild) {
         self.childWidgets.push(newChild);
         newChild.setWidgetParent(self);
+    },
+
+    /**
+     * Add a widget with the given ID, class, and markup as a child of this
+     * widget.
+     *
+     * @type info: Opaque handle received from the server where a
+     * LiveFragment/Element was passed.
+     *
+     * @return: A Deferred which will fire with the newly created widget
+     * instance once it has been added as a child.
+     */
+    function addChildWidgetFromWidgetInfo(self, info) {
+        return self._addChildWidgetFromComponents(
+            info.requiredModules,
+            info.id,
+            info['class'],
+            info.children,
+            info.initArguments,
+            info.markup
+            );
+    },
+
+    /**
+     * Actual implementation of dynamic widget instantiation.
+     */
+    function _addChildWidgetFromComponents(self,
+                                           requiredModules, widgetID,
+                                           widgetClassName, children,
+                                           initArguments, markup) {
+
+        var moduleIndex;
+        var childIndex;
+
+        var importDeferreds;
+        var allImportsDone;
+        var topNode;
+        var topWidgetClass;
+        var childWidgetClass;
+        var topWidget;
+        var childWidget;
+        var childInitArgs;
+        var childNode;
+        var childID;
+        var parentWidget;
+
+        if (widgetID in Nevow.Athena.Widget._athenaWidgets) {
+            throw new Error("You blew it.");
+        }
+
+        importDeferreds = [];
+        for (moduleIndex = 0; moduleIndex < requiredModules.length; ++moduleIndex) {
+            throw new Error("Not implemented yet.");
+            importDeferreds.push(Divmod.IMPORT(requiredModules[moduleIndex]));
+        }
+        allImportsDone = Divmod.Defer.DeferredList(importDeferreds);
+        allImportsDone.addCallback(
+            function(ignored) {
+                topNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(
+                    document.importNode(
+                        Divmod.Runtime.theRuntime.parseXHTMLString(markup).documentElement,
+                        true),
+                    'id', 'athena:' + widgetID);
+
+                topWidgetClass = Divmod.namedAny(widgetClassName);
+                if (topWidgetClass === undefined) {
+                    throw new Error("Bad class: " + widgetClassName);
+                }
+
+                initArguments.unshift(topNode);
+                topWidget = topWidgetClass.apply(null, initArguments);
+                Nevow.Athena.Widget._athenaWidgets[widgetID] = topWidget;
+
+                for (childIndex = 0; childIndex < children.length; ++childIndex) {
+                    childWidgetClass = Divmod.namedAny(children[childIndex]['class']);
+                    childInitArgs = children[childIndex]['initArguments'];
+                    childID = children[childIndex]['id'];
+
+                    if (childID in Nevow.Athena.Widget._athenaWidgets) {
+                        throw new Error("You blew it: " + childID);
+                    }
+
+                    childNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(topNode, 'id', 'athena:' + childID);
+
+                    if (childWidgetClass === undefined) {
+                        throw new Error("Broken: " + children[childIndex]['class']);
+                    }
+
+                    childInitArgs.unshift(childNode);
+                    childWidget = childWidgetClass.apply(null, childInitArgs);
+
+                    Nevow.Athena.Widget._athenaWidgets[childID] = childWidget;
+
+                    parentWidget = Nevow.Athena.Widget.get(childNode.parentNode);
+                    parentWidget.addChildWidget(childWidget);
+                }
+                self.addChildWidget(topWidget);
+
+
+                Nevow.Athena._recursivelyLoad(topWidget);
+
+                return topWidget;
+            });
+
+        return allImportsDone;
     },
 
     function setWidgetParent(self, widgetParent) {
@@ -660,6 +781,28 @@ Nevow.Athena.Widget.get = function(node) {
     return Nevow.Athena.Widget._athenaWidgets[widgetId];
 };
 
+Nevow.Athena.Widget.dispatchEvent = function dispatchEvent(widget, eventName, handlerName, callable) {
+    var result = false;
+    Nevow.Athena._rdm.pause();
+    try {
+        try {
+            result = callable.call(widget);
+        } catch (err) {
+            Divmod.err(
+                err,
+                "Dispatching " + eventName +
+                " to " + handlerName +
+                " on " + widget +
+                " failed.");
+        }
+    } catch (err) {
+        Nevow.Athena._rdm.unpause();
+        throw err;
+    }
+    Nevow.Athena._rdm.unpause();
+    return result;
+};
+
 /**
  * Given a node and a method name in an event handling context, dispatch the
  * event to the named method on the widget which owns the given node.  This
@@ -675,23 +818,11 @@ Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerN
     if (method === undefined) {
         Divmod.msg("Undefined event handler: " + handlerName);
     } else {
-        Nevow.Athena._rdm.pause();
-        try {
-            try {
-                result = method.call(widget, node);
-            } catch (err) {
-                Divmod.err(
-                    err,
-                    "Dispatching " + eventName +
-                    " to " + handlerName +
-                    " on " + widget +
-                    " failed.");
-            }
-        } catch (err) {
-            Nevow.Athena._rdm.unpause();
-            throw err;
-        }
-        Nevow.Athena._rdm.unpause();
+        result = Nevow.Athena.Widget.dispatchEvent(
+            widget, eventName, handlerName,
+            function() {
+                return method.call(widget, node);
+            });
     }
     return result;
 };

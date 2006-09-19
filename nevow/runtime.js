@@ -11,6 +11,7 @@ Divmod.Runtime.TooManyNodes = Divmod.Error.subclass("Divmod.Runtime.TooManyNodes
 Divmod.Runtime.NodeAttributeError = Divmod.Runtime.NodeNotFound.subclass("Divmod.Runtime.NodeAttributeError");
 Divmod.Runtime.NodeAttributeError.methods(
     function __init__(self, root, attribute, value) {
+        Divmod.Runtime.NodeAttributeError.upcall(self, '__init__');
         self.root = root;
         self.attribute = attribute;
         self.value = value;
@@ -76,7 +77,7 @@ Divmod.Runtime.Platform.methods(
             null
         ).singleNodeValue;
         if (!node) {
-            throw new Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
+            throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
         }
         return node;
     },
@@ -220,10 +221,11 @@ Divmod.Runtime.Platform.methods(
     },
 
     /**
-     * Some browsers rewrite attribute names.  This method is responsible
-     * for transforming canonical attribute names into their browser-specific
-     * names.  It gets called by L{Divmod.Runtime.Platform.getAttribute}
-     * when it encounters a namespace-less attribute.
+     * Some browsers rewrite attribute names.  This method is responsible for
+     * transforming canonical attribute names into their browser-specific
+     * names.  It gets called by L{Divmod.Runtime.Platform.getAttribute} and
+     * L{Divmod.Runtime.Platform.setAttribute} when they encounter a
+     * namespace-less attribute.
      */
     function _mangleAttributeName(self, localName) {
         if(localName in self.attrNameToMangled) {
@@ -231,6 +233,16 @@ Divmod.Runtime.Platform.methods(
         }
         return localName;
     },
+
+//     function setAttribute(self, node, localName, namespaceURI, namespaceIdentifier, value) {
+//         if (namespaceURI !== undefined && node.setAttributeNS) {
+//             node.setAttributeNS(namespaceURI, localName, value);
+//         } else if (namespaceIdentifier !== undefined) {
+//             node.setAttribute(namespaceIdentifier + ':' + localName, value);
+//         } else {
+//             node.setAttribute(self._mangleAttributeName(localName), value);
+//         }
+//     },
 
     /**
      * This is _the_way_ to get the value of an attribute off of node
@@ -275,7 +287,7 @@ Divmod.Runtime.Platform.methods(
     },
 
     function makeHTTPRequest(self) {
-        throw Error("makeHTTPRequest is unimplemented on " + self);
+        throw new Error("makeHTTPRequest is unimplemented on " + self);
     },
 
     function _onReadyStateChange(self, req, d) {
@@ -392,10 +404,24 @@ Divmod.Runtime.Platform.methods(
         }
     },
 
+    /**
+     * Parse the given XHTML 1.0 string and append its top-level node as a
+     * child of the given node.
+     *
+     * @param node: A DOM node.
+     * @param innerHTML The XHTML 1.0 string to append.
+     */
     function appendNodeContent(self, node, innerHTML) {
-        throw new Error("appendNode content not implemented on " + self.name);
+        throw new Error("appendNodeContent not implemented on " + self.name);
     },
 
+    /**
+     * Parse the given XHTML 1.0 string and use its top-level node to replace
+     * all of the given node's children.
+     *
+     * @param node: A DOM node.
+     * @param innerHTML The XHTML 1.0 string to append.
+     */
     function setNodeContent(self, node, innerHTML) {
         while (node.childNodes.length) {
             node.removeChild(node.firstChild);
@@ -476,13 +502,6 @@ Divmod.Runtime.Firefox.methods(
             node.appendChild(newScript);
         }
         node.appendChild(document.importNode(doc.documentElement, true));
-    },
-
-    function setNodeContent(self, node, innerHTML) {
-        while (node.childNodes.length) {
-            node.removeChild(node.firstChild);
-        }
-        self.appendNodeContent(node, innerHTML);
     },
 
     function makeHTTPRequest(self) {
@@ -570,7 +589,7 @@ Divmod.Runtime.InternetExplorer.methods(
                 }
             }
             self._xmlhttpname = null;
-            throw Error("No support XML HTTP Request thingy on this platform");
+            throw new Error("No support XML HTTP Request thingy on this platform");
         } else {
             return new ActiveXObject(self._xmlhttpname);
         }
@@ -683,13 +702,6 @@ Divmod.Runtime.Opera.methods(
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
         node.appendChild(document.importNode(doc.documentElement, true));
-    },
-
-    function setNodeContent(self, node, innerHTML) {
-        while (node.childNodes.length) {
-            node.removeChild(node.firstChild);
-        }
-        self.appendNodeContent(node, innerHTML);
     },
 
     function makeHTTPRequest(self) {

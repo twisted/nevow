@@ -1,6 +1,7 @@
 from twisted.internet import defer
 
 from nevow import loaders, tags, athena
+from nevow.flat import flatten
 from nevow.page import Element
 from nevow.athena import expose, LiveElement
 from nevow.livetrial import testcase
@@ -295,15 +296,41 @@ class FirstNodeByAttribute(testcase.TestCase):
 class DynamicWidgetInstantiation(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.DynamicWidgetInstantiation'
 
-    def getWidgets(self):
-        widgets = []
-        f = athena.LiveFragment(docFactory=loaders.stan(tags.div[widgets]))
+    def getDynamicWidget(self):
+        """
+        Return a newly created LiveFragment.
+        """
+        class DynamicFragment(athena.LiveFragment):
+            docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment')))
+            jsClass = u'Nevow.Athena.Tests.DynamicWidgetClass'
+
+            def someMethod(self):
+                return u'foo'
+            expose(someMethod)
+
+        f = DynamicFragment()
         f.setFragmentParent(self)
-        for i in xrange(5):
-            widgets.append(athena.LiveFragment(docFactory=loaders.stan(tags.span(render=tags.directive('liveFragment')))))
-            widgets[-1].setFragmentParent(f)
         return f
-    athena.expose(getWidgets)
+    expose(getDynamicWidget)
+
+
+    def getDynamicWidgetInfo(self):
+        """
+        Return a dictionary containing structured information about a newly
+        created Fragment which is a child of this test case.
+        """
+        f = self.getDynamicWidget()
+
+        # Force it to have an ID and to become part of the page and other
+        # grotty filthy things.
+        #
+        # XXX Make an actual API, maybe.
+        widgetInfo = f._structured()
+
+        return {
+            u'id': widgetInfo[u'id'],
+            u'klass': widgetInfo[u'class']}
+    expose(getDynamicWidgetInfo)
 
 
 

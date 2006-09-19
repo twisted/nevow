@@ -462,7 +462,7 @@ Nevow.Athena.Test.TestResult.methods(
     },
 
     function testFailed(self, failure) {
-        var message = failure.error.message;
+        var message = failure.error.toString();
         var stack = failure.error.stack;
         if (stack) {
             var frames = stack.split('\n');
