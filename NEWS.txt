@@ -3,6 +3,11 @@ X.X.X (XXXX-XX-XX):
     Divmod.Runtime.Platform.{set,append}NodeContent.  Instead, they must be
     added using Nevow.Athena.Widget.addChildWidgetFromWidgetInfo.
 
+0.9.7 (2009-09-12):
+  - Automatic Athena event handler registration is fixed for all supported browsers
+    and is no longer document-sensitive (ie, it works inside tables now).
+  - Nit has gained a new assertion method, assertIn.
+
 0.9.6 (2008-08-30):
   - Fixed a bug in the IE implementation of the runtime.js node fetching
     functions.
