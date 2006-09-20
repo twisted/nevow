@@ -1,4 +1,6 @@
-X.X.X (XXXX-XX-XX):
+0.9.8 (2009-09-20):
+  - A bug in nit that caused it to fail if there were too many tests in a 
+    test case, and swallow failures in some cases, has been fixed.
   - Widgets can no longer be added to a page after render time using
     Divmod.Runtime.Platform.{set,append}NodeContent.  Instead, they must be
     added using Nevow.Athena.Widget.addChildWidgetFromWidgetInfo.
