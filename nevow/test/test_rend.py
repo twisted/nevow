@@ -26,28 +26,9 @@ from formless import annotate
 from formless import iformless
 
 
-class req(testutil.FakeRequest):
-    implements(iformless.IFormDefaults)
-    method = 'GET'
-    def __init__(self):
-        testutil.FakeRequest.__init__(self, uri='/', currentSegments=[''])
-        self.d = defer.Deferred()
-        self.accumulator = ''
-
-    def write(self, data):
-        testutil.FakeRequest.write(self, data)
-        self.accumulator+=data
-
-    def getDefault(self, key, context):
-        return ''
-
-    def remember(self, object, interface):
-        pass
-
-
 def deferredRender(res, request=None):
     if request is None:
-        request = req()
+        request = testutil.AccumulatingFakeRequest()
 
     d = util.maybeDeferred(res.renderHTTP,
         context.PageContext(

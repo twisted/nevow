@@ -2,9 +2,13 @@
 # See LICENSE for details.
 
 
-from nevow import inevow
 from zope.interface import implements
+
 import twisted.python.components as tpc
+from twisted.internet import defer
+
+from formless import iformless
+from nevow import inevow, context, athena, loaders, tags
 
 class FakeChannel:
     def __init__(self, site):
@@ -158,3 +162,67 @@ if not hasattr(TestCase, 'mktemp'):
         return tempfile.mktemp()
     TestCase.mktemp = mktemp
 
+
+class AccumulatingFakeRequest(FakeRequest):
+    """
+    I am a fake IRequest that stores data written out in an instance variable.
+    I also have a stub implementation of IFormDefaults.
+
+    @ivar accumulator: The accumulated data from write().
+    """
+    implements(iformless.IFormDefaults)
+    method = 'GET'
+    def __init__(self):
+        FakeRequest.__init__(self, uri='/', currentSegments=[''])
+        self.d = defer.Deferred()
+        self.accumulator = ''
+
+    def write(self, data):
+        FakeRequest.write(self, data)
+        self.accumulator+=data
+
+    def getDefault(self, key, context):
+        return ''
+
+    def remember(self, object, interface):
+        pass
+
+
+class FragmentWrapper(athena.LivePage):
+    """
+    I wrap myself around an Athena fragment, providing a minimal amount of html
+    scaffolding in addition to an L{athena.LivePage}.
+    """
+    docFactory = loaders.stan(
+                    tags.html[
+                        tags.body[
+                            tags.directive('fragment')]])
+
+    def __init__(self, f):
+        super(FragmentWrapper, self).__init__()
+        self.f = f
+
+    def render_fragment(self, ctx, data):
+        self.f.setFragmentParent(self)
+        return self.f
+
+
+def renderLivePage(res, topLevelContext=context.WebContext):
+    """
+    Render the given LivePage resource, performing LivePage-specific cleanup.
+    Return a Deferred which fires when it has rendered.
+    """
+    D = renderPage(res, topLevelContext)
+    return D.addCallback(lambda x: (res._messageDeliverer.close(), x)[1])
+
+
+def renderPage(res, topLevelContext=context.WebContext):
+    """
+    Render the given resource.  Return a Deferred which fires when it has
+    rendered.
+    """
+    req = AccumulatingFakeRequest()
+    return res.renderHTTP(
+                topLevelContext(
+                    tag=res, parent=context.RequestContext(tag=req))).addCallback(
+                        lambda x: req.accumulator)

@@ -11,7 +11,6 @@ import twisted.python.components as tpc
 
 from nevow import inevow
 from nevow import tags
-from nevow import testutil
 from nevow import util
 from nevow.inevow import ISerializable
 
@@ -122,7 +121,8 @@ def flatten(stan, ctx=None):
     """
     if ctx is None:
         from nevow.context import RequestContext, PageContext
-        ctx = PageContext(tag=None, parent=RequestContext(tag=testutil.FakeRequest()))
+        from nevow.testutil import FakeRequest
+        ctx = PageContext(tag=None, parent=RequestContext(tag=FakeRequest()))
         ctx.remember(None, inevow.IData)
     result = []
     list(iterflatten(stan, ctx, result.append))

@@ -3,7 +3,7 @@ import inspect, types, warnings
 from twisted.trial import runner, unittest
 from twisted.python import log
 
-from nevow import athena, loaders, tags
+from nevow import athena, loaders, tags, page
 
 
 class TestCase(athena.LiveFragment, unittest.TestCase):
@@ -81,10 +81,36 @@ class TestCase(athena.LiveFragment, unittest.TestCase):
 
 
 
+class TestError(athena.LiveElement):
+    """
+    An element rendering an error that occurred during test collection.
+    """
+    docFactory = loaders.stan(tags.div(render=tags.directive('error')))
+
+    def __init__(self, holder):
+        holder.run(self)
+
+    def addError(self, holder, error):
+        self._error = error
+
+    def head(self):
+        """
+        We have nothing to render in <head>.
+        """
+
+    def error(self, req, tag):
+        return tag(_class='test-suite')[
+            tags.pre[self._error.getTraceback()]]
+    page.renderer(error)
+
+
 class TestSuite(object):
     """
     A collection of test cases.
     """
+
+    holderType = runner.ErrorHolder
+
     def __init__(self, name="Live Tests"):
         self.tests = []
         self.name = name
@@ -99,6 +125,8 @@ class TestSuite(object):
         for test in self.tests:
             if isinstance(test, TestSuite):
                 l.extend(test.gatherInstances())
+            elif isinstance(test, self.holderType):
+                l.append(TestError(test))
             else:
                 test.name = '%s.%s' % (self.name, test.__name__)
                 l.append(test())

@@ -1,14 +1,14 @@
 from twisted.trial import unittest
 import os
 from twisted.internet import defer
-from nevow import static, util, context
+from nevow import static, util, context, testutil
 from nevow.test import test_rend
 
-class FakeRequest(test_rend.req):
+class FakeRequest(testutil.AccumulatingFakeRequest):
     _headers = None
 
     def __init__(self):
-        test_rend.req.__init__(self)
+        testutil.AccumulatingFakeRequest.__init__(self)
         self.deferred = defer.Deferred()
         self._headers = {}
 
@@ -24,7 +24,7 @@ class FakeRequest(test_rend.req):
     def unregisterProducer(self):
         pass
     def finish(self):
-        test_rend.req.finish(self)
+        testutil.AccumulatingFakeRequest.finish(self)
         self.deferred.callback(None)
 
 def deferredRender(res, req):
