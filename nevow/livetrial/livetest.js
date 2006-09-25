@@ -150,11 +150,11 @@ Nevow.Athena.Test.TestCase.methods(
      * @return: C{undefined}
      */
     function assertEqual(self, a, b, msg) {
-        if (!(a == b)) {
-            if (msg == undefined) {
-                msg = a + ' != ' + b;
+        if (!(a === b)) {
+            if (msg === undefined) {
+                msg = a + ' !== ' + b;
             } else {
-                msg = a + ' != ' + b + ': ' + msg;
+                msg = a + ' !== ' + b + ': ' + msg;
             }
             self.fail(msg);
         }
@@ -182,11 +182,11 @@ Nevow.Athena.Test.TestCase.methods(
      * @return: C{undefined}
      */
     function assertNotEqual(self, a, b, msg) {
-        if (!(a != b)) {
+        if (!(a !== b)) {
             if (msg == undefined) {
-                msg = a + " == " + b;
+                msg = a + " === " + b;
             } else {
-                msg = a + " == " + b + ": " + msg;
+                msg = a + " === " + b + ": " + msg;
             }
             self.fail(msg);
         }
@@ -216,6 +216,44 @@ Nevow.Athena.Test.TestCase.methods(
         }
         self.failUnless(threw !== undefined, "Callable threw no error.");
         return threw;
+    },
+
+    /**
+     * Add a callback and an errback to the given Deferred which will assert
+     * that it is errbacked with one of the specified error types.
+     *
+     * @param deferred: The L{Divmod.Defer.Deferred} which is expected to fail.
+     *
+     * @param errorTypes: An C{Array} of L{Divmod.Error} subclasses which are
+     * the allowed failure types for the given Deferred.
+     *
+     * @throw Error: Thrown if C{errorTypes} has a length of 0.
+     *
+     * @rtype: L{Divmod.Defer.Deferred}
+     *
+     * @return: A Deferred which will fire with the error instance with which
+     * the input Deferred fails if it is one of the types specified in
+     * C{errorTypes} or which will errback if the input Deferred either
+     * succeeds or fails with a different error type.
+     */
+    function assertFailure(self, deferred, errorTypes) {
+        if (errorTypes.length == 0) {
+            throw new Error("Specify at least one error class to assertFailure");
+        }
+        return deferred.addCallbacks(
+            function(result) {
+                self.fail("Deferred called back, expected an errback.");
+            },
+            function(err) {
+                var result;
+                for (var i = 0; i < errorTypes.length; ++i) {
+                    result = err.check(errorTypes[i]);
+                    if (result != null) {
+                        return result;
+                    }
+                }
+                self.fail("Expected " + errorTypes + ", got " + err);
+            });
     },
 
     /**

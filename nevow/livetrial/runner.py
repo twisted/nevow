@@ -85,7 +85,7 @@ class TestFramework(athena.LivePage):
                 tags.invisible(render=tags.directive('runner'))]]])
 
     def __init__(self, testSuite):
-        super(TestFramework, self).__init__(None, None, jsModuleRoot=url.here.child('jsmodule'))
+        super(TestFramework, self).__init__()
         self.testSuite = testSuite
         self.children = {
             'livetest.css': static.File(util.resource_filename('nevow.livetrial', 'livetest.css')),

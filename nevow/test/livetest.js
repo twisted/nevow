@@ -15,6 +15,19 @@ Nevow.Athena.Tests.WidgetInitializerArguments.methods(
         return self.callRemote('test', self.args);
     });
 
+
+Nevow.Athena.Tests.CallRemoteTestCase = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.CallRemoteTestCase');
+Nevow.Athena.Tests.CallRemoteTestCase.methods(
+    /**
+     * Test that calling a method which is not exposed properly results in a
+     * failed Deferred.
+     */
+    function test_invalidRemoteMethod(self) {
+        return self.assertFailure(
+            self.callRemote("noSuchMethod"),
+            [Nevow.Athena.NoSuchMethod]);
+    });
+
 Nevow.Athena.Tests.ClientToServerArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ClientToServerArgumentSerialization');
 Nevow.Athena.Tests.ClientToServerArgumentSerialization.methods(
     function test_clientToServerArgumentSerialization(self) {
@@ -341,6 +354,28 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
         result.addCallback(
             function(methodResult) {
                 self.assertEqual(methodResult, 'foo');
+            });
+        return result;
+    },
+
+    /**
+     * Test dynamic instantiation of a widget defined in a module which has not
+     * yet been imported.
+     */
+    function test_dynamicImportWidget(self) {
+        /*
+         * Sanity check
+         */
+        self.assertEqual(Nevow.Athena.Tests.Resources, undefined);
+
+        var result = self.callRemote("getWidgetWithImports");
+        result.addCallback(
+            function(widgetInfo) {
+                return self.addChildWidgetFromWidgetInfo(widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                self.failUnless(widget instanceof Nevow.Athena.Tests.Resources.ImportWidget);
             });
         return result;
     }

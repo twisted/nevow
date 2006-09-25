@@ -10,6 +10,17 @@ Divmod.Defer.Failure.methods(
         self.error = error;
     },
 
+    /**
+     * Return the underlying Error instance if it is an instance of the given
+     * error class, otherwise return null;
+     */
+    function check(self, errorType) {
+        if (self.error instanceof errorType) {
+            return self.error;
+        }
+        return null;
+    },
+
     function toString(self) {
         return 'Failure: ' + self.error;
     },

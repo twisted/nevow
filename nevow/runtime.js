@@ -30,13 +30,14 @@ Divmod.Runtime.Platform.DOM_DESCEND = 'Divmod.Runtime.Platform.DOM_DESCEND';
 Divmod.Runtime.Platform.DOM_CONTINUE = 'Divmod.Runtime.Platform.DOM_CONTINUE';
 Divmod.Runtime.Platform.DOM_TERMINATE = 'Divmod.Runtime.Platform.DOM_TERMINATE';
 
-Divmod.Runtime.Platform.method(
+Divmod.Runtime.Platform.methods(
     function __init__(self, name) {
         self.name = name;
         self.attrNameToMangled = {};
-    });
+        self._scriptCounter = 0;
+        self._scriptDeferreds = {};
+    },
 
-Divmod.Runtime.Platform.methods(
     function _nsResolver(self, prefix) {
         var ns;
         switch(prefix) {
@@ -427,7 +428,52 @@ Divmod.Runtime.Platform.methods(
             node.removeChild(node.firstChild);
         }
         self.appendNodeContent(node, innerHTML);
-    });
+    },
+
+    /**
+     * Load the JavaScript module at the given URL.
+     *
+     * The manner in which the JavaScript is evaluated is implementation
+     * dependent.
+     *
+     * @return: A Deferred which fires when the contents of the module have
+     * been evaluated.
+     */
+    function loadScript(self, location) {
+        self._scriptCounter += 1;
+        self._scriptDeferreds[self._scriptCounter] = Divmod.Defer.Deferred();
+
+        var language = '"text/javascript"';
+        var onload = '"Divmod.Runtime.theRuntime._scriptLoaded(' + self._scriptCounter + ')"';
+        var src = '"' + location + '"';
+        var id = '"__athena_runtime_script_loader_' + self._scriptCounter + '__"';
+        var xmlns = '"http://www.w3.org/1999/xhtml"';
+        var script = (
+            '<span ' +
+            'style="display: none" ' +
+            'xmlns=' + xmlns + ' ' +
+            'id=' + id + '>' +
+            '<script ' +
+            'type=' + language + ' ' +
+            'onload=' + onload + ' ' +
+            'src=' + src + '>' +
+            '</script>' +
+            '</span>');
+
+        self.appendNodeContent(document.body, script);
+
+        return self._scriptDeferreds[self._scriptCounter];
+    },
+
+    function _scriptLoaded(self, which) {
+        var script = document.getElementById('__athena_runtime_script_loader_' + which + '__');
+        script.parentNode.removeChild(script);
+
+        var loaded = self._scriptDeferreds[which];
+        delete self._scriptDeferreds[which];
+        loaded.callback(null);
+    }
+    );
 
 Divmod.Runtime.Firefox = Divmod.Runtime.Platform.subclass('Divmod.Runtime.Firefox');
 

@@ -25,6 +25,15 @@ class WidgetInitializerArguments(testcase.TestCase):
     expose(test)
 
 
+
+class CallRemoteTestCase(testcase.TestCase):
+    """
+    Test the callRemote method of Widgets.
+    """
+    jsClass = u'Nevow.Athena.Tests.CallRemoteTestCase'
+
+
+
 class ClientToServerArgumentSerialization(testcase.TestCase):
     """
     Tests that arguments passed to a method on the server are properly
@@ -293,6 +302,16 @@ class FirstNodeByAttribute(testcase.TestCase):
 
 
 
+class WidgetRequiresImport(LiveElement):
+    """
+    Widget which has no behavior, but which has a JavaScript class which will
+    require a dynamic import.
+    """
+    jsClass = u'Nevow.Athena.Tests.Resources.ImportWidget'
+    docFactory = loaders.stan(tags.div(render=tags.directive('liveElement')))
+
+
+
 class DynamicWidgetInstantiation(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.DynamicWidgetInstantiation'
 
@@ -331,6 +350,16 @@ class DynamicWidgetInstantiation(testcase.TestCase):
             u'id': widgetInfo[u'id'],
             u'klass': widgetInfo[u'class']}
     expose(getDynamicWidgetInfo)
+
+
+    def getWidgetWithImports(self):
+        """
+        Return a Widget which requires a module import.
+        """
+        f = WidgetRequiresImport()
+        f.setFragmentParent(self)
+        return f
+    expose(getWidgetWithImports)
 
 
 

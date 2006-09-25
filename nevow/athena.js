@@ -331,7 +331,7 @@ Nevow.Athena._actionHandlers = {
             d.callback(result);
         } else {
             Divmod.debug('object', 'Errback');
-            d.errback(new Error(result[0] + ': ' + result[1]));
+            d.errback(Divmod.namedAny(result[0]).apply(null, result[1]));
         }
     },
 
@@ -620,6 +620,14 @@ Nevow.Athena._recursivelyLoad = function _recursivelyLoad(widget) {
  * appear repeatedly on the same page.
  */
 
+
+/**
+ * Error class thrown when an attempt is made to invoke a method which is
+ * either undefined or unexposed.
+ */
+Nevow.Athena.NoSuchMethod = Divmod.Error.subclass("Nevow.Athena.NoSuchMethod");
+
+
 Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass('Nevow.Athena.Widget');
 Nevow.Athena.Widget.methods(
     function __init__(self, widgetNode) {
@@ -636,7 +644,8 @@ Nevow.Athena.Widget.methods(
 
     /**
      * Add a widget with the given ID, class, and markup as a child of this
-     * widget.
+     * widget.  Any required modules which have not already been imported will
+     * be imported.
      *
      * @type info: Opaque handle received from the server where a
      * LiveFragment/Element was passed.
@@ -678,14 +687,33 @@ Nevow.Athena.Widget.methods(
         var childID;
         var parentWidget;
 
+        var moduleURL;
+        var moduleName;
+        var moduleParts;
+        var moduleObj;
+
         if (widgetID in Nevow.Athena.Widget._athenaWidgets) {
             throw new Error("You blew it.");
         }
 
         importDeferreds = [];
         for (moduleIndex = 0; moduleIndex < requiredModules.length; ++moduleIndex) {
-            throw new Error("Not implemented yet.");
-            importDeferreds.push(Divmod.IMPORT(requiredModules[moduleIndex]));
+            moduleName = requiredModules[moduleIndex][0];
+            moduleURL = requiredModules[moduleIndex][1];
+
+            moduleParts = moduleName.split('.');
+            moduleObj = Divmod._global;
+
+            for (var i = 0; i < moduleParts.length; ++i) {
+                if (moduleObj[moduleParts[i]] === undefined) {
+                    moduleObj[moduleParts[i]] = {};
+                }
+                moduleObj = moduleObj[moduleParts[i]];
+            }
+
+            importDeferreds.push(
+                Divmod.Runtime.theRuntime.loadScript(
+                    moduleURL));
         }
         allImportsDone = Divmod.Defer.DeferredList(importDeferreds);
         allImportsDone.addCallback(

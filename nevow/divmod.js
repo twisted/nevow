@@ -286,6 +286,16 @@ Divmod.Error.methods(
     function __init__(self, /* optional */ message) {
         self.message = message;
         self.stack = Error().stack;
+    },
+
+    /**
+     * Represent this error as a string.
+     *
+     * @rtype: string
+     * @return: This error, as a string.
+     */
+    function toString(self) {
+        return self.__name__ + ': ' + self.message;
     });
 
 /**

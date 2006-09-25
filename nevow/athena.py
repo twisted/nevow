@@ -31,9 +31,6 @@ expose = util.Expose(
     The Widget for Foo will be allowed to invoke C{twiddle} and C{frob}.
     """)
 
-class LivePageError(Exception):
-    """base exception for livepage errors"""
-
 
 
 class OrphanedFragment(Exception):
@@ -41,6 +38,28 @@ class OrphanedFragment(Exception):
     Raised if you try to render a L{LiveFragment} without somehow first setting
     its fragment parent.
     """
+
+
+
+class LivePageError(Exception):
+    """
+    Base exception for LivePage errors.
+    """
+    jsClass = u'Divmod.Error'
+
+
+
+class NoSuchMethod(LivePageError):
+    """
+    Raised when an attempt is made to invoke a method which is not defined or
+    exposed.
+    """
+    jsClass = u'Nevow.Athena.NoSuchMethod'
+
+    def __init__(self, objectID, methodName):
+        self.objectID = objectID
+        self.methodName = methodName
+        LivePageError.__init__(self, objectID, methodName)
 
 
 
@@ -151,7 +170,7 @@ class JSModule(object):
     def _extractImports(self, fileObj):
         s = fileObj.read()
         for m in self._importExpression.finditer(s):
-            yield self.getOrCreate(m.group(1), self.mapping)
+            yield self.getOrCreate(m.group(1).decode('ascii'), self.mapping)
 
 
     def dependencies(self):
@@ -265,6 +284,7 @@ class JSDependencies(object):
                 u'Nevow.Athena': util.resource_filename('nevow', 'athena.js'),
                 u'Nevow.Athena.Test': util.resource_filename('nevow.livetrial', 'livetest.js'),
                 u'Nevow.Athena.Tests': util.resource_filename('nevow.test', 'livetest.js'),
+                u'Nevow.Athena.Tests.Resources': util.resource_filename('nevow.test', 'livetest_resources.js'),
                 u'Nevow.TagLibrary': util.resource_filename('nevow.taglibrary', 'taglibrary.js'),
                 u'Nevow.TagLibrary.TabbedPane': util.resource_filename('nevow.taglibrary', 'tabbedPane.js')}
             self._loadPlugins = True
@@ -724,7 +744,7 @@ class LivePage(rend.Page):
     # considered lost; this lets the server notice clients who actively leave
     # (closed window, browser navigates away) and network congestion/errors
     # (unplugged ethernet cable, etc)
-    def _becomeLive(self):
+    def _becomeLive(self, location):
         """
         Assign this LivePage a clientID, associate it with a factory, and begin
         tracking its state.  This only occurs when a LivePage is *rendered*,
@@ -733,7 +753,7 @@ class LivePage(rend.Page):
         self.clientID = self.factory.addClient(self)
 
         if self.jsModuleRoot is None:
-            self.jsModuleRoot = url.here.child(self.clientID).child('jsmodule')
+            self.jsModuleRoot = location.child(self.clientID).child('jsmodule')
 
         self._requestIDCounter = itertools.count().next
 
@@ -760,7 +780,10 @@ class LivePage(rend.Page):
         assert self.factory is not None, "Cannot render a LivePage without a factory"
         self._rendered = True
 
-        self._becomeLive()
+        self._becomeLive(
+            url.URL.fromString(
+                flat.flatten(
+                    url.here, ctx)))
 
         neverEverCache(inevow.IRequest(ctx))
         return rend.Page.renderHTTP(self, ctx)
@@ -871,15 +894,29 @@ class LivePage(rend.Page):
         """
         Handle a remote call initiated by the client.
         """
-        func = self._localObjects[objectID].locateMethod(ctx, method)
-        result = defer.maybeDeferred(func, *args, **kwargs)
+        localObj = self._localObjects[objectID]
+        try:
+            func = localObj.locateMethod(ctx, method)
+        except AttributeError:
+            result = defer.fail(NoSuchMethod(objectID, method))
+        else:
+            result = defer.maybeDeferred(func, *args, **kwargs)
         def _cbCall(result):
             success = True
             if isinstance(result, failure.Failure):
                 log.msg("Sending error to browser:")
                 log.err(result)
                 success = False
-                result = (unicode(result.type.__name__, 'ascii'), unicode(result.getErrorMessage(), 'ascii'))
+                if result.check(LivePageError):
+                    result = (
+                        result.value.jsClass,
+                        result.value.args)
+                else:
+                    result = (
+                        u'Divmod.Error',
+                        [u'%s: %s' % (
+                                result.type.__name__.decode('ascii'),
+                                result.getErrorMessage().decode('ascii'))])
             message = (u'respond', (unicode(requestId), success, result))
             self.addMessage(message)
         result.addBoth(_cbCall)
@@ -1074,7 +1111,7 @@ class _LiveMixin(object):
         del children[0]
 
         return {
-            u'requiredModules': requiredModules,
+            u'requiredModules': [(name, flat.flatten(url).decode('utf-8')) for (name, url) in requiredModules],
             u'class': self.jsClass,
             u'id': self._athenaID,
             u'initArguments': self.getInitialArguments(),
