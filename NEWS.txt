@@ -1,3 +1,11 @@
+0.9.9 (2006-09-26):
+  - Several nit changes, including the addition of the "check" method to 
+    Failure, and the addition of an "assertFailure" method.
+  - The ability to pass Python exceptions to Javascript has been added to 
+    Athena.
+  - Dynamic module import has been added for the cases where it is necessary
+    to dynamically add a widget to an existing page.
+  
 0.9.8 (2009-09-20):
   - A bug in nit that caused it to fail if there were too many tests in a 
     test case, and swallow failures in some cases, has been fixed.
