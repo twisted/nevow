@@ -110,7 +110,7 @@ def iterflatten(stan, ctx, writer, shouldYieldItem=None):
                         rest.append(gen)
                         rest.append(iter([partialflatten(ctx, item)]))
                         break
-
+                        
     if straccum:
         writer(tags.raw(''.join(straccum)))
 
