@@ -8,7 +8,7 @@ import twisted.python.components as tpc
 from twisted.internet import defer
 
 from formless import iformless
-from nevow import inevow, context, athena, loaders, tags
+from nevow import inevow, context, athena, loaders, tags, appserver
 
 class FakeChannel:
     def __init__(self, site):
@@ -38,10 +38,12 @@ class FakeRequest(tpc.Componentized):
     failure = None
     context = None
     redirected_to = None
-
+    content = ""
     method = 'GET'
 
-    def __init__(self, headers=None, args=None, avatar=None, uri='/', currentSegments=None):
+    def __init__(self, headers=None, args=None, avatar=None,
+                 uri='/', currentSegments=None, cookies=None,
+                 user="", password="", isSecure=False):
         """Create a FakeRequest instance.
 
         headers:
@@ -54,6 +56,14 @@ class FakeRequest(tpc.Componentized):
             request URI
         currentSegments:
             list of segments that have "already been located"
+        cookies:
+            dict of cookies
+        user:
+            username (like in http auth)
+        password:
+            password (like in http auth)
+        isSecure:
+            whether this request represents an HTTPS url
         """
         tpc.Componentized.__init__(self)
         self.uri = uri
@@ -70,6 +80,13 @@ class FakeRequest(tpc.Componentized):
         self.sess = FakeSession(avatar)
         self.site = FakeSite()
         self.received_headers = {}
+        if cookies is not None:
+            self.cookies = cookies
+        else:
+            self.cookies = {}
+        self.user = user
+        self.password = password
+        self.secure = isSecure
 
     def URLPath(self):
         from nevow import url
@@ -113,6 +130,41 @@ class FakeRequest(tpc.Componentized):
     def getClientIP(self):
         return '127.0.0.1'
 
+    def addCookie(self, k, v, expires=None, domain=None, path=None, max_age=None, comment=None, secure=None):
+        """
+        Set a cookie for use in subsequent requests.
+        """
+        self.cookies[k] = v
+
+    def getCookie(self, k):
+        """
+        Fetch a cookie previously set.
+        """
+        return self.cookies.get(k)
+
+    def getUser(self):
+        """
+        Returns the HTTP auth username.
+        """
+        return self.user
+
+    def getPassword(self):
+        """
+        Returns the HTTP auth password.
+        """
+        return self.password
+
+    def rememberRootURL(self, url=None):
+        """
+        For compatibility with appserver.NevowRequest.
+        """
+        pass
+
+    def isSecure(self):
+        """
+        Returns whether this is an HTTPS request or not.
+        """
+        return self.secure
 
 try:
     from twisted.trial import unittest
@@ -172,8 +224,8 @@ class AccumulatingFakeRequest(FakeRequest):
     """
     implements(iformless.IFormDefaults)
     method = 'GET'
-    def __init__(self):
-        FakeRequest.__init__(self, uri='/', currentSegments=[''])
+    def __init__(self, uri='/', currentSegments=('',)):
+        FakeRequest.__init__(self, uri=uri, currentSegments=list(currentSegments))
         self.d = defer.Deferred()
         self.accumulator = ''
 
@@ -207,22 +259,28 @@ class FragmentWrapper(athena.LivePage):
         return self.f
 
 
-def renderLivePage(res, topLevelContext=context.WebContext):
+def renderLivePage(res, topLevelContext=context.WebContext,
+                   reqFactory=AccumulatingFakeRequest):
     """
     Render the given LivePage resource, performing LivePage-specific cleanup.
     Return a Deferred which fires when it has rendered.
     """
-    D = renderPage(res, topLevelContext)
+    D = renderPage(res, topLevelContext, reqFactory)
     return D.addCallback(lambda x: (res._messageDeliverer.close(), x)[1])
 
 
-def renderPage(res, topLevelContext=context.WebContext):
+def renderPage(res, topLevelContext=context.WebContext,
+               reqFactory=AccumulatingFakeRequest):
     """
     Render the given resource.  Return a Deferred which fires when it has
     rendered.
     """
-    req = AccumulatingFakeRequest()
-    return res.renderHTTP(
-                topLevelContext(
-                    tag=res, parent=context.RequestContext(tag=req))).addCallback(
-                        lambda x: req.accumulator)
+    req = reqFactory()
+    ctx = topLevelContext(tag=res)
+    ctx.remember(req, inevow.IRequest)
+
+    render = appserver.NevowRequest(None, True).gotPageContext
+
+    result = render(ctx)
+    result.addCallback(lambda x: req.accumulator)
+    return result
