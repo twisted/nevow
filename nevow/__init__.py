@@ -54,7 +54,7 @@ nevow.accessors.FunctionAccessor       __builtin__.function                     
 nevow.accessors.FunctionAccessor       __builtin__.method                       nevow.inevow.IGettable
 nevow.accessors.FunctionAccessor       __builtin__.instancemethod               nevow.inevow.IGettable
 nevow.accessors.DirectiveAccessor      nevow.stan.directive                     nevow.inevow.IGettable
-nevow.accessors.SlotAccessor        nevow.stan.slot     nevow.inevow.IGettable
+nevow.accessors.SlotAccessor           nevow.stan.slot                          nevow.inevow.IGettable
 
     #
 
@@ -172,6 +172,7 @@ nevow.flat.flatstan.MethodSerializer              __builtin__.instancemethod
 nevow.flat.flatstan.RendererSerializer            nevow.inevow.IRenderer
 nevow.flat.flatstan.DirectiveSerializer           nevow.stan.directive
 nevow.flat.flatstan.SlotSerializer                nevow.stan.slot
+nevow.flat.flatstan.PrecompiledSlotSerializer     nevow.stan._PrecompiledSlot
 nevow.flat.flatstan.ContextSerializer             nevow.context.WovenContext
 nevow.flat.twist.DeferredSerializer               twisted.internet.defer.Deferred
 nevow.flat.twist.DeferredSerializer               twisted.internet.defer.DeferredList

@@ -132,6 +132,39 @@ class slot(object):
         raise NotImplementedError, "Stan slot instances are not iterable."
 
 
+
+class _PrecompiledSlot(object):
+    """
+    Marker for slot insertion into a template which has been precompiled.
+
+    This differs from a normal slot in that it captures some attributes of its
+    context at precompilation time so that it can be rendered properly (as
+    these attributes are typically lost during precompilation).
+    """
+    __slots__ = [
+        'name', 'children', 'default', 'isAttrib',
+        'inURL', 'inJS', 'inJSSingleQuoteString']
+
+    def __init__(self, name, children, default, isAttrib, inURL, inJS, inJSSingleQuoteString):
+        self.name = name
+        self.children = children
+        self.default = default
+        self.isAttrib = isAttrib
+        self.inURL = inURL
+        self.inJS = inJS
+        self.inJSSingleQuoteString = inJSSingleQuoteString
+
+
+    def __repr__(self):
+        return (
+            '_PrecompiledSlot('
+            '%r, isAttrib=%r, inURL=%r, inJS=%r, '
+            'inJSSingleQuoteString=%r)') % (
+            self.name, self.isAttrib, self.inURL, self.inJS,
+            self.inJSSingleQuoteString)
+
+
+
 class Tag(object):
     """Tag instances represent XML tags with a tag name, attributes,
     and children. Tag instances can be constructed using the Prototype

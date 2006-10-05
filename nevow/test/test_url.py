@@ -461,13 +461,19 @@ class Serialization(TestCase):
         self.assertEquals(flatten(tags.p[u]), r"<p>http://localhost/foo-_.!*'()bar</p>")
 
     def test_urlintagwithmultipleamps(self):
+        """
+        Test the serialization of an URL with an ampersand in it as an
+        attribute value.
+
+        The ampersand must be quoted for the attribute to be valid.
+        """
         tag = tags.invisible[tags.a(href=url.URL.fromString('http://localhost/').add('foo', 'bar').add('baz', 'spam'))]
         self.assertEquals(flatten(tag), '<a href="http://localhost/?foo=bar&amp;baz=spam"></a>')
-        
+
         tag = tags.invisible[loaders.xmlstr('<a xmlns:n="http://nevow.com/ns/nevow/0.1" href="#"><n:attr name="href"><n:slot name="href"/></n:attr></a>')]
         tag.fillSlots('href', url.URL.fromString('http://localhost/').add('foo', 'bar').add('baz', 'spam'))
         self.assertEquals(flatten(tag), '<a href="http://localhost/?foo=bar&amp;baz=spam"></a>')
-    test_urlintagwithmultipleamps.todo = "Need to fix the second half of this test"
+
 
     def test_rfc1808(self):
         """Test the relative link resolving stuff I found in rfc1808 section 5.
