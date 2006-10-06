@@ -719,7 +719,7 @@ Nevow.Athena.Widget.methods(
         allImportsDone.addCallback(
             function(ignored) {
                 topNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(
-                    document.importNode(
+                    Divmod.Runtime.theRuntime.importNode(
                         Divmod.Runtime.theRuntime.parseXHTMLString(markup).documentElement,
                         true),
                     'id', 'athena:' + widgetID);
@@ -757,7 +757,6 @@ Nevow.Athena.Widget.methods(
                     parentWidget.addChildWidget(childWidget);
                 }
                 self.addChildWidget(topWidget);
-
 
                 Nevow.Athena._recursivelyLoad(topWidget);
 

@@ -104,8 +104,8 @@ Divmod.Runtime.Tests.TraversalOrdering.methods(
         self.assertEquals(classes[4], 'right_grandchild');
     });
 
-Divmod.Runtime.Tests.GetAttribute = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.GetAttribute');
-Divmod.Runtime.Tests.GetAttribute.methods(
+Divmod.Runtime.Tests.Standalone = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.Standalone');
+Divmod.Runtime.Tests.Standalone.methods(
     /**
      * Ensure that explicitly namespaced attributes and attributes whose
      * names get rewritten by IE can be correctly retrieved, and that they
@@ -135,6 +135,29 @@ Divmod.Runtime.Tests.GetAttribute.methods(
         self.assertEquals(
             Divmod.Runtime.theRuntime.getAttribute(node, "athena:class"),
             "the athena class");
+    },
+
+    /**
+     * Test that importNode() does something seemingly sensible; this
+     * functionality is somewhat subtle at best, and thus hard to test
+     * effectively.
+     */
+    function test_importNode(self) {
+        var doc = Divmod.Runtime.theRuntime.parseXHTMLString(
+            '<div xmlns="http://www.w3.org/1999/xhtml">stuff</div>');
+        var srcElem = doc.documentElement;
+        var destElem = Divmod.Runtime.theRuntime.importNode(srcElem, true);
+
+        /* This might be a sensible thing to test, except for the fact that
+         * it's not even true on most implementations...
+         */
+
+        //self.assertEqual(document, destElem.ownerDocument);
+
+        self.assertNotEqual(srcElem, destElem);
+        document.documentElement.appendChild(destElem);
+        self.assertEqual(document, destElem.ownerDocument);
+        destElem.parentNode.removeChild(destElem);
     });
 
 Divmod.Runtime.Tests.FindInRootNode = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.FindInRootNode');

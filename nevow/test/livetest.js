@@ -345,7 +345,6 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
         result.addCallback(
             function(widget) {
                 self.assertEqual(Nevow.Athena.Widget.get(widget.node), widget);
-                self.assertEqual(widget.node.parentNode.parentNode, null);
                 self.assertEqual(widget.widgetParent, self);
                 self.assertEqual(self.childWidgets[self.childWidgets.length - 1], widget);
 

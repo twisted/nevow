@@ -54,9 +54,12 @@ class TraversalOrdering(testcase.TestCase):
             tags.div(_class='right_child')[
                 tags.div(_class='right_grandchild')]]
 
-class GetAttribute(testcase.TestCase):
-    jsClass = u'Divmod.Runtime.Tests.GetAttribute'
 
 
 class FindInRootNode(testcase.TestCase):
     jsClass = u'Divmod.Runtime.Tests.FindInRootNode'
+
+
+
+class Standalone(testcase.TestCase):
+    jsClass = u'Divmod.Runtime.Tests.Standalone'

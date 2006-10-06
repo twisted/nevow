@@ -472,8 +472,19 @@ Divmod.Runtime.Platform.methods(
         var loaded = self._scriptDeferreds[which];
         delete self._scriptDeferreds[which];
         loaded.callback(null);
-    }
-    );
+    },
+
+    /**
+     * Simulate the functionality of the DOM Level 2 Document.importNode
+     * method, used on the browser document.
+     *
+     * @param node: A DOM Node to import.
+     * @param deep: A boolean indicating whether children should be imported.
+     * @returns: The imported Node.
+     */
+    function importNode(self, node, deep) {
+        return document.importNode(node, deep);
+    });
 
 Divmod.Runtime.Firefox = Divmod.Runtime.Platform.subclass('Divmod.Runtime.Firefox');
 
@@ -698,6 +709,37 @@ Divmod.Runtime.InternetExplorer.methods(
             var result = nodes[0];
             return result;
         }
+    },
+
+    function loadScript(self, location) {
+        // The <script> tricks the base implementation uses produce
+        // spectacularly bizarre behaviour in IE, so we just use getPage/eval
+        // here.
+
+        var req = Divmod.Runtime.theRuntime.getPage(location);
+        var d = req[1];
+        d.addCallback(
+            function (result) {
+                eval(result['response']);
+            });
+        return d;
+    },
+
+    /**
+     * Simulate importNode by rebuilding the node contents in a node created in
+     * the browser document; IE doesn't support DOM Level 2, and importNode in
+     * particular.
+     */
+    function importNode(self, node, deep) {
+        var nodeXML = node.xml || node.outerHTML;
+        if (!nodeXML) {
+            // This probably isn't a node at all, but some other junk
+            throw new Error('Unable to retrieve XML content of node');
+        }
+
+        var tmpNode = document.createElement('div');
+        tmpNode.innerHTML = nodeXML;
+        return tmpNode.firstChild.cloneNode(deep);
     });
 
 
