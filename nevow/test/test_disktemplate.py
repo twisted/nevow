@@ -11,7 +11,7 @@ from nevow import rend
 from nevow import testutil
 from nevow import loaders
 from nevow import util
-
+from nevow import tags
 
 class req(testutil.FakeRequest):
     def __init__(self):
@@ -226,26 +226,32 @@ class TestXmlFileWithSlots(testutil.TestCase):
         template = '<p xmlns:nevow="http://nevow.com/ns/nevow/0.1"><nevow:slot name="foo">stuff</nevow:slot></p>'
         doc = loaders.xmlstr(template).load()
 
-        
+
+
 class TestAttrReplacement(testutil.TestCase):
-    
+    """
+    Test the replacement of an attribute in an HTML or XML document using slot
+    or attr elements.
+    """
     def testXML(self):
         t = '<a xmlns:n="http://nevow.com/ns/nevow/0.1" href="#"><n:attr name="href">href</n:attr>label</a>'
         result = flat.flatten(loaders.xmlstr(t).load())
         self.assertEqual(result, '<a href="href">label</a>')
         t = '<a xmlns:n="http://nevow.com/ns/nevow/0.1" href="#"><n:attr name="href"><n:slot name="href"/></n:attr>label</a>'
-        ctx = context.WovenContext()
+        precompiled = loaders.xmlstr(t).load()
+        ctx = context.WovenContext(tag=tags.invisible[precompiled])
         ctx.fillSlots('href', 'href')
-        result = flat.flatten(flat.precompile(loaders.xmlstr(t).load()), ctx)
+        result = flat.flatten(precompiled, ctx)
         self.assertEqual(result, '<a href="href">label</a>')
+
 
     def testHTML(self):
         t = '<a href="#"><nevow:attr name="href">href</nevow:attr>label</a>'
         doc = flat.flatten(loaders.htmlstr(t).load())
         self.assertEqual(doc, '<a href="href">label</a>')
         t = '<a href="#"><nevow:attr name="href"><nevow:slot name="href"/></nevow:attr>label</a>'
-        ctx = context.WovenContext()
+        precompiled = loaders.htmlstr(t).load()
+        ctx = context.WovenContext(tag=tags.invisible[precompiled])
         ctx.fillSlots('href', 'href')
-        precompiled = flat.precompile(loaders.htmlstr(t).load())
         result = flat.flatten(precompiled, ctx)
         self.assertEqual(result, '<a href="href">label</a>')

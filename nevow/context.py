@@ -31,7 +31,9 @@ class WebContext(object):
     inURL = property(lambda self: False)
     inJS = property(lambda self: False)
     inJSSingleQuoteString = property(lambda self: False)
+
     precompile = property(lambda self: False)
+
     def with(self, tag):
         warnings.warn("use WovenContext(parent, tag) instead", DeprecationWarning, stacklevel=2)
         return WovenContext(self, tag)
@@ -158,25 +160,33 @@ class WebContext(object):
 
     def clone(self, deep=True, cloneTags=True):
         ## don't clone the tags of parent contexts. I *hope* code won't be
-        ## trying to modify parent tags so this should not be necessary.
-        ## However, *do* clone the parent contexts themselves.
-        ## This is necessary for chain(), as it mutates top-context.parent.
+        ## trying to modify parent tags so this should not be necessary.  We
+        ## used to also clone parent contexts, but that is insanely expensive.
+        ## The only code that actually required that behavior is
+        ## ContextSerializer, which is the only caller of context.chain.  So
+        ## instead of doing the clone here, now we do it there.
 
-        if self.parent:
-            parent=self.parent.clone(cloneTags=False)
+        if self.parent is not None:
+            if deep:
+                parent = self.parent.clone(cloneTags=False)
+            else:
+                parent = self.parent
         else:
-            parent=None
+            parent = None
+
         if cloneTags:
             tag = self.tag.clone(deep=deep)
         else:
             tag = self.tag
+
         if self._remembrances is not None:
-            remembrances=self._remembrances.copy()
+            remembrances = self._remembrances.copy()
         else:
-            remembrances=None
+            remembrances = None
+
         return type(self)(
-            parent = parent,
-            tag = tag,
+            parent=parent,
+            tag=tag,
             remembrances=remembrances,
         )
 

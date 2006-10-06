@@ -12,25 +12,155 @@ tooMany = tags.html[tags.div(pattern="foo"), tags.div(pattern="foo")]
 notEnough = tags.html[tags.div[tags.span["Hello"]]]
 
 
-class TestOne(testutil.TestCase):
-    def test_tagQuery(self):
-        new = IQ(simple).onePattern('foo')
-        self.assertEquals(new.tagName, 'div')
+class OnePatternTestCase(testutil.TestCase):
+    """
+    Test various C{IQ.onePattern} implementations.
+    """
+    _patternDiv = tags.div(pattern="foo")
 
-    def test_tagTooMany(self):
-        self.assertRaises(stan.TooManyNodes, IQ(tooMany).onePattern, 'foo')
+    _simpleStan = tags.html[_patternDiv]
+
+    _simpleSlot = tags.slot('slotname')[_patternDiv]
+
+    _tooManyPatternsSiblingStan = tags.html[
+        tags.div(pattern="foo"),
+        tags.div(pattern="foo")]
+
+    _manyPatternsLinealStan = tags.html(pattern="foo")[
+        tags.div(pattern="foo"),
+        "extra content"]
+
+
+    def _testQuery(self, container, expected):
+        pattern = IQ(container).onePattern('foo')
+
+        # The pattern node has had its pattern special removed - put it back,
+        # so we can perform a comparison
+        self.assertEqual(pattern.pattern, None)
+        pattern.pattern = 'foo'
+
+        self.assertEqual(str(pattern), str(expected))
+
+
+    def test_tagQuery(self):
+        return self._testQuery(
+            self._simpleStan, self._patternDiv)
+
+
+    def test_contextQuery(self):
+        return self._testQuery(
+            context.WovenContext(tag=self._simpleStan),
+            self._patternDiv)
+
+
+    def test_listQuery(self):
+        return self._testQuery(
+            flat.precompile(self._simpleStan),
+            self._patternDiv)
+
+
+    def test_loaderQuery(self):
+        return self._testQuery(
+            loaders.stan(self._simpleStan),
+            self._patternDiv)
+
+
+    def test_slotQuery(self):
+        return self._testQuery(
+            self._simpleSlot,
+            self._patternDiv)
+
+
+    def test_precompiledSlotQuery(self):
+        return self._testQuery(
+            flat.precompile(self._simpleSlot),
+            self._patternDiv)
+
+
+    def _testTooManyPatterns(self, obj):
+        """
+        Test that the L{IQ} adapter for C{obj} provides a L{onePattern} method
+        which raises L{stan.TooManyNodes} if passed a pattern name for which
+        there are multiple pattern nodes.
+        """
+        self.assertRaises(stan.TooManyNodes, IQ(obj).onePattern, 'foo')
+
+
+    def test_stanTooManySiblingPatterns(self):
+        """
+        Test that a Tag with children with the same pattern name causes
+        onePattern to raise L{TooManyNodes}.
+        """
+        return self._testTooManyPatterns(self._tooManyPatternsSiblingStan)
+
+
+    def test_contextTooManySiblingPatterns(self):
+        """
+        Like L{test_stanTooManySiblingPatterns} but for a WovenContext.
+        """
+        return self._testTooManyPatterns(
+            context.WovenContext(tag=self._tooManyPatternsSiblingStan))
+
+
+    def test_listTooManySiblingPatterns(self):
+        """
+        Like L{test_stanTooManySiblingPatterns} but for a list.
+        """
+        return self._testTooManyPatterns([self._tooManyPatternsSiblingStan])
+
+
+    def test_precompiledTooManySiblingPatterns(self):
+        """
+        Like L{test_stanTooManySiblingPatterns} but for a precompiled document.
+        """
+        P = flat.precompile(self._tooManyPatternsSiblingStan)
+        return self._testTooManyPatterns(P)
+
+
+    def test_loaderTooManySiblingPatterns(self):
+        """
+        Like L{test_stanTooManySiblingPatterns} but for a loader.
+        """
+        return self._testTooManyPatterns(loaders.stan(self._tooManyPatternsSiblingStan))
+
+
+    def test_stanMultipleLinealPatterns(self):
+        """
+        Test that calling onePattern a Tag with a pattern and a child with the
+        same pattern
+        """
+        return self._testQuery(
+            self._manyPatternsLinealStan,
+            self._manyPatternsLinealStan)
+
+
+    def test_contextMultipleLinealPatterns(self):
+        return self._testQuery(
+            context.WovenContext(tag=self._manyPatternsLinealStan),
+            self._manyPatternsLinealStan)
+
+
+    def test_listMultipleLinealPatterns(self):
+        return self._testQuery(
+            [self._manyPatternsLinealStan],
+            self._manyPatternsLinealStan)
+
+
+    def test_precompiledMultipleLinealPatterns(self):
+        P = flat.precompile(self._manyPatternsLinealStan)
+        return self._testQuery(
+            P,
+            P[0].tag)
+
+
+    def test_loaderMultipleLinealPatterns(self):
+        return self._testQuery(
+            loaders.stan(self._manyPatternsLinealStan),
+            loaders.stan(self._manyPatternsLinealStan).load()[0].tag)
+
 
     def test_tagNotEnough(self):
         self.assertRaises(stan.NodeNotFound, IQ(notEnough).onePattern, 'foo')
-
-    def test_contextQuery(self):
-        C = context.WovenContext(tag=simple)
-        new = IQ(C).onePattern('foo')
-        self.assertEquals(new.tagName, 'div')
-
-    def test_contextTooMany(self):
-        C = context.WovenContext(tag=tooMany)
-        self.assertRaises(stan.TooManyNodes, IQ(C).onePattern, 'foo')
 
     def test_contextNotEnough(self):
         self.assertRaises(
@@ -44,31 +174,9 @@ class TestOne(testutil.TestCase):
         new = IQ(C).onePattern('outer')
         self.assertEquals(new.tagName, 'html')
 
-    def test_contextTagTooMany(self):
-        tooMany = tags.html(pattern="foo")[ tags.div(pattern="foo") ]
-        self.assertRaises(stan.TooManyNodes, IQ(context.WovenContext(tag=tooMany)).onePattern, 'foo')
-
-    def test_listQuery(self):
-        P = flat.precompile(simple)
-        new = IQ(P).onePattern('foo')
-        self.assertEquals(new.tagName, 'div')
-
-    def test_listTooMany(self):
-        P = flat.precompile(tooMany)
-        self.assertRaises(stan.TooManyNodes, IQ(P).onePattern, 'foo')
-
     def test_listNotEnough(self):
         P = flat.precompile(notEnough)
         self.assertRaises(stan.NodeNotFound, IQ(P).onePattern, 'foo')
-
-    def test_loaderQuery(self):
-        L = loaders.stan(simple)
-        new = IQ(L).onePattern('foo')
-        self.assertEquals(new.tagName, 'div')
-
-    def test_loaderTooMany(self):
-        L = loaders.stan(tooMany)
-        self.assertRaises(stan.TooManyNodes, IQ(L).onePattern, 'foo')
 
     def test_loaderNotEnough(self):
         L = loaders.stan(notEnough)

@@ -54,7 +54,8 @@ nevow.accessors.FunctionAccessor       __builtin__.function                     
 nevow.accessors.FunctionAccessor       __builtin__.method                       nevow.inevow.IGettable
 nevow.accessors.FunctionAccessor       __builtin__.instancemethod               nevow.inevow.IGettable
 nevow.accessors.DirectiveAccessor      nevow.stan.directive                     nevow.inevow.IGettable
-nevow.accessors.SlotAccessor        nevow.stan.slot     nevow.inevow.IGettable
+nevow.accessors.SlotAccessor           nevow.stan.slot                          nevow.inevow.IGettable
+nevow.accessors.SlotAccessor           nevow.stan._PrecompiledSlot              nevow.inevow.IGettable
 
     #
 
@@ -126,13 +127,14 @@ nevow.url.URLRedirectAdapter    nevow.url.URLOverlay    nevow.inevow.IResource
 nevow.util.remainingSegmentsFactory  nevow.context.RequestContext   nevow.inevow.IRemainingSegments
 nevow.util.currentSegmentsFactory  nevow.context.RequestContext   nevow.inevow.ICurrentSegments
 
-nevow.query.QueryContext    nevow.context.WovenContext  nevow.inevow.IQ
+nevow.query.QueryContext    nevow.context.WovenContext    nevow.inevow.IQ
 nevow.query.QueryLoader     nevow.inevow.IDocFactory      nevow.inevow.IQ
-nevow.query.QueryList       __builtin__.list        nevow.inevow.IQ
-nevow.query.QuerySlot       nevow.stan.slot             nevow.inevow.IQ
-nevow.query.QueryNeverFind  nevow.stan.xml      nevow.inevow.IQ
-nevow.query.QueryNeverFind  nevow.stan.raw      nevow.inevow.IQ
-nevow.query.QueryNeverFind  nevow.stan.directive    nevow.inevow.IQ
+nevow.query.QueryList       __builtin__.list              nevow.inevow.IQ
+nevow.query.QuerySlot       nevow.stan.slot               nevow.inevow.IQ
+nevow.query.QuerySlot       nevow.stan._PrecompiledSlot   nevow.inevow.IQ
+nevow.query.QueryNeverFind  nevow.stan.xml                nevow.inevow.IQ
+nevow.query.QueryNeverFind  nevow.stan.raw                nevow.inevow.IQ
+nevow.query.QueryNeverFind  nevow.stan.directive          nevow.inevow.IQ
 
 # I18N
 nevow.i18n.languagesFactory     nevow.context.RequestContext    nevow.inevow.ILanguages
@@ -172,6 +174,7 @@ nevow.flat.flatstan.MethodSerializer              __builtin__.instancemethod
 nevow.flat.flatstan.RendererSerializer            nevow.inevow.IRenderer
 nevow.flat.flatstan.DirectiveSerializer           nevow.stan.directive
 nevow.flat.flatstan.SlotSerializer                nevow.stan.slot
+nevow.flat.flatstan.PrecompiledSlotSerializer     nevow.stan._PrecompiledSlot
 nevow.flat.flatstan.ContextSerializer             nevow.context.WovenContext
 nevow.flat.twist.DeferredSerializer               twisted.internet.defer.Deferred
 nevow.flat.twist.DeferredSerializer               twisted.internet.defer.DeferredList
