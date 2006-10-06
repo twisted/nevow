@@ -132,6 +132,39 @@ class slot(object):
         raise NotImplementedError, "Stan slot instances are not iterable."
 
 
+
+class _PrecompiledSlot(object):
+    """
+    Marker for slot insertion into a template which has been precompiled.
+
+    This differs from a normal slot in that it captures some attributes of its
+    context at precompilation time so that it can be rendered properly (as
+    these attributes are typically lost during precompilation).
+    """
+    __slots__ = [
+        'name', 'children', 'default', 'isAttrib',
+        'inURL', 'inJS', 'inJSSingleQuoteString']
+
+    def __init__(self, name, children, default, isAttrib, inURL, inJS, inJSSingleQuoteString):
+        self.name = name
+        self.children = children
+        self.default = default
+        self.isAttrib = isAttrib
+        self.inURL = inURL
+        self.inJS = inJS
+        self.inJSSingleQuoteString = inJSSingleQuoteString
+
+
+    def __repr__(self):
+        return (
+            '_PrecompiledSlot('
+            '%r, isAttrib=%r, inURL=%r, inJS=%r, '
+            'inJSSingleQuoteString=%r)') % (
+            self.name, self.isAttrib, self.inURL, self.inJS,
+            self.inJSSingleQuoteString)
+
+
+
 class Tag(object):
     """Tag instances represent XML tags with a tag name, attributes,
     and children. Tag instances can be constructed using the Prototype
@@ -159,6 +192,7 @@ class Tag(object):
             self._specials = {}
         else:
             self._specials = specials
+
 
     def fillSlots(self, slotName, slotValue):
         """Remember the stan 'slotValue' with the name 'slotName' at this position
@@ -201,17 +235,25 @@ class Tag(object):
                 specialMatches(self, 'pattern', pattern)]
 
     def onePattern(self, pattern):
-        """Return a single matching pattern, cloned.
+        """
+        Return a single matching pattern, cloned.
+
         If there is more than one matching pattern or no matching patterns,
         raise an exception.
 
-        Useful in the case where you want to locate one and only one
-        sub-tag and do something with it.
+        Useful in the case where you want to locate one and only one sub-tag
+        and do something with it.
         """
-        return _locateOne(pattern,
-            lambda pattern: specialMatches(
-                self, 'pattern', pattern),
-            'pattern').clone(deep=False, clearPattern=True)
+        data = getattr(self, 'pattern', Unset)
+        if data == pattern:
+            result = self
+        else:
+            result = _locateOne(
+                pattern,
+                lambda pattern: specialMatches(self, 'pattern', pattern),
+                'pattern')
+        return result.clone(deep=False, clearPattern=True)
+
 
     def __call__(self, **kw):
         """Change attributes of this tag. This is implemented using
@@ -509,9 +551,10 @@ def specials(tag, special):
 
 
 def specialMatches(tag, special, pattern):
-    """Generate special attribute matches starting with the given tag;
-    if a tag has special, do not look any deeper below that tag, whether
-    it matches pattern or not. Returns an iterable.
+    """
+    Generate special attribute matches starting with the given tag; if a tag
+    has special, do not look any deeper below that tag, whether it matches
+    pattern or not. Returns an iterable.
     """
     for childOrContext in getattr(tag, 'children', []):
         child = getattr(childOrContext, 'tag', childOrContext)

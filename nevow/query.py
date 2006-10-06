@@ -27,18 +27,8 @@ class QueryContext(tpc.Adapter):
             yield pat
 
     def onePattern(self, pattern):
-        found = False
-        try:
-            found = self.original.tag.onePattern(pattern)
-        except stan.NodeNotFound:
-            pass
-        if self.original.tag.pattern == pattern:
-            if found:
-                raise stan.TooManyNodes, ('pattern', pattern)
-            return self.original.tag.clone(deep=False, clearPattern=True)
-        if not found:
-            raise stan.NodeNotFound, ('pattern', pattern)
-        return found
+        return self.original.tag.onePattern(pattern)
+
 
 class QueryList(tpc.Adapter):
     def _locatePatterns(self, pattern, default, loop=True):
@@ -73,18 +63,20 @@ class QueryList(tpc.Adapter):
                 yield pat
 
     def onePattern(self, pattern):
-        found = False
+        node = None
         for item in self.original:
             try:
-                oldFound = found
-                found = inevow.IQ(item).onePattern(pattern)
-                if oldFound:
-                    raise stan.TooManyNodes('pattern', pattern)
+                newNode = inevow.IQ(item).onePattern(pattern)
             except stan.NodeNotFound:
                 continue
-        if not found:
+            else:
+                if node is None:
+                    node = newNode
+                else:
+                    raise stan.TooManyNodes('pattern', pattern)
+        if node is None:
             raise stan.NodeNotFound('pattern', pattern)
-        return found
+        return node
 
 
 class QuerySlot(QueryList):

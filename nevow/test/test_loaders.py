@@ -7,6 +7,7 @@ from twisted.trial import unittest, util
 
 from nevow import context
 from nevow import flat
+from nevow.flat.flatstan import _PrecompiledSlot
 from nevow import loaders
 from nevow import tags as t
 
@@ -27,12 +28,6 @@ class TestDocFactories(unittest.TestCase):
         self.assertEquals(doc, ['<div>goodbye.</div>'])
 
 
-    def test_stan(self):
-        doc = t.ul(id='nav')[t.li['one'], t.li['two'], t.li['three']]
-        df = loaders.stan(doc)
-        self.assertEquals(df.load()[0], '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>')
-
-
     def test_stanPreprocessors(self):
         """
         Test that the stan loader properly passes uncompiled documents to
@@ -41,6 +36,28 @@ class TestDocFactories(unittest.TestCase):
         factory = loaders.stan(
             t.div[t.span['Hello'], t.span['world']])
         return self._preprocessorTest(factory)
+
+
+    def test_stan(self):
+        doc = t.ul(id='nav')[t.li['one'], t.li['two'], t.li['three']]
+        df = loaders.stan(doc)
+        self.assertEquals(df.load()[0], '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>')
+
+
+    def test_stanPrecompiled(self):
+        """
+        Test that a stan loader works with precompiled documents.
+
+        (This behavior will probably be deprecated soon, but we need to test
+        that it works right until we remove it.)
+        """
+        doc = flat.precompile(t.ul(id='nav')[t.li['one'], t.li['two'], t.slot('three')])
+        df = loaders.stan(doc)
+        loaded = df.load()
+        self.assertEqual(loaded[0], '<ul id="nav"><li>one</li><li>two</li>')
+        self.failUnless(isinstance(loaded[1], _PrecompiledSlot))
+        self.assertEqual(loaded[1].name, 'three')
+        self.assertEqual(loaded[2], '</ul>')
 
 
     def test_htmlstr(self):

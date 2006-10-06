@@ -3,27 +3,45 @@ from nevow import tags as T, rend, loaders, athena, url
 from formless import annotate, webform
 from twisted.python import util
 
-animals = {u'elf' : u'Pointy ears.  Bad attitude regarding trees.',
-           u'chipmunk': u'Cute.  Fuzzy.  Sings horribly.',
-           u'chupacabra': u'It sucks goats.',
-           u'ninja': u'Stealthy and invisible, and technically an animal.',
-           }
-
+animals = {
+    u'elf' : u'Pointy ears.  Bad attitude regarding trees.',
+    u'chipmunk': u'Cute.  Fuzzy.  Sings horribly.',
+    u'chupacabra': u'It sucks goats.',
+    u'ninja': u'Stealthy and invisible, and technically an animal.',
+}
 
 class TypeAheadPage(athena.LivePage):
-    _tmpl = util.sibpath(__file__, "typeahead.html")
-    docFactory = loaders.xmlfile(_tmpl)
+    docFactory = loaders.xmlfile(util.sibpath(__file__, "typeahead.html"))
+
+    def __init__(self, *a, **kw):
+        super(TypeAheadPage, self).__init__(*a, **kw)
+        self.jsModules.mapping[u'typeahead'] = util.sibpath(__file__, 'typeahead.js')
+
+
+    def render_debug(self, ctx, data):
+        f = athena.IntrospectionFragment()
+        f.setFragmentParent(self)
+        return ctx.tag[f]
+
+
     def render_typehereField(self, ctx, data):
         frag = TypeAheadFieldFragment()
-        frag.page = self
+        frag.setFragmentParent(self)
         return frag
 
+
+
 class TypeAheadFieldFragment(athena.LiveFragment):
+    jsClass = u'typeahead.TypeAhead'
+
     docFactory = loaders.stan(
-            T.span(render=T.directive('liveFragment'))[ '\n',
-                T.input(type="text", _class="typehere"), '\n',
-                T.h3(_class="description"),
-                ])
+        T.span(render=T.directive('liveFragment'))[
+            T.input(
+                type="text",
+                _class="typehere",
+                onkeyup="Nevow.Athena.Widget.get(this).loadDescription(this, event); return false;"),
+            T.h3(_class="description")])
+
 
     def loadDescription(self, typed):
         if typed == u'':
@@ -39,6 +57,7 @@ class TypeAheadFieldFragment(athena.LiveFragment):
         else:
             return None, u'--'
     athena.expose(loadDescription)
+
 
 class DataEntry(rend.Page):
     """Add Animal"""
@@ -78,5 +97,4 @@ class DataEntry(rend.Page):
         return animals.keys()
 
     def child_typeahead(self, ctx):
-        return TypeAheadPage(None, None)
-
+        return TypeAheadPage()
