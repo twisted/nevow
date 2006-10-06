@@ -2,13 +2,12 @@
 # See LICENSE for details.
 
 from __future__ import generators
-
-import urllib, warnings
+import urllib
 
 from twisted.python import log, failure
 
 from nevow import util
-from nevow.stan import directive, Unset, invisible, _PrecompiledSlot
+from nevow.stan import directive, Unset, invisible
 from nevow.inevow import ICanHandleException, IData, IMacroFactory, IRenderer, IRendererFactory
 from nevow.flat import precompile, serialize
 from nevow.accessors import convertToData
@@ -256,88 +255,31 @@ def RendererSerializer(original, context):
 def DirectiveSerializer(original, context):
     if context.precompile:
         return original
-
+    
     rendererFactory = context.locate(IRendererFactory)
     renderer = rendererFactory.renderer(context, original.name)
     return serialize(renderer, context)
 
 
 def SlotSerializer(original, context):
-    """
-    Serialize a slot.
-
-    If the value is already available in the given context, serialize and
-    return it.  Otherwise, if this is a precompilation pass, return a new
-    kind of slot which captures the current render context, so that any
-    necessary quoting may be performed.  Otherwise, raise an exception
-    indicating that the slot cannot be serialized.
-    """
     if context.precompile:
         try:
-            data = context.locateSlotData(original.name)
+            return serialize(context.locateSlotData(original.name), context)
         except KeyError:
-            return _PrecompiledSlot(
-                original.name,
-                precompile(original.children, context),
-                original.default,
-                context.isAttrib,
-                context.inURL,
-                context.inJS,
-                context.inJSSingleQuoteString)
-        else:
-            return serialize(data, context)
+            original.children = precompile(original.children, context)
+        return original
     try:
         data = context.locateSlotData(original.name)
     except KeyError:
         if original.default is None:
             raise
-        data = original.default
+        return serialize(original.default, context)
     return serialize(data, context)
 
 
-def PrecompiledSlotSerializer(original, context):
-    """
-    Serialize a pre-compiled slot.
-
-    Return the serialized value of the slot or raise a KeyError if it has no
-    value.
-    """
-    # Precompilation should _not_ be happening at this point, but Nevow is very
-    # sloppy about precompiling multiple times, so sometimes we are in a
-    # precompilation context.  In this case, there is nothing to do, just
-    # return the original object.  The case which seems to exercise this most
-    # often is the use of a pattern as the stan document given to the stan
-    # loader.  The pattern has already been precompiled, but the stan loader
-    # precompiles it again.  This case should be eliminated by adding a loader
-    # for precompiled documents.
-    if context.precompile:
-        warnings.warn(
-            "[v0.9.9] Support for multiple precompilation passes is deprecated.",
-            PendingDeprecationWarning)
-        return original
-
-    try:
-        data = context.locateSlotData(original.name)
-    except KeyError:
-        if original.default is None:
-            raise
-        data = original.default
-    originalContext = context.clone(deep=False)
-    originalContext.isAttrib = original.isAttrib
-    originalContext.inURL = original.inURL
-    originalContext.inJS = original.inJS
-    originalContext.inJSSingleQuoteString = original.inJSSingleQuoteString
-    return serialize(data, originalContext)
-
-
 def ContextSerializer(original, context):
-    """
-    Serialize the given context's tag in that context.
-    """
     originalContext = original.clone(deep=False)
     originalContext.precompile = context and context.precompile or False
-    if originalContext.parent is not None:
-        originalContext.parent = originalContext.parent.clone(cloneTags=False)
     originalContext.chain(context)
     try:
         return TagSerializer(originalContext.tag, originalContext, contextIsMine=True)

@@ -232,9 +232,8 @@ class TestPage(unittest.TestCase):
         return deferredRender(r).addCallback(
             lambda result: self.assertEquals(result, '<div id="outer"><div id="inner"></div></div>'))
 
-    def _testDocFactoryInStanTree(self, docFactory, expected):
+    def test_docFactoryInStanTree(self):
         class Page(rend.Page):
-            docFactory = loaders.stan(div[invisible(render=directive('included'))])
 
             def __init__(self, included):
                 self.included = included
@@ -243,104 +242,38 @@ class TestPage(unittest.TestCase):
             def render_included(self, context, data):
                 return self.included
 
-        return deferredRender(Page(docFactory)).addCallback(
-            self.assertEqual, '<div>' + expected + '</div>')
+            docFactory = loaders.stan(div[invisible(render=directive('included'))])
 
-
-    def test_stanInStanTree(self):
-        """
-        """
-        return self._testDocFactoryInStanTree(
-            loaders.stan(p['fee']),
-            '<p>fee</p>')
-
-
-    def test_htmlStringInStanTree(self):
-        """
-        Test that an htmlstr loader in a stan document is flattened by
-        having its document loaded and flattened.
-        """
-        return self._testDocFactoryInStanTree(
-            loaders.htmlstr('<p>fi</p>'),
-            '<p>fi</p>')
-    test_htmlStringInStanTree.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
-
-    def test_xmlStringInStanTree(self):
-        """
-        Like L{test_htmlStringInStanTree}, but for an xmlstr loader.
-        """
-        return self._testDocFactoryInStanTree(
-            loaders.xmlstr('<p>fo</p>'),
-            '<p>fo</p>')
-
-
-    def test_htmlFileInStanTree(self):
-        """
-        Like L{test_htmlStringInStanTree}, but for an htmlfile loader.
-        """
         doc = '<p>fum</p>'
         temp = self.mktemp()
         f = file(temp, 'w')
         f.write(doc)
         f.close()
 
-        return self._testDocFactoryInStanTree(
-            loaders.htmlfile(temp),
-            '<p>fum</p>')
-    test_htmlFileInStanTree.suppress = [
+        return defer.DeferredList([
+            deferredRender(Page(loaders.stan(p['fee']))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fee</p></div>')),
+
+            deferredRender(Page(loaders.htmlstr('<p>fi</p>'))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fi</p></div>')),
+
+            deferredRender(Page(loaders.xmlstr('<p>fo</p>'))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fo</p></div>')),
+
+            deferredRender(Page(loaders.htmlfile(temp))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fum</p></div>')),
+
+            deferredRender(Page(loaders.xmlfile(temp))).addCallback(
+            lambda result: self.assertEquals(result, '<div><p>fum</p></div>'))],
+                                  fireOnOneErrback=True)
+    test_docFactoryInStanTree.suppress = [
+        SUPPRESS(message=
+                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
+                 "Please start using xmlfile and/or xmlstr."),
         SUPPRESS(message=
                  r"\[v0.8\] htmlfile is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
-
-    def test_xmlFileInStanTree(self):
-        """
-        Like L{test_htmlStringInStanTree}, but for an xmlfile loader.
-        """
-        doc = '<p>I</p>'
-        temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(doc)
-        f.close()
-
-        return self._testDocFactoryInStanTree(
-            loaders.xmlfile(temp),
-            '<p>I</p>')
-
-
-    def test_reusedDocFactory(self):
-        """
-        Test that a docFactory which is used more than once behaves properly
-        both times.
-        """
-        class Page(rend.Page):
-            docFactory = loaders.stan(div[invisible(render=directive('included'))])
-
-            def __init__(self, included):
-                self.included = included
-                rend.Page.__init__(self)
-
-            def render_included(self, context, data):
-                return self.included
-
-        p1 = Page(loaders.stan('first'))
-        p2 = Page(loaders.xmlstr('<p>second</p>'))
-
-        d = deferredRender(p1)
-        def rendered(result):
-            self.assertEqual(result, '<div>first</div>')
-            return deferredRender(p2)
-        d.addCallback(rendered)
-
-        def renderedAgain(result):
-            self.assertEqual(result, '<div><p>second</p></div>')
-        d.addCallback(renderedAgain)
-
-        return d
+                 "Please start using xmlfile and/or xmlstr."),
+        ]
 
 
     def test_buffered(self):

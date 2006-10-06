@@ -6,8 +6,7 @@ from nevow.accessors import convertToData, NoAccessor
 from nevow import context
 from nevow import inevow
 from nevow.stan import directive
-from nevow.tags import invisible, slot
-from nevow.flat import precompile
+from nevow.tags import invisible
 from nevow import rend
 from nevow.testutil import TestCase
 
@@ -120,20 +119,4 @@ class TestPageData(Base):
         self.assertEquals('foo', convertToData(directive('foo'), ctx))
         # IContainer on the Page should delegate to IContainer(self.original) if no data_ method
         self.assertEquals('world', convertToData(directive('hello'), ctx))
-
-
-
-class SlotAccessorTestCase(TestCase):
-    def _accessorTest(self, obj):
-        ctx = context.WovenContext()
-        ctx.fillSlots('slotname', 'foo')
-        data = inevow.IGettable(obj).get(ctx)
-        self.assertEqual(data, 'foo')
-
-
-    def test_slotAccessor(self):
-        return self._accessorTest(slot('slotname'))
-
-
-    def test_precompiledSlotAccessor(self):
-        return self._accessorTest(precompile(slot('slotname'))[0])
+        
