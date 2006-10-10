@@ -1,3 +1,6 @@
+0.9.10 (2006-10-05):
+  - Minor update to nevow.testutil.
+
 0.9.9 (2006-09-26):
   - Several nit changes, including the addition of the "check" method to 
     Failure, and the addition of an "assertFailure" method.
