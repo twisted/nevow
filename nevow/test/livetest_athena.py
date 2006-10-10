@@ -2,7 +2,7 @@ from twisted.internet import defer
 
 from nevow import loaders, tags, athena
 from nevow.flat import flatten
-from nevow.page import Element
+from nevow.page import Element, renderer
 from nevow.athena import expose, LiveElement
 from nevow.livetrial import testcase
 from nevow.test import test_json
@@ -296,9 +296,39 @@ class AthenaHandler(testcase.TestCase):
 
 
 
-class FirstNodeByAttribute(testcase.TestCase):
-    jsClass = u'Nevow.Athena.Tests.FirstNodeByAttribute'
-    docFactory = loaders.stan(tags.div(render=tags.directive('liveTest')))
+class NodeLocationSubElement1(LiveElement):
+    docFactory = loaders.stan(
+        tags.div(render=tags.directive('liveElement'))[
+            tags.invisible(render=tags.directive('bar')),
+            tags.div(_class='foo'),
+            tags.span(_class='foo', id='foo')])
+
+    def bar(self, req, tag):
+        e = NodeLocationSubElement2()
+        e.setFragmentParent(self)
+        return e
+    renderer(bar)
+
+
+
+class NodeLocationSubElement2(LiveElement):
+    docFactory = loaders.stan(
+        tags.div(render=tags.directive('liveElement'))[
+            tags.div(_class='bar'),
+            tags.span(_class='bar', id='foo')])
+
+
+
+class NodeLocation(testcase.TestCase):
+    jsClass = u'Nevow.Athena.Tests.NodeLocation'
+
+    def getWidgetDocument(self):
+        """
+        Return some child elements for us to search in.
+        """
+        e = NodeLocationSubElement1()
+        e.setFragmentParent(self)
+        return e
 
 
 

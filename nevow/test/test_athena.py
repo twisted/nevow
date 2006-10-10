@@ -9,7 +9,7 @@ from twisted.web import microdom
 from nevow import athena, rend, tags, flat, loaders
 from nevow.inevow import IRequest
 from nevow.context import WovenContext
-from nevow.testutil import FakeRequest
+from nevow.testutil import FakeRequest, renderLivePage
 
 
 class Utilities(unittest.TestCase):
@@ -190,6 +190,21 @@ the end
         self.assertEquals(
             athena._rewriteEventHandlerToAttribute(tag),
             tag)
+
+
+    def test_athenaIdRewriting(self):
+        """
+        Test that id attributes are correctly rewritten.
+        """
+        tag = tags.div(id='foo')
+        element = athena.LiveElement(docFactory=loaders.stan(tag))
+        page = athena.LivePage(docFactory=loaders.stan(element))
+        element.setFragmentParent(page)
+
+        def _verifyRendering(result):
+            self.assertIn('athenaid:%s-foo' % (element._athenaID,), result)
+
+        return renderLivePage(page).addCallback(_verifyRendering)
 
 
     def _render(self, page):

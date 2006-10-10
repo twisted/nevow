@@ -261,14 +261,31 @@ Nevow.Athena.Tests.AthenaHandler.methods(
         return false;
     });
 
-Nevow.Athena.Tests.FirstNodeByAttribute = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.FirstNodeByAttribute');
-Nevow.Athena.Tests.FirstNodeByAttribute.methods(
+Nevow.Athena.Tests.NodeLocation = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.NodeLocation');
+Nevow.Athena.Tests.NodeLocation.methods(
     function test_firstNodeByAttribute(self) {
-        var html = '<div xmlns="http://www.w3.org/1999/xhtml" class="foo" />';
-        Divmod.Runtime.theRuntime.appendNodeContent(self.node, html);
-        var node = self.firstNodeByAttribute("class", "foo");
+        var node = self.childWidgets[0].firstNodeByAttribute("class", "foo");
         self.assertEquals(node.className, "foo");
         self.assertEquals(node.tagName.toLowerCase(), "div");
+    },
+
+    /**
+     * Test that nodeById finds the node.
+     */
+    function test_nodeById(self) {
+        var node = self.childWidgets[0].childWidgets[0].nodeById('foo');
+        self.assertEquals(node.className, 'bar');
+        self.assertEquals(node.tagName.toLowerCase(), 'span');
+    },
+
+    /**
+     * Test that nodeById finds the node in the parent widget, not the child
+     * widget.
+     */
+    function test_nodeByIdParent(self) {
+        var node = self.childWidgets[0].nodeById('foo');
+        self.assertEquals(node.className, 'foo');
+        self.assertEquals(node.tagName.toLowerCase(), 'span');
     });
 
 

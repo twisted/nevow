@@ -948,21 +948,6 @@ class LivePage(rend.Page):
 
 
 
-# Nevow.Athena.Widget.method(
-#     'getElementById',
-#     function (self, id) {
-#         return document.getElementById(self.widgetId + '-' + id);
-#     });
-
-# def _mangleId(document):
-#     if 'id' in document.attributes:
-#         document.attributes['id'] = [nevow.slot('athena:id'), '-', document.attributes['id']]
-#     for ch in document.children:
-#         _mangleId(ch)
-#     return document
-
-
-
 handler = stan.Proto('athena:handler')
 _handlerFormat = "return Nevow.Athena.Widget.handleEvent(this, %(event)s, %(handler)s);"
 
@@ -994,10 +979,30 @@ def rewriteEventHandlerNodes(root):
     return root
 
 
+def _rewriteAthenaId(tag):
+    """
+    Rewrite id attributes to be prefixed with the ID of the widget the node is
+    contained by.
+    """
+    if isinstance(tag, stan.Tag):
+        elementId = tag.attributes.pop('id', None)
+        if elementId is not None:
+            tag.attributes['id'] = ['athenaid:', tags.slot('athena:id'), '-', elementId]
+    return tag
+
+
+def rewriteAthenaIds(root):
+    """
+    Rewrite id attributes to be unique to the widget they're in.
+    """
+    stan.visit(root, _rewriteAthenaId)
+    return root
+
+
 class _LiveMixin(object):
     jsClass = u'Nevow.Athena.Widget'
 
-    preprocessors = [rewriteEventHandlerNodes]
+    preprocessors = [rewriteEventHandlerNodes, rewriteAthenaIds]
 
     fragmentParent = None
 
@@ -1250,6 +1255,19 @@ class LiveFragment(_LiveMixin, rend.Fragment):
 
     L{LiveFragment.callRemote} can be used to invoke any method of the widget
     on the client.
+
+    Elements with id attributes will be rewritten so that the id is unique to
+    that particular instance. The client-side C{Nevow.Athena.Widget.nodeById}
+    API is provided to locate these later on. For example:
+
+        <div id="foo" />
+
+    and then:
+
+        var node = self.nodyById('foo');
+
+    On most platforms, this API will be much faster than similar techniques
+    using C{Nevow.Athena.Widget.nodeByAttribute} etc.
     """
     def __init__(self, *a, **kw):
         super(LiveFragment, self).__init__(*a, **kw)
@@ -1320,6 +1338,19 @@ class LiveElement(_LiveMixin, Element):
 
     L{LiveElement.callRemote} can be used to invoke any method of the widget on
     the client.
+
+    Elements with id attributes will be rewritten so that the id is unique to
+    that particular instance. The client-side C{Nevow.Athena.Widget.nodeById}
+    API is provided to locate these later on. For example:
+
+        <div id="foo" />
+
+    and then:
+
+        var node = self.nodyById('foo');
+
+    On most platforms, this API will be much faster than similar techniques
+    using C{Nevow.Athena.Widget.nodeByAttribute} etc.
     """
 
 

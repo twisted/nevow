@@ -778,9 +778,9 @@ Nevow.Athena.Widget.methods(
         return Divmod.Runtime.theRuntime.firstNodeByAttribute(self.node, attrName, attrValue);
     },
 
-//     function elementById(self, id) {
-//         return document.getElementByID(self.objectID + '-' + id);
-//     },
+    function nodeById(self, id) {
+        return document.getElementById('athenaid:' + self.objectID + '-' + id);
+    },
 
     function nodesByAttribute(self, attrName, attrValue) {
         return Divmod.Runtime.theRuntime.nodesByAttribute(self.node, attrName, attrValue);
