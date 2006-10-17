@@ -1,3 +1,8 @@
+0.9.11 (2006-10-10):
+  - Fixed dynamic widget instantiation in IE.
+  - Added support for correctly quoting the values of slots which are used as
+    attributes.
+
 0.9.10 (2006-10-05):
   - Minor update to nevow.testutil.
 
