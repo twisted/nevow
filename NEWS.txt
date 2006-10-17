@@ -1,3 +1,9 @@
+0.9.12 (2006-10-17):
+  - Added id rewriting for LiveElement and LiveFragment, such that id
+    attributes in a widget template are rewritten so that they are unique to 
+    the widget instance. A client-side API, Nevow.Athena.Widget.nodeById(), 
+    is provided to allow location of these nodes.
+
 0.9.11 (2006-10-10):
   - Fixed dynamic widget instantiation in IE.
   - Added support for correctly quoting the values of slots which are used as
