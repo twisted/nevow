@@ -28,8 +28,8 @@
 .nevow-tabbedpane-pane {
   clear: both;
   position: absolute;
-  top: -1000px;
-  left: -1000px;
+  top: -10000px;
+  left: -10000px;
 }
 
 .nevow-tabbedpane-selected-pane {
