@@ -139,16 +139,16 @@ function setTimeout(f, n) {
  */
 
 var Divmod = {};
-load("../divmod.js");
+load("../js/Divmod/__init__.js");
 
 Divmod.Defer = {};
-load("../defer.js");
+load("../js/Divmod/Defer.js");
 
 var Nevow = {};
-load("../nevow.js");
+load("../js/Nevow/__init__.js");
 
 Divmod.Base = {};
-load("../base.js");
+load("../js/Divmod/Base.js");
 
 /*
  * Prevent anything from actually happening.
@@ -156,10 +156,10 @@ load("../base.js");
 Divmod.Base.addLoadEvent = function () {};
 
 Divmod.Inspect = {};
-load("../inspect.js");
+load("../js/Divmod/Inspect.js");
 
 Nevow.Athena = {};
-load("../athena.js");
+load("../js/Nevow/Athena/__init__.js");
 
 Nevow.Athena.Test = {};
-load("../livetrial/livetest.js");
+load("../js/Nevow/Athena/Test.js");

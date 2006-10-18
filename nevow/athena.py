@@ -206,7 +206,6 @@ class JSPackage(object):
         self.mapping = mapping
 
 
-
 class AutoJSPackage(object):
     """
     An IJavascriptPackage implementation that scans an on-disk hierarchy
@@ -272,21 +271,7 @@ class JSDependencies(object):
 
     def __init__(self, mapping=None):
         if mapping is None:
-            self.mapping = {
-                u'Divmod': util.resource_filename('nevow', 'divmod.js'),
-                u'Divmod.Base': util.resource_filename('nevow', 'base.js'),
-                u'Divmod.Defer': util.resource_filename('nevow', 'defer.js'),
-                u'Divmod.Inspect': util.resource_filename('nevow', 'inspect.js'),
-                u'Divmod.Runtime': util.resource_filename('nevow', 'runtime.js'),
-                u'Divmod.Runtime.Tests': util.resource_filename('nevow.test', 'livetest_runtime.js'),
-                u'Divmod.XML': util.resource_filename('nevow', 'xml.js'),
-                u'Nevow': util.resource_filename('nevow', 'nevow.js'),
-                u'Nevow.Athena': util.resource_filename('nevow', 'athena.js'),
-                u'Nevow.Athena.Test': util.resource_filename('nevow.livetrial', 'livetest.js'),
-                u'Nevow.Athena.Tests': util.resource_filename('nevow.test', 'livetest.js'),
-                u'Nevow.Athena.Tests.Resources': util.resource_filename('nevow.test', 'livetest_resources.js'),
-                u'Nevow.TagLibrary': util.resource_filename('nevow.taglibrary', 'taglibrary.js'),
-                u'Nevow.TagLibrary.TabbedPane': util.resource_filename('nevow.taglibrary', 'tabbedPane.js')}
+            self.mapping = {}
             self._loadPlugins = True
         else:
             self.mapping = mapping
@@ -853,7 +838,11 @@ class LivePage(rend.Page):
 
     def render_liveglue(self, ctx, data):
         return ctx.tag[
-            [self.getImportStan(mod) for mod in self.BOOTSTRAP_MODULES],
+            # Hit jsDeps.getModuleForName to force it to load some plugins :/
+            # This really needs to be redesigned.
+            [self.getImportStan(jsDeps.getModuleForName(name).name)
+             for name
+             in self.BOOTSTRAP_MODULES],
             tags.script(type='text/javascript')[tags.raw("""
                 Divmod._location = '%(baseURL)s';
                 Nevow.Athena.livepageId = '%(clientID)s';

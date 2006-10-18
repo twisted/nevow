@@ -5,7 +5,7 @@ from nevow.livepage import js, flt
 class tabbedPaneGlue:
 
     _css = util.resource_filename('nevow.taglibrary', "tabbedPane.css")
-    _js = util.resource_filename('nevow.taglibrary', "tabbedPane.js")
+    _js = util.resource_filename('nevow', "js/Nevow/TagLibrary/TabbedPane.js")
 
     fileCSS = static.File(_css, 'text/css')
     fileJS = static.File(_js, 'text/javascript')
