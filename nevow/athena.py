@@ -1032,6 +1032,8 @@ class _LiveMixin(object):
 
 
     def rend(self, context, data):
+        assert isinstance(self.jsClass, unicode), "jsClass must be a unicode string"
+
         if self.page is None:
             raise OrphanedFragment(self)
         self._athenaID = self.page.addLocalObject(self)
