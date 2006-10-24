@@ -1,6 +1,4 @@
-
-load("testsupport.js");
-
+// import Nevow.Athena.Test
 
 function makeTestCase() {
     var testCase = {};

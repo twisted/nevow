@@ -1,10 +1,5 @@
 // -*- test-case-name: nevow.test.test_javascript -*-
 
-load("testsupport.js");
-
-// import Divmod
-// import Divmod.Defer
-
 function succeedDeferred() {
     var result = null;
     var error = null;
