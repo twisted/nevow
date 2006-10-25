@@ -1,3 +1,9 @@
+#!/usr/bin/smjs
+
+load("testsupport.js");
+
+// import Divmod
+
 /*
  *  Unit tests.
  * These don't work in any browser yet

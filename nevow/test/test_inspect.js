@@ -1,5 +1,8 @@
 // -*- test-case-name: nevow.test.test_javascript.JavaScriptTestSuite.testJSInspect
 
+load("testsupport.js");
+
+// import Divmod
 // import Divmod.Inspect
 
 /**

@@ -1,5 +1,10 @@
 // -*- test-case-name: nevow.test.test_javascript.JavaScriptTestSuite.testJSBase
 
+load("testsupport.js");
+
+// import Divmod
+// import Divmod.Base
+
 function test_reprString() {
     /**
      * Test L{Divmod.Base.reprString} correctly escapes various whitespace
