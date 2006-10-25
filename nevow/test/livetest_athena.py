@@ -318,6 +318,16 @@ class NodeLocationSubElement2(LiveElement):
             tags.span(_class='bar', id='foo')])
 
 
+    def getDynamicWidget(self):
+        """
+        Return a widget dynamically for us to have more fun with.
+        """
+        e = NodeLocationSubElement1()
+        e.setFragmentParent(self)
+        return e
+    expose(getDynamicWidget)
+
+
 
 class NodeLocation(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.NodeLocation'
@@ -328,7 +338,9 @@ class NodeLocation(testcase.TestCase):
         """
         e = NodeLocationSubElement1()
         e.setFragmentParent(self)
-        return e
+        e2 = NodeLocationSubElement2()
+        e2.setFragmentParent(self)
+        return [e, e2]
 
 
 

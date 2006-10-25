@@ -779,7 +779,8 @@ Nevow.Athena.Widget.methods(
     },
 
     function nodeById(self, id) {
-        return document.getElementById('athenaid:' + self.objectID + '-' + id);
+        var translatedId = 'athenaid:' + self.objectID + '-' + id;
+        return Divmod.Runtime.theRuntime.getElementByIdWithNode(self.node, translatedId);
     },
 
     function nodesByAttribute(self, attrName, attrValue) {

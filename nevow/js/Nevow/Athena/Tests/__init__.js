@@ -286,6 +286,69 @@ Nevow.Athena.Tests.NodeLocation.methods(
         var node = self.childWidgets[0].nodeById('foo');
         self.assertEquals(node.className, 'foo');
         self.assertEquals(node.tagName.toLowerCase(), 'span');
+    },
+
+    /**
+     * Test that nodeById throws NodeNotFound when the node cannot be located.
+     */
+    function test_nodeByIdNotFound(self) {
+        var _find = function () { return self.childWidgets[0].nodeById('nonexistent'); };
+        self.assertThrows(Divmod.Runtime.NodeNotFound, _find);
+    },
+
+    function addDynamicWidget(self, child) {
+        var d = child.callRemote('getDynamicWidget');
+        d.addCallback(
+            function (widgetInfo) {
+                return child.addChildWidgetFromWidgetInfo(widgetInfo);
+            });
+        return d;
+    },
+
+    /**
+     * Test that nodeById is able to locate nodes in a dynamically instantiated
+     * widget that has not yet been added as a child somewhere in the browser
+     * document.
+     */
+    function test_nodeByIdInDynamicOrphan(self) {
+        var child = self.childWidgets[1];
+        var d = self.addDynamicWidget(child);
+        d.addCallback(
+            function (widget) {
+                var node = widget.nodeById('foo');
+                self.assertEquals(node.className, 'foo');
+                self.assertEquals(node.tagName.toLowerCase(), 'span');
+            });
+        return d;
+    },
+
+    /**
+     * Test that nodeById is able to locate nodes in a dynamically instantiated
+     * widget that has already been added as a child somewhere in the browser
+     * document.
+     */
+    function test_nodeByIdInDynamicChild(self) {
+        var child = self.childWidgets[1];
+        var d = self.addDynamicWidget(child);
+        d.addCallback(
+            function (widget) {
+                child.node.appendChild(widget.node);
+                var node = widget.nodeById('foo');
+                self.assertEquals(node.className, 'foo');
+                self.assertEquals(node.tagName.toLowerCase(), 'span');
+            });
+        return d;
+    },
+
+    function test_nodeByIdNotFoundInDynamicOrphan(self) {
+        var child = self.childWidgets[1];
+        var d = self.addDynamicWidget(child);
+        d.addCallback(
+            function (widget) {
+                var _find = function () { return widget.nodeById('nonexistent'); };
+                self.assertThrows(Divmod.Runtime.NodeNotFound, _find);
+            });
+        return d;
     });
 
 

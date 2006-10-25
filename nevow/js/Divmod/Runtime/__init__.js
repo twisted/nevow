@@ -484,6 +484,22 @@ Divmod.Runtime.Platform.methods(
      */
     function importNode(self, node, deep) {
         return document.importNode(node, deep);
+    },
+
+    /**
+     * Retrieve an element from the document by id, where the element is
+     * expected to be the child of a particular node (typically a widget's
+     * top-most node). Note that this method does not enforce that the element
+     * ultimately located is, in fact, a child of the node passed in; the API
+     * is merely to allow for platfom-specific workarounds for certain edge
+     * cases.
+     */
+    function getElementByIdWithNode(self, node, id) {
+        var foundNode = node.ownerDocument.getElementById(id);
+        if (foundNode == null) {
+            throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
+        }
+        return foundNode;
     });
 
 Divmod.Runtime.Firefox = Divmod.Runtime.Platform.subclass('Divmod.Runtime.Firefox');
@@ -740,6 +756,43 @@ Divmod.Runtime.InternetExplorer.methods(
         var tmpNode = document.createElement('div');
         tmpNode.innerHTML = nodeXML;
         return tmpNode.firstChild.cloneNode(deep);
+    },
+
+    function getElementByIdWithNode(self, node, id) {
+        var foundNode = node.ownerDocument.getElementById(id);
+        if (foundNode == null) {
+            // We didn't find it, maybe we need a workaround.
+
+            // Let's find the root node of the hierarchy.
+            var root = node;
+            while (root.parentNode != null) {
+                root = root.parentNode;
+            }
+
+            var DOCUMENT_FRAGMENT_NODE = 11;
+            if (root.nodeType == DOCUMENT_FRAGMENT_NODE) {
+                // We're in a DocumentFragment, and thus getElementById won't
+                // find any of our children. Let's insert ourselves into the
+                // document temporarily.
+                var currentParent = node.parentNode;
+                var nextSibling = node.nextSibling;
+                currentParent.removeChild(node);
+                document.documentElement.appendChild(node);
+
+                // Try again
+                foundNode = node.ownerDocument.getElementById(id);
+
+                // And now put us back where we used to be.
+                node.parentNode.removeChild(node);
+                currentParent.insertBefore(node, nextSibling);
+            }
+        }
+
+        if (foundNode == null) {
+            throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
+        }
+
+        return foundNode;
     });
 
 
