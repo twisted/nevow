@@ -355,8 +355,6 @@ Nevow.Athena._rf = (function() {
     };
 })();
 
-Nevow.Athena._rdm = new Nevow.Athena.ReliableMessageDelivery(Nevow.Athena._rf, Nevow.Athena._connectionLost);
-
 Nevow.Athena.getAttribute = function() {
     /* Deprecated alias */
     return Divmod.Runtime.theRuntime.getAttribute.apply(Divmod.Runtime.theRuntime, arguments);
@@ -584,6 +582,8 @@ Nevow.Athena._initialize = function() {
 
     Divmod.Base.addToCallStack(window, 'onkeypress', Nevow.Athena._checkEscape, false);
     Divmod.Base.addToCallStack(window, 'onkeyup', Nevow.Athena._checkEscape, false);
+
+    Nevow.Athena._rdm = Nevow.Athena.ReliableMessageDelivery(Nevow.Athena._rf, Nevow.Athena._connectionLost);
 
     /**
      * Delay initialization for just a moment so that Safari stops whirling

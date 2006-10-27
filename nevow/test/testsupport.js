@@ -133,33 +133,3 @@ _testsupportDummyScheduler = [];
 function setTimeout(f, n) {
     _testsupportDummyScheduler.push([n, f]);
 }
-
-/*
- * XXX TODO: actually parse //import lines, don't always import everything.
- */
-
-var Divmod = {};
-load("../js/Divmod/__init__.js");
-
-Divmod.Defer = {};
-load("../js/Divmod/Defer.js");
-
-var Nevow = {};
-load("../js/Nevow/__init__.js");
-
-Divmod.Base = {};
-load("../js/Divmod/Base.js");
-
-/*
- * Prevent anything from actually happening.
- */
-Divmod.Base.addLoadEvent = function () {};
-
-Divmod.Inspect = {};
-load("../js/Divmod/Inspect.js");
-
-Nevow.Athena = {};
-load("../js/Nevow/Athena/__init__.js");
-
-Nevow.Athena.Test = {};
-load("../js/Nevow/Athena/Test.js");
