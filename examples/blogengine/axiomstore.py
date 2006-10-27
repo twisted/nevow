@@ -1,6 +1,6 @@
 from iblogengine import IBlog
 from zope.interface import implements
-from axiom import item, store, attributes, sequence
+from axiom import item, store, attributes
 from epsilon.extime import Time
 
 class Post(item.Item):
@@ -30,12 +30,10 @@ class Blog(item.Item, item.InstallableMixin):
     typeName = "BlogengineBlog"
     schemaVersion = 1
 
-    posts = attributes.reference()
     next_id = attributes.integer(default=0)
     
     def __init__(self, **kw):
         super(Blog, self).__init__(**kw)
-        self.posts = sequence.List(store=self.store)
         post = Post(store=self.store,
                     id=self.getNextId(),
                     author=u'mike',
@@ -52,7 +50,6 @@ class Blog(item.Item, item.InstallableMixin):
         # Why even let posts manage their own ids?  Oh well.
         assert post.id == self.next_id,\
                "Bad post ID; is %r, should be %r" % (post.id, self.next_id)
-        self.posts.append(post)
         self.next_id += 1
 
     def getPosts(self, how_many = None):
@@ -65,7 +62,7 @@ class Blog(item.Item, item.InstallableMixin):
         return (self.getOne(self.next_id-id-1) for id in range(how_many))
 
     def getOne(self, id):
-        return self.posts[id]
+        return self.store.findUnique(Post, Post.id == id)
 
     def getNextId(self):
         return self.next_id
