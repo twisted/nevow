@@ -1036,6 +1036,9 @@ Nevow.Athena.Widget._instantiateOneWidget = function(cls, node) {
         inst.loaded();
         Divmod.debug("widget", "Widget class " + cls + " loaded.");
     }
+    if (inst.nodeInserted != undefined) {
+        inst.nodeInserted();
+    }
 };
 
 Nevow.Athena.Widget._pageLoaded = false;

@@ -328,6 +328,27 @@ class NodeLocationSubElement2(LiveElement):
     expose(getDynamicWidget)
 
 
+    def getNodeInsertedHelper(self):
+        """
+        Return a dynamically instantiated NodeInsertedHelper to play with.
+        """
+        e = NodeInsertedHelper()
+        e.setFragmentParent(self)
+        return e
+    expose(getNodeInsertedHelper)
+
+
+
+class NodeInsertedHelper(LiveElement):
+    """
+    Simple widget to be dynamically instatiated for testing nodeInserted
+    behaviour on client side.
+    """
+    jsClass = u'Nevow.Athena.Tests.NodeInsertedHelper'
+    docFactory = loaders.stan(
+        tags.div(render=tags.directive('liveElement')))
+
+
 
 class NodeLocation(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.NodeLocation'

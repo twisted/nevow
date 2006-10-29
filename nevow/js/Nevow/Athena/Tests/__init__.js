@@ -261,6 +261,20 @@ Nevow.Athena.Tests.AthenaHandler.methods(
         return false;
     });
 
+/**
+ * Simple widget to be dynamically instantiated for testing nodeInserted
+ * behaviour.
+ */
+Nevow.Athena.Tests.NodeInsertedHelper = Nevow.Athena.Widget.subclass('Nevow.Athena.Tests.NodeInsertedHelper');
+Nevow.Athena.Tests.NodeInsertedHelper.methods(
+    /**
+     * Detect whether nodeInserted is called; Athena should do this when (and
+     * only when) instantiating us statically.
+     */
+    function nodeInserted(self) {
+        self.inserted = true;
+    });
+
 Nevow.Athena.Tests.NodeLocation = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.NodeLocation');
 Nevow.Athena.Tests.NodeLocation.methods(
     function test_firstNodeByAttribute(self) {
@@ -296,8 +310,8 @@ Nevow.Athena.Tests.NodeLocation.methods(
         self.assertThrows(Divmod.Runtime.NodeNotFound, _find);
     },
 
-    function addDynamicWidget(self, child) {
-        var d = child.callRemote('getDynamicWidget');
+    function addDynamicWidget(self, child, method) {
+        var d = child.callRemote(method);
         d.addCallback(
             function (widgetInfo) {
                 return child.addChildWidgetFromWidgetInfo(widgetInfo);
@@ -312,7 +326,7 @@ Nevow.Athena.Tests.NodeLocation.methods(
      */
     function test_nodeByIdInDynamicOrphan(self) {
         var child = self.childWidgets[1];
-        var d = self.addDynamicWidget(child);
+        var d = self.addDynamicWidget(child, 'getDynamicWidget');
         d.addCallback(
             function (widget) {
                 var node = widget.nodeById('foo');
@@ -329,7 +343,7 @@ Nevow.Athena.Tests.NodeLocation.methods(
      */
     function test_nodeByIdInDynamicChild(self) {
         var child = self.childWidgets[1];
-        var d = self.addDynamicWidget(child);
+        var d = self.addDynamicWidget(child, 'getDynamicWidget');
         d.addCallback(
             function (widget) {
                 child.node.appendChild(widget.node);
@@ -342,11 +356,41 @@ Nevow.Athena.Tests.NodeLocation.methods(
 
     function test_nodeByIdNotFoundInDynamicOrphan(self) {
         var child = self.childWidgets[1];
-        var d = self.addDynamicWidget(child);
+        var d = self.addDynamicWidget(child, 'getDynamicWidget');
         d.addCallback(
             function (widget) {
                 var _find = function () { return widget.nodeById('nonexistent'); };
                 self.assertThrows(Divmod.Runtime.NodeNotFound, _find);
+            });
+        return d;
+    },
+
+    /**
+     * Detect whether nodeInserted is called; Athena should do this when (and
+     * only when) instantiating us statically.
+     */
+    function nodeInserted(self) {
+        self.inserted = true;
+    },
+
+    /**
+     * Test that nodeInserted is called on a widget that is statically
+     * instantiated.
+     */
+    function test_staticWidget(self) {
+        self.assertEqual(self.inserted, true);
+    },
+
+    /**
+     * Test that nodeInserted is *not* called on a widget that is dynamically
+     * instantiated.
+     */
+    function test_dynamicWidget(self) {
+        var child = self.childWidgets[1];
+        var d = self.addDynamicWidget(child, 'getNodeInsertedHelper');
+        d.addCallback(
+            function (widget) {
+                self.assertNotEqual(widget.inserted, true);
             });
         return d;
     });
@@ -366,7 +410,7 @@ Nevow.Athena.Tests.DynamicWidgetClass.methods(
 /**
  * Test that retrieving several LiveFragments from the server using a
  * method call returns something which can be passed to
- * L{Divmod.Runtime.Platform.setNodeContent} to add new widgets to the
+ * L{Nevow.Athena.Widget.getDynamicWidgetInfo} to add new widgets to the
  * page.
  */
 Nevow.Athena.Tests.DynamicWidgetInstantiation = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.DynamicWidgetInstantiation');
