@@ -19,7 +19,12 @@ package_data={
         'nevow': [
             'Canvas.swf',
             '*.css',
-            '*.js',
+	    'js/Divmod/*.js', 
+	    'js/Nevow/*.js',
+	    'js/Nevow/Athena/Tests/*.js',
+	    'js/Divmod/Runtime/*.js',
+	    'js/Nevow/Athena/*.js',
+	    'js/Nevow/TagLibrary/*.js',
             ],
         'nevow.athena_private': [
             '*.png'

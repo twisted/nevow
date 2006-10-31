@@ -1,3 +1,8 @@
+0.9.13 (2006-10-21):
+  - Adjust non-selected panes in tabbedpane to be further out of the viewport.
+  - Convert to using the Javascript module plugin system for Nevow-provided 
+    modules.
+
 0.9.12 (2006-10-17):
   - Added id rewriting for LiveElement and LiveFragment, such that id
     attributes in a widget template are rewritten so that they are unique to 
