@@ -427,6 +427,45 @@ Nevow.Athena.Tests.DynamicWidgetClass.methods(
  */
 Nevow.Athena.Tests.DynamicWidgetInstantiation = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.DynamicWidgetInstantiation');
 Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
+    /** 
+     * Test that a s->c C{callRemote} can pass a widget.
+     *
+     * In other words, test that this python code:
+     * C{self.callRemote('takeWidget', widget)} works correctly.
+     */
+    function test_childWidgetAsArgument(self) { 
+        // ask the server to make a remote call
+        var d = self.callRemote("getDynamicWidgetLater");
+        d.addCallback(
+            function (ignored) {
+                var d2 = self._childWidgetAsArgumentDeferred.addCallback(
+                    function (childWidget) {
+                        self.assertEqual(childWidget.widgetParent, self);
+                        var d3 = childWidget.callRemote('someMethod');
+                        d3.addCallback(
+                            function (ret) {
+                                self.assertEqual(ret, 'foo');
+                        });
+                        return d3;
+                });
+                return d2;
+        });
+        return d;
+    },
+
+    /** 
+     * A callable which the server can C{callRemote}, passing a widget as an
+     * argument.  C{widgetinfo} is the marshalled form of the widget.  
+     * 
+     * @return null because we cannot, at present, serialize widgets from
+     * client to server.
+     */
+    function sendWidgetAsArgument(self, widgetinfo) {
+        self._childWidgetAsArgumentDeferred =
+                self.addChildWidgetFromWidgetInfo(widgetinfo);
+        return null; 
+    },
+
     /**
      * Test the API for adding a widget based on an ID, class name, and
      * __init__ arguments to an existing page.

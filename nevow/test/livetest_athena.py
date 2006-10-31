@@ -395,6 +395,25 @@ class DynamicWidgetInstantiation(testcase.TestCase):
         return f
     expose(getDynamicWidget)
 
+    def getDynamicWidgetLater(self):
+        """
+        Make a s->c call with a LiveFragment as an argument.  This tests
+        that widgets are reliably serialized when they appear as function
+        arguments.
+        """
+        class DynamicFragment(athena.LiveFragment):
+            docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment')))
+            jsClass = u'Nevow.Athena.Tests.DynamicWidgetClass'
+
+            def someMethod(self):
+                return u'foo'
+            expose(someMethod)
+
+        f = DynamicFragment()
+        f.setFragmentParent(self)
+        return self.callRemote("sendWidgetAsArgument", f)
+    expose(getDynamicWidgetLater)
+
 
     def getDynamicWidgetInfo(self):
         """
