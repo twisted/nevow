@@ -1,12 +1,22 @@
+0.9.14 (2006-10-31):
+  - Support code for running non-browser javascript tests has been added.
+  - Added a workaround for nodeById on widgets not yet added to the document in
+    IE.
+  - Athena will now invoke the nodeInserted method (if it exists) on a widget
+    that it instantiates statically.
+  - ID rewriting, similar to existing rewriting support for 'id' attributes,
+    has been added in 'for' and 'headers' attributes of 'label' and 'td'/'th'
+    elements, respectively.
+
 0.9.13 (2006-10-21):
   - Adjust non-selected panes in tabbedpane to be further out of the viewport.
-  - Convert to using the Javascript module plugin system for Nevow-provided 
+  - Convert to using the Javascript module plugin system for Nevow-provided
     modules.
 
 0.9.12 (2006-10-17):
   - Added id rewriting for LiveElement and LiveFragment, such that id
-    attributes in a widget template are rewritten so that they are unique to 
-    the widget instance. A client-side API, Nevow.Athena.Widget.nodeById(), 
+    attributes in a widget template are rewritten so that they are unique to
+    the widget instance. A client-side API, Nevow.Athena.Widget.nodeById(),
     is provided to allow location of these nodes.
 
 0.9.11 (2006-10-10):
@@ -18,15 +28,15 @@
   - Minor update to nevow.testutil.
 
 0.9.9 (2006-09-26):
-  - Several nit changes, including the addition of the "check" method to 
+  - Several nit changes, including the addition of the "check" method to
     Failure, and the addition of an "assertFailure" method.
-  - The ability to pass Python exceptions to Javascript has been added to 
+  - The ability to pass Python exceptions to Javascript has been added to
     Athena.
   - Dynamic module import has been added for the cases where it is necessary
     to dynamically add a widget to an existing page.
-  
+
 0.9.8 (2009-09-20):
-  - A bug in nit that caused it to fail if there were too many tests in a 
+  - A bug in nit that caused it to fail if there were too many tests in a
     test case, and swallow failures in some cases, has been fixed.
   - Widgets can no longer be added to a page after render time using
     Divmod.Runtime.Platform.{set,append}NodeContent.  Instead, they must be
