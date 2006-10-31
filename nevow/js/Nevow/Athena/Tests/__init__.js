@@ -1,4 +1,5 @@
 
+// import Divmod.Runtime
 // import Nevow.Athena
 
 Nevow.Athena.Tests.WidgetInitializerArguments = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.WidgetInitializerArguments');
@@ -280,16 +281,16 @@ Nevow.Athena.Tests.NodeLocation.methods(
     function test_firstNodeByAttribute(self) {
         var node = self.childWidgets[0].firstNodeByAttribute("class", "foo");
         self.assertEquals(node.className, "foo");
-        self.assertEquals(node.tagName.toLowerCase(), "div");
+        self.assertEquals(node.tagName.toLowerCase(), "label");
     },
 
     /**
      * Test that nodeById finds the node.
      */
     function test_nodeById(self) {
-        var node = self.childWidgets[0].childWidgets[0].nodeById('foo');
+        var node = self.childWidgets[0].childWidgets[0].nodeById('username');
         self.assertEquals(node.className, 'bar');
-        self.assertEquals(node.tagName.toLowerCase(), 'span');
+        self.assertEquals(node.tagName.toLowerCase(), 'input');
     },
 
     /**
@@ -297,9 +298,20 @@ Nevow.Athena.Tests.NodeLocation.methods(
      * widget.
      */
     function test_nodeByIdParent(self) {
-        var node = self.childWidgets[0].nodeById('foo');
+        var node = self.childWidgets[0].nodeById('username');
         self.assertEquals(node.className, 'foo');
-        self.assertEquals(node.tagName.toLowerCase(), 'span');
+        self.assertEquals(node.tagName.toLowerCase(), 'input');
+    },
+
+    /**
+     * Test that ID mangling mangles label.for as well as id attributes. Label
+     * and for must be equal.
+     */
+    function test_matchingLabelForAndId(self) {
+        var label = self.childWidgets[0].firstNodeByAttribute("class", "foo");
+        var labelForAttribute = Divmod.Runtime.theRuntime.getAttribute(label, "for");
+        var input = self.childWidgets[0].nodeById('username');
+        self.assertEquals(labelForAttribute, input["id"]);
     },
 
     /**
@@ -329,9 +341,9 @@ Nevow.Athena.Tests.NodeLocation.methods(
         var d = self.addDynamicWidget(child, 'getDynamicWidget');
         d.addCallback(
             function (widget) {
-                var node = widget.nodeById('foo');
+                var node = widget.nodeById('username');
                 self.assertEquals(node.className, 'foo');
-                self.assertEquals(node.tagName.toLowerCase(), 'span');
+                self.assertEquals(node.tagName.toLowerCase(), 'input');
             });
         return d;
     },
@@ -347,9 +359,9 @@ Nevow.Athena.Tests.NodeLocation.methods(
         d.addCallback(
             function (widget) {
                 child.node.appendChild(widget.node);
-                var node = widget.nodeById('foo');
+                var node = widget.nodeById('username');
                 self.assertEquals(node.className, 'foo');
-                self.assertEquals(node.tagName.toLowerCase(), 'span');
+                self.assertEquals(node.tagName.toLowerCase(), 'input');
             });
         return d;
     },

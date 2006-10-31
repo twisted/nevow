@@ -300,8 +300,8 @@ class NodeLocationSubElement1(LiveElement):
     docFactory = loaders.stan(
         tags.div(render=tags.directive('liveElement'))[
             tags.invisible(render=tags.directive('bar')),
-            tags.div(_class='foo'),
-            tags.span(_class='foo', id='foo')])
+            tags.label(_class='foo', _for="username"),
+            tags.input(_class='foo', id='username')])
 
     def bar(self, req, tag):
         e = NodeLocationSubElement2()
@@ -314,8 +314,8 @@ class NodeLocationSubElement1(LiveElement):
 class NodeLocationSubElement2(LiveElement):
     docFactory = loaders.stan(
         tags.div(render=tags.directive('liveElement'))[
-            tags.div(_class='bar'),
-            tags.span(_class='bar', id='foo')])
+            tags.label(_class='bar', _for="username"),
+            tags.input(_class='bar', id='username')])
 
 
     def getDynamicWidget(self):

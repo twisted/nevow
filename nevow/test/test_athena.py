@@ -194,15 +194,29 @@ the end
 
     def test_athenaIdRewriting(self):
         """
-        Test that id attributes are correctly rewritten.
+        Test that IDs are correctly rewritten in id, for, and headers
+        attributes.
         """
-        tag = tags.div(id='foo')
+        tag = [tags.label(_for='foo'),
+               tags.input(id='foo'),
+               tags.th(headers=''),
+               tags.th(headers='foo'),
+               tags.td(headers='foo bar'),
+               tags.td(headers='foo bar baz')]
         element = athena.LiveElement(docFactory=loaders.stan(tag))
         page = athena.LivePage(docFactory=loaders.stan(element))
         element.setFragmentParent(page)
 
         def _verifyRendering(result):
-            self.assertIn('athenaid:%s-foo' % (element._athenaID,), result)
+            self.assertIn('<input id="athenaid:%s-foo"' % (element._athenaID,), result)
+            self.assertIn('<label for="athenaid:%s-foo"' % (element._athenaID,), result)
+            self.assertIn('<th headers=""', result)
+            self.assertIn('<th headers="athenaid:%s-foo"' % (
+                element._athenaID,), result)
+            self.assertIn('<td headers="athenaid:%s-foo athenaid:%s-bar"' % (
+                element._athenaID, element._athenaID), result)
+            self.assertIn('<td headers="athenaid:%s-foo athenaid:%s-bar athenaid:%s-baz"' % (
+                element._athenaID, element._athenaID, element._athenaID), result)
 
         return renderLivePage(page).addCallback(_verifyRendering)
 

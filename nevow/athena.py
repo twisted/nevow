@@ -968,15 +968,36 @@ def rewriteEventHandlerNodes(root):
     return root
 
 
+def _mangleId(oldId):
+    """
+    Return a consistently mangled form of an id that is unique to the widget
+    within which it occurs.
+    """
+    return ['athenaid:', tags.slot('athena:id'), '-', oldId]
+
+
 def _rewriteAthenaId(tag):
     """
     Rewrite id attributes to be prefixed with the ID of the widget the node is
-    contained by.
+    contained by. Also rewrite label "for" attributes which must match the id of
+    their form element.
     """
     if isinstance(tag, stan.Tag):
         elementId = tag.attributes.pop('id', None)
         if elementId is not None:
-            tag.attributes['id'] = ['athenaid:', tags.slot('athena:id'), '-', elementId]
+            tag.attributes['id'] = _mangleId(elementId)
+        if tag.tagName == "label":
+            elementFor = tag.attributes.pop('for', None)
+            if elementFor is not None:
+                tag.attributes['for'] = _mangleId(elementFor)
+        if tag.tagName in ('td', 'th'):
+            headers = tag.attributes.pop('headers', None)
+            if headers is not None:
+                ids = headers.split()
+                headers = [_mangleId(headerId) for headerId in ids]
+                for n in xrange(len(headers) - 1, 0, -1):
+                    headers.insert(n, ' ')
+                tag.attributes['headers'] = headers
     return tag
 
 
