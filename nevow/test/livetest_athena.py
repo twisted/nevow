@@ -443,6 +443,21 @@ class DynamicWidgetInstantiation(testcase.TestCase):
         return f
     expose(getWidgetWithImports)
 
+    def getNonXHTMLWidget(self):
+        """
+        @return: a widget with a namespace that is not XHTML so a test can
+        verify that the namespace is preserved.
+        """
+        class NonXHTMLFragment(athena.LiveFragment):
+            circle = tags.Proto("circle")
+            docFactory = loaders.stan(
+                    circle(xmlns="http://www.w3.org/2000/svg",
+                           render=tags.directive("liveFragment")))
+
+        f = NonXHTMLFragment()
+        f.setFragmentParent(self)
+        return f
+    expose(getNonXHTMLWidget)
 
 
 class GettingWidgetlessNodeRaisesException(testcase.TestCase):

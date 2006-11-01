@@ -466,6 +466,28 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
         return null; 
     },
 
+    /** 
+     * Test that widgets with non-XHTML namespaces can be sent server to
+     * client.
+     *
+     * The widget returned by the server should be rebuilt with the same
+     * C{namespaceURI} it was given at render time.
+     */
+    function test_nonXHTMLWidgetReturn(self) { 
+        var result = self.callRemote("getNonXHTMLWidget");
+        result.addCallback(
+            function _(info) { 
+                return self.addChildWidgetFromWidgetInfo(info)
+            });
+        result.addCallback(
+            function (childWidget) {
+                self.assertEqual(childWidget.widgetParent, self);
+                self.assertEqual(childWidget.node.namespaceURI,
+                        'http://www.w3.org/2000/svg');
+            });
+        return result;
+    },
+
     /**
      * Test the API for adding a widget based on an ID, class name, and
      * __init__ arguments to an existing page.
