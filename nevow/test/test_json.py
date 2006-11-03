@@ -3,7 +3,7 @@
 
 from twisted.trial import unittest
 
-from nevow import json, rend, page, loaders, tags
+from nevow import json, rend, page, loaders, tags, athena
 
 TEST_OBJECTS = [
     0,
@@ -40,6 +40,37 @@ TEST_STRINGLIKE_OBJECTS = [
     u'string with high codepoint characters: \u0111\u2222\u3333\u4444\uffff',
     u'string with very high codepoint characters: \U00011111\U00022222\U00033333\U00044444\U000fffff',
     ]
+
+
+class DummyLivePage(object):
+    """
+    Stand-in for L{athena.LivePage} which implements only enough of its
+    behavior so that a L{LiveFragment} or L{LiveElement} can be set as its
+    child and flattened.
+    """
+    localCounter = 0
+
+    def __init__(self):
+        self.page = self
+        self.liveFragmentChildren = []
+
+
+    def addLocalObject(self, obj):
+        """
+        Return an Athena ID for the given object.  Returns a new value on every
+        call.
+        """
+        self.localCounter += 1
+        return self.localCounter
+
+
+    def _shouldInclude(self, module):
+        """
+        Stub module-system method.  Always declares that the given module
+        should not be included.
+        """
+        return False
+
 
 
 class JavascriptObjectNotationTestCase(unittest.TestCase):
@@ -104,3 +135,53 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         string.
         """
         return self._rendererTest(page.Element)
+
+
+    def _doubleSerialization(self, cls):
+        fragment = cls(docFactory=loaders.stan(tags.div['Hello']))
+        self.assertEqual(
+            json.serialize(fragment),
+            json.serialize(fragment))
+
+
+    def test_doubleFragmentSerialization(self):
+        """
+        Test that repeatedly calling L{json.serialize} with an instance of
+        L{rend.Fragment} results in the same result each time.
+        """
+        return self._doubleSerialization(rend.Fragment)
+
+
+    def test_doubleElementSerialization(self):
+        """
+        Like L{test_doubleElementSerialization} but for L{page.Element}
+        instances.
+        """
+        return self._doubleSerialization(page.Element)
+
+
+    def _doubleLiveSerialization(self, cls, renderer):
+        livePage = DummyLivePage()
+        liveFragment = cls(
+            docFactory=loaders.stan(
+                tags.div(render=tags.directive(renderer))['Hello']))
+        liveFragment.setFragmentParent(livePage)
+        self.assertEqual(
+            json.serialize(liveFragment),
+            json.serialize(liveFragment))
+
+
+    def test_doubleLiveFragmentSerialization(self):
+        """
+        Like L{test_doubleFragmentSerialization} but for L{athena.LiveFragment}
+        instances.
+        """
+        return self._doubleLiveSerialization(athena.LiveFragment, 'liveFragment')
+
+
+    def test_doubleLiveElementSerialization(self):
+        """
+        Like L{test_doubleFragmentSerialization} but for L{athena.LiveElement}
+        instances.
+        """
+        return self._doubleLiveSerialization(athena.LiveElement, 'liveElement')

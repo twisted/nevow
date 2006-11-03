@@ -1018,6 +1018,10 @@ class _LiveMixin(object):
 
     _page = None
 
+    # Reference to the result of a call to _structured, if one has been made,
+    # otherwise None.  This is used to make _structured() idempotent.
+    _structuredCache = None
+
     def __init__(self, *a, **k):
         super(_LiveMixin, self).__init__(*a, **k)
         self.liveFragmentChildren = []
@@ -1113,6 +1117,9 @@ class _LiveMixin(object):
         client-side Widgets which correspond to this fragment and all of its
         children.
         """
+        if self._structuredCache is not None:
+            return self._structuredCache
+
         children = []
         requiredModules = []
 
@@ -1123,17 +1130,19 @@ class _LiveMixin(object):
         markup = context.call(
             {'children': children,
              'requiredModules': requiredModules},
-            flat.flatten, self).decode('utf-8')
+            flat.flatten, tags.div(xmlns="http://www.w3.org/1999/xhtml")[self]).decode('utf-8')
 
         del children[0]
 
-        return {
-            u'requiredModules': [(name, flat.flatten(url).decode('utf-8')) for (name, url) in requiredModules],
+        self._structuredCache = {
+            u'requiredModules': [(name, flat.flatten(url).decode('utf-8'))
+                                 for (name, url) in requiredModules],
             u'class': self.jsClass,
             u'id': self._athenaID,
-            u'initArguments': self.getInitialArguments(),
+            u'initArguments': tuple(self.getInitialArguments()),
             u'markup': markup,
             u'children': children}
+        return self._structuredCache
 
 
     def liveElement(self, request, tag):

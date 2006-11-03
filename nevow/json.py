@@ -277,15 +277,11 @@ def _serialize(obj, w, seen):
                 w(',')
         w('}')
     elif isinstance(obj, (athena.LiveFragment, athena.LiveElement)):
-        widgetInfo = obj._structured()
-        widgetInfo[u'markup'] = (
-            u'<div xmlns="http://www.w3.org/1999/xhtml">' +
-            widgetInfo[u'markup'] +
-            u'</div>')
-        _serialize(widgetInfo, w, seen)
+        _serialize(obj._structured(), w, seen)
     elif isinstance(obj, (rend.Fragment, page.Element)):
+        wrapper = tags.div(xmlns="http://www.w3.org/1999/xhtml")
         w('"')
-        w(stringEncode(flat.flatten(tags.div(xmlns="http://www.w3.org/1999/xhtml")[obj]).decode('utf-8')))
+        w(stringEncode(flat.flatten(wrapper[obj]).decode('utf-8')))
         w('"')
     else:
         raise TypeError("Unsupported type %r: %r" % (type(obj), obj))
