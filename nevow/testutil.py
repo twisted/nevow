@@ -108,10 +108,7 @@ class FakeRequest(tpc.Componentized):
         self.finished = True
 
     def getHeader(self, key):
-        d = {
-            'referer': '/',
-            }
-        return d.get(key)
+        return self.headers.get(key)
 
     def setHeader(self, key, val):
         self.headers[key] = val
