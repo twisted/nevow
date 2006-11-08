@@ -1,3 +1,9 @@
+0.9.15 (2006-11-08):
+  - Changed _LiveMixin rendering to be idempotent to support the case
+    where a transport hiccup causes a LiveFragment or LiveElement to
+    be sent to the browser multiple times.
+  - Improvements to the tests.
+
 0.9.14 (2006-10-31):
   - Support code for running non-browser javascript tests has been added.
   - Added a workaround for nodeById on widgets not yet added to the document in
