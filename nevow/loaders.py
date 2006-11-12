@@ -24,15 +24,13 @@ import warnings
 import os.path
 from zope.interface import implements
 
-from twisted.python.reflect import getClass
-from twisted.web import microdom
-
 from nevow import context
 from nevow import inevow
 from nevow import tags
 from nevow import flat
 from nevow.flat import flatsax
-from nevow.util import CachedFile
+
+from twisted.python.reflect import getClass
 
 
 class stan(object):
@@ -89,6 +87,7 @@ class htmlstr(object):
     def load(self, ctx=None, preprocessors=()):
         assert not preprocessors, "preprocessors not supported by htmlstr"
         if self._cache is None:
+            from twisted.web import microdom
             doc = microdom.parseString(self.template, beExtremelyLenient=self.beExtremelyLenient)
             doc = flat.precompile(doc, ctx)
             if self.pattern is not None:
@@ -106,6 +105,10 @@ class htmlfile(object):
     templateDir = ''
     beExtremelyLenient = True
 
+    _filename = None
+    _mtime = None
+    _cache = None
+
     def __init__(self, template=None, pattern=None, templateDir=None, beExtremelyLenient=None):
         warnings.warn(
             "[v0.8] htmlfile is deprecated because it's buggy. Please start using xmlfile and/or xmlstr.",
@@ -119,19 +122,20 @@ class htmlfile(object):
             self.templateDir = templateDir
         if beExtremelyLenient is not None:
             self.beExtremelyLenient = beExtremelyLenient
-        _filename = os.path.join(self.templateDir, self.template)
-        self._cache = CachedFile(_filename, self._reallyLoad)
-
-    def _reallyLoad(self, path, ctx):
-        doc = microdom.parse(path, beExtremelyLenient=self.beExtremelyLenient)
-        doc = flat.precompile(doc, ctx)
-        if self.pattern is not None:
-            doc = inevow.IQ(doc).onePattern(self.pattern)
-        return doc
+        self._filename = os.path.join(self.templateDir, self.template)
 
     def load(self, ctx=None, preprocessors=()):
         assert not preprocessors, "preprocessors not supported by htmlfile"
-        return self._cache.load(ctx)
+        mtime = os.path.getmtime(self._filename)
+        if mtime != self._mtime or self._cache is None:
+            from twisted.web import microdom
+            doc = microdom.parse(self._filename, beExtremelyLenient=self.beExtremelyLenient)
+            doc = flat.precompile(doc, ctx)
+            if self.pattern is not None:
+                doc = inevow.IQ(doc).onePattern(self.pattern)
+            self._mtime = mtime
+            self._cache = doc
+        return self._cache
 
 class xmlstr(object):
 
@@ -178,6 +182,10 @@ class xmlfile(object):
     ignoreDocType = False
     ignoreComment = False
 
+    _filename = None
+    _mtime = None
+    _cache = None
+
     def __init__(self, template=None, pattern=None, templateDir=None, ignoreDocType=None, ignoreComment=None):
         self._cache = {}
         if template is not None:
@@ -195,8 +203,6 @@ class xmlfile(object):
         else:
             self._filename = self.template
 
-        self._cache = {}
-
     def load(self, ctx=None, preprocessors=()):
         rendererFactoryClass = None
         if ctx is not None:
@@ -205,13 +211,16 @@ class xmlfile(object):
                 rendererFactoryClass = getClass(r)
 
         cacheKey = (self._filename, self.pattern, rendererFactoryClass)
-        cachedFile = self._cache.get(cacheKey)
-        if cachedFile is None:
-            cachedFile = self._cache[cacheKey] = CachedFile(self._filename, self._reallyLoad)
 
-        return cachedFile.load(ctx, preprocessors)
+        try:
+            cachedModified, doc = self._cache[cacheKey]
+        except KeyError:
+            cachedModified = doc = None
+        currentModified = os.path.getmtime(self._filename)
 
-    def _reallyLoad(self, path, ctx, preprocessors):
+        if currentModified == cachedModified:
+            return doc
+
         doc = flatsax.parse(open(self._filename), self.ignoreDocType, self.ignoreComment)
         for proc in preprocessors:
             doc = proc(doc)
@@ -220,4 +229,6 @@ class xmlfile(object):
         if self.pattern is not None:
             doc = inevow.IQ(doc).onePattern(self.pattern)
 
+        self._mtime = currentModified
+        self._cache[cacheKey] = currentModified, doc
         return doc

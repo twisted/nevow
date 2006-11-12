@@ -12,14 +12,6 @@ from nevow.context import WovenContext
 from nevow.testutil import FakeRequest, renderLivePage
 
 
-class _TestJSModule(athena.JSModule):
-    extractCounter = 0
-
-    def _extractImports(self, *a, **kw):
-        self.extractCounter += 1
-        return super(_TestJSModule, self)._extractImports(*a, **kw)
-
-
 class Utilities(unittest.TestCase):
 
     testModuleImpl = '''\
@@ -46,6 +38,10 @@ the end
 
         self.assertIdentical(m1, m2)
 
+        deps = [d.name for d in m1.dependencies()]
+        deps.sort()
+        self.assertEquals(deps, ['Another', 'ExampleModule', 'Module'])
+
         modules['Another'] = self.mktemp()
         anotherModule = file(modules['Another'], 'w')
         anotherModule.write('// import SecondaryDependency\n')
@@ -63,10 +59,6 @@ the end
         # Stub these out with an empty file
         modules['SecondaryDependency'] = modules['Module']
         modules['ExampleDependency'] = modules['Module']
-
-        deps = [d.name for d in m1.dependencies()]
-        deps.sort()
-        self.assertEquals(deps, ['Another', 'ExampleModule', 'Module'])
 
         depgraph = {
             'Another': ['SecondaryDependency'],
@@ -86,29 +78,6 @@ the end
                 self.assertIn(m, allDeps)
                 self.failUnless(allDeps.index(d) < allDeps.index(m))
 
-
-    def test_dependencyCaching(self):
-        """
-        Test that dependency caching works as expected.
-        """
-        testModuleFilename = self.mktemp()
-        testModule = file(testModuleFilename, 'w')
-        testModule.write('')
-        testModule.close()
-
-        modules = {'testmodule': testModuleFilename}
-        m = _TestJSModule('testmodule', modules)
-
-        deps = list(m.dependencies())
-        self.assertEquals(m.extractCounter, 1)
-
-        deps2 = list(m.dependencies())
-        self.assertEquals(m.extractCounter, 1)
-
-        newTime = m.lastModified
-        os.utime(testModuleFilename, (newTime + 1, newTime + 1))
-        deps3 = list(m.dependencies())
-        self.assertEquals(m.extractCounter, 2)
 
     def test_renderJavascriptModules(self):
         """

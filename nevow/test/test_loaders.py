@@ -333,7 +333,7 @@ class TestDocFactoriesCache(unittest.TestCase):
         self.assertIn('foo', before)
         self.assertIn('bar', after)
         self.failIfEqual(before, after)
-    test_reloadAfterPrecompile.todo = \
+    test_reloadAfterPrecompile.skip = \
         'Fix so that disk templates are reloaded even after a precompile. ' \
         'Probably just a matter of making the DocSerializer really lazy'
 
