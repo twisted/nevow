@@ -10,9 +10,12 @@ try:
 except NameError:
     from sets import Set as set
 
+from itertools import count
+from os import utime
+
 from twisted.trial.unittest import TestCase
 
-from nevow.util import UnexposedMethodError, Expose
+from nevow.util import UnexposedMethodError, Expose, CachedFile
 
 class ExposeTestCase(TestCase):
     def test_singleExpose(self):
@@ -269,3 +272,47 @@ class ExposeTestCase(TestCase):
             set(['bar', 'quux']))
         self.assertEquals(expose.get(Foo(), 'bar')(), 'baz')
         self.assertEquals(expose.get(Foo(), 'quux')(), 'quux')
+
+
+
+class CachedFileTests(TestCase):
+    def setUp(self):
+        self.testFile = self.mktemp()
+        file(self.testFile, 'w').close()
+
+        counter = count()
+        self.cache = CachedFile(self.testFile, lambda path: counter.next())
+
+    def test_cache(self):
+        """
+        Test that loading a file twice returns the cached version the second
+        time.
+        """
+        o1 = self.cache.load()
+        o2 = self.cache.load()
+        self.assertEqual(o1, o2)
+
+    def test_cacheModifiedTime(self):
+        """
+        Test that loading a cached file with a different mtime loads the file
+        again.
+        """
+        mtime = os.path.getmtime(self.testFile)
+        o = self.cache.load()
+        # sanity check
+        self.assertEqual(o, 0)
+
+        utime(self.testFile, (mtime + 100, mtime + 100))
+        o = self.cache.load()
+        self.assertEqual(o, 1)
+
+        utime(self.testFile, (mtime, mtime))
+        o = self.cache.load()
+        self.assertEqual(o, 2)
+
+    def test_loadArgs(self):
+        marker = object()
+        def _loadMe(path, otherArg):
+            self.assertIdentical(otherArg, marker)
+
+        CachedFile(self.testFile, _loadMe).load(marker)

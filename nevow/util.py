@@ -192,3 +192,33 @@ except ImportError:
         modulepath = namedAny(modulename).__file__
         return os.path.join(os.path.dirname(os.path.abspath(modulepath)), resource_name)
 
+
+
+class CachedFile(object):
+    """
+    Helper for caching operations on files in the filesystem.
+    """
+    def __init__(self, path, loader):
+        """
+        @type path: L{str}
+        @param path: The path to the associated file in the filesystem.
+
+        @param loader: A callable that returns the relevant data; invoked when
+        the cache is empty or stale.
+        """
+
+        self.path = path
+        self.loader = loader
+        self._mtime = None
+
+    def load(self, *args, **kwargs):
+        """
+        Load this file. Any positional or keyword arguments will be passed
+        along to the loader callable, after the path itself.
+        """
+        currentTime = os.path.getmtime(self.path)
+        if self._mtime is None or currentTime != self._mtime:
+            self._mtime = currentTime
+            self._cachedObj = self.loader(self.path, *args, **kwargs)
+
+        return self._cachedObj
