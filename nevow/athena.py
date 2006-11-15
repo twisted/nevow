@@ -12,6 +12,7 @@ from twisted import plugin
 from nevow import inevow, plugins, flat
 from nevow import rend, loaders, url, static
 from nevow import json, util, tags, guard, stan
+from nevow.util import CachedFile
 
 from nevow.page import Element, renderer
 
@@ -161,6 +162,8 @@ class JSModule(object):
             parent = '.'.join(name.split('.')[:-1])
             self.packageDeps = [self.getOrCreate(parent, mapping)]
 
+        self._cache = CachedFile(self.mapping[self.name], self._getDeps)
+
 
     def __repr__(self):
         return 'JSModule(%r)' % (self.name,)
@@ -173,16 +176,20 @@ class JSModule(object):
             yield self.getOrCreate(m.group(1).decode('ascii'), self.mapping)
 
 
+
+    def _getDeps(self, jsFile):
+        """
+        Calculate our dependencies given the path to our source.
+        """
+        depgen = self._extractImports(file(jsFile, 'r'))
+        return self.packageDeps + dict.fromkeys(depgen).keys()
+
+
     def dependencies(self):
-        jsFile = self.mapping[self.name]
-        if jsFile is None:
-            return iter(())
-        mtime = os.path.getmtime(jsFile)
-        if mtime >= self.lastModified:
-            depgen = self._extractImports(file(jsFile, 'r'))
-            self.deps = self.packageDeps + dict.fromkeys(depgen).keys()
-            self.lastModified = mtime
-        return self.deps
+        """
+        Return a list of names of other JavaScript modules we depend on.
+        """
+        return self._cache.load()
 
 
     def allDependencies(self):

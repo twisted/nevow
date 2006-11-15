@@ -10,9 +10,13 @@ try:
 except NameError:
     from sets import Set as set
 
+from itertools import count
+from os import utime
+from os.path import getmtime
+
 from twisted.trial.unittest import TestCase
 
-from nevow.util import UnexposedMethodError, Expose
+from nevow.util import UnexposedMethodError, Expose, CachedFile
 
 class ExposeTestCase(TestCase):
     def test_singleExpose(self):
@@ -269,3 +273,87 @@ class ExposeTestCase(TestCase):
             set(['bar', 'quux']))
         self.assertEquals(expose.get(Foo(), 'bar')(), 'baz')
         self.assertEquals(expose.get(Foo(), 'quux')(), 'quux')
+
+
+
+class CachedFileTests(TestCase):
+    def setUp(self):
+        self.testFile = self.mktemp()
+        file(self.testFile, 'w').close()
+
+        counter = count()
+        self.cache = CachedFile(self.testFile, lambda path: counter.next())
+
+    def test_cache(self):
+        """
+        Test that loading a file twice returns the cached version the second
+        time.
+        """
+        o1 = self.cache.load()
+        o2 = self.cache.load()
+        self.assertEqual(o1, o2)
+
+    def test_cacheModifiedTime(self):
+        """
+        Test that loading a cached file with a different mtime loads the file
+        again.
+        """
+        mtime = getmtime(self.testFile)
+        o = self.cache.load()
+        # sanity check
+        self.assertEqual(o, 0)
+
+        utime(self.testFile, (mtime + 100, mtime + 100))
+        o = self.cache.load()
+        self.assertEqual(o, 1)
+
+        utime(self.testFile, (mtime, mtime))
+        o = self.cache.load()
+        self.assertEqual(o, 2)
+
+    def test_cacheInvalidate(self):
+        """
+        Test that calling invalidate really invalidates the cache.
+        """
+        self.assertEqual(self.cache.load(), 0)
+        self.cache.invalidate()
+        self.assertEqual(self.cache.load(), 1)
+
+    def test_loadArgs(self):
+        """
+        Test that additional arguments are correctly passed through to the
+        loader.
+        """
+        marker = object()
+        def _loadMe(path, otherArg, otherKwarg):
+            self.assertIdentical(otherArg, marker)
+            self.assertIdentical(otherKwarg, marker)
+
+        CachedFile(self.testFile, _loadMe).load(marker, otherKwarg=marker)
+
+    def test_loaderException(self):
+        """
+        Test that an exception raised from the loader does not break the
+        L{CachedFile}.
+        """
+        counter = count()
+
+        def _loadMe(path, crashMe=False):
+            if crashMe:
+                raise Exception('It is an exception!')
+            return counter.next()
+
+        cf = CachedFile(self.testFile, _loadMe)
+
+        # Can we still load after the first attempt raises an exception?
+        self.assertRaises(Exception, cf.load, True)
+        self.assertEqual(cf.load(), 0)
+
+        # Cache should be valid now, so a broken loader shouldn't matter
+        self.assertEqual(cf.load(True), 0)
+
+        # A second broken load
+        cf.invalidate()
+
+        self.assertRaises(Exception, cf.load, True)
+        self.assertEqual(cf.load(), 1)
