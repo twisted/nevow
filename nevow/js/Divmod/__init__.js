@@ -299,6 +299,12 @@ Divmod.Error.methods(
     });
 
 /**
+ * Sequence container index out of bounds.
+ */
+Divmod.IndexError = Divmod.Error.subclass("Divmod.IndexError");
+
+
+/**
  * Base class for all warning classes.
  */
 Divmod.Warning = Divmod.Class.subclass("Divmod.Warning");
