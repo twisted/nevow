@@ -1,3 +1,7 @@
+0.9.16 (2006-11-17):
+  - Updated nit to work with Twisted trunk.
+  - Athena module import caching has been fixed.
+
 0.9.15 (2006-11-08):
   - Changed _LiveMixin rendering to be idempotent to support the case
     where a transport hiccup causes a LiveFragment or LiveElement to
