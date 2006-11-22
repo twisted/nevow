@@ -117,7 +117,7 @@ class FakeRequest(tpc.Componentized):
         self.redirected_to = url
 
     def getRootURL(self):
-        return ''
+        return None
 
     def processingFailed(self, f):
         self.failure = f
