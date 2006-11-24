@@ -37,15 +37,16 @@ class StringTokenizer(object):
 
         SLASH = "\\"
 
-        bit, s = s[:1], s[1:]
-        bits = [bit]
-        while s:
-            if s.startswith(SLASH):
-                bit, s = s[:2], s[2:]
-            else:
-                bit, s = s[:1], s[1:]
-            bits.append(bit)
-            if bit == '"':
+        IT = iter(s)
+        bits = [IT.next()]
+        for char in IT:
+            bits.append(char)
+            if char == SLASH:
+                try:
+                    bits.append(IT.next())
+                except StopIteration:
+                    return None
+            if char == '"':
                 self.matched = ''.join(bits)
                 return self
 
