@@ -555,6 +555,25 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
     },
 
     /**
+     * Test that removeAllChildWidgets leaves the child widget list empty
+     * and ensures that the removed widgets have a null parent.
+     */
+    function test_removeAllChildWidgets(self) {
+        var result = self.callRemote('getDynamicWidget');
+        result.addCallback(
+            function(widget) {
+                return self.addChildWidgetFromWidgetInfo(widget);
+            });
+        result.addCallback(
+            function(widget) {
+                self.removeAllChildWidgets();
+                self.assertEqual(widget.widgetParent, null);
+                self.assertEqual(self.childWidgets.length, 0);
+            });
+        return result;
+    },
+
+    /**
      * Test dynamic instantiation of a widget defined in a module which has not
      * yet been imported.
      */

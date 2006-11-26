@@ -785,6 +785,16 @@ Nevow.Athena.Widget.methods(
 
     function nodesByAttribute(self, attrName, attrValue) {
         return Divmod.Runtime.theRuntime.nodesByAttribute(self.node, attrName, attrValue);
+    },
+
+    /**
+     * Remove all the child widgets from this widget.
+     */
+    function removeAllChildWidgets(self) {
+        for (var i=0; i<self.childWidgets.length; i++) {
+            self.childWidgets[i].setWidgetParent(null);
+        }
+        self.childWidgets = [];
     });
 
 
