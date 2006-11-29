@@ -8,6 +8,7 @@ import twisted.python.components as tpc
 from twisted.internet import defer, protocol, error, reactor
 from twisted.python.util import untilConcludes
 from twisted.python import procutils
+from twisted.web import http
 
 from formless import iformless
 from nevow import inevow, context, athena, loaders, tags, appserver
@@ -44,6 +45,7 @@ class FakeRequest(tpc.Componentized):
     redirected_to = None
     content = ""
     method = 'GET'
+    code = http.OK
 
     def __init__(self, headers=None, args=None, avatar=None,
                  uri='/', currentSegments=None, cookies=None,
@@ -79,6 +81,8 @@ class FakeRequest(tpc.Componentized):
             for seg in currentSegments:
                 assert seg == self.postpath[0]
                 self.prepath.append(self.postpath.pop(0))
+        else:
+            self.prepath.append('')
         self.headers = headers or {}
         self.args = args or {}
         self.sess = FakeSession(avatar)
@@ -225,8 +229,8 @@ class AccumulatingFakeRequest(FakeRequest):
     """
     implements(iformless.IFormDefaults)
     method = 'GET'
-    def __init__(self, uri='/', currentSegments=('',)):
-        FakeRequest.__init__(self, uri=uri, currentSegments=list(currentSegments))
+    def __init__(self, *a, **kw):
+        FakeRequest.__init__(self, *a, **kw)
         self.d = defer.Deferred()
         self.accumulator = ''
 

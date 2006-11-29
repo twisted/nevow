@@ -4,6 +4,7 @@ applications.
 """
 
 from twisted.trial.unittest import TestCase
+from twisted.web.http import OK, BAD_REQUEST
 
 from nevow.testutil import FakeRequest, renderPage
 from nevow.url import root
@@ -35,3 +36,19 @@ class TestFakeRequest(TestCase):
             return self.assertEquals('http://localhost/foo', result)
 
         return renderPage(_URLPage()).addCallback(_checkForUrl)
+
+
+    def test_defaultResponseCode(self):
+        """
+        Test that the default response code of a fake request is success.
+        """
+        self.assertEqual(FakeRequest().code, OK)
+
+
+    def test_setResponseCode(self):
+        """
+        Test that the response code of a fake request can be set.
+        """
+        req = FakeRequest()
+        req.setResponseCode(BAD_REQUEST)
+        self.assertEqual(req.code, BAD_REQUEST)
