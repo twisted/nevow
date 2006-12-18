@@ -1,3 +1,9 @@
+0.9.17 (2006-12-08):
+  - More efficient JSON string parsing.
+  - Give FakeRequests a default status code of OK.  Accept all of
+    FakeRequest.__init__'s arguments in the __init__ of
+    AccumulatingFakeRequest.
+
 0.9.16 (2006-11-17):
   - Updated nit to work with Twisted trunk.
   - Athena module import caching has been fixed.
