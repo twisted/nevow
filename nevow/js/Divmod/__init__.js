@@ -247,6 +247,16 @@ Divmod.Class.subclass = function(/* optional */ className) {
         }
     };
 
+
+    /**
+     * Return C{true} if class C{a} is a subclass of class {b} (or is {b}).
+     * Return C{false} otherwise.
+     */
+    subClass.subclassOf = function(superClass) {
+        return (subClass.prototype instanceof superClass
+                || subClass == superClass);
+    };
+
     /**
        Not quite sure what to do with this...
     **/
@@ -429,3 +439,29 @@ Divmod.logger.addObserver(function (evt) {
             console.log("Divmod log: " + evt.message);
         }
 });
+
+
+
+/**
+ * Return C{true} if the two arrays contain identical elements and C{false}
+ * otherwise.
+ */
+Divmod.arraysEqual = function arraysEqual(a, b) {
+    if (!(a instanceof Array && b instanceof Array)) {
+        return false;
+    }
+    if (a.length !== b.length) {
+        return false;
+    }
+    for (var i in a) {
+        if (!(i in b && a[i] === b[i])) {
+            return false;
+        }
+    }
+    for (var i in b) {
+        if (!(i in a)) {
+            return false;
+        }
+    }
+    return true;
+};

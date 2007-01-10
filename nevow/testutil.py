@@ -354,15 +354,17 @@ class JavaScriptTestSuite(unittest.TestCase):
 
         return d
 
+
+
 def setJavascriptInterpreterOrSkip(testCase):
     """
     If we're unable to find a javascript interpreter (currently we only look
-    for smjs) then set the C{skip} attribute on C{testCase}.  Otherwise assign
-    the path to the interpreter executable to
+    for smjs or js) then set the C{skip} attribute on C{testCase}. Otherwise
+    assign the path to the interpreter executable to
     C{testCase.javascriptInterpreter}
     """
-    _jsInterps = procutils.which('smjs')
-    if _jsInterps:
-        testCase.javascriptInterpreter = _jsInterps[0]
-    else:
+    script = consolejstest.findJavascriptInterpreter()
+    if script is None:
         testCase.skip = "No JavaScript interpreter available."
+    else:
+        testCase.javascriptInterpreter = script
