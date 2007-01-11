@@ -25,8 +25,7 @@ Divmod.Defer.Failure.methods(
         return 'Failure: ' + self.error;
     },
 
-    function parseStack(self) {
-        var stackString = self.error.stack;
+    function parseStack(self, stackString) {
         var frames = [];
 
         var line;
@@ -59,65 +58,13 @@ Divmod.Defer.Failure.methods(
         return frames;
     },
 
-
-    /**
-     * Return a list of 'frames' from the stack, with many of the frames
-     * filtered out. The removed frames are those which are added for every
-     * single method call.
-     *
-     * @return: [{fname: <filename as string>,
-     *            lineNumber: <line number as int>,
-     *            func: <function that the frame is inside as string>}]
-     */
-    function filteredParseStack(self) {
-        var frames = self.parseStack();
-        var ret = [];
-        for (var i = 0; i < frames.length; ++i) {
-            var f = frames[i];
-            if (f.fname == "" && f.lineNumber == 0) {
-                ret.pop();
-                continue;
-            }
-            ret.push(f);
-        };
-        return ret;
-    },
-
-
-    /**
-     * Format a single frame from L{Failure.filteredParseStack} as a pretty
-     * string.
-     *
-     * @return: string
-     */
-    function frameToPrettyText(self, frame) {
-        return '  Function "' + frame.func + '":\n    ' + frame.fname + ':'
-            + frame.lineNumber;
-    },
-
-
-    /**
-     * Return a nicely formatted stack trace using L{Failure.frameToPrettyText}.
-     */
-    function toPrettyText(self, /* optional */ frames) {
-        if (frames == undefined) {
-            frames = self.parseStack();
-        }
-        var ret = 'Traceback (most recent call last):\n';
-        for (var i = 0; i < frames.length; ++i) {
-            ret += self.frameToPrettyText(frames[i]) + '\n';
-        }
-        return ret + self.error;
-    },
-
-
     function toPrettyNode(self) {
         var stack = self.error.stack;
         if (!stack) {
             return document.createTextNode(self.toString());
         }
 
-        var frames = self.parseStack();
+        var frames = self.parseStack(stack);
         var resultNode = document.createElement('div');
         resultNode.style.overflow = 'scroll';
         resultNode.style.height = 640;

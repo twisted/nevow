@@ -9,14 +9,13 @@ javascript interpreter
 
 from sys import argv
 from twisted.python.util import sibpath
-from twisted.python import procutils
 import nevow, subprocess
 
 _DUMMY_MODULE_NAME = 'ConsoleJSTest'
 
 def getDependencies(fname, ignore=('Divmod.Runtime', 'MochiKit.DOM'),
-                    bootstrap=nevow.athena.LivePage.BOOTSTRAP_MODULES,
-                    packages=None):
+                           bootstrap=nevow.athena.LivePage.BOOTSTRAP_MODULES,
+                           packages=None):
     """
     Get the javascript modules that the code in the file with name C{fname}
     depends on, recursively
@@ -42,32 +41,18 @@ def getDependencies(fname, ignore=('Divmod.Runtime', 'MochiKit.DOM'),
     if packages is None:
         packages = nevow.athena.allJavascriptPackages()
 
-    # TODO if a module is ignored, we should ignore its dependencies
-    bootstrapModules = [nevow.athena.JSModule.getOrCreate(m, packages)
-                        for m in bootstrap if m not in ignore]
-
     packages[_DUMMY_MODULE_NAME] = fname
-    module = nevow.athena.JSModule(_DUMMY_MODULE_NAME, packages)
 
-    return (bootstrapModules +
-            [dep for dep in module.allDependencies()
-             if (dep.name not in bootstrap
-                 and dep.name != _DUMMY_MODULE_NAME
-                 and dep.name not in ignore)])
+    # TODO if a module is ignored, we should ignore its dependencies
 
+    return ([nevow.athena.JSModule.getOrCreate(m, packages)
+               for m in bootstrap if m not in ignore] +
 
-
-def findJavascriptInterpreter():
-    """
-    Return a string path to a JavaScript interpreter if one can be found in
-    the executable path. If not, return None.
-    """
-    for script in ['smjs', 'js']:
-        _jsInterps = procutils.which(script)
-        if _jsInterps:
-            return _jsInterps[0]
-    return None
-
+            [dep for dep in nevow.athena.JSModule(
+                                _DUMMY_MODULE_NAME, packages).allDependencies()
+                if dep.name not in bootstrap
+                    and dep.name != _DUMMY_MODULE_NAME
+                    and dep.name not in ignore])
 
 
 def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent = function() {};',)},
