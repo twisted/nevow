@@ -1,16 +1,24 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
+import sys, signal
+from popen2 import popen2
+from StringIO import StringIO
 
 from zope.interface import implements
 
-import twisted.python.components as tpc
-from twisted.internet import defer, protocol, error, reactor
-from twisted.python.util import untilConcludes
-from twisted.python import procutils
+try:
+    import subunit
+except ImportError:
+    subunit = None
+
+from twisted.trial.unittest import TestCase as TrialTestCase
+from twisted.python.components import Componentized
+from twisted.internet import defer
 from twisted.web import http
 
 from formless import iformless
+
 from nevow import inevow, context, athena, loaders, tags, appserver
 from nevow.scripts import consolejstest
 
@@ -24,10 +32,10 @@ class FakeSite:
     pass
 
 
-class FakeSession(tpc.Componentized):
+class FakeSession(Componentized):
     implements(inevow.ISession)
     def __init__(self, avatar):
-        tpc.Componentized.__init__(self)
+        Componentized.__init__(self)
         self.avatar = avatar
         self.uid = 12345
     def getLoggedInRoot(self):
@@ -37,7 +45,7 @@ class FakeSession(tpc.Componentized):
 fs = FakeSession(None)
 
 
-class FakeRequest(tpc.Componentized):
+class FakeRequest(Componentized):
     implements(inevow.IRequest)
     args = {}
     failure = None
@@ -71,7 +79,7 @@ class FakeRequest(tpc.Componentized):
         isSecure:
             whether this request represents an HTTPS url
         """
-        tpc.Componentized.__init__(self)
+        Componentized.__init__(self)
         self.uri = uri
         self.prepath = []
         postpath = uri.split('?')[0]
@@ -171,16 +179,8 @@ class FakeRequest(tpc.Componentized):
         """
         return self.secure
 
-try:
-    from twisted.trial import unittest
-    FailTest = unittest.FailTest
-except:
-    import unittest
-    class FailTest(Exception): pass
 
-
-import sys
-class TestCase(unittest.TestCase):
+class TestCase(TrialTestCase):
     hasBools = (sys.version_info >= (2,3))
     _assertions = 0
 
@@ -188,32 +188,32 @@ class TestCase(unittest.TestCase):
     def failUnlessSubstring(self, containee, container, msg=None):
         self._assertions += 1
         if container.find(containee) == -1:
-            raise unittest.FailTest, (msg or "%r not in %r" % (containee, container))
+            self.fail(msg or "%r not in %r" % (containee, container))
     def failIfSubstring(self, containee, container, msg=None):
         self._assertions += 1
         if container.find(containee) != -1:
-            raise unittest.FailTest, (msg or "%r in %r" % (containee, container))
-    
+            self.fail(msg or "%r in %r" % (containee, container))
+
     assertSubstring = failUnlessSubstring
     assertNotSubstring = failIfSubstring
 
     def assertNotIdentical(self, first, second, msg=None):
         self._assertions += 1
         if first is second:
-            raise FailTest, (msg or '%r is %r' % (first, second))
+            self.fail(msg or '%r is %r' % (first, second))
 
     def failIfIn(self, containee, container, msg=None):
         self._assertions += 1
         if containee in container:
-            raise FailTest, (msg or "%r in %r" % (containee, container))
+            self.fail(msg or "%r in %r" % (containee, container))
 
     def assertApproximates(self, first, second, tolerance, msg=None):
         self._assertions += 1
         if abs(first - second) > tolerance:
-            raise FailTest, (msg or "%s ~== %s" % (first, second))
+            self.fail(msg or "%s ~== %s" % (first, second))
 
 
-if not hasattr(TestCase, 'mktemp'):
+if not hasattr(TrialTestCase, 'mktemp'):
     def mktemp(self):
         import tempfile
         return tempfile.mktemp()
@@ -290,69 +290,92 @@ def renderPage(res, topLevelContext=context.WebContext,
     result.addCallback(lambda x: req.accumulator)
     return result
 
-class _JavaScriptTestSuiteProtocol(protocol.ProcessProtocol):
-    # XXX TODO: integrate this with Trial somehow, to report results of
-    # individual JS tests.
-
-    finished = None
-
-    def connectionMade(self):
-        self.out = []
-        self.err = []
-
-    def outReceived(self, out):
-        untilConcludes(sys.stdout.write, out)
-        untilConcludes(sys.stdout.flush)
-        self.out.append(out)
-
-    def errReceived(self, err):
-        untilConcludes(sys.stdout.write, err)
-        untilConcludes(sys.stdout.flush)
-        self.err.append(err)
-
-    def processEnded(self, reason):
-        if reason.check(error.ProcessTerminated):
-            self.finished.errback(Exception(reason.getErrorMessage(), ''.join(self.out), ''.join(self.err)))
-        elif self.err:
-            self.finished.errback(Exception(''.join(self.out), ''.join(self.err)))
-        else:
-            self.finished.callback(''.join(self.out))
 
 
-class JavaScriptTestSuite(unittest.TestCase):
+class NotSupported(Exception):
     """
-    Inherit from me if you want to run javascript tests
-
-    @ivar path: path to directory containing the javascipt files
-    @type path: L{twisted.python.filepath.FilePath}
+    Raised by L{JavaScriptTestCase} if the installation lacks a certain
+    required feature.
     """
-    javascriptInterpreter = None
-    path = None
 
-    def onetest(self, jsfile):
+
+class JavaScriptTestCase(TrialTestCase):
+    def __init__(self, methodName='runTest'):
+        TrialTestCase.__init__(self, methodName)
+        self.testMethod = getattr(self, methodName)
+
+
+    def checkDependencies(self):
         """
-        Test the javascript file C{jsfile}
+        Check that all the dependencies of the test are satisfied.
 
-        @param jsfile: filename
-        @type jsfile: C{str}
-
-        @return: deferred that fires when the javascript interpreter process
-        terminates
-        @rtype: L{twisted.interner.defer.Deferred}
+        @raise NotSupported: If any one of the dependencies is not satisfied.
         """
-        p = _JavaScriptTestSuiteProtocol()
-        d = p.finished = defer.Deferred()
+        js = consolejstest.findJavascriptInterpreter()
+        if js is None:
+            raise NotSupported("Could not find JavaScript interpreter")
+        if subunit is None:
+            raise NotSupported("Could not import 'subunit'")
 
+
+    def _writeToTemp(self, contents):
         fname = self.mktemp()
-        file(fname, 'w').write(
-            consolejstest.generateTestScript(self.path.child(jsfile).path))
+        fd = file(fname, 'w')
+        try:
+            fd.write(contents)
+        finally:
+            fd.close()
+        return fname
 
-        reactor.spawnProcess(
-            p,
-            self.javascriptInterpreter,
-            ("js", fname))
 
-        return d
+    def makeScript(self, testModule):
+        js = """
+// import Divmod.UnitTest
+// import %(module)s
+
+Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
+""" % {'module': testModule}
+        jsfile = self._writeToTemp(js)
+        scriptFile = self._writeToTemp(consolejstest.generateTestScript(jsfile))
+        return scriptFile
+
+
+    def _runWithSigchild(self, f, *a, **kw):
+        """
+        Run the given function with an alternative SIGCHLD handler.
+        """
+        oldHandler = signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+        try:
+            return f(*a, **kw)
+        finally:
+            signal.signal(signal.SIGCHLD, oldHandler)
+
+
+    def run(self, result):
+        try:
+            self.checkDependencies()
+        except NotSupported, e:
+            result.startTest(self)
+            result.addSkip(self, str(e))
+            result.stopTest(self)
+            return
+        js = consolejstest.findJavascriptInterpreter()
+        script = self.makeScript(self.testMethod())
+        protocol = subunit.TestProtocolServer(result)
+
+        # What this *SHOULD BE*
+        # d = getProcessOutput(js, (script,))
+        # d.addCallback(StringIO)
+        # d.addCallback(protocol.readFrom)
+        # return d
+
+        # However, *run cannot return a Deferred profanity profanity profanity
+        # profanity*, so instead it is *profanity* this:
+        def run():
+            r, w = popen2([js, script])
+            return r.read()
+        output = self._runWithSigchild(run)
+        protocol.readFrom(StringIO(output))
 
 
 

@@ -14,7 +14,7 @@ import nevow, subprocess
 
 _DUMMY_MODULE_NAME = 'ConsoleJSTest'
 
-def getDependencies(fname, ignore=('Divmod.Runtime', 'MochiKit.DOM'),
+def getDependencies(fname, ignore=('MochiKit.DOM',),
                     bootstrap=nevow.athena.LivePage.BOOTSTRAP_MODULES,
                     packages=None):
     """

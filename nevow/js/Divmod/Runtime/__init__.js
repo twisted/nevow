@@ -505,7 +505,15 @@ Divmod.Runtime.Platform.methods(
 Divmod.Runtime.Firefox = Divmod.Runtime.Platform.subclass('Divmod.Runtime.Firefox');
 
 Divmod.Runtime.Firefox.isThisTheOne = function isThisTheOne() {
-    return navigator.appName == "Netscape";
+    try {
+        return navigator.appName == "Netscape";
+    } catch (err) {
+        if (err instanceof ReferenceError) {
+            return false;
+        } else {
+            throw err;
+        }
+    }
 };
 
 Divmod.Runtime.Firefox.methods(
@@ -584,7 +592,15 @@ Divmod.Runtime.Firefox.methods(
 Divmod.Runtime.InternetExplorer = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorer");
 
 Divmod.Runtime.InternetExplorer.isThisTheOne = function isThisTheOne() {
-    return navigator.appName == "Microsoft Internet Explorer";
+    try {
+        return navigator.appName == "Microsoft Internet Explorer";
+    } catch (err) {
+        if (err instanceof ReferenceError) {
+            return false;
+        } else {
+            throw err;
+        }
+    }
 };
 
 Divmod.Runtime.InternetExplorer.methods(
@@ -799,7 +815,15 @@ Divmod.Runtime.InternetExplorer.methods(
 Divmod.Runtime.Opera = Divmod.Runtime.Platform.subclass("Divmod.Runtime.Opera");
 
 Divmod.Runtime.Opera.isThisTheOne = function isThisTheOne() {
-    return navigator.userAgent.indexOf('Opera') != -1;
+    try {
+        return navigator.userAgent.indexOf('Opera') != -1;
+    } catch (err) {
+        if (err instanceof ReferenceError) {
+            return false;
+        } else {
+            throw err;
+        }
+    }
 };
 
 Divmod.Runtime.Opera.methods(
@@ -850,8 +874,39 @@ Divmod.Runtime.Opera.methods(
     });
 
 
+Divmod.Runtime.SpidermonkeyStandalone = Divmod.Class.subclass();
+Divmod.Runtime.SpidermonkeyStandalone.isThisTheOne = function() {
+    try {
+        navigator;
+    } catch (err) {
+        if (!(err instanceof ReferenceError)) {
+            throw err;
+        }
+        try {
+            document;
+        } catch (err) {
+            if (!(err instanceof ReferenceError)) {
+                throw err;
+            }
+            try {
+                window;
+            } catch (err) {
+                if (!(err instanceof ReferenceError)) {
+                    throw err;
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
-    var platforms = [Divmod.Runtime.Firefox, Divmod.Runtime.InternetExplorer, Divmod.Runtime.Opera];
+    var platforms = [
+        Divmod.Runtime.Firefox,
+        Divmod.Runtime.InternetExplorer,
+        Divmod.Runtime.Opera,
+        Divmod.Runtime.SpidermonkeyStandalone];
     for (var cls = 0; cls < platforms.length; ++cls) {
         if (platforms[cls].isThisTheOne()) {
             return platforms[cls];
