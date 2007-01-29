@@ -1101,6 +1101,7 @@ Nevow.Athena.Widget._defaultDisconnectionNotifier = function() {
         };
     div.appendChild(a);
 
+    div.className = 'nevow-connection-lost';
     div.style.textAlign = 'center';
     div.style.position = 'absolute';
     div.style.top = '1em';
