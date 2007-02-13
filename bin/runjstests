@@ -1,7 +1,0 @@
-#!/usr/bin/python
-
-# Copyright (c) 2006 Divmod.
-# See LICENSE for details.
-
-from nevow.scripts.consolejstest import run
-run()
