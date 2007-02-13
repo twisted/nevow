@@ -3,7 +3,6 @@
 
 import sys, signal
 from popen2 import popen2
-from StringIO import StringIO
 
 from zope.interface import implements
 
@@ -16,12 +15,12 @@ from twisted.trial.unittest import TestCase as TrialTestCase
 from twisted.python.components import Componentized
 from twisted.internet import defer
 from twisted.web import http
+from twisted.protocols.basic import LineReceiver
 
 from formless import iformless
 
 from nevow import inevow, context, athena, loaders, tags, appserver
-from nevow.scripts import consolejstest
-
+from nevow.jsutil import findJavascriptInterpreter, generateTestScript
 
 class FakeChannel:
     def __init__(self, site):
@@ -299,6 +298,27 @@ class NotSupported(Exception):
     """
 
 
+
+class TestProtocolLineReceiverServer(LineReceiver):
+    """
+    Subunit protocol which is also a Twisted LineReceiver so that it
+    includes line buffering logic.
+    """
+    delimiter = '\n'
+
+    def __init__(self, proto):
+        self.proto = proto
+
+
+    def lineReceived(self, line):
+        """
+        Forward the line on to the subunit protocol's lineReceived method,
+        which expects it to be newline terminated.
+        """
+        self.proto.lineReceived(line + '\n')
+
+
+
 class JavaScriptTestCase(TrialTestCase):
     def __init__(self, methodName='runTest'):
         TrialTestCase.__init__(self, methodName)
@@ -311,7 +331,7 @@ class JavaScriptTestCase(TrialTestCase):
 
         @raise NotSupported: If any one of the dependencies is not satisfied.
         """
-        js = consolejstest.findJavascriptInterpreter()
+        js = findJavascriptInterpreter()
         if js is None:
             raise NotSupported("Could not find JavaScript interpreter")
         if subunit is None:
@@ -336,7 +356,7 @@ class JavaScriptTestCase(TrialTestCase):
 Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
 """ % {'module': testModule}
         jsfile = self._writeToTemp(js)
-        scriptFile = self._writeToTemp(consolejstest.generateTestScript(jsfile))
+        scriptFile = self._writeToTemp(generateTestScript(jsfile))
         return scriptFile
 
 
@@ -359,23 +379,26 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
             result.addSkip(self, str(e))
             result.stopTest(self)
             return
-        js = consolejstest.findJavascriptInterpreter()
+        js = findJavascriptInterpreter()
         script = self.makeScript(self.testMethod())
-        protocol = subunit.TestProtocolServer(result)
+        server = subunit.TestProtocolServer(result)
+        protocol = TestProtocolLineReceiverServer(server)
 
         # What this *SHOULD BE*
-        # d = getProcessOutput(js, (script,))
-        # d.addCallback(StringIO)
-        # d.addCallback(protocol.readFrom)
-        # return d
+        # spawnProcess(protocol, js, (script,))
+        # return protocol.someDisconnectCallback()
 
         # However, *run cannot return a Deferred profanity profanity profanity
         # profanity*, so instead it is *profanity* this:
         def run():
             r, w = popen2([js, script])
-            return r.read()
-        output = self._runWithSigchild(run)
-        protocol.readFrom(StringIO(output))
+            while True:
+                bytes = r.read(4096)
+                if bytes:
+                    protocol.dataReceived(bytes)
+                else:
+                    break
+        self._runWithSigchild(run)
 
 
 
@@ -386,7 +409,7 @@ def setJavascriptInterpreterOrSkip(testCase):
     assign the path to the interpreter executable to
     C{testCase.javascriptInterpreter}
     """
-    script = consolejstest.findJavascriptInterpreter()
+    script = findJavascriptInterpreter()
     if script is None:
         testCase.skip = "No JavaScript interpreter available."
     else:

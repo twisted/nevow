@@ -1,21 +1,17 @@
-# Copyright (c) 2006 Divmod.
+# -*- test-case-name: nevow.test.test_jsutil -*-
+# Copyright (c) 2004-2007 Divmod.
 # See LICENSE for details.
 
-"""
-Out-of-browser conversion of javascript test modules that use Athena's "//
-import" syntax into monolithic scripts suitable for feeding into a plain
-javascript interpreter
-"""
-
-from sys import argv
+from twisted.python.procutils import which
 from twisted.python.util import sibpath
-from twisted.python import procutils
-import nevow, subprocess
+
+import nevow
+from nevow.athena import LivePage, allJavascriptPackages, JSModule
 
 _DUMMY_MODULE_NAME = 'ConsoleJSTest'
 
 def getDependencies(fname, ignore=('MochiKit.DOM',),
-                    bootstrap=nevow.athena.LivePage.BOOTSTRAP_MODULES,
+                    bootstrap=LivePage.BOOTSTRAP_MODULES,
                     packages=None):
     """
     Get the javascript modules that the code in the file with name C{fname}
@@ -28,26 +24,26 @@ def getDependencies(fname, ignore=('MochiKit.DOM',),
     @type ignore: sequence
 
     @param boostrap: names of javascript modules to always include, regardless
-    of explicit dependencies (defaults to L{nevow.athena.LivePage}'s list of
+    of explicit dependencies (defaults to L{LivePage}'s list of
     bootstrap modules)
     @type boostrap: sequence
 
     @param packages: all javascript packages we know about.  defaults to the
-    result of L{nevow.athena.allJavascriptPackages}
+    result of L{allJavascriptPackages}
     @type packages: C{dict}
 
     @return: modules included by javascript in file named C{fname}
-    @rtype: dependency-ordered list of L{nevow.athena.JSModule} instances
+    @rtype: dependency-ordered list of L{JSModule} instances
     """
     if packages is None:
-        packages = nevow.athena.allJavascriptPackages()
+        packages = allJavascriptPackages()
 
     # TODO if a module is ignored, we should ignore its dependencies
-    bootstrapModules = [nevow.athena.JSModule.getOrCreate(m, packages)
+    bootstrapModules = [JSModule.getOrCreate(m, packages)
                         for m in bootstrap if m not in ignore]
 
     packages[_DUMMY_MODULE_NAME] = fname
-    module = nevow.athena.JSModule(_DUMMY_MODULE_NAME, packages)
+    module = JSModule(_DUMMY_MODULE_NAME, packages)
 
     return (bootstrapModules +
             [dep for dep in module.allDependencies()
@@ -63,7 +59,7 @@ def findJavascriptInterpreter():
     the executable path. If not, return None.
     """
     for script in ['smjs', 'js']:
-        _jsInterps = procutils.which(script)
+        _jsInterps = which(script)
         if _jsInterps:
             return _jsInterps[0]
     return None
@@ -88,7 +84,7 @@ def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent =
 
     @param dependencies: the modules the script depends on.  Defaults to the
     result of L{getDependencies}
-    @type dependencies: dependency-ordered list of L{nevow.athena.JSModule}
+    @type dependencies: dependency-ordered list of L{JSModule}
     instances
 
     @return: converted javascript source text
@@ -119,14 +115,3 @@ def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent =
     js.append(file(fname).read())
 
     return '\n'.join(js)
-
-def run():
-    """
-    Read a single filename from the command line arguments, replace any module
-    imports with the body of the module in question and pipe the result to the
-    spidermonkey javascript interpreter
-
-    """
-    # TODO: support more than one filename at a time
-    js = generateTestScript(argv[1])
-    subprocess.Popen('/usr/bin/smjs', stdin=subprocess.PIPE).communicate(js)

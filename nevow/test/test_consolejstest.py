@@ -2,20 +2,21 @@
 # See LICENSE for details.
 
 """
-Test the dependency tracking and javascript generation of
-L{nevow.scripts.consolejstest}
+Test the dependency tracking and javascript generation code in
+L{nevow.jsutil}.
 """
 
 from textwrap import dedent
 from twisted.internet.utils import getProcessOutput
 from twisted.trial.unittest import TestCase
-from nevow.scripts import consolejstest
 from nevow.testutil import setJavascriptInterpreterOrSkip
+from nevow.jsutil import getDependencies, generateTestScript
 from nevow import athena
 
 class _ConsoleJSTestMixin:
     """
-    Things that might be useful for testing L{nevow.scripts.consolejstest}
+    Things that might be useful for testing JavaScript interaction functions
+    from L{nevow.testutil}.
     """
 
     def _getPackages(self):
@@ -58,41 +59,40 @@ class _ConsoleJSTestMixin:
 
 class DependenciesTestCase(TestCase, _ConsoleJSTestMixin):
     """
-    Tests for L{nevow.scripts.consolejstest.getDependencies}
+    Tests for L{getDependencies}
     """
-
     def test_getDependenciesNoModules(self):
         """
-        Test that L{nevow.scripts.consolejstest.getDependencies} returns the
-        empty list when the js module it's passed doesn't explicitly import
-        anything and the C{bootstrap} and C{ignore} parameters are empty
+        Test that L{getDependencies} returns the empty list when the js module
+        it's passed doesn't explicitly import anything and the C{bootstrap} and
+        C{ignore} parameters are empty
         """
-        deps = consolejstest.getDependencies(
+        deps = getDependencies(
                 self._outputToTempFile(''), ignore=(), bootstrap=())
         self.assertEqual(len(deps), 0)
 
+
     def test_getDependenciesBootstrap(self):
         """
-        Test that L{nevow.scripts.consolejstest.getDependencies} returns a
-        list containing only the bootstrap modules when the js module it's
-        passed doesn't explicitly import anything and the "ignore" parameter
-        is empty
+        Test that L{getDependencies} returns a list containing only the
+        bootstrap modules when the js module it's passed doesn't explicitly
+        import anything and the "ignore" parameter is empty.
         """
         bootstrap = ['ConsoleJSTestFoo.Bar', 'ConsoleJSTestFoo.Baz']
 
-        deps = consolejstest.getDependencies(
+        deps = getDependencies(
                 self._outputToTempFile(''),
                 ignore=(),
                 bootstrap=bootstrap,
                 packages=self._getPackages())
         self.assertEqual([d.name for d in deps], bootstrap)
 
+
     def test_getDependenciesIgnore(self):
         """
-        Test that L{nevow.scripts.consolejstest.getDependencies} observes the
-        C{ignore} parameter
+        Test that L{getDependencies} observes the C{ignore} parameter
         """
-        deps = consolejstest.getDependencies(
+        deps = getDependencies(
                 self._outputToTempFile(
                     dedent(
                         '''
@@ -107,13 +107,13 @@ class DependenciesTestCase(TestCase, _ConsoleJSTestMixin):
 
     def test_getDependenciesAll(self):
         """
-        Test that L{nevow.scripts.consolejstest.getDependencies} works if we
-        import a single module which in turn depends on multiple modules
+        Test that L{getDependencies} works if we import a single module which
+        in turn depends on multiple modules
         """
         fname = self._outputToTempFile(
             '// import ConsoleJSTestFoo.Baz')
 
-        deps = consolejstest.getDependencies(
+        deps = getDependencies(
                 fname,
                 ignore=(),
                 bootstrap=(),
@@ -125,14 +125,13 @@ class DependenciesTestCase(TestCase, _ConsoleJSTestMixin):
 
 class JSGenerationTestCase(TestCase, _ConsoleJSTestMixin):
     """
-    Tests for L{nevow.scripts.consolejstest.generateTestScript}
+    Tests for L{generateTestScript}
     """
-
     javascriptInterpreter = None
 
     def test_generateTestScript(self):
         """
-        Test for L{nevow.scripts.consolejstest.generateTestScript}
+        Test for L{generateTestScript}
         """
         fname = self._outputToTempFile(
                     dedent(
@@ -142,13 +141,13 @@ class JSGenerationTestCase(TestCase, _ConsoleJSTestMixin):
                         print("hello from the test module");
                         '''))
 
-        deps = consolejstest.getDependencies(
+        deps = getDependencies(
                 fname,
                 ignore=(),
                 bootstrap=(),
                 packages=self._getPackages())
 
-        script = consolejstest.generateTestScript(
+        script = generateTestScript(
                     fname,
                     dependencies=deps)
 
