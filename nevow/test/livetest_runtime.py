@@ -63,3 +63,11 @@ class FindInRootNode(testcase.TestCase):
 
 class Standalone(testcase.TestCase):
     jsClass = u'Divmod.Runtime.Tests.Standalone'
+
+
+
+class ElementPosition(testcase.TestCase):
+    """
+    Tests for the element position-getting methods
+    """
+    jsClass = u'Divmod.Runtime.Tests.ElementPosition'

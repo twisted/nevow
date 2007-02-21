@@ -212,3 +212,30 @@ Divmod.Runtime.Tests.FindInRootNode.methods(
         self.assertEqual(error.attribute, 'foo');
         self.assertEqual(error.value, 'bar');
     });
+
+Divmod.Runtime.Tests.ElementPosition = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.ElementPosition');
+/**
+ * Tests for L{Divmod.Runtime}'s element position-getting methods
+ */
+Divmod.Runtime.Tests.ElementPosition.methods(
+    /**
+     * Test L{Divmod.Runtime.Platform.findPosX}
+     */
+    function test_findPosX(self) {
+        var div = document.createElement('div');
+        div.style.position = 'absolute';
+        div.style.left = '8px';
+        document.body.appendChild(div);
+        self.assertEqual(parseInt(Divmod.Runtime.theRuntime.findPosX(div)), 8);
+    },
+
+    /**
+     * Test L{Divmod.Runtime.Platform.findPosY}
+     */
+    function test_findPosY(self) {
+        var div = document.createElement('div');
+        div.style.position = 'absolute';
+        div.style.top = '5px';
+        document.body.appendChild(div);
+        self.assertEqual(parseInt(Divmod.Runtime.theRuntime.findPosY(div)), 5);
+    });

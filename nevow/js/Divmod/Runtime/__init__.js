@@ -154,6 +154,44 @@ Divmod.Runtime.Platform.methods(
     },
 
     /**
+     * Find the X position of a node C{node} on the page in a cross-browser
+     * fashion
+     *
+     * @rtype: C{Number}
+     */
+    function findPosX(self, node) {
+        var curleft = 0;
+        if (node.offsetParent) {
+            while (node.offsetParent) {
+                curleft += node.offsetLeft
+                node = node.offsetParent;
+            }
+        } else if (node.x) {
+            curleft += node.x;
+        }
+        return curleft;
+    },
+
+    /**
+     * Find the Y position of a node C{node} on the page in a cross-browser
+     * fashion
+     *
+     * @rtype: C{Number}
+     */
+    function findPosY(self, node) {
+        var curtop = 0;
+        if (node.offsetParent) {
+            while (node.offsetParent) {
+                curtop += node.offsetTop
+                node = node.offsetParent;
+            }
+        } else if (node.y) {
+            curtop += node.y;
+        }
+        return curtop;
+    },
+
+    /**
      * Determine the dimensions of the page (browser viewport).
      * This method only considers the visible portion of the page
      * (i.e. how much of it can fit on the screen at once).
