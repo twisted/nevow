@@ -2,7 +2,7 @@ import os, string, random
 
 from twisted.internet import task
 
-from nevow import canvas, page
+from nevow import canvas, rend
 
 
 DEBUG = False
@@ -103,7 +103,7 @@ class CanvasDemo(canvas.Canvas):
         canvas.S = S = canvas.sound('http://localhost/amen.mp3')
         S.play(timesLoop=5)
         for x in range(random.randint(1, 4)):
-            canvas.pen(
+            canvas.pen( 
                 random.randint(1, 10),
                 random.randint(0, 0xffffff),
                 random.randint(0, 100))
@@ -160,9 +160,9 @@ class CanvasDemo(canvas.Canvas):
             canvas.x += 15
 
 
-class Reloader(page.Page):
+class Reloader(rend.Page):
     canvas = None
-    def locateChild(self, req, segs):
+    def locateChild(self, ctx, segs):
         if segs == ('',):
             reload(__import__(__name__))
             self.canvas = CanvasDemo(words)
