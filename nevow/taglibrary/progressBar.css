@@ -5,7 +5,7 @@
     border-width: 1px;
 }
 
-.progressBar > div {
+.progressBarDiv {
     height: 15px;
     background-color: #aaaaaa;
 }

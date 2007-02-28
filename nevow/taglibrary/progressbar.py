@@ -41,7 +41,7 @@ class ProgressBarComponent(object):
         name = data.get('name', 'theProgressBar')
         percent = data.get('percent', 0)
         yield t.div(class_='progressBar', id_=str(name))[
-            t.div(style='width: %i%%'%percent) ]
+            t.div(class_ ='progressBarDiv', style='width: %i%%'%percent) ]
         yield t.script(type='text/javascript')[
             component[name].init('new ProgressBar(%r)'%name),
             #component[name].setPercent(percent)
