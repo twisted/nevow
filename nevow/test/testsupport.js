@@ -31,6 +31,48 @@ function runTests(testFunctions) {
 }
 
 /**
+ * Throw an error if the given object is true.
+ *
+ * @param a: The object of which to test the truth value.
+ *
+ * @param msg: An optional string which will used to create the thrown
+ * Error if specified.
+ *
+ * @throw Error: If the given object is true, an error is thrown.
+ *
+ * @return: C{undefined}
+ */
+function failIf(a, msg) {
+    if (a) {
+        if (msg == undefined) {
+            msg = a;
+        }
+        throw new Error(msg);
+    }
+}
+
+/**
+ * Throw an error if the given object is false.
+ *
+ * @param a: The object of which to test the truth value.
+ *
+ * @param msg: An optional string which will used to create the thrown
+ * Error if specified.
+ *
+ * @throw Error: If the given object is false, an error is thrown.
+ *
+ * @return: C{undefined}
+ */
+function failUnless(a, msg) {
+    if (!a) {
+        if (msg == undefined) {
+            msg = a;
+        }
+        throw new Error(msg);
+    }
+}
+
+/**
  * Throw an error unless the given condition is true.
  *
  * @type cond: boolean
