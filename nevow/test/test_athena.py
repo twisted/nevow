@@ -5,6 +5,7 @@ from itertools import izip
 from twisted.trial import unittest
 from twisted.python import util
 from twisted.web import microdom
+from twisted.internet.defer import Deferred
 
 from nevow import athena, rend, tags, flat, loaders
 from nevow.inevow import IRequest
@@ -811,3 +812,165 @@ class Transport(unittest.TestCase):
         """
         self.rdm.close()
         self.failIf(self.scheduled, "Expected no scheduled calls.")
+
+
+class LiveMixinTestsMixin:
+    """
+    Test-method defining mixin class for L{LiveElement} and L{LiveFragment} testing.
+
+    @ivar elementFactory: No-argument callable which returns an object against
+    which tests will be run.
+    """
+    def elementFactory(self):
+        raise NotImplementedError("%s did not implement elementFactory" % (self,))
+
+
+    def test_localDetach(self):
+        """
+        Verify that L{_athenaDetachServer} removes the element from its parent
+        and disassociates it from the page locally.
+        """
+        page = athena.LivePage()
+        element = self.elementFactory()
+        element.setFragmentParent(page)
+        element._athenaDetachServer()
+        self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertIdentical(element.fragmentParent, None)
+        self.assertIdentical(element.page, None)
+
+
+    def test_localDetachWithChildren(self):
+        """
+        Similar to L{test_localDetach}, but cover the case where the removed
+        element has a child of its own and verify that that child is also
+        detached.
+        """
+        page = athena.LivePage()
+        element = self.elementFactory()
+        element.setFragmentParent(page)
+        child = self.elementFactory()
+        child.setFragmentParent(element)
+        element._athenaDetachServer()
+        self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertIdentical(element.fragmentParent, None)
+        self.assertIdentical(element.page, None)
+        self.assertNotIn(child, element.liveFragmentChildren)
+        self.assertIdentical(child.fragmentParent, None)
+        self.assertIdentical(child.page, None)
+
+
+    def test_detach(self):
+        """
+        Verify that L{detach} informs the client of the event and returns a
+        Deferred which fires when the client acknowledges this.
+        """
+        page = athena.LivePage()
+        element = self.elementFactory()
+        element.setFragmentParent(page)
+
+        calls = []
+        def callRemote(methodName):
+            d = Deferred()
+            calls.append((methodName, d))
+            return d
+        element.callRemote = callRemote
+
+        d = element.detach()
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], '_athenaDetachClient')
+        calls[0][1].callback(None)
+        self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertIdentical(element.fragmentParent, None)
+        self.assertIdentical(element.page, None)
+
+
+    def test_detachWithChildren(self):
+        """
+        Similar to L{test_detach}, but cover the case where the removed element
+        has a child of its own and verify that that child is also detached.
+        """
+        page = athena.LivePage()
+        element = self.elementFactory()
+        element.setFragmentParent(page)
+        child = self.elementFactory()
+        child.setFragmentParent(element)
+
+        calls = []
+        def callRemote(methodName):
+            d = Deferred()
+            calls.append((methodName, d))
+            return d
+        element.callRemote = callRemote
+        child.callRemote = callRemote
+
+        d = element.detach()
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], '_athenaDetachClient')
+        calls[0][1].callback(None)
+        self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertIdentical(element.fragmentParent, None)
+        self.assertIdentical(element.page, None)
+        self.assertNotIn(child, element.liveFragmentChildren)
+        self.assertIdentical(child.fragmentParent, None)
+        self.assertIdentical(child.page, None)
+
+
+    def test_localDetachCallback(self):
+        """
+        Verify that C{detached} is called when C{_athenaDetachServer} is
+        called.
+        """
+        page = athena.LivePage()
+        element = self.elementFactory()
+        element.setFragmentParent(page)
+
+        detachCall = []
+        def detached():
+            detachCall.append((element.fragmentParent, element.page))
+        element.detached = detached
+
+        element._athenaDetachServer()
+        self.assertEqual(detachCall, [(None, None)])
+
+
+    def test_detachCallback(self):
+        """
+        Verify that C{detached} is called C{detach} is called locally.
+        """
+        page = athena.LivePage()
+        element = self.elementFactory()
+        element.setFragmentParent(page)
+
+        detachCall = []
+        def detached():
+            detachCall.append((element.fragmentParent, element.page))
+        element.detached = detached
+
+        calls = []
+        def callRemote(methodName):
+            d = Deferred()
+            calls.append(d)
+            return d
+        element.callRemote = callRemote
+
+        d = element.detach()
+
+        self.assertEqual(detachCall, [])
+        calls[0].callback(None)
+        self.assertEqual(detachCall, [(None, None)])
+
+
+
+class LiveElementTests(LiveMixinTestsMixin, unittest.TestCase):
+    """
+    Tests for L{nevow.athena.LiveElement}.
+    """
+    elementFactory = athena.LiveElement
+
+
+
+class LiveFragmentTests(LiveMixinTestsMixin, unittest.TestCase):
+    """
+    Tests for L{nevow.athena.LiveFragment}.
+    """
+    elementFactory = athena.LiveFragment

@@ -628,6 +628,12 @@ Nevow.Athena._recursivelyLoad = function _recursivelyLoad(widget) {
 Nevow.Athena.NoSuchMethod = Divmod.Error.subclass("Nevow.Athena.NoSuchMethod");
 
 
+/**
+ * Error class thrown when an attempt is made to remove a child from a widget
+ * which is not its parent.
+ */
+Nevow.Athena.NoSuchChild = Divmod.Error.subclass("Nevow.Athena.NoSuchChild");
+
 Nevow.Athena.Widget = Nevow.Athena.RemoteReference.subclass('Nevow.Athena.Widget');
 Nevow.Athena.Widget.methods(
     function __init__(self, widgetNode) {
@@ -788,6 +794,22 @@ Nevow.Athena.Widget.methods(
     },
 
     /**
+     * Remove the given child widget from this widget.
+     *
+     * @param child: A widget which is currently a child of this widget.
+     */
+    function removeChildWidget(self, child) {
+        for (var i = 0; i < self.childWidgets.length; ++i) {
+            if (self.childWidgets[i] === child) {
+                self.childWidgets.splice(i, 1);
+                child.setWidgetParent(null);
+                return;
+            }
+        }
+        throw Nevow.Athena.NoSuchChild();
+    },
+
+    /**
      * Remove all the child widgets from this widget.
      */
     function removeAllChildWidgets(self) {
@@ -795,6 +817,50 @@ Nevow.Athena.Widget.methods(
             self.childWidgets[i].setWidgetParent(null);
         }
         self.childWidgets = [];
+    },
+
+    /**
+     * Locally remove this widget from its parent and from the general widget
+     * tracking system.
+     */
+    function _athenaDetachClient(self) {
+        for (var i = 0; i < self.childWidgets.length; ++i) {
+            self.childWidgets[i]._athenaDetachClient();
+        }
+        if (self.widgetParent !== null) {
+            self.widgetParent.removeChildWidget(self);
+        }
+        delete Nevow.Athena.Widget._athenaWidgets[self.objectID];
+        self.detached();
+    },
+
+    /**
+     * Disconnect this widget from its server-side component and remove it from
+     * the tracking collection.
+     *
+     * This function will *not* work correctly if the parent/child
+     * relationships of this widget do not exactly match the parent/child
+     * relationships of the corresponding fragments or elements on the server.
+     */
+    function detach(self) {
+        var result = self.callRemote('_athenaDetachServer');
+        result.addCallback(
+            function(ignored) {
+                self._athenaDetachClient();
+            });
+        return result;
+    },
+
+    /**
+     * Application-level callback invoked when L{detach} succeeds or when the
+     * server invokes the detach logic from its side.
+     *
+     * This is invoked after this widget has been disassociated from its parent
+     * and from the page.
+     *
+     * Override this.
+     */
+    function detached(self) {
     });
 
 

@@ -1219,6 +1219,47 @@ class _LiveMixin(object):
             varargs)
 
 
+    def _athenaDetachServer(self):
+        """
+        Locally remove this from its parent.
+        """
+        for ch in self.liveFragmentChildren:
+            ch._athenaDetachServer()
+        self.fragmentParent.liveFragmentChildren.remove(self)
+        self.fragmentParent = None
+        self.page = None
+        self.detached()
+    expose(_athenaDetachServer)
+
+
+    def detach(self):
+        """
+        Remove this from its parent after notifying the client that this is
+        happening.
+
+        This function will *not* work correctly if the parent/child
+        relationships of this widget do not exactly match the parent/child
+        relationships of the corresponding fragments or elements on the server.
+
+        @return: A L{Deferred} which will fire when the detach completes.
+        """
+        d = self.callRemote('_athenaDetachClient')
+        d.addCallback(lambda ign: self._athenaDetachServer())
+        return d
+
+
+    def detached(self):
+        """
+        Application-level callback invoked when L{detach} succeeds or when the
+        client invokes the detach logic from its side.
+
+        This is invoked after this fragment has been disassociated from its
+        parent and from the page.
+
+        Override this.
+        """
+
+
 
 class LiveFragment(_LiveMixin, rend.Fragment):
     """

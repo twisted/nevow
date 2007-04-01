@@ -378,9 +378,10 @@ class WidgetRequiresImport(LiveElement):
 class DynamicWidgetInstantiation(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.DynamicWidgetInstantiation'
 
-    def getDynamicWidget(self):
+
+    def makeDynamicWidget(self):
         """
-        Return a newly created LiveFragment.
+        Return a newly created LiveFragment with no parent.
         """
         class DynamicFragment(athena.LiveFragment):
             docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment')))
@@ -389,11 +390,19 @@ class DynamicWidgetInstantiation(testcase.TestCase):
             def someMethod(self):
                 return u'foo'
             expose(someMethod)
+        return DynamicFragment()
 
-        f = DynamicFragment()
+
+    def getDynamicWidget(self):
+        """
+        Return a newly created LiveFragment with this LiveFragment as its
+        parent.
+        """
+        f = self.makeDynamicWidget()
         f.setFragmentParent(self)
         return f
     expose(getDynamicWidget)
+
 
     def getDynamicWidgetLater(self):
         """
@@ -458,6 +467,55 @@ class DynamicWidgetInstantiation(testcase.TestCase):
         f.setFragmentParent(self)
         return f
     expose(getNonXHTMLWidget)
+
+
+    def getAndRememberDynamicWidget(self):
+        """
+        Call and return the result of L{getDynamicWidget}, but also save the
+        result as an attribute on self for later inspection.
+        """
+        self.savedWidget = self.getDynamicWidget()
+        return self.savedWidget
+    expose(getAndRememberDynamicWidget)
+
+
+    def getAndSaveDynamicWidgetWithChild(self):
+        """
+        Return a LiveFragment which is a child of this widget and which has a
+        child.
+        """
+        childFragment = self.makeDynamicWidget()
+        class DynamicFragment(athena.LiveFragment):
+            docFactory = loaders.stan(
+                tags.div(render=tags.directive('liveFragment'))[
+                    tags.div(render=tags.directive('child'))])
+            jsClass = u'Nevow.Athena.Tests.DynamicWidgetClass'
+
+            def render_child(self, ctx):
+                childFragment.setFragmentParent(self)
+                return childFragment
+
+        f = DynamicFragment()
+        f.setFragmentParent(self)
+        return f
+    expose(getAndSaveDynamicWidgetWithChild)
+
+
+    def assertSavedWidgetRemoved(self):
+        """
+        Verify that the saved widget is no longer a child of this fragment.
+        """
+        self.assertNotIn(self.savedWidget, self.liveFragmentChildren)
+    expose(assertSavedWidgetRemoved)
+
+
+    def detachSavedDynamicWidget(self):
+        """
+        Initiate a server-side detach on the saved widget.
+        """
+        return self.savedWidget.detach()
+    expose(detachSavedDynamicWidget)
+
 
 
 class GettingWidgetlessNodeRaisesException(testcase.TestCase):

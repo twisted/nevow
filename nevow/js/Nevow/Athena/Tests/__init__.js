@@ -1,4 +1,3 @@
-
 // import Divmod.Runtime
 // import Nevow.Athena
 
@@ -427,13 +426,13 @@ Nevow.Athena.Tests.DynamicWidgetClass.methods(
  */
 Nevow.Athena.Tests.DynamicWidgetInstantiation = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.DynamicWidgetInstantiation');
 Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
-    /** 
+    /**
      * Test that a s->c C{callRemote} can pass a widget.
      *
      * In other words, test that this python code:
      * C{self.callRemote('takeWidget', widget)} works correctly.
      */
-    function test_childWidgetAsArgument(self) { 
+    function test_childWidgetAsArgument(self) {
         // ask the server to make a remote call
         var d = self.callRemote("getDynamicWidgetLater");
         d.addCallback(
@@ -453,30 +452,30 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
         return d;
     },
 
-    /** 
+    /**
      * A callable which the server can C{callRemote}, passing a widget as an
-     * argument.  C{widgetinfo} is the marshalled form of the widget.  
-     * 
+     * argument.  C{widgetinfo} is the marshalled form of the widget.
+     *
      * @return null because we cannot, at present, serialize widgets from
      * client to server.
      */
     function sendWidgetAsArgument(self, widgetinfo) {
         self._childWidgetAsArgumentDeferred =
                 self.addChildWidgetFromWidgetInfo(widgetinfo);
-        return null; 
+        return null;
     },
 
-    /** 
+    /**
      * Test that widgets with non-XHTML namespaces can be sent server to
      * client.
      *
      * The widget returned by the server should be rebuilt with the same
      * C{namespaceURI} it was given at render time.
      */
-    function test_nonXHTMLWidgetReturn(self) { 
+    function test_nonXHTMLWidgetReturn(self) {
         var result = self.callRemote("getNonXHTMLWidget");
         result.addCallback(
-            function _(info) { 
+            function _(info) {
                 return self.addChildWidgetFromWidgetInfo(info)
             });
         result.addCallback(
@@ -555,6 +554,39 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
     },
 
     /**
+     * Verify that removeChildWidget sets the specified widget's parent to null
+     * and removes it from the parent's children array.
+     */
+    function test_removeChildWidget(self) {
+        var result = self.callRemote('getDynamicWidget');
+        result.addCallback(
+            function(widgetInfo) {
+                return self.addChildWidgetFromWidgetInfo(widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                self.removeChildWidget(widget);
+                self.assertEqual(widget.widgetParent, null);
+                for (var i = 0; i < self.childWidgets.length; ++i) {
+                    self.assertNotEqual(self.childWidgets[i], widget);
+                }
+            });
+        return result;
+    },
+
+    /**
+     * Verify that removeChildWidget throws the appropriate error when an
+     * attempt is made to remove a child from a widget which is not its parent.
+     */
+    function test_invalidRemoveChildWidget(self) {
+        self.assertThrows(
+            Nevow.Athena.NoSuchChild,
+            function() {
+                self.removeChildWidget({});
+            });
+    },
+
+    /**
      * Test that removeAllChildWidgets leaves the child widget list empty
      * and ensures that the removed widgets have a null parent.
      */
@@ -571,6 +603,183 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
                 self.assertEqual(self.childWidgets.length, 0);
             });
         return result;
+    },
+
+    /**
+     * Helper for L{test_detachOrphan} and L{test_serverSideDetachOrphan}.
+     *
+     * @param detach: A one-argument callable which will be invoked with a
+     * widget and should detach it in whatever way is being tested and return a
+     * Deferred which fires when the detach has been completed.
+     */
+    function _detachTest(self, detach) {
+        var result = self.callRemote('getAndRememberDynamicWidget');
+        result.addCallback(
+            function(widgetInfo) {
+                return self.addChildWidgetFromWidgetInfo(widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                /*
+                 * Orphan it.
+                 */
+                self.removeChildWidget(widget);
+
+                /*
+                 * Sanity check
+                 */
+                self.failUnless(
+                    widget.objectID in Nevow.Athena.Widget._athenaWidgets);
+
+                /*
+                 * Actually get rid of it.
+                 */
+                var d = detach(widget);
+
+                d.addCallback(
+                    function(ignored) {
+                        return widget;
+                    });
+                return d
+            });
+        result.addCallback(
+            function(widget) {
+                /*
+                 * Locally, athena should not be tracking or referencing this
+                 * object any more.
+                 */
+                self.failIf(
+                    widget.objectID in Nevow.Athena.Widget._athenaWidgets);
+
+                /*
+                 * The server should also have forgotten about it.
+                 */
+                return self.callRemote("assertSavedWidgetRemoved");
+            });
+        return result;
+    },
+
+    /**
+     * Verify that a widget with no parent can be disassociated from its
+     * server-side component and removed from Athena's tracking.
+     */
+    function test_detachOrphan(self) {
+        return self._detachTest(
+            function(widget) {
+                return widget.detach();
+            });
+    },
+
+    /**
+     * Similar to L{test_detachOrphan}, but perform the detach using the
+     * server-side API.
+     */
+    function test_serverSideDetachOrphan(self) {
+        return self._detachTest(
+            function(widget) {
+                return self.callRemote('detachSavedDynamicWidget');
+            });
+    },
+
+    /**
+     * Helper for L{test_detachedCallback} and L{test_remoteDetachedCallback}.
+     *
+     * @param detach: A one-argument callable which will be invoked with a
+     * widget and should detach it in whatever way is being tested and return a
+     * Deferred which fires when the detach has been completed.
+     */
+    function _detachedCallbackTest(self, detach) {
+        var detachCalls = [];
+        var result = self.callRemote('getAndRememberDynamicWidget');
+        result.addCallback(
+            function(widgetInfo) {
+                return self.addChildWidgetFromWidgetInfo(widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                /*
+                 * Make sure we notice the detached callback.
+                 */
+                function detached() {
+                    var id = widget.objectID;
+                    var notWidget = Nevow.Athena.Widget._athenaWidgets[id];
+                    detachCalls.push([widget.widgetParent, notWidget]);
+                };
+
+                widget.detached = detached;
+
+                /*
+                 * Do the detach.
+                 */
+                return detach(widget);
+            });
+        result.addCallback(
+            function(ignored) {
+                self.assertEqual(detachCalls.length, 1);
+                self.assertEqual(detachCalls[0][0], null);
+                self.assertEqual(detachCalls[0][1], undefined);
+            });
+        return result;
+    },
+
+    /**
+     * Verify that the C{detached} widget callback is invoked when a widget is
+     * detached from this side of the connection.
+     */
+    function test_detachedCallback(self) {
+        return self._detachedCallbackTest(
+            function(widget) {
+                return widget.detach();
+            });
+    },
+
+    function _testDetachWithChildren(self, detach) {
+        var parent = null;
+        var child = null;
+        var result = self.callRemote('getAndSaveDynamicWidgetWithChild');
+        result.addCallback(
+            function(widgetInfo) {
+                return self.addChildWidgetFromWidgetInfo(widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                parent = widget;
+                child = widget.childWidgets[0];
+                return widget.detach();
+            });
+        result.addCallback(
+            function(ignored) {
+                self.assertEqual(parent.childWidgets.length, 0);
+                self.assertEqual(parent.widgetParent, null);
+                self.assertEqual(child.widgetParent, null);
+
+                var widgets = Nevow.Athena.Widget._athenaWidgets;
+                self.failIf(parent.objectID in widgets);
+                self.failIf(child.objectID in widgets);
+            });
+        return result;
+    },
+
+    /**
+     * Like C{test_detach}, but cover the case where a detached widget has
+     * children itself.  Verify that the children are detached as well.
+     */
+    function test_detachWithChildren(self) {
+        return self._testDetachWithChildren(
+            function(widget) {
+                return widget.detach();
+            });
+    },
+
+    /**
+     * Like C{test_detach}, but cover the case where a detached widget has
+     * children itself.  Verify that the children are detached as well.
+     */
+    function test_serverSideDetachWithChildren(self) {
+        return self._testDetachWithChildren(
+            function(widget) {
+                return widget.callRemote('detachSavedDynamicWidget');
+            });
     },
 
     /**
