@@ -529,3 +529,11 @@ class RemoteMethodErrorShowsDialog(testcase.TestCase):
     def raiseValueError(self):
         raise ValueError('hi')
     athena.expose(raiseValueError)
+
+
+
+class DelayedCallTests(testcase.TestCase):
+    """
+    Tests for the behavior of scheduling timed calls in the client.
+    """
+    jsClass = u'Nevow.Athena.Tests.DelayedCallTests'

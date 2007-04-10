@@ -872,3 +872,93 @@ Nevow.Athena.Tests.RemoteMethodErrorShowsDialog.methods(
                 return waitD;
             });
     });
+
+
+Nevow.Athena.Tests.DelayedCallTests = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.DelayedCallTests');
+Nevow.Athena.Tests.DelayedCallTests.methods(
+    /**
+     * Verify correct behavior in the trivial case of a call scheduled for a
+     * short period of time in the future.
+     */
+    function test_callLater(self) {
+        var result = Divmod.Defer.Deferred();
+        var finished = false;
+        function delayed() {
+            finished = true;
+            result.callback(null);
+        };
+        self.callLater(0, delayed);
+        self.failIf(finished);
+        return result;
+    },
+
+    /**
+     * Verify that when a DelayedCall is cancelled, it does not run.
+     */
+    function test_cancelDelayedCall(self) {
+        var finished = false;
+        function delayed() {
+            finished = true;
+        };
+        var call = self.callLater(0, delayed);
+        call.cancel();
+
+        /*
+         * Let a little time pass and then make sure the above call never ran.
+         */
+        var result = Divmod.Defer.Deferred();
+        var counter = 3;
+        function check() {
+            if (counter > 0) {
+                counter -= 1;
+                self.callLater(0, check);
+                return;
+            }
+            try {
+                self.failIf(finished);
+            } catch (err) {
+                result.errback(err);
+                return;
+            }
+            result.callback(null);
+        };
+        self.callLater(0, check);
+        return result;
+    },
+
+    /**
+     * Verify that three calls separately scheduled for different times run in
+     * the appropriate order.
+     */
+    function test_callLaterOrdering(self) {
+        var result = Divmod.Defer.Deferred();
+        var calls = [];
+        function first() {
+            calls.push("first");
+        };
+        function second() {
+            calls.push("second");
+        };
+        function third() {
+            calls.push("third");
+            result.callback(null);
+        };
+
+        /*
+         * This also happens to serve as a test for the seconds/milliseconds
+         * conversion code, since sub-millisecond fractional times are
+         * collapsed to 0 (at least by Firefox 1.5).
+         */
+        self.callLater(0.02, second);
+        self.callLater(0.03, third);
+        self.callLater(0.01, first);
+
+        result.addCallback(
+            function(ignored) {
+                self.assertEqual(calls.length, 3);
+                self.assertEqual(calls[0], "first");
+                self.assertEqual(calls[1], "second");
+                self.assertEqual(calls[2], "third");
+            });
+        return result;
+    });

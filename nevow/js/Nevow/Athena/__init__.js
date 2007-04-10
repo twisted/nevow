@@ -776,6 +776,22 @@ Nevow.Athena.Widget.methods(
         self.widgetParent = widgetParent;
     },
 
+
+    /**
+     * Schedule a function to be called after a specified delay.
+     *
+     * @type seconds: number
+     * @param seconds: The number of seconds to wait.
+     *
+     * @type callable: function
+     * @param callable: The function to call after the delay.
+     *
+     */
+    function callLater(self, seconds, callable) {
+        return Divmod.Runtime.DelayedCall(seconds * 1000, callable);
+    },
+
+
     function nodeByAttribute(self, attrName, attrValue, /* optional */ defaultNode) {
         return Divmod.Runtime.theRuntime.nodeByAttribute(self.node, attrName, attrValue, defaultNode);
     },

@@ -24,6 +24,25 @@ Divmod.Runtime.NodeAttributeError.methods(
             " (programmer error).");
     });
 
+
+/**
+ * Wrapper around a lower-level scheduled timed call which provides additional
+ * useful operations.
+ */
+Divmod.Runtime.DelayedCall = Divmod.Class.subclass('Divmod.Runtime.DelayedCall');
+Divmod.Runtime.DelayedCall.methods(
+    function __init__(self, delay, callable) {
+        self._handle = setTimeout(callable, delay);
+    },
+
+    /**
+     * Unschedule this call so that it does not run.
+     */
+    function cancel(self) {
+        clearTimeout(self._handle);
+    });
+
+
 Divmod.Runtime.Platform = Divmod.Class.subclass("Divmod.Runtime.Platform");
 
 Divmod.Runtime.Platform.DOM_DESCEND = 'Divmod.Runtime.Platform.DOM_DESCEND';
