@@ -1,16 +1,27 @@
 
 import os, sets
 from itertools import izip
+from xml.dom.minidom import parseString
 
 from twisted.trial import unittest
 from twisted.python import util
-from twisted.web import microdom
 from twisted.internet.defer import Deferred
+from twisted.application.service import IServiceMaker
+from twisted.application.internet import TCPServer
+from twisted.python.reflect import qual
+from twisted.python.usage import UsageError
+from twisted.plugin import IPlugin
 
 from nevow import athena, rend, tags, flat, loaders
+from nevow.loaders import stan
+from nevow.athena import LiveElement
+from nevow.appserver import NevowSite
 from nevow.inevow import IRequest
 from nevow.context import WovenContext
 from nevow.testutil import FakeRequest, renderLivePage
+from nevow._widget_plugin import ElementRenderingLivePage
+
+from twisted.plugins.nevow_widget import widgetServiceMaker
 
 
 class _TestJSModule(athena.JSModule):
@@ -974,3 +985,129 @@ class LiveFragmentTests(LiveMixinTestsMixin, unittest.TestCase):
     Tests for L{nevow.athena.LiveFragment}.
     """
     elementFactory = athena.LiveFragment
+
+
+
+class DummyLiveElement(LiveElement):
+    """
+    Behaviorless Athena element used to test C{makeService}.
+    """
+
+
+
+class WidgetSubcommandTests(unittest.TestCase):
+    """
+    Test the twistd subcommand which runs a server to render a single Athena
+    widget.
+    """
+    def test_portOption(self):
+        """
+        Verify that the --port option adds an integer to the Options' port key.
+        """
+        options = widgetServiceMaker.options()
+        options['element'] = DummyLiveElement()
+        options.parseOptions(['--port', '3874'])
+        self.assertEqual(options['port'], 3874)
+        options.parseOptions(['--port', '65535'])
+        self.assertEqual(options['port'], 65535)
+
+
+    def test_invalidPortOption(self):
+        """
+        Verify that non-integer and out-of-range port numbers are rejected.
+        """
+        options = widgetServiceMaker.options()
+        options['element'] = DummyLiveElement()
+        self.assertRaises(UsageError, options.parseOptions, ['--port', 'hello world'])
+        self.assertRaises(UsageError, options.parseOptions, ['--port', '-7'])
+        self.assertRaises(UsageError, options.parseOptions, ['--port', '70000'])
+        self.assertRaises(UsageError, options.parseOptions, ['--port', '65536'])
+
+
+    def test_widgetOption(self):
+        """
+        Verify that the --element option adds a class to the Options' element
+        key.
+        """
+        options = widgetServiceMaker.options()
+        options.parseOptions(['--element', qual(DummyLiveElement)])
+        self.failUnless(isinstance(options['element'], DummyLiveElement))
+
+
+    def test_invalidWidgetOption(self):
+        """
+        Verify that specifying a non-existent class is rejected.
+        """
+        options = widgetServiceMaker.options()
+        self.assertRaises(
+            UsageError,
+            options.parseOptions, ['--element', qual(DummyLiveElement) + 'xxx'])
+        self.assertRaises(
+            UsageError,
+            options.parseOptions, ['--element', '-'])
+
+
+
+    def test_invalidMissingWidget(self):
+        """
+        Verify that a missing widget class is rejected.
+        """
+        options = widgetServiceMaker.options()
+        self.assertRaises(UsageError, options.parseOptions, [])
+
+
+    def test_defaultPort(self):
+        """
+        Verify that the default port number is 8080.
+        """
+        options = widgetServiceMaker.options()
+        options['element'] = DummyLiveElement()
+        options.parseOptions([])
+        self.assertEqual(options['port'], 8080)
+
+
+    def test_providesInterfaces(self):
+        """
+        Verify that the necessary interfaces for the object to be found as a
+        twistd subcommand plugin are provided.
+        """
+        self.failUnless(IPlugin.providedBy(widgetServiceMaker))
+        self.failUnless(IServiceMaker.providedBy(widgetServiceMaker))
+
+
+    def test_makeService(self):
+        """
+        Verify that the L{IService} creation function returns a service which
+        will run a Nevow site.
+        """
+        service = widgetServiceMaker.makeService({
+                'element': DummyLiveElement(),
+                'port': 8080,
+                })
+        self.failUnless(isinstance(service, TCPServer))
+        self.assertEqual(service.args[0], 8080)
+        self.failUnless(isinstance(service.args[1], NevowSite))
+        self.failUnless(isinstance(service.args[1].resource, ElementRenderingLivePage))
+        self.failUnless(isinstance(service.args[1].resource.element, DummyLiveElement))
+
+
+    def test_livePageRendering(self):
+        """
+        Verify that an L{ElementRenderingLivePage} instantiated with a
+        particular LiveElement properly renders that element.
+        """
+        element = DummyLiveElement()
+        element.jsClass = u'Dummy.ClassName'
+        element.docFactory = stan('the element')
+        page = ElementRenderingLivePage(element)
+        renderDeferred = renderLivePage(page)
+        def cbRendered(result):
+            document = parseString(result)
+            titles = document.getElementsByTagName('title')
+            self.assertEqual(len(titles), 1)
+            self.assertEqual(titles[0].firstChild.nodeValue, DummyLiveElement.__name__)
+            divs = document.getElementsByTagName('div')
+            self.assertEqual(len(divs), 1)
+            self.assertEqual(divs[0].firstChild.nodeValue, 'the element')
+        renderDeferred.addCallback(cbRendered)
+        return renderDeferred
