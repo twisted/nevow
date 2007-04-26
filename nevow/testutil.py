@@ -2,7 +2,8 @@
 # See LICENSE for details.
 
 import sys, signal
-from popen2 import popen2
+from popen2 import Popen3
+from os import WEXITSTATUS
 
 from zope.interface import implements
 
@@ -348,14 +349,39 @@ class JavaScriptTestCase(TrialTestCase):
         return fname
 
 
-    def makeScript(self, testModule):
+    def createSource(self, testModule):
+        """
+        Return a string of JavaScript source code which, when executed, will
+        run the JavaScript unit tests defined in the given module.
+
+        @type testModule: C{str}
+        @param testModule: The JavaScript module name which contains the
+        tests to run.
+
+        @rtype: C{str}
+        """
         js = """
 // import Divmod.UnitTest
 // import %(module)s
 
 Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
 """ % {'module': testModule}
-        jsfile = self._writeToTemp(js)
+        return js
+
+
+    def makeScript(self, testModule):
+        """
+        Write JavaScript source for executing the JavaScript unit tests in
+        the given JavaScript module to a file and return the name of that
+        file.
+
+        @type testModule: C{str}
+        @param testModule: The JavaScript module name which contains the
+        tests to run.
+
+        @rtype: C{str}
+        """
+        jsfile = self._writeToTemp(self.createSource(testModule))
         scriptFile = self._writeToTemp(generateTestScript(jsfile))
         return scriptFile
 
@@ -391,13 +417,20 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
         # However, *run cannot return a Deferred profanity profanity profanity
         # profanity*, so instead it is *profanity* this:
         def run():
-            r, w = popen2([js, script])
+            child = Popen3([js, script])
             while True:
-                bytes = r.read(4096)
+                bytes = child.fromchild.read(4096)
                 if bytes:
                     protocol.dataReceived(bytes)
                 else:
                     break
+            exitStatus = WEXITSTATUS(child.wait())
+            if exitStatus:
+                result.addError(
+                    self,
+                    (Exception,
+                     "JavaScript interpreter had error exit: %d" % (exitStatus,),
+                     None))
         self._runWithSigchild(run)
 
 

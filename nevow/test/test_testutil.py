@@ -3,10 +3,13 @@ Tests for L{nevow.testutil} -- a module of utilities for testing Nevow
 applications.
 """
 
+from unittest import TestResult
+
 from twisted.trial.unittest import TestCase
 from twisted.web.http import OK, BAD_REQUEST
 
-from nevow.testutil import FakeRequest, renderPage
+from nevow.testutil import (
+    FakeRequest, renderPage, JavaScriptTestCase, NotSupported)
 from nevow.url import root
 from nevow.rend import Page
 from nevow.loaders import stan
@@ -52,3 +55,23 @@ class TestFakeRequest(TestCase):
         req = FakeRequest()
         req.setResponseCode(BAD_REQUEST)
         self.assertEqual(req.code, BAD_REQUEST)
+
+
+class JavaScriptTests(TestCase):
+    """
+    Tests for the JavaScript UnitTest runner, L{JavaScriptTestCase}.
+    """
+    def test_unsuccessfulExit(self):
+        """
+        Verify that an unsuccessful exit status results in an error.
+        """
+        case = JavaScriptTestCase()
+        try:
+            case.checkDependencies()
+        except NotSupported:
+            raise SkipTest("Missing JS dependencies")
+
+        result = TestResult()
+        case.createSource = lambda testMethod: "throw new TypeError();"
+        case.run(result)
+        self.assertEqual(len(result.errors), 1)
