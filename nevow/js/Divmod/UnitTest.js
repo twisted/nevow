@@ -1,3 +1,5 @@
+// -*- test-case-name: nevow.test.test_javascript -*-
+
 /**
  * JavaScript unit testing framework, modeled on xUnit.
  */
@@ -31,6 +33,9 @@ Divmod.UnitTest.loadFromClass = function loadFromClass(testClass) {
  * C{false} otherwise.
  */
 Divmod.UnitTest.isTestCaseClass = function isTestCaseClass(klass) {
+    if (klass.subclassOf === undefined) {
+        return false;
+    }
     return klass.subclassOf(Divmod.UnitTest.TestCase);
 };
 

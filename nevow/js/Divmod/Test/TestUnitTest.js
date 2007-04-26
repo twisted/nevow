@@ -1,3 +1,5 @@
+// -*- test-case-name: nevow.test.test_javascript -*-
+
 /**
  * Tests for Divmod.UnitTest, the Javascript unit-testing framework.
  * Uses mock test cases provided by Divmod.Test.Mock.
@@ -42,6 +44,22 @@ Divmod.Test.TestUnitTest.AssertionTests.methods(
     function test_assert(self) {
         self.assertThrows(Divmod.UnitTest.AssertionError,
                           function () { self.assert(false, "message"); })
+    },
+
+    /**
+     * Verify that isTestCaseClass returns a positive result for TestCase
+     * subclasses and a negative result for other types of object.
+     */
+
+    function test_isTestCaseClass(self) {
+        self.assertIdentical(
+            true, Divmod.UnitTest.isTestCaseClass(
+                Divmod.Test.TestUnitTest.AssertionTests));
+        self.assertIdentical(
+            false, Divmod.UnitTest.isTestCaseClass(
+                Divmod.Test.TestUnitTest.AssertionTests()));
+        self.assertIdentical(
+            false, Divmod.UnitTest.isTestCaseClass(1));
     },
 
 
