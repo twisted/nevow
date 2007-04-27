@@ -1,3 +1,9 @@
+0.9.18 (2007-02-23):
+  - Athena 'connection lost' notification now styleable via the
+    'nevow-connection-lost' CSS class.
+  - The 'runjstests' script has been removed, now that JS tests can be
+    run with trial.
+
 0.9.17 (2006-12-08):
   - More efficient JSON string parsing.
   - Give FakeRequests a default status code of OK.  Accept all of
