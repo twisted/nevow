@@ -825,6 +825,38 @@ class Transport(unittest.TestCase):
         self.failIf(self.scheduled, "Expected no scheduled calls.")
 
 
+    def test_closeExcessOnReceived(self):
+        """
+        Test that any excess idle transports are closed when a message is received.
+        """
+        secondTransport = []
+        self.rdm.addOutput(mappend(self.transport))
+        self.rdm.addOutput(mappend(secondTransport))
+        d = self.rdm.basketCaseReceived(None, [0, []])
+        self.assertEquals(self.transport, [[]])
+        self.assertEquals(secondTransport, [[]])
+        self.failIf(d.called)
+
+
+    def test_closeExcessOnUnpaused(self):
+        """
+        Test that any excess idle transports are closed when the message
+        deliverer is unpaused.
+        """
+        secondTransport = []
+        self.rdm.pause()
+        self.rdm.pause()
+        self.rdm.addOutput(mappend(self.transport))
+        self.rdm.addOutput(mappend(secondTransport))
+        self.rdm.unpause()
+        self.assertEqual(self.transport, [])
+        self.assertEqual(secondTransport, [])
+        self.rdm.unpause()
+        self.assertEqual(self.transport, [[]])
+        self.assertEqual(secondTransport, [])
+
+
+
 class LiveMixinTestsMixin:
     """
     Test-method defining mixin class for L{LiveElement} and L{LiveFragment} testing.

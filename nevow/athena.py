@@ -534,15 +534,28 @@ class ReliableMessageDelivery(object):
         self._paused += 1
 
 
+    def _trySendMessages(self):
+        """
+        If we have pending messages and there is an available transport, then
+        consume it to send the messages.
+        """
+        if self.messages and self.outputs:
+            output, timeout = self.outputs.pop(0)
+            timeout.cancel()
+            if not self.outputs:
+                self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
+            self._sendMessagesToOutput(output)
+
+
     def unpause(self):
+        """
+        Decrement the pause counter and if the resulting state is not still
+        paused try to flush any pending messages and expend excess outputs.
+        """
         self._paused -= 1
         if self._paused == 0:
-            if self.messages and self.outputs:
-                output, timeout = self.outputs.pop(0)
-                timeout.cancel()
-                if not self.outputs:
-                    self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
-                self._sendMessagesToOutput(output)
+            self._trySendMessages()
+            self._flushOutputs()
 
 
     def addMessage(self, msg):
@@ -599,10 +612,36 @@ class ReliableMessageDelivery(object):
             self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
 
 
-    def _registerDeferredAsOutputChannel(self):
+    def _createOutputDeferred(self):
+        """
+        Create a new deferred, attaching it as an output.  If the current
+        state is not paused, try to flush any pending messages and expend
+        any excess outputs.
+        """
         d = defer.Deferred()
         self.addOutput(d.callback)
+        if not self._paused and self.outputs:
+            self._trySendMessages()
+            self._flushOutputs()
         return d
+
+
+    def _flushOutputs(self):
+        """
+        Use up all except for one output.
+
+        This provides ideal behavior for the default HTTP client
+        configuration, since only a maximum of two simultaneous connections
+        are allowed.  The remaining one output will let us signal the client
+        at will without preventing the client from establishing new
+        connections.
+        """
+        if self.outputs is None:
+            return
+        while len(self.outputs) > 1:
+            output, timeout = self.outputs.pop(0)
+            timeout.cancel()
+            output([self.outgoingAck, []])
 
 
     def basketCaseReceived(self, ctx, basketCase):
@@ -640,7 +679,7 @@ class ReliableMessageDelivery(object):
                             log.msg("Athena transport duplicate message, discarding: %r %r" %
                                     (self.livePage.clientID,
                                      seq))
-                    d = self._registerDeferredAsOutputChannel()
+                    d = self._createOutputDeferred()
                 finally:
                     self.unpause()
             else:
@@ -651,7 +690,8 @@ class ReliableMessageDelivery(object):
                      self.outgoingAck,
                      incomingMessages[0][0]))
         else:
-            d = self._registerDeferredAsOutputChannel()
+            d = self._createOutputDeferred()
+
         return d
 
 
