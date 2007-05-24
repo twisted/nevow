@@ -1,3 +1,12 @@
+0.9.19 (2007-04-27):
+  - Changed the styling of the progressbar to work on IE6.
+  - Athena.Widget.detach added, to allow widgets to cleanly be removed
+    from a page.
+  - Athena.Widget.callLater added, a wrapper around setTimeout and
+    clearTimeout.
+  - 'athena-widget' twistd command added, for starting a server which
+    serves a single LiveFragment or LiveElement.
+
 0.9.18 (2007-02-23):
   - Athena 'connection lost' notification now styleable via the
     'nevow-connection-lost' CSS class.
