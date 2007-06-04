@@ -114,22 +114,11 @@ Nevow.Athena.ReliableMessageDelivery.methods(
 
     function pause(self) {
         self._paused += 1;
-        var s = "";
-        for (var i = 0; i < self._paused; ++i) {
-            s += " *";
-        }
-        Divmod.debug("transport", s + "Pausing.");
     },
 
     function unpause(self) {
-        var s = "";
-        for (var i = 0; i < self._paused; ++i) {
-            s += " *";
-        }
-        Divmod.debug("transport", s + "Unpausing.");
         self._paused -= 1;
         if (self._paused == 0) {
-            Divmod.debug("transport", s + "And flushing");
             self.flushMessages();
         }
     },
@@ -327,10 +316,8 @@ Nevow.Athena._actionHandlers = {
         delete Nevow.Athena.remoteCalls[responseId];
 
         if (success) {
-            Divmod.debug('object', 'Callback');
             d.callback(result);
         } else {
-            Divmod.debug('object', 'Errback');
             d.errback(Divmod.namedAny(result[0]).apply(null, result[1]));
         }
     },
