@@ -94,11 +94,11 @@ class URL(object):
     fromString = classmethod(fromString)
 
     def fromRequest(klass, request):
-        import warnings
-        warnings.warn(
-            "[v0.4] URL.fromRequest will change behaviour soon. Use fromContext instead",
-            DeprecationWarning,
-            stacklevel=2)
+        """
+        Create a new L{URL} instance which is the same as the URL represented
+        by C{request} except that it includes only the path segments which have
+        already been processed.
+        """
         uri = request.prePathURL()
         if '?' in request.uri:
             uri += '?' + request.uri.split('?')[-1]
