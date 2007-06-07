@@ -31,3 +31,11 @@ class JSUnitTests(JavaScriptTestCase):
 
     def test_object(self):
         return 'Divmod.Test.TestObject'
+
+
+    def test_runtime(self):
+        return 'Divmod.Test.TestRuntime'
+
+
+    def test_widget(self):
+        return 'Nevow.Test.TestWidget'

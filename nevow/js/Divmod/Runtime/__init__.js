@@ -1,4 +1,4 @@
-
+// -*- test-case-name: nevow.test.test_javascript -*-
 // import Divmod
 // import Divmod.Base
 // import Divmod.Defer
@@ -576,8 +576,6 @@ Divmod.Runtime.Firefox.isThisTheOne = function isThisTheOne() {
 Divmod.Runtime.Firefox.methods(
     function __init__(self) {
         Divmod.Runtime.Firefox.upcall(self, '__init__', 'Firefox');
-        self.dp = new DOMParser();
-        self.ds = new XMLSerializer();
     },
 
     function makeHTML(self, element) {
@@ -604,8 +602,19 @@ Divmod.Runtime.Firefox.methods(
         return HTML_ELEMENT;
     },
 
+    /**
+     * Return the cached DOM parser for this runtime.  Create one if one does
+     * not yet exist.
+     */
+    function _getParser(self) {
+        if (self._cachedParser === undefined) {
+            self._cachedParser = new DOMParser();
+        }
+        return self._cachedParser;
+    },
+
     function parseXHTMLString(self, s) {
-        var doc = self.dp.parseFromString(s, "application/xml");
+        var doc = self._getParser().parseFromString(s, "application/xml");
         if (doc.documentElement.namespaceURI != "http://www.w3.org/1999/xhtml") {
             throw new Error("Unknown namespace used with parseXHTMLString - only XHTML 1.0 is supported.");
         }
@@ -930,40 +939,11 @@ Divmod.Runtime.Opera.methods(
         return new XMLHttpRequest();
     });
 
-
-Divmod.Runtime.SpidermonkeyStandalone = Divmod.Class.subclass();
-Divmod.Runtime.SpidermonkeyStandalone.isThisTheOne = function() {
-    try {
-        navigator;
-    } catch (err) {
-        if (!(err instanceof ReferenceError)) {
-            throw err;
-        }
-        try {
-            document;
-        } catch (err) {
-            if (!(err instanceof ReferenceError)) {
-                throw err;
-            }
-            try {
-                window;
-            } catch (err) {
-                if (!(err instanceof ReferenceError)) {
-                    throw err;
-                }
-                return true;
-            }
-        }
-    }
-    return false;
-};
-
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
     var platforms = [
         Divmod.Runtime.Firefox,
         Divmod.Runtime.InternetExplorer,
-        Divmod.Runtime.Opera,
-        Divmod.Runtime.SpidermonkeyStandalone];
+        Divmod.Runtime.Opera];
     for (var cls = 0; cls < platforms.length; ++cls) {
         if (platforms[cls].isThisTheOne()) {
             return platforms[cls];

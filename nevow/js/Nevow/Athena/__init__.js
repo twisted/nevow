@@ -627,7 +627,8 @@ Nevow.Athena.Widget.methods(
         self.node = widgetNode;
         self.childWidgets = [];
         self.widgetParent = null;
-        Nevow.Athena.Widget.upcall(self, "__init__", Nevow.Athena.athenaIDFromNode(widgetNode));
+        Nevow.Athena.Widget.upcall(self, "__init__",
+                                   Nevow.Athena.athenaIDFromNode(widgetNode));
     },
 
     function addChildWidget(self, newChild) {
@@ -779,6 +780,34 @@ Nevow.Athena.Widget.methods(
     },
 
 
+    /**
+     * Connect a DOM event on my node to a method on me, causing the method
+     * with the event's name to be called on me when that event occurs.
+     *
+     * @param domEventName: the name of an event in the DOM, such as
+     * "onclick", "onscroll", "onchange", etc.
+     *
+     * @param methodName: the method name on this widget to use.  Note that
+     * you must connect the event to a method on this widget.  If unspecified,
+     * this will be the same as L{domEventName}.
+     *
+     * @param domNode: a node (this widget's node, or one of its descendants)
+     * where the event will be handled.  If unspecified, this will be the
+     * widget's node.
+     */
+    function connectDOMEvent(self, domEventName, /* optional*/
+                             methodName, domNode) {
+        if (domNode === undefined) {
+            domNode = self.node;
+        }
+        if (methodName === undefined) {
+            methodName = domEventName;
+        }
+        domNode[domEventName] = Nevow.Athena.Widget._makeEventHandler(
+            domEventName, methodName);
+    },
+
+
     function nodeByAttribute(self, attrName, attrValue, /* optional */ defaultNode) {
         return Divmod.Runtime.theRuntime.nodeByAttribute(self.node, attrName, attrValue, defaultNode);
     },
@@ -866,6 +895,19 @@ Nevow.Athena.Widget.methods(
     function detached(self) {
     });
 
+/**
+ * Create a function that will return a handler for a DOM event.
+ *
+ * This function is a part of the above L{connectDOMEvent} implementation, but
+ * must be a separate top-level function due to a bug in IE.
+ *
+ * http://www.bazon.net/mishoo/articles.epl?art_id=824
+ */
+Nevow.Athena.Widget._makeEventHandler = function (domEventName, methodName) {
+    return function () {
+        return Nevow.Athena.Widget.handleEvent(this, domEventName, methodName);
+    };
+};
 
 Nevow.Athena.Widget._athenaWidgets = {};
 

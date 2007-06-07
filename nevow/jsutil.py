@@ -1,4 +1,4 @@
-# -*- test-case-name: nevow.test.test_jsutil -*-
+# -*- test-case-name: nevow.test.test_consolejstest -*-
 # Copyright (c) 2004-2007 Divmod.
 # See LICENSE for details.
 
@@ -8,10 +8,14 @@ from twisted.python.util import sibpath
 import nevow
 from nevow.athena import LivePage, allJavascriptPackages, JSModule
 
+_TEST_BOOTSTRAP = LivePage.BOOTSTRAP_MODULES[:]
+_TEST_BOOTSTRAP.insert(_TEST_BOOTSTRAP.index('Divmod.Runtime'),
+                       'Divmod.MockBrowser')
+
 _DUMMY_MODULE_NAME = 'ConsoleJSTest'
 
-def getDependencies(fname, ignore=('MochiKit.DOM',),
-                    bootstrap=LivePage.BOOTSTRAP_MODULES,
+def getDependencies(fname, ignore=[],
+                    bootstrap=_TEST_BOOTSTRAP,
                     packages=None):
     """
     Get the javascript modules that the code in the file with name C{fname}
@@ -23,9 +27,9 @@ def getDependencies(fname, ignore=('MochiKit.DOM',),
     @param ignore: names of javascript modules to exclude from dependency list
     @type ignore: sequence
 
-    @param boostrap: names of javascript modules to always include, regardless
-    of explicit dependencies (defaults to L{LivePage}'s list of
-    bootstrap modules)
+    @param bootstrap: names of javascript modules to always include, regardless
+    of explicit dependencies (defaults to L{LivePage}'s list of bootstrap
+    modules, plus the mock browser implementation.)
     @type boostrap: sequence
 
     @param packages: all javascript packages we know about.  defaults to the
@@ -91,7 +95,7 @@ def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent =
     @rtype: C{str}
     """
     if dependencies is None:
-        dependencies= getDependencies(fname)
+        dependencies = getDependencies(fname)
 
     load = lambda fname: 'load(%r);' % (fname,)
     initialized = set()

@@ -7,6 +7,7 @@
 
 // import Divmod.UnitTest
 // import Divmod.Test.Mock
+/* DON'T load Divmod.MockBrowser; it should be imported implicitly. */
 
 
 /**
@@ -689,4 +690,284 @@ Divmod.Test.TestUnitTest.RunnerTest.methods(
         }
         var observed = Divmod.UnitTest.formatErrors(self.result);
         self.assertIdentical(observed, expected);
+    });
+
+Divmod.Test.TestUnitTest.MockDocumentTest = Divmod.UnitTest.TestCase.subclass(
+    'Divmod.Test.TestUnitTest.MockDocumentTest');
+
+Divmod.Test.TestUnitTest.MockDocumentTest.methods(
+    /**
+     * Verify that the document is implicitly imported by the test set up.
+     * NB: If we ever have a way to run these tests in a real browser, there
+     * should be a way to skip this one.
+     */
+    function test_documentExists(self) {
+        self.assert(document instanceof Divmod.MockBrowser.Document);
+    },
+
+    /**
+     * Verify that the document has a "body" attribute which is an element.
+     */
+    function test_documentHasBody(self) {
+        self.assert(document.body instanceof Divmod.MockBrowser.Element);
+    },
+
+    /**
+     * Verify that the elements created by the document have their tag name
+     * set based on input.
+     */
+    function test_createElement(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        self.assertIdentical(aDocument.createElement('something').tagName,
+                             'SOMETHING');
+    },
+
+    /**
+     * Verify that text nodes are created with appropriate 'length' and
+     * 'nodeValue' attributes.
+     */
+
+    function test_createTextNode(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var aNode = aDocument.createTextNode("hello, world!");
+        self.assertIdentical(aNode.length, 13);
+        self.assertIdentical(aNode.nodeValue, "hello, world!");
+    },
+
+    /**
+     * Verify that setting an attribute on an element results in that
+     * attribute being returned from getAttribute.
+     */
+    function test_setGetAttribute(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement('test');
+        anElement.setAttribute("abc", "123");
+        self.assertIdentical(anElement.getAttribute("abc"), "123");
+    },
+
+    /**
+     * Verify that an Element will have a "style" attribute that can be
+     * manipulated.
+     */
+    function test_elementHasStyle(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement('test');
+        anElement.style.border = 'thin solid blue';
+        self.assertIdentical(anElement.style.border, 'thin solid blue');
+    },
+
+    /**
+     * Verify that an Element given a certain class via setAttribute will be
+     * given a 'className' attribute that matches the class.
+     */
+    function test_firefoxStyleClassAttribute(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement('test');
+        anElement.setAttribute("class", "something");
+        self.assertIdentical(anElement.className, "something");
+    },
+
+    /**
+     * Verify that a mock element's appendChild() puts that element into the
+     * childNodes array.
+     */
+    function test_appendChild(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("test");
+        var anotherElement = aDocument.createElement('test2');
+        anElement.appendChild(anotherElement);
+        self.assertIdentical(anElement.childNodes[0], anotherElement);
+        self.assertIdentical(anotherElement.parentNode, anElement);
+    },
+
+    /**
+     * Verify that a mock element's removeChild() removes that element (and
+     * only that element) from the childNodes array.
+     */
+    function test_removeChild(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("test");
+        var anotherElement = aDocument.createElement("test2");
+        var ignoreMe = aDocument.createElement("testX");
+        var ignoreMe2 = aDocument.createElement("testY");
+        anElement.appendChild(ignoreMe);
+        anElement.appendChild(anotherElement);
+        anElement.appendChild(ignoreMe2);
+        anElement.removeChild(anotherElement);
+
+        self.assertIdentical(anElement.childNodes.length, 2);
+        for (var i = 0; i < anElement.childNodes.length; i++) {
+            self.assert(anElement.childNodes[i] !== anotherElement);
+        }
+    },
+
+    /**
+     * Verify that an exception will be raised if a mock element is asked to
+     * remove a child which it does not contain.
+     */
+    function test_removeChildInvalid(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("test");
+        var anotherElement = aDocument.createElement("test2");
+        self.assertThrows(
+            Divmod.MockBrowser.DOMError,
+            function () {
+                anElement.removeChild(anotherElement);
+            });
+    },
+
+    /**
+     * Verify that elements can be retrieved by their ID.
+     */
+    function test_getElementById(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("a");
+        var anotherElement = aDocument.createElement("b");
+        aDocument.body.appendChild(anElement);
+        aDocument.body.appendChild(anotherElement);
+
+        anotherElement.id = 'test1';
+        self.assertIdentical(aDocument.getElementById('test1'), anotherElement);
+        var thirdElement = aDocument.createElement('c');
+        aDocument.body.appendChild(thirdElement);
+        thirdElement.id = 'test2';
+        self.assertIdentical(aDocument.getElementById('test2'), thirdElement);
+    },
+
+    /**
+     * Verify that orphaned elements (those not in any document) will not be
+     * returned by getElementById even if they have an ID that matches.
+     */
+    function test_getElementByIdNoOrphans(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("a");
+        anElement.id = 'test1';
+        self.assertIdentical(aDocument.getElementById('test1'), null);
+        aDocument.body.appendChild(anElement);
+        self.assertIdentical(aDocument.getElementById('test1'), anElement);
+    },
+
+    /**
+     * Verify that conflicting IDs are resolved in the reverse order they are
+     * created; i.e. that the most recently added created node in the document
+     * with a given ID is found.
+     *
+     * This behavior is inconsistent with actual browser DOM, but providing
+     * proper DOM semantics is difficult due to the fact that tests are
+     * sharing lots of global state but should not be.
+     *
+     * Although these tests here each create their own document object for
+     * better isolation, third-party code designed to run in an actual browser
+     * (c.f. MochiKit.DOM) will generally assume that there is only one global
+     * document and may hold their own references to it.
+     *
+     * Browsers appear to treat the first element to be added to the document
+     * with a given ID as the definitive one, whereas we always want to take
+     * the most recent, because a previous test may have stomped on that ID.
+     *
+     * Eventually it might be a better idea to have the test framework
+     * interact with the global document a bit, re-setting it to a pristine
+     * state between tests to that they do not interact with each other, and
+     * correcting this implementation to be completely consistent with the
+     * browser's getElementById.
+     *
+     * However, for the time being, this point is mostly moot; I can't find a
+     * description of the behavior of ID conflicts in either the DOM
+     * specifications or browser documentation (except by the vague
+     * implication that they should never, ever happen) so this behavior is
+     * correct inasmuch as it prevents tests from having inter-test
+     * interactions which they should not have. -glyph
+     */
+
+    function test_conflictResolutionOrder(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var c = aDocument.createElement("c");
+        var b = aDocument.createElement("b");
+        var a = aDocument.createElement("a");
+
+        c.id = 'test1';
+
+        aDocument.body.appendChild(a);
+        aDocument.body.appendChild(b);
+        aDocument.body.appendChild(c);
+
+        self.assertIdentical(aDocument.getElementById('test1'), c);
+        b.id = 'test1';
+        a.id = 'test1';
+
+        // a was created later.
+        self.assertIdentical(aDocument.getElementById("test1"), a);
+    },
+
+    /**
+     * Verify that getElementById with an id that does not exist will mimic
+     * Firefox's behavior and return 'null'.
+     */
+    function test_getNoElementById(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("div");
+        anElement.id = "some-id";
+        self.assertIdentical(aDocument.getElementById("some-other-id"), null);
+    },
+
+    /**
+     * Verify that the string representation of a mock element captures all of
+     * its interesting features to provide something to introspect while
+     * debugging.
+     */
+    function test_elementToString(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("stuff");
+        // Tag name.
+        self.assertIdentical(
+            anElement.toString(), "<{MOCK}STUFF />");
+        anElement.setAttribute("hello", "world");
+        // Attributes.
+        self.assertIdentical(
+            anElement.toString(), '<{MOCK}STUFF hello="world" />');
+        anElement.style.border = "thick solid blue";
+        // Special "style" attribute.
+        self.assertIdentical(
+            anElement.toString(),
+            '<{MOCK}STUFF hello="world" {style}="border: thick solid blue; " />');
+        anotherElement = aDocument.createElement("other");
+        anElement.appendChild(anotherElement);
+        // Child nodes.
+        self.assertIdentical(
+            anElement.toString(),
+            '<{MOCK}STUFF hello="world" {style}="border: thick solid blue; ">...</STUFF>');
+    },
+
+    /**
+     * Verify that the default size of an Element will initially be (0, 0)
+     * until that element is added to the document.
+     */
+    function test_defaultElementSize(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("stuff");
+
+        self.assertIdentical(0, anElement.clientHeight);
+        self.assertIdentical(0, anElement.clientWidth);
+
+        aDocument.body.appendChild(anElement);
+
+        self.assertIdentical(aDocument.DEFAULT_HEIGHT,
+                             anElement.clientHeight);
+        self.assertIdentical(aDocument.DEFAULT_WIDTH,
+                             anElement.clientWidth);
+    },
+
+    /**
+     * Verify that the platform will respect the sizes set for mock elements
+     * in tests.
+     */
+    function test_getMockElementSize(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement("stuff");
+        anElement.setMockElementSize(1234, 5678);
+
+        var size = Divmod.Runtime.theRuntime.getElementSize(anElement);
+
+        self.assertIdentical(size.w, 1234);
+        self.assertIdentical(size.h, 5678);
     });
