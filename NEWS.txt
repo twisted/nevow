@@ -1,3 +1,8 @@
+0.9.20 (2007-05-24):
+
+  - Athena now no longer holds more than one idle transport open to
+    the browser.
+
 0.9.19 (2007-04-27):
   - Changed the styling of the progressbar to work on IE6.
   - Athena.Widget.detach added, to allow widgets to cleanly be removed
