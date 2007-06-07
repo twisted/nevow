@@ -1,4 +1,5 @@
 // -*- test-case-name: nevow.test.test_javascript.JSUnitTests.test_runtime -*-
+
 /**
  * Unit Tests for Divmod.Runtime.
  *
@@ -43,4 +44,45 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
         self.assertIdentical(nodes[1], secondNode);
         self.assertIdentical(nodes[2], thirdNode);
         self.assertIdentical(nodes[3], fourthNode);
+    },
+
+    /**
+     * It should be possible to find a node with a particular id starting from
+     * a node with implements the DOM API.
+     *
+     * Elements are documented here:
+     *
+     * http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html#ID-745549614
+     */
+    function test_getElementByIdWithNode(self) {
+        var id = 'right';
+        var node;
+        var child;
+
+        node = document.createElement('a');
+        node.id = id;
+        document.body.appendChild(node);
+        self.assertIdentical(
+            Divmod.Runtime.theRuntime.getElementByIdWithNode(node, id),
+            node);
+
+        self.assertThrows(
+            Divmod.Runtime.NodeNotFound,
+            function() {
+                Divmod.Runtime.theRuntime.getElementByIdWithNode(
+                    node, 'wrong');
+            });
+
+        node = document.createElement('a');
+        child = document.createElement('b');
+        child.id = 'wrong';
+        node.appendChild(child);
+        child = document.createElement('c');
+        child.id = id;
+        node.appendChild(child);
+        document.body.appendChild(node);
+
+        self.assertIdentical(
+            Divmod.Runtime.theRuntime.getElementByIdWithNode(node, id).id,
+            id)
     });

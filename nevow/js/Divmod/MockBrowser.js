@@ -51,6 +51,7 @@ Divmod.MockBrowser.Document.methods(
      */
     function createElement(self, tagName) {
         var el = Divmod.MockBrowser.Element(tagName);
+        el._setOwnerDocument(self);
         self._allElements.push(el);
         return el;
     },
@@ -63,7 +64,7 @@ Divmod.MockBrowser.Document.methods(
      * @param id: a string.
      */
     function getElementById(self, id) {
-        for (i = self._allElements.length - 1; i >= 0; i--) {
+        for (var i = self._allElements.length - 1; i >= 0; i--) {
             var eachElement = self._allElements[i];
             if (eachElement.id === id &&
                 eachElement._getContainingDocument() == self) {
@@ -77,8 +78,32 @@ Divmod.MockBrowser.Document.methods(
      * Create a L{TextNode} with the given text.
      */
     function createTextNode(self, text) {
-        return Divmod.MockBrowser.TextNode(text);
+        var aNode = Divmod.MockBrowser.TextNode(text);
+        aNode._setOwnerDocument(self);
+        return aNode;
     });
+
+
+
+/**
+ * A fake node, the primary datatype for the entire DOM.
+ *
+ * @see: http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html#ID-1950641247
+ *
+ * @ivar ownerDocument: a document, to which this node belongs.
+ *
+ */
+Divmod.MockBrowser.Node = Divmod.Class.subclass("Divmod.MockBrowser.Node");
+Divmod.MockBrowser.Node.methods(
+    /**
+     * Internal helper to let a document set itself as the owner of this
+     * node.
+     */
+    function _setOwnerDocument(self, ownerDocument) {
+        self.ownerDocument = ownerDocument;
+    });
+
+
 
 /**
  * A fake node containing some text.
@@ -87,7 +112,7 @@ Divmod.MockBrowser.Document.methods(
  *  http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html#ID-1312295772
  */
 
-Divmod.MockBrowser.TextNode = Divmod.Class.subclass("Divmod.MockBrowser.TextNode");
+Divmod.MockBrowser.TextNode = Divmod.MockBrowser.Node.subclass("Divmod.MockBrowser.TextNode");
 Divmod.MockBrowser.TextNode.methods(
     /**
      * Create a text node.  Private.  Use L{Document.createTextNode} if you
@@ -117,7 +142,7 @@ Divmod.MockBrowser.DOMError = Divmod.Error.subclass("Divmod.MockBrowser.DOMError
  *
  * @ivar className: The name of the class of this node.
  */
-Divmod.MockBrowser.Element = Divmod.Class.subclass(
+Divmod.MockBrowser.Element = Divmod.MockBrowser.Node.subclass(
     "Divmod.MockBrowser.Element");
 Divmod.MockBrowser.Element.methods(
     /**

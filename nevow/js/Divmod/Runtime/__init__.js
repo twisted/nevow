@@ -939,6 +939,8 @@ Divmod.Runtime.Opera.methods(
         return new XMLHttpRequest();
     });
 
+
+
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
     var platforms = [
         Divmod.Runtime.Firefox,

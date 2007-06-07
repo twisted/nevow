@@ -723,6 +723,17 @@ Divmod.Test.TestUnitTest.MockDocumentTest.methods(
     },
 
     /**
+     * Elements created with L{Document.createElement} should have a
+     * C{ownerDocument} property which refers to the document which created
+     * them.
+     */
+    function test_createdElementHasDocument(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement('a');
+        self.assertIdentical(anElement.ownerDocument, aDocument);
+    },
+
+    /**
      * Verify that text nodes are created with appropriate 'length' and
      * 'nodeValue' attributes.
      */
@@ -732,6 +743,17 @@ Divmod.Test.TestUnitTest.MockDocumentTest.methods(
         var aNode = aDocument.createTextNode("hello, world!");
         self.assertIdentical(aNode.length, 13);
         self.assertIdentical(aNode.nodeValue, "hello, world!");
+    },
+
+    /**
+     * Text Nodes created with L{Document.createElement} should have a
+     * C{ownerDocument} property which refers to the document which created
+     * them.
+     */
+    function test_createdTextNodeHasDocument(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var aNode = aDocument.createTextNode("hello, world!");
+        self.assertIdentical(aNode.ownerDocument, aDocument);
     },
 
     /**
