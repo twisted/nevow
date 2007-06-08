@@ -181,7 +181,7 @@ class JSModule(object):
         """
         Calculate our dependencies given the path to our source.
         """
-        depgen = self._extractImports(file(jsFile, 'r'))
+        depgen = self._extractImports(file(jsFile, 'rU'))
         return self.packageDeps + dict.fromkeys(depgen).keys()
 
 

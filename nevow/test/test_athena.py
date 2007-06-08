@@ -99,6 +99,28 @@ the end
                 self.failUnless(allDeps.index(d) < allDeps.index(m))
 
 
+    def test_crlfNewlines(self):
+        """
+        The import system should correctly ignore the CR after a module name
+        when CR LF newlines are used in a JavaScript source file.
+        """
+        fooModuleFilename = self.mktemp()
+        fooModule = file(fooModuleFilename, 'wb')
+        fooModule.write('// import Bar\r\n')
+        fooModule.close()
+        barModuleFilename = self.mktemp()
+        barModule = file(barModuleFilename, 'wb')
+        barModule.close()
+
+        modules = {
+            'Foo': fooModuleFilename,
+            'Bar': barModuleFilename}
+        module = athena.JSModule('Foo', modules)
+        fooDependencies = list(module.dependencies())
+        self.assertEqual(len(fooDependencies), 1)
+        self.assertEqual(fooDependencies[0].name, u'Bar')
+
+
     def test_dependencyCaching(self):
         """
         Test that dependency caching works as expected.
