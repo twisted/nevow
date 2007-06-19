@@ -217,6 +217,8 @@ class AutoJSPackage(object):
     """
     An IJavascriptPackage implementation that scans an on-disk hierarchy
     locating modules and packages.
+
+    Note that module/package names beginning with . are ignored.
     """
     implements(plugin.IPlugin, inevow.IJavascriptPackage)
 
@@ -231,6 +233,7 @@ class AutoJSPackage(object):
         _revMap = {baseDir: ''}
         for root, dirs, filenames in os.walk(baseDir):
             stem = _revMap[root]
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
 
             for dir in dirs:
                 name = stem + dir
@@ -241,6 +244,9 @@ class AutoJSPackage(object):
                 _revMap[os.path.join(root, dir)] = name + '.'
 
             for fn in filenames:
+                if fn.startswith('.'):
+                    continue
+
                 if fn == '__init__.js':
                     continue
 

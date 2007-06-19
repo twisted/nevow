@@ -187,8 +187,9 @@ the end
                     u'Foo.Baz.Quux': _f('Foo', 'Baz', 'Quux.js')}
 
         for module, path in expected.iteritems():
-            self.assertIn(module, package.mapping)
-            self.assertEquals(package.mapping[module], path)
+            m = package.mapping.pop(module)
+            self.assertEquals(m, path)
+        self.assertEquals(package.mapping, {})
 
 
     def testPackageDeps(self):
