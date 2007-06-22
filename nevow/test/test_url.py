@@ -38,7 +38,7 @@ rfc1808_relative_link_tests = [
     #('../..', 'http://a/'),
     #('../../', 'http://a/'),
     ('../../g', 'http://a/g'),
-    
+
     # "Abnormal"
     ('', 'http://a/b/c/d;p?q#f'),
     #('../../../g', 'http://a/../g'),
@@ -61,6 +61,30 @@ rfc1808_relative_link_tests = [
 class FR(FakeRequest):
     def prePathURL(Self):
         return theurl
+
+
+
+class _IncompatibleSignatureURL(url.URL):
+    """
+    A test fixture for verifying that subclasses which override C{cloneURL}
+    won't be copied by any other means (e.g. constructing C{self.__class___}
+    directly).  It accomplishes this by having a constructor signature which
+    is incompatible with L{url.URL}'s.
+    """
+    def __init__(
+        self, magicValue, scheme, netloc, pathsegs, querysegs, fragment):
+        url.URL.__init__(self, scheme, netloc, pathsegs, querysegs, fragment)
+        self.magicValue = magicValue
+
+
+    def cloneURL(self, scheme, netloc, pathsegs, querysegs, fragment):
+        """
+        Override the base implementation to pass along C{self.magicValue}.
+        """
+        return self.__class__(
+            self.magicValue, scheme, netloc, pathsegs, querysegs, fragment)
+
+
 
 class TestURL(TestCase):
     def test_fromString(self):
@@ -89,7 +113,7 @@ class TestURL(TestCase):
     def test_fromRequest(self):
         urlpath = url.URL.fromRequest(FR())
         self.assertEquals(theurl, str(urlpath))
-        
+
     def test_fromContext(self):
 
         r = FakeRequest(uri='/a/b/c')
@@ -104,7 +128,7 @@ class TestURL(TestCase):
         r.prepath = ['a','b']
         urlpath = url.URL.fromContext(context.RequestContext(tag=r))
         self.assertEquals('http://localhost/a/b?foo=bar', str(urlpath))
-        
+
     def test_equality(self):
         urlpath = url.URL.fromString(theurl)
         self.failUnlessEqual(urlpath, url.URL.fromString(theurl))
@@ -114,7 +138,7 @@ class TestURL(TestCase):
         urlpath = url.URL.fromString(theurl)
         self.assertEquals("http://www.foo.com:80/a/nice/?zot=23&zut",
                           str(urlpath.parent()))
-    
+
     def test_parentdir(self):
         urlpath = url.URL.fromString(theurl)
         self.assertEquals("http://www.foo.com:80/a/nice/?zot=23&zut",
@@ -195,7 +219,7 @@ class TestURL(TestCase):
         urlpath = url.URL.fromString(theurl2)
         self.assertEquals("http://www.foo.com:80/a/nice/?zot=23&zut",
                           str(urlpath.curdir()))
-        
+
     def test_click(self):
         urlpath = url.URL.fromString(theurl)
         # a null uri should be valid (return here)
@@ -218,12 +242,104 @@ class TestURL(TestCase):
         u = url.URL.fromString('http://www.foo.com:80/me/noquery')
         self.failUnlessEqual('http://www.foo.com:80/me/17?spam=158',
                              str(u.click('/me/17?spam=158')))
-                             
+
         # Check that everything from the path onward is removed when the click link
         # has no path.
         u = url.URL.fromString('http://localhost/foo?abc=def')
         self.failUnlessEqual(str(u.click('http://www.python.org')), 'http://www.python.org/')
-        
+
+
+    def test_cloneUnchanged(self):
+        """
+        Verify that L{url.URL.cloneURL} doesn't change any of the arguments it
+        is passed.
+        """
+        urlpath = url.URL.fromString('https://x:1/y?z=1#A')
+        self.assertEqual(
+            urlpath.cloneURL(urlpath.scheme,
+                             urlpath.netloc,
+                             urlpath._qpathlist,
+                             urlpath._querylist,
+                             urlpath.fragment),
+            urlpath)
+
+
+    def _makeIncompatibleSignatureURL(self, magicValue):
+        return _IncompatibleSignatureURL(magicValue, '', '', None, None, '')
+
+
+    def test_clickCloning(self):
+        """
+        Verify that L{url.URL.click} uses L{url.URL.cloneURL} to construct its
+        return value.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8789)
+        self.assertEqual(urlpath.click('/').magicValue, 8789)
+
+
+    def test_clickCloningScheme(self):
+        """
+        Verify that L{url.URL.click} uses L{url.URL.cloneURL} to construct its
+        return value, when the clicked url has a scheme.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8031)
+        self.assertEqual(urlpath.click('https://foo').magicValue, 8031)
+
+
+    def test_addCloning(self):
+        """
+        Verify that L{url.URL.add} uses L{url.URL.cloneURL} to construct its
+        return value.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8789)
+        self.assertEqual(urlpath.add('x').magicValue, 8789)
+
+
+    def test_replaceCloning(self):
+        """
+        Verify that L{url.URL.replace} uses L{url.URL.cloneURL} to construct
+        its return value.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8789)
+        self.assertEqual(urlpath.replace('x').magicValue, 8789)
+
+
+    def test_removeCloning(self):
+        """
+        Verify that L{url.URL.remove} uses L{url.URL.cloneURL} to construct
+        its return value.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8789)
+        self.assertEqual(urlpath.remove('x').magicValue, 8789)
+
+
+    def test_clearCloning(self):
+        """
+        Verify that L{url.URL.clear} uses L{url.URL.cloneURL} to construct its
+        return value.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8789)
+        self.assertEqual(urlpath.clear().magicValue, 8789)
+
+
+    def test_anchorCloning(self):
+        """
+        Verify that L{url.URL.anchor} uses L{url.URL.cloneURL} to construct
+        its return value.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8789)
+        self.assertEqual(urlpath.anchor().magicValue, 8789)
+
+
+    def test_secureCloning(self):
+        """
+        Verify that L{url.URL.secure} uses L{url.URL.cloneURL} to construct its
+        return value.
+        """
+        urlpath = self._makeIncompatibleSignatureURL(8789)
+        self.assertEqual(urlpath.secure().magicValue, 8789)
+
+
     def test_clickCollapse(self):
         tests = [
             ['http://localhost/', '.', 'http://localhost/'],
@@ -245,7 +361,7 @@ class TestURL(TestCase):
                 str(url.URL.fromString(start).click(click)),
                 result
                 )
-        
+
     def test_add(self):
         urlpath = url.URL.fromString(theurl)
         self.assertEquals(
@@ -277,7 +393,7 @@ class TestURL(TestCase):
             str(url.URL(netloc="www.foo.com").add("foo", "bar")))
 
     def test_replace(self):
-        urlpath = url.URL.fromString(theurl)    
+        urlpath = url.URL.fromString(theurl)
         self.assertEquals(
             "http://www.foo.com:80/a/nice/path/?zot=32&zut",
             str(urlpath.replace("zot", 32)))
@@ -304,7 +420,7 @@ class TestURL(TestCase):
             str(urlpath.anchor('')))
 
     def test_clear(self):
-        urlpath = url.URL.fromString(theurl)    
+        urlpath = url.URL.fromString(theurl)
         self.assertEquals(
             "http://www.foo.com:80/a/nice/path/?zut",
             str(urlpath.clear("zot")))
@@ -334,7 +450,7 @@ class TestURL(TestCase):
         self.assertEquals(str(url.URL.fromString('http://localhost/').secure(port=443)), 'https://localhost/')
         self.assertEquals(str(url.URL.fromString('http://localhost:8080/').secure(port=8443)), 'https://localhost:8443/')
         self.assertEquals(str(url.URL.fromString('https://localhost:8443/').secure(False, 8080)), 'http://localhost:8080/')
-        
+
 
     def test_eq_same(self):
         u = url.URL.fromString('http://localhost/')
@@ -373,7 +489,7 @@ class TestURL(TestCase):
         u = url.URL.fromString('http://localhost/')
         self.failUnless(u != 42, "URL must differ from a number.")
         self.failUnless(u != object(), "URL must be differ from an object.")
-        
+
     def test_parseEqualInParamValue(self):
         u = url.URL.fromString('http://localhost/?=x=x=x')
         self.failUnless(u.query == ['=x=x=x'])
@@ -383,7 +499,7 @@ class TestURL(TestCase):
         self.failUnless(str(u) == 'http://localhost/?foo=x%3Dx%3Dx&bar=y')
 
 class Serialization(TestCase):
-    
+
     def testQuoting(self):
         context = None
         scheme = 'http'
@@ -393,9 +509,9 @@ class Serialization(TestCase):
         fragment = 'futz'
         u = url.URL(scheme, loc, path, query, fragment)
         s = flatten(url.URL(scheme, loc, path, query, fragment))
-        
+
         parsedScheme, parsedLoc, parsedPath, parsedQuery, parsedFragment = urlparse.urlsplit(s)
-        
+
         self.assertEquals(scheme, parsedScheme)
         self.assertEquals(loc, parsedLoc)
         self.assertEquals('/' + '/'.join(map(lambda p: urllib.quote(p,safe=''),path)), parsedPath)
@@ -423,7 +539,7 @@ class Serialization(TestCase):
             return ctx.tag
 
         self.assertEquals(flatten(tags.invisible(render=fillIt)[u]), original + '/baz')
-        
+
     def test_strangeSegs(self):
         base = 'http://localhost/'
         tests = (
@@ -435,7 +551,7 @@ class Serialization(TestCase):
         for test, result in tests:
             u = url.URL.fromString(base).child(test)
             self.assertEquals(flatten(u), base+result)
-            
+
     def test_urlContent(self):
         u = url.URL.fromString('http://localhost/').child(r'<c:\foo\bar&>')
         self.assertEquals(flatten(tags.p[u]), '<p>http://localhost/%3Cc%3A%5Cfoo%5Cbar%26%3E</p>')
