@@ -47,7 +47,7 @@ class URL(object):
     also be used as a redirect mechanism - simply return an instance from an
     IResource method. See URLRedirectAdapter for details.
     """
-
+    
     def __init__(self, scheme='http', netloc='localhost', pathsegs=None, querysegs=None, fragment=''):
         self.scheme = scheme
         self.netloc = netloc
@@ -116,7 +116,7 @@ class URL(object):
     fromContext = classmethod(fromContext)
 
     ## path manipulations ##
-
+    
     def pathList(self, unquote=False, copy=True):
         result = self._qpathlist
         if unquote:
@@ -124,7 +124,7 @@ class URL(object):
         if copy:
             result = result[:]
         return result
-
+    
     def sibling(self, path):
         """Construct a url where the given path segment is a sibling of this url
         """
@@ -203,21 +203,21 @@ class URL(object):
         take you if you clicked on a link with an 'href' as given.
         """
         scheme, netloc, path, query, fragment = urlparse.urlsplit(href)
-
+        
         if (scheme, netloc, path, query, fragment) == ('', '', '', '', ''):
             return self
-
-        query = unquerify(query)
-
+            
+        query = unquerify(query)            
+            
         if scheme:
             if path and path[0] == '/':
                 path = path[1:]
             return URL(scheme, netloc, map(raw, path.split('/')), query, fragment)
         else:
             scheme = self.scheme
-
+            
         if not netloc:
-            netloc = self.netloc
+            netloc = self.netloc 
             if not path:
                 path = self.path
                 if not query:
@@ -234,7 +234,7 @@ class URL(object):
 
         path = normURLPath(path)
         return URL(scheme, netloc, map(raw, path.split('/')), query, fragment)
-
+        
     ## query manipulation ##
 
     def queryList(self, copy=True):
@@ -244,7 +244,7 @@ class URL(object):
         return self._querylist
 
     # FIXME: here we call str() on query arg values: is this right?
-
+    
     def add(self, name, value=None):
         """Add a query argument with the given value
         None indicates that the argument has no value
@@ -274,7 +274,7 @@ class URL(object):
         """Remove all query arguments with the given name
         """
         return self._pathMod(
-            self.pathList(copy=False),
+            self.pathList(copy=False), 
             filter(
                 lambda x: x[0] != name, self.queryList(False)))
 
@@ -308,17 +308,17 @@ class URL(object):
             netloc = '%s:%d' % (netloc, port)
 
         return self.__class__(scheme, netloc, self._qpathlist, self._querylist, self.fragment)
-
+            
     ## fragment/anchor manipulation
-
+    
     def anchor(self, anchor=None):
         '''Modify the fragment/anchor and return a new URL. An anchor of
         None (the default) or '' (the empty string) will the current anchor.
         '''
         return self.__class__(self.scheme, self.netloc, self._qpathlist, self._querylist, anchor)
-
+    
     ## object protocol override ##
-
+    
     def __str__(self):
         return str(flat.flatten(self))
 
