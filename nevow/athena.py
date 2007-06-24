@@ -1,6 +1,7 @@
 # -*- test-case-name: nevow.test.test_athena -*-
 
 import itertools, os, re, warnings
+from sys import maxint
 
 from zope.interface import implements
 
@@ -13,6 +14,7 @@ from nevow import inevow, plugins, flat
 from nevow import rend, loaders, url, static
 from nevow import json, util, tags, guard, stan
 from nevow.util import CachedFile
+from nevow.useragent import UserAgent, browsers
 
 from nevow.page import Element, renderer
 
@@ -703,6 +705,19 @@ class ReliableMessageDelivery(object):
 
 
 class LivePage(rend.Page):
+    """
+    A resource which can receive messages from and send messages to the client
+    after the initial page load has completed and which can send messages.
+
+    @ivar requiredBrowserVersions: A dictionary mapping User-Agent browser
+        names to the minimum supported version of those browsers.  Clients
+        using these browsers which are below the minimum version will be shown
+        an alternate page explaining this rather than the normal page content.
+
+    @ivar unsupportedBrowserLoader: A document loader which will be used to
+        generate the content shown to unsupported browsers.
+    """
+
     factory = LivePageFactory()
     _rendered = False
     _didDisconnect = False
@@ -729,6 +744,19 @@ class LivePage(rend.Page):
 
     # Modules needed to bootstrap
     BOOTSTRAP_MODULES = ['Divmod', 'Divmod.Base', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
+
+    # Known minimum working versions of certain browsers.
+    requiredBrowserVersions = {
+        browsers.GECKO: (20051111,),
+        browsers.INTERNET_EXPLORER: (6, 0),
+        browsers.WEBKIT: (maxint,),
+        browsers.OPERA: (maxint,)}
+
+    unsupportedBrowserLoader = loaders.stan(
+        tags.html[
+            tags.body[
+                'Your browser is not supported by the Athena toolkit.']])
+
 
     def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, transportRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
@@ -813,17 +841,57 @@ class LivePage(rend.Page):
         self.addLocalObject(self)
 
 
+    def _supportedBrowser(self, request):
+        """
+        Determine whether a known-unsupported browser is making a request.
+
+        @param request: The L{IRequest} being made.
+
+        @rtype: C{bool}
+        @return: False if the user agent is known to be unsupported by Athena,
+            True otherwise.
+        """
+        agentString = request.getHeader("user-agent")
+        if agentString is None:
+            return True
+        agent = UserAgent.fromHeaderValue(agentString)
+        if agent is None:
+            return True
+
+        requiredVersion = self.requiredBrowserVersions.get(agent.browser, None)
+        if requiredVersion is not None:
+            return agent.version >= requiredVersion
+        return True
+
+
+    def renderUnsupported(self, ctx):
+        """
+        Render a notification to the user that his user agent is
+        unsupported by this LivePage.
+
+        @param ctx: The current rendering context.
+
+        @return: Something renderable (same behavior as L{renderHTTP})
+        """
+        return flat.flatten(self.unsupportedBrowserLoader.load())
+
+
     def renderHTTP(self, ctx):
         assert not self._rendered, "Cannot render a LivePage more than once"
         assert self.factory is not None, "Cannot render a LivePage without a factory"
         self._rendered = True
+
+        request = inevow.IRequest(ctx)
+        if not self._supportedBrowser(request):
+            request.write(self.renderUnsupported(ctx))
+            return ''
 
         self._becomeLive(
             url.URL.fromString(
                 flat.flatten(
                     url.here, ctx)))
 
-        neverEverCache(inevow.IRequest(ctx))
+        neverEverCache(request)
         return rend.Page.renderHTTP(self, ctx)
 
 

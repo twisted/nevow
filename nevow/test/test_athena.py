@@ -18,7 +18,8 @@ from nevow.athena import LiveElement
 from nevow.appserver import NevowSite
 from nevow.inevow import IRequest
 from nevow.context import WovenContext
-from nevow.testutil import FakeRequest, renderLivePage
+from nevow.testutil import AccumulatingFakeRequest, FakeRequest
+from nevow.testutil import renderPage, renderLivePage
 from nevow._widget_plugin import ElementRenderingLivePage
 
 from twisted.plugins.nevow_widget import widgetServiceMaker
@@ -287,16 +288,6 @@ the end
         return renderLivePage(page).addCallback(_verifyRendering)
 
 
-    def _render(self, page):
-        """
-        Test helper which tries to render the given page.
-        """
-        ctx = WovenContext()
-        req = FakeRequest()
-        ctx.remember(req, IRequest)
-        return page.renderHTTP(ctx).addCallback(lambda ign: req.v)
-
-
     def test_elementPreprocessors(self):
         """
         Make sure that LiveElements have their preprocessors applied to their
@@ -309,12 +300,57 @@ the end
         page = athena.LivePage(docFactory=loaders.stan(element))
         element.preprocessors = [preprocessed.append]
         element.setFragmentParent(page)
-        renderDeferred = self._render(page)
+        renderDeferred = renderPage(page)
         def rendered(result):
             page.action_close(None)
             self.assertEquals(preprocessed, [[tag]])
         renderDeferred.addCallback(rendered)
         return renderDeferred
+
+
+    def test_userAgentDetection(self):
+        """
+        C{LivePage._supportedBrowser} should return True for User-Agent strings
+        which are not known to be supported and False for those which are known
+        to be unsupported.
+        """
+        page = athena.LivePage()
+        supported = ["Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)",
+                     "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)",
+                     "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.3)"
+                     " Gecko/20061201 Firefox/2.0.0.3 (Ubuntu-feisty)",
+                     "Mozilla/5.0 (Windows; U; Windows NT 5.2; sv-SE;"
+                     " rv:1.8.0.8) Gecko/20061025 Firefox 1.5.0.8"]
+        unsupported = ["Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en)"
+                       " AppleWebKit/418.9.1 (KHTML, like Gecko) Safari/419.3",
+                       "Opera/9.20 (Windows NT 6.0; U; en)",
+                       "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US;"
+                       " rv:1.7.10) Gecko/20050716 Firefox/1.0.6",
+                       "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 5.0)"]
+        for ua in supported:
+            req = FakeRequest()
+            req.headers['user-agent'] = ua
+            self.assertTrue(page._supportedBrowser(req))
+        for ua in unsupported:
+            req = FakeRequest()
+            req.headers['user-agent'] = ua
+            self.assertFalse(page._supportedBrowser(req))
+
+
+    def test_unsupportedBrowserPage(self):
+        """
+        Test that unsupported browsers get told they're unsupported.
+        """
+        ctx = WovenContext()
+        page = athena.LivePage()
+        req = AccumulatingFakeRequest()
+        req.headers['user-agent'] = "Mozilla/4.0 (compatible; MSIE 2.0; Windows NT 5.1)"
+        ctx.remember(req, IRequest)
+        d = renderPage(page, reqFactory=lambda: req)
+        d.addCallback(
+            self.assertEqual,
+            flat.flatten(page.unsupportedBrowserLoader))
+        return d
 
 
 
