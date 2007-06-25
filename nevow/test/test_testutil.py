@@ -5,7 +5,7 @@ applications.
 
 from unittest import TestResult
 
-from twisted.trial.unittest import TestCase
+from twisted.trial.unittest import TestCase, SkipTest
 from twisted.web.http import OK, BAD_REQUEST
 
 from nevow.testutil import (
