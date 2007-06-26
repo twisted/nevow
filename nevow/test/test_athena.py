@@ -320,10 +320,11 @@ the end
                      "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.3)"
                      " Gecko/20061201 Firefox/2.0.0.3 (Ubuntu-feisty)",
                      "Mozilla/5.0 (Windows; U; Windows NT 5.2; sv-SE;"
-                     " rv:1.8.0.8) Gecko/20061025 Firefox 1.5.0.8"]
+                     " rv:1.8.0.8) Gecko/20061025 Firefox 1.5.0.8",
+                     "Opera/9.20 (Windows NT 6.0; U; en)"]
         unsupported = ["Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en)"
                        " AppleWebKit/418.9.1 (KHTML, like Gecko) Safari/419.3",
-                       "Opera/9.20 (Windows NT 6.0; U; en)",
+                       "Opera/8.5 (Windows NT 6.0; U; en)",
                        "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US;"
                        " rv:1.7.10) Gecko/20050716 Firefox/1.0.6",
                        "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 5.0)"]

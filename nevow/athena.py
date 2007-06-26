@@ -750,7 +750,7 @@ class LivePage(rend.Page):
         browsers.GECKO: (20051111,),
         browsers.INTERNET_EXPLORER: (6, 0),
         browsers.WEBKIT: (maxint,),
-        browsers.OPERA: (maxint,)}
+        browsers.OPERA: (9,)}
 
     unsupportedBrowserLoader = loaders.stan(
         tags.html[
