@@ -138,7 +138,13 @@ class FakeRequest(Componentized):
         self.code = code
 
     def prePathURL(self):
-        return 'http://localhost/%s'%'/'.join(self.prepath)
+        """
+        The absolute URL up until the last handled segment of this request.
+
+        @rtype: C{str}.
+        """
+        return 'http://%s/%s' % (self.getHeader('host') or 'localhost',
+                                 '/'.join(self.prepath))
 
     def getClientIP(self):
         return '127.0.0.1'
