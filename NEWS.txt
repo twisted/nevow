@@ -1,5 +1,8 @@
-0.9.20 (2007-05-24):
+0.9.21 (2007-06-06):
+  - Debug logging messages from the reliable message delivery queue
+    disabled.
 
+0.9.20 (2007-05-24):
   - Athena now no longer holds more than one idle transport open to
     the browser.
 
