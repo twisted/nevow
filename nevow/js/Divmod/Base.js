@@ -14,8 +14,8 @@
 
 Divmod.Base.NotFound = Divmod.Class.subclass("Divmod.Base.NotFound");
 
-Divmod.Base.reprString = function(o) { 
-    return ('"' + o.replace(/(["\\])/g, '\\$1') + '"'
+Divmod.Base.reprString = function(o) {
+    return ('"' + o.replace(/([\"\\])/g, '\\$1') + '"'
         ).replace(/[\f]/g, "\\f"
         ).replace(/[\b]/g, "\\b"
         ).replace(/[\n]/g, "\\n"
