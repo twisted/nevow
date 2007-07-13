@@ -1,3 +1,10 @@
+0.9.22 (2007-07-06):
+  - Mock DOM implementation for easier browser testing added.
+  - JavaScript source files are now read using universal newlines mode.
+  - athena.AutoJSPackage now excludes dotfiles.
+  - url.URL now properly subclassable.
+  - User-agent parsing added to Athena, to detect known-unsupported browsers.
+
 0.9.21 (2007-06-06):
   - Debug logging messages from the reliable message delivery queue
     disabled.
