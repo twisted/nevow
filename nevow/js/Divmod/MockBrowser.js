@@ -101,6 +101,23 @@ Divmod.MockBrowser.Node.methods(
      */
     function _setOwnerDocument(self, ownerDocument) {
         self.ownerDocument = ownerDocument;
+    },
+
+    /**
+     * Internal mock DOM notification that the parent of this node has changed.
+     */
+    function _setParent(self, newParent) {
+        var justAdded = (self.parentNode === undefined);
+        self.parentNode = newParent;
+        if (justAdded) {
+            self._insertedIntoDocument();
+        }
+    },
+
+    /**
+     * Internal mock DOM notification that the node was inserted into the document.
+     */
+    function _insertedIntoDocument(self) {
     });
 
 
@@ -218,30 +235,6 @@ Divmod.MockBrowser.Element.methods(
     },
 
     /**
-     * Internal mock DOM notification that the parent of this node has changed.
-     */
-    function _setParent(self, newParent) {
-        var justAdded = (self.parentNode === undefined);
-        self.parentNode = newParent;
-        if (justAdded) {
-            self._insertedIntoDocument();
-        }
-    },
-
-    /**
-     * Internal mock DOM notification that the node was inserted into the document.
-     */
-    function _insertedIntoDocument(self) {
-        for (var i = 0; i < self.childNodes.length; i++) {
-            self.childNodes[i]._insertedIntoDocument();
-        }
-        var doc = self._getContainingDocument();
-        if (doc !== undefined) {
-            self.setMockElementSize(doc.DEFAULT_WIDTH, doc.DEFAULT_HEIGHT);
-        }
-    },
-
-    /**
      * Remove a child from this element.
      */
     function removeChild(self, child) {
@@ -256,6 +249,7 @@ Divmod.MockBrowser.Element.methods(
             throw new Divmod.MockBrowser.DOMError("no such node");
         }
         self.childNodes.splice(idx, 1);
+        child.parentNode = null;
     },
 
     /**
@@ -271,6 +265,21 @@ Divmod.MockBrowser.Element.methods(
             self.className = value;
         }
         self._attributes[name] = value;
+    },
+
+    /**
+     * Handle node insertion event by sending it on to all this element's
+     * children and setting this element's size.
+     */
+    function _insertedIntoDocument(self) {
+        Divmod.MockBrowser.Element.upcall(self, '_insertedIntoDocument');
+        for (var i = 0; i < self.childNodes.length; i++) {
+            self.childNodes[i]._insertedIntoDocument();
+        }
+        var doc = self._getContainingDocument();
+        if (doc !== undefined) {
+            self.setMockElementSize(doc.DEFAULT_WIDTH, doc.DEFAULT_HEIGHT);
+        }
     },
 
     /**

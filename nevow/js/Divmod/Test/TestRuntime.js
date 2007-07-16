@@ -19,6 +19,31 @@ Divmod.Test.TestRuntime.RuntimeTests = Divmod.UnitTest.TestCase.subclass(
     'Divmod.Test.TestRuntime.RuntimeTests');
 Divmod.Test.TestRuntime.RuntimeTests.methods(
     /**
+     * Node.appendChild should accept a TextNode and add it to the childNodes
+     * array.
+     */
+    function test_appendTextNode(self) {
+        var words = 'words';
+        var node = document.createElement('span');
+        var text = document.createTextNode(words);
+        node.appendChild(text);
+        self.assertIdentical(node.childNodes.length, 1);
+        self.assertIdentical(node.childNodes[0].nodeValue, words);
+    },
+
+    /**
+     * When a node is removed from its parent with removeChild, the parentNode
+     * property of the removed node should be set to null.
+     */
+    function test_removeChildClearsParent(self) {
+        var parent = document.createElement('span');
+        var child = document.createElement('span');
+        parent.appendChild(child);
+        parent.removeChild(child);
+        self.assertIdentical(child.parentNode, null);
+    },
+
+    /**
      * Verify that traversal of nested nodes will result in retrieving all the
      * nodes in depth-first order.
      */
