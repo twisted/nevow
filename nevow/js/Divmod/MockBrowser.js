@@ -20,7 +20,50 @@
 
 // import Divmod
 
-Divmod.MockBrowser.Document = Divmod.Class.subclass("Divmod.MockBrowser.Document");
+/**
+ * A fake node, the primary datatype for the entire DOM.
+ *
+ * @see: http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html#ID-1950641247
+ *
+ * @ivar ownerDocument: a document, to which this node belongs.
+ *
+ */
+Divmod.MockBrowser.Node = Divmod.Class.subclass("Divmod.MockBrowser.Node");
+Divmod.MockBrowser.Node.methods(
+    /**
+     * Internal helper to let a document set itself as the owner of this
+     * node.
+     */
+    function _setOwnerDocument(self, ownerDocument) {
+        self.ownerDocument = ownerDocument;
+    },
+
+    /**
+     * Internal mock DOM notification that the parent of this node has changed.
+     */
+    function _setParent(self, newParent) {
+        var justAdded = (self.parentNode === undefined);
+        self.parentNode = newParent;
+        if (justAdded) {
+            self._insertedIntoDocument();
+        }
+    },
+
+    /**
+     * Internal mock DOM notification that the node was inserted into the document.
+     */
+    function _insertedIntoDocument(self) {
+    },
+
+    function __init__(self) {
+        self.ELEMENT_NODE = 1;
+        self.TEXT_NODE = 3;
+        self.DOCUMENT_NODE = 9;
+    });
+
+
+
+Divmod.MockBrowser.Document = Divmod.MockBrowser.Node.subclass("Divmod.MockBrowser.Document");
 
 /**
  * This is a mock document that can be used in the tests where there is no
@@ -40,6 +83,8 @@ Divmod.MockBrowser.Document.methods(
      * Create a mock browser with a "body" element.
      */
     function __init__(self) {
+        Divmod.MockBrowser.Document.upcall(self, '__init__');
+        self.nodeType = self.DOCUMENT_NODE;
         self._allElements = [];
         self.DEFAULT_HEIGHT = 20;
         self.DEFAULT_WIDTH = 300;
@@ -86,43 +131,6 @@ Divmod.MockBrowser.Document.methods(
 
 
 /**
- * A fake node, the primary datatype for the entire DOM.
- *
- * @see: http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html#ID-1950641247
- *
- * @ivar ownerDocument: a document, to which this node belongs.
- *
- */
-Divmod.MockBrowser.Node = Divmod.Class.subclass("Divmod.MockBrowser.Node");
-Divmod.MockBrowser.Node.methods(
-    /**
-     * Internal helper to let a document set itself as the owner of this
-     * node.
-     */
-    function _setOwnerDocument(self, ownerDocument) {
-        self.ownerDocument = ownerDocument;
-    },
-
-    /**
-     * Internal mock DOM notification that the parent of this node has changed.
-     */
-    function _setParent(self, newParent) {
-        var justAdded = (self.parentNode === undefined);
-        self.parentNode = newParent;
-        if (justAdded) {
-            self._insertedIntoDocument();
-        }
-    },
-
-    /**
-     * Internal mock DOM notification that the node was inserted into the document.
-     */
-    function _insertedIntoDocument(self) {
-    });
-
-
-
-/**
  * A fake node containing some text.
  *
  * Relevant specifications:
@@ -136,6 +144,8 @@ Divmod.MockBrowser.TextNode.methods(
      * want to create one of these.
      */
     function __init__(self, nodeValue) {
+        Divmod.MockBrowser.TextNode.upcall(self, '__init__');
+        self.nodeType = self.TEXT_NODE;
         self.nodeValue = nodeValue;
         self.length = nodeValue.length;
     });
@@ -167,6 +177,8 @@ Divmod.MockBrowser.Element.methods(
      * L{Document.createElement} instead.
      */
     function __init__(self, tagName) {
+        Divmod.MockBrowser.Element.upcall(self, '__init__');
+        self.nodeType = self.ELEMENT_NODE;
         self._attributes = {};
         self.tagName = tagName.toUpperCase();
         self.style = {};

@@ -19,6 +19,59 @@ Divmod.Test.TestRuntime.RuntimeTests = Divmod.UnitTest.TestCase.subclass(
     'Divmod.Test.TestRuntime.RuntimeTests');
 Divmod.Test.TestRuntime.RuntimeTests.methods(
     /**
+     * Assert that the various *_NODE attributes are present with the correct
+     * values.
+     *
+     * Note: Actually, there should be quite a few other attributes as well.
+     * See
+     * <http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html#ID-1950641247>.
+     * Feel free to add them as necessary.
+     */
+    function _attributesTest(self, node) {
+        self.assertIdentical(node.ELEMENT_NODE, 1);
+        self.assertIdentical(node.TEXT_NODE, 3);
+        self.assertIdentical(node.DOCUMENT_NODE, 9);
+    },
+
+    /**
+     * Nodes should have L{ELEMENT_NODE} and L{TEXT_NODE} attributes.
+     */
+    function test_nodeAttributes(self) {
+        var node = document.createElement('span');
+        self._attributesTest(node);
+    },
+
+    /**
+     * Documents should have L{ELEMENT_NODE} and L{TEXT_NODE} attributes.
+     */
+    function test_documentAttributes(self) {
+        self._attributesTest(document);
+    },
+
+    /**
+     * The nodeType property of a Document should be C{DOCUMENT_NODE}.
+     */
+    function test_documentNodeType(self) {
+        self.assertIdentical(document.nodeType, document.DOCUMENT_NODE);
+    },
+
+    /**
+     * The nodeType property of an element should be C{ELEMENT_NODE}.
+     */
+    function test_elementNodeType(self) {
+        var node = document.createElement('span');
+        self.assertIdentical(node.nodeType, document.ELEMENT_NODE);
+    },
+
+    /**
+     * The nodeType property of a text node should be C{TEXT_NODE}.
+     */
+    function test_textNodeNodeType(self) {
+        var node = document.createTextNode('foo');
+        self.assertIdentical(node.nodeType, document.TEXT_NODE);
+    },
+
+    /**
      * Node.appendChild should accept a TextNode and add it to the childNodes
      * array.
      */
