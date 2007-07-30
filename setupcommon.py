@@ -19,8 +19,10 @@ package_data={
         'nevow': [
             'Canvas.swf',
             '*.css',
-	    'js/Divmod/*.js', 
+	    '*.js',
+	    'js/Divmod/*.js',
 	    'js/Nevow/*.js',
+	    'js/Nevow/Test/*.js',
 	    'js/Nevow/Athena/Tests/*.js',
 	    'js/Divmod/Runtime/*.js',
 	    'js/Nevow/Athena/*.js',
