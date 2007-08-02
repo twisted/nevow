@@ -223,8 +223,9 @@ class CachedFile(object):
         Load this file. Any positional or keyword arguments will be passed
         along to the loader callable, after the path itself.
         """
-        currentTime = os.path.getmtime(self.path)
-        if self._mtime is None or currentTime != self._mtime:
+        #currentTime = os.path.getmtime(self.path)
+        if self._mtime is None:# or currentTime != self._mtime:
+            currentTime = os.path.getmtime(self.path) #hack
             self._cachedObj = self.loader(self.path, *args, **kwargs)
             self._mtime = currentTime
 
