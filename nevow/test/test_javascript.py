@@ -39,3 +39,7 @@ class JSUnitTests(JavaScriptTestCase):
 
     def test_widget(self):
         return 'Nevow.Test.TestWidget'
+
+
+    def test_init(self):
+        return 'Nevow.Test.TestInit'

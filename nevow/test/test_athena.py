@@ -1086,6 +1086,50 @@ class DummyLiveElement(LiveElement):
     """
 
 
+class LivePageTests(unittest.TestCase):
+    """
+    Tests for L{nevow.athena.LivePage}
+    """
+
+    def setUp(self):
+        """
+        Create and remember a L{LivePage} instance.
+        """
+        self.page = athena.LivePage()
+
+
+    def test_bootstrapCall(self):
+        """
+        L{LivePage.bootstrapCall} should generate a JSON-serialized string for
+        calling a single JavaScript function.
+        """
+        bc = self.page._bootstrapCall(
+            "SomeModule.someMethod", [u"one", 2, {u"three": 4.1}])
+        self.assertEqual(
+            bc, 'SomeModule.someMethod("one", 2, {"three":4.1});')
+
+
+    def test_bootstraps(self):
+        """
+        L{LivePage._bootstraps} should return a list of 2-tuples of (initialization
+        method, arguments) of methods to call in JavaScript.
+        """
+        SEG = "'" + '"'
+        URI = "http://localhost/" + SEG
+        req = FakeRequest(uri='/' + SEG, currentSegments=[SEG])
+        ctx = WovenContext()
+        ctx.remember(req, IRequest)
+        self.page.clientID = 'asdf'
+        self.assertEqual(
+            self.page._bootstraps(ctx),
+            [("Divmod.bootstrap",
+              # Nevow's URL quoting rules are weird, but this is the URL
+              # flattener's fault, not mine.  Adjust to taste if that changes
+              # (it won't) -glyph
+              [u"http://localhost/'%22"]),
+             ("Nevow.Athena.bootstrap", [u'asdf'])])
+
+
 
 class WidgetSubcommandTests(unittest.TestCase):
     """

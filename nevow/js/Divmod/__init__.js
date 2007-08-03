@@ -1,6 +1,20 @@
 
 Divmod.debugging = false;
 
+/**
+ * Initialize state in this module that only the server knows about.
+ *
+ * See the Python module "nevow.athena" for where this is expected to be
+ * called.
+ *
+ * @param transportRoot: a string, the URL where the root of the server-side
+ * Athena transport hierarchy for the current page is located.
+ */
+Divmod.bootstrap = function (transportRoot) {
+    this._location = transportRoot;
+};
+
+
 Divmod.baseURL = function() {
     // Use "cached" value if it exists
     if (Divmod._baseURL != undefined) {

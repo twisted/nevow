@@ -1271,3 +1271,16 @@ Nevow.Athena.Widget._initialize = function() {
 Divmod.Base.addLoadEvent(Nevow.Athena._initialize);
 Divmod.Base.addLoadEvent(Nevow.Athena.Widget._initialize);
 
+
+/**
+ * Initialize state in this module that only the server knows about.
+ *
+ * See the Python module "nevow.athena" for where this is expected to be
+ * called.
+ *
+ * @param clientID: a string, the unique identifier of the current page's live
+ * server-side peer.
+ */
+Nevow.Athena.bootstrap = function (clientID) {
+    this.livepageId = clientID;
+}

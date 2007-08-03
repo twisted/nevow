@@ -703,6 +703,11 @@ class ReliableMessageDelivery(object):
         return d
 
 
+BOOTSTRAP_NODE_ID = 'athena:bootstrap'
+BOOTSTRAP_STATEMENT = ("eval(document.getElementById('" + BOOTSTRAP_NODE_ID +
+                       "').getAttribute('payload'));")
+
+
 
 class LivePage(rend.Page):
     """
@@ -743,7 +748,8 @@ class LivePage(rend.Page):
     page = property(lambda self: self)
 
     # Modules needed to bootstrap
-    BOOTSTRAP_MODULES = ['Divmod', 'Divmod.Base', 'Divmod.Defer', 'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
+    BOOTSTRAP_MODULES = ['Divmod', 'Divmod.Base', 'Divmod.Defer',
+                         'Divmod.Runtime', 'Nevow', 'Nevow.Athena']
 
     # Known minimum working versions of certain browsers.
     requiredBrowserVersions = {
@@ -958,17 +964,49 @@ class LivePage(rend.Page):
 
 
     def render_liveglue(self, ctx, data):
+        bootstrapString = '\n'.join(
+            [self._bootstrapCall(method, args) for
+             method, args in self._bootstraps(ctx)])
         return ctx.tag[
             # Hit jsDeps.getModuleForName to force it to load some plugins :/
             # This really needs to be redesigned.
             [self.getImportStan(jsDeps.getModuleForName(name).name)
              for name
              in self.BOOTSTRAP_MODULES],
-            tags.script(type='text/javascript')[tags.raw("""
-                Divmod._location = '%(baseURL)s';
-                Nevow.Athena.livepageId = '%(clientID)s';
-            """ % {'clientID': self.clientID, 'baseURL': flat.flatten(self.transportRoot, ctx)})]
+            tags.script(type='text/javascript',
+                        id=BOOTSTRAP_NODE_ID,
+                        payload=bootstrapString)[
+                BOOTSTRAP_STATEMENT]
         ]
+
+
+    def _bootstraps(self, ctx):
+        """
+        Generate a list of 2-tuples of (methodName, arguments) representing the
+        methods which need to be invoked as soon as all the bootstrap modules
+        are loaded.
+
+        @param: a L{WovenContext} that can render an URL.
+        """
+        return [
+            ("Divmod.bootstrap",
+             [flat.flatten(self.transportRoot, ctx).decode("ascii")]),
+            ("Nevow.Athena.bootstrap",
+             [self.clientID.decode('ascii')])]
+
+
+    def _bootstrapCall(self, methodName, args):
+        """
+        Generate a string to call a 'bootstrap' function in an Athena JavaScript
+        module client-side.
+
+        @param methodName: the name of the method.
+
+        @param args: a list of objects that will be JSON-serialized as
+        arguments to the named method.
+        """
+        return '%s(%s);' % (
+            methodName, ', '.join([json.serialize(arg) for arg in args]))
 
 
     def child_jsmodule(self, ctx):

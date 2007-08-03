@@ -1,3 +1,5 @@
+// -*- test-case-name: nevow.test.test_javascript -*-
+
 /**
  * Tests for Divmod.__init__
  */
@@ -6,6 +8,19 @@
 
 Divmod.Test.TestBase.TestBase = Divmod.UnitTest.TestCase.subclass('TestBase');
 Divmod.Test.TestBase.TestBase.methods(
+
+    /**
+     * Verify that the Divmod module's bootstrap function sets its '_location'
+     * attribute.
+     */
+    function test_divmodBootstrap(self) {
+        var notDivmod = {};
+        notDivmod.bootstrap = Divmod.bootstrap;
+        var STUFF = "hello there";
+        notDivmod.bootstrap(STUFF);
+        self.assertIdentical(notDivmod._location, STUFF);
+    },
+
     /**
      * Test L{Divmod.Base.reprString} correctly escapes various whitespace
      * characters.
