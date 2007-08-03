@@ -554,26 +554,37 @@ Nevow.Athena._unloaded = function() {
     Nevow.Athena._finalize();
 };
 
+/**
+ * The keycode for the 'ESC' key.
+ */
+
+Nevow.Athena.KEYCODE_ESCAPE = 27;
+
+/**
+ * Top-level window event handler for the 'ESC' key, to prevent disconnection.
+ * Cancels the default behavior but otherwise leaves the event unmodified, so
+ * that other application code can handle it if so desired.
+ */
 Nevow.Athena._checkEscape = function(event) {
-    if (event.keyCode == 27) {
-        Nevow.Athena._finalize();
-        return false;
+    if (event.keyCode == Nevow.Athena.KEYCODE_ESCAPE) {
+        event.preventDefault();
+        return true;
     }
+    return true;
 };
 
 /**
  *
  */
 Nevow.Athena._initialize = function() {
-    Divmod.Base.addToCallStack(window, 'onunload', Nevow.Athena._unloaded, true);
+    Divmod.Base.addToCallStack(window, 'onunload',
+                               Nevow.Athena._unloaded, true);
+    Divmod.Base.addToCallStack(window, 'onkeypress',
+                               Nevow.Athena._checkEscape, false);
 
-    Divmod.Base.addToCallStack(window, 'onkeypress', Nevow.Athena._checkEscape, false);
-    Divmod.Base.addToCallStack(window, 'onkeyup', Nevow.Athena._checkEscape, false);
-
-    Nevow.Athena._rdm = Nevow.Athena.ReliableMessageDelivery(Nevow.Athena._rf, Nevow.Athena._connectionLost);
-
-    /**
-     * Delay initialization for just a moment so that Safari stops whirling
+    Nevow.Athena._rdm = Nevow.Athena.ReliableMessageDelivery(
+        Nevow.Athena._rf, Nevow.Athena._connectionLost);
+    /* Delay initialization for just a moment so that Safari stops whirling
      * its loading icon.
      */
     setTimeout(function() {
