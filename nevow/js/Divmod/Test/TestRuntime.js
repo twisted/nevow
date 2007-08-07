@@ -97,6 +97,49 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
     },
 
     /**
+     * A node can be replaced in its parent's children list with the parent's
+     * C{replaceNode} method.  C{replaceNode} returns the node which was
+     * replaced.
+     */
+    function test_replaceChild(self) {
+        var parent = document.createElement('SPAN');
+        var oldChild = document.createElement('A');
+        var newChild = document.createElement('B');
+
+        parent.appendChild(document.createElement('BEFORE'));
+        parent.appendChild(oldChild);
+        parent.appendChild(document.createElement('AFTER'));
+
+        var returned = parent.replaceChild(newChild, oldChild);
+        self.assertIdentical(returned, oldChild);
+
+        self.assertIdentical(parent.childNodes.length, 3);
+        self.assertIdentical(parent.childNodes[0].tagName, 'BEFORE');
+        self.assertIdentical(parent.childNodes[1].tagName, 'B');
+        self.assertIdentical(parent.childNodes[2].tagName, 'AFTER');
+
+        self.assertIdentical(oldChild.parentNode, null);
+        self.assertIdentical(newChild.parentNode, parent);
+    },
+
+    /**
+     * L{Element.replaceChild} should throw a L{DOMError} when invoked with an
+     * old child argument which is not a child of the node.
+     */
+    function test_replaceChildThrows(self) {
+        var parent = document.createElement('SPAN');
+        var nonChild = document.createElement('A');
+        var newChild = document.createElement('B');
+
+        self.assertThrows(
+            DOMException,
+            function() {
+                parent.replaceChild(newChild, nonChild);
+            });
+        self.assertIdentical(parent.childNodes.length, 0);
+    },
+
+    /**
      * Verify that traversal of nested nodes will result in retrieving all the
      * nodes in depth-first order.
      */

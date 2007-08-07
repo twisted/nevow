@@ -265,6 +265,39 @@ Divmod.MockBrowser.Element.methods(
     },
 
     /**
+     * Replaces the child node oldChild with newChild in the list of children,
+     * and returns the oldChild node. If the newChild is already in the tree,
+     * it is first removed.
+     *
+     * Note: strictly speaking, this is a method on the Node interface, not the
+     * Element interface.  However, invoking the implementation of this method
+     * on other Node subclasses is probably an error.  At least on Firefox 1.5,
+     * they silently ignore this call (likewise for appendChild and
+     * removeChild).
+     *
+     * @param newChild: The new node to put in the child list.
+     *
+     * @param oldChild: The node being replaced in the list.
+     *
+     * @return: The node replaced.
+     *
+     * @throw Divmod.MockBrowser.DOMError: Raised if oldChild is not a child of
+     *     this node.
+     *
+     */
+    function replaceChild(self, newChild, oldChild) {
+        for (var i = 0; i < self.childNodes.length; ++i) {
+            if (self.childNodes[i] === oldChild) {
+                self.childNodes[i]._setParent(null);
+                self.childNodes[i] = newChild;
+                newChild._setParent(self);
+                return oldChild;
+            }
+        }
+        throw Divmod.MockBrowser.DOMError("no such node");
+    },
+
+    /**
      * Emulate Firefox's Element.setAttribute, setting the attribute for
      * retrieval by 'getAttribute', except for certain special cases such as
      * 'class', which are also represented as attributes.
@@ -320,6 +353,7 @@ Divmod.MockBrowser.Element.methods(
  */
 if (Divmod.namedAny("document") === undefined) {
     document = Divmod.MockBrowser.Document();
+    DOMException = Divmod.MockBrowser.DOMError;
     // This line is here _solely_ to fool our _own_ browser-detection code.
     navigator = {appName: "Netscape"};
 }
