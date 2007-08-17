@@ -98,7 +98,7 @@ def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent =
         dependencies = getDependencies(fname)
 
     load = lambda fname: 'load(%r);' % (fname,)
-    initialized = set()
+    initialized = {}
     js = [load(sibpath(nevow.__file__, 'test/testsupport.js'))]
     for m in dependencies:
         segments = m.name.split('.')
@@ -106,7 +106,7 @@ def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent =
             segments = segments[:-1]
         initname = '.'.join(segments)
         if initname not in initialized:
-            initialized.add(initname)
+            initialized[initname] = 1
             if '.' in initname:
                 prefix = ''
             else:

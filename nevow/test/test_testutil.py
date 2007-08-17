@@ -8,8 +8,8 @@ from unittest import TestResult
 from twisted.trial.unittest import TestCase, SkipTest
 from twisted.web.http import OK, BAD_REQUEST
 
-from nevow.testutil import (
-    FakeRequest, renderPage, JavaScriptTestCase, NotSupported)
+from nevow.testutil import FakeRequest, renderPage, JavaScriptTestCase
+from nevow.testutil import NotSupported
 from nevow.url import root
 from nevow.rend import Page
 from nevow.loaders import stan
