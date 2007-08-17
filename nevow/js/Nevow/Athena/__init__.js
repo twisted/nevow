@@ -481,7 +481,7 @@ Nevow.Athena.RemoteReference.methods(
         close.onclick = function() {
             document.body.removeChild(e);
             return false;
-        }
+        };
         close.style.display = "block";
 
         close.appendChild(

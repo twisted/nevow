@@ -21,7 +21,7 @@ Divmod.Base.reprString = function(o) {
         ).replace(/[\n]/g, "\\n"
         ).replace(/[\t]/g, "\\t"
         ).replace(/[\r]/g, "\\r");
-}
+};
 
 Divmod.Base.registerJSON = function(name, check, wrap, /* optional */override) {
         /***
@@ -45,7 +45,7 @@ Divmod.Base.registerJSON = function(name, check, wrap, /* optional */override) {
 
         ***/
         Divmod.Base.jsonRegistry.register(name, check, wrap, override);
-}
+};
 
 Divmod.Base.serializeJSON = function(o) {
     /***
@@ -131,9 +131,9 @@ Divmod.Base.serializeJSON = function(o) {
         res.push(useKey + ":" + val);
     }
     return "{" + res.join(", ") + "}";
-}
+};
 
-Divmod.Base.AdapterRegistry = Divmod.Class.subclass("Divmod.Base.AdapterRegistry")
+Divmod.Base.AdapterRegistry = Divmod.Class.subclass("Divmod.Base.AdapterRegistry");
 
 Divmod.Base.AdapterRegistry.methods(
     function __init__(self) {
@@ -217,7 +217,7 @@ Divmod.Base._newCallStack = function(target, path, once) {
     };
     rval.callStack = [];
     return rval;
-}
+};
 
 Divmod.Base.addToCallStack = function(target, path, func, once) {
     var existing = target[path];
@@ -230,7 +230,7 @@ Divmod.Base.addToCallStack = function(target, path, func, once) {
         target[path] = regfunc;
     }
     regfunc.callStack.push(func);
-}
+};
 
 Divmod.Base.addLoadEvent = function(func) {
     /***
@@ -241,6 +241,6 @@ Divmod.Base.addLoadEvent = function(func) {
 
     ***/
     Divmod.Base.addToCallStack(window, "onload", func, true);
-}
+};
 
 Divmod.Base.jsonRegistry = Divmod.Base.AdapterRegistry();
