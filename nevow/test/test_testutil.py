@@ -5,7 +5,6 @@ applications.
 
 from unittest import TestResult
 
-from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase, SkipTest
 from twisted.web.http import OK, BAD_REQUEST
 
@@ -93,20 +92,5 @@ class JavaScriptTests(TestCase):
 
         result = TestResult()
         case.createSource = lambda testMethod: "throw new TypeError();"
-        case.run(result)
-        self.assertEqual(len(result.errors), 1)
-
-
-    def test_signalledExit(self):
-        """
-        An error should be reported if the JavaScript interpreter exits because
-        it received a signal.
-        """
-        case = JavaScriptTestCase()
-        def stubFinder():
-            return FilePath(__file__).sibling('segfault.py').path
-        case.findJavascriptInterpreter = stubFinder
-        case.createSource = lambda testMethod: ""
-        result = TestResult()
         case.run(result)
         self.assertEqual(len(result.errors), 1)
