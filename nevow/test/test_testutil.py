@@ -5,6 +5,7 @@ applications.
 
 from unittest import TestResult
 
+from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase, SkipTest
 from twisted.web.http import OK, BAD_REQUEST
 
@@ -80,17 +81,37 @@ class JavaScriptTests(TestCase):
     """
     Tests for the JavaScript UnitTest runner, L{JavaScriptTestCase}.
     """
+    def setUp(self):
+        """
+        Create a L{JavaScriptTestCase} and verify that its dependencies are
+        present (otherwise, skip the test).
+        """
+        self.case = JavaScriptTestCase()
+        try:
+            self.case.checkDependencies()
+        except NotSupported:
+            raise SkipTest("Missing JS dependencies")
+
+
     def test_unsuccessfulExit(self):
         """
         Verify that an unsuccessful exit status results in an error.
         """
-        case = JavaScriptTestCase()
-        try:
-            case.checkDependencies()
-        except NotSupported:
-            raise SkipTest("Missing JS dependencies")
-
         result = TestResult()
-        case.createSource = lambda testMethod: "throw new TypeError();"
-        case.run(result)
+        self.case.createSource = lambda testMethod: "throw new TypeError();"
+        self.case.run(result)
+        self.assertEqual(len(result.errors), 1)
+
+
+    def test_signalledExit(self):
+        """
+        An error should be reported if the JavaScript interpreter exits because
+        it received a signal.
+        """
+        def stubFinder():
+            return FilePath(__file__).sibling('segfault.py').path
+        self.case.findJavascriptInterpreter = stubFinder
+        self.case.createSource = lambda testMethod: ""
+        result = TestResult()
+        self.case.run(result)
         self.assertEqual(len(result.errors), 1)

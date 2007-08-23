@@ -3,7 +3,7 @@
 
 import sys, signal
 from popen2 import Popen3
-from os import WEXITSTATUS
+from os import WEXITSTATUS, WIFSIGNALED, WTERMSIG
 
 from zope.interface import implements
 
@@ -332,13 +332,20 @@ class JavaScriptTestCase(TrialTestCase):
         self.testMethod = getattr(self, methodName)
 
 
+    def findJavascriptInterpreter(self):
+        """
+        @see L{nevow.jsutil.findJavascriptInterpreter}
+        """
+        return findJavascriptInterpreter()
+
+
     def checkDependencies(self):
         """
         Check that all the dependencies of the test are satisfied.
 
         @raise NotSupported: If any one of the dependencies is not satisfied.
         """
-        js = findJavascriptInterpreter()
+        js = self.findJavascriptInterpreter()
         if js is None:
             raise NotSupported("Could not find JavaScript interpreter")
         if subunit is None:
@@ -411,7 +418,7 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
             result.addSkip(self, str(e))
             result.stopTest(self)
             return
-        js = findJavascriptInterpreter()
+        js = self.findJavascriptInterpreter()
         script = self.makeScript(self.testMethod())
         server = subunit.TestProtocolServer(result)
         protocol = TestProtocolLineReceiverServer(server)
@@ -430,13 +437,21 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
                     protocol.dataReceived(bytes)
                 else:
                     break
-            exitStatus = WEXITSTATUS(child.wait())
-            if exitStatus:
+            exitCode = child.wait()
+            if WIFSIGNALED(exitCode):
                 result.addError(
                     self,
                     (Exception,
-                     "JavaScript interpreter had error exit: %d" % (exitStatus,),
+                     "JavaScript interpreter exited due to signal %d" % (WTERMSIG(exitCode),),
                      None))
+            else:
+                exitStatus = WEXITSTATUS(exitCode)
+                if exitStatus:
+                    result.addError(
+                        self,
+                        (Exception,
+                         "JavaScript interpreter had error exit: %d" % (exitStatus,),
+                         None))
         self._runWithSigchild(run)
 
 
