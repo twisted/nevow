@@ -26,7 +26,7 @@ Divmod.Base.reprString = function(o) {
 Divmod.Base.registerJSON = function(name, check, wrap, /* optional */override) {
         /***
 
-            Register a JSON serialization function.  JSON serialization 
+            Register a JSON serialization function.  JSON serialization
             functions should take one argument and return an object
             suitable for JSON serialization:
 
@@ -39,7 +39,7 @@ Divmod.Base.registerJSON = function(name, check, wrap, /* optional */override) {
                 - Array-like (length property that is a number)
                 - Objects with a "json" method will have this method called
                 - Any other object will be used as {key:value, ...} pairs
-            
+
             If override is given, it is used as the highest priority
             JSON serialization, otherwise it will be used as the lowest.
 
@@ -151,7 +151,7 @@ Divmod.Base.AdapterRegistry.methods(
     },
     function register(self, name, check, wrap, /* optional */ override) {
         /***
-            
+
             The check function should return true if the given arguments are
             appropriate for the wrap function.
 
@@ -170,7 +170,7 @@ Divmod.Base.AdapterRegistry.methods(
         /***
 
             Find an adapter for the given arguments.
-            
+
             If no suitable adapter is found, throws NotFound.
 
         ***/
@@ -200,8 +200,8 @@ Divmod.Base.AdapterRegistry.methods(
 );
 
 Divmod.Base._newCallStack = function(target, path, once) {
+    var callStack = [];
     var rval = function () {
-        var callStack = arguments.callee.callStack;
         for (var i = 0; i < callStack.length; i++) {
             if (callStack[i].apply(target, arguments) === false) {
                 break;
@@ -215,7 +215,7 @@ Divmod.Base._newCallStack = function(target, path, once) {
             }
         }
     };
-    rval.callStack = [];
+    rval.callStack = callStack;
     return rval;
 };
 
