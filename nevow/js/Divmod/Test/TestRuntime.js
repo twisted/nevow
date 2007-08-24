@@ -97,6 +97,70 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
     },
 
     /**
+     * Verify that C{insertBefore} sticks the new node at the right place in
+     * the C{childNodes} array, and sets the appropriate parent.
+     */
+    function test_insertBefore(self) {
+        var top = document.createElement('div');
+        var reference = document.createElement('div');
+        top.appendChild(reference);
+        var toInsert = document.createElement('div');
+        top.insertBefore(toInsert, reference);
+        self.assertIdentical(toInsert.parentNode, top);
+        self.assertIdentical(top.childNodes[0], toInsert);
+        self.assertIdentical(top.childNodes[1], reference);
+        self.assertIdentical(top.childNodes.length, 2);
+    },
+
+    /**
+     * Verify that C{insertBefore} returns the inserted node.
+     */
+    function test_insertBeforeReturnValue(self) {
+        var top = document.createElement('div');
+        var reference = document.createElement('div');
+        top.appendChild(reference);
+        var toInsert = document.createElement('div');
+        self.assertIdentical(top.insertBefore(toInsert, reference), toInsert);
+    },
+
+    /**
+     * Verify that C{insertBefore} returns the inserted node when the
+     * reference node is C{null}.
+     */
+    function test_insertBeforeReturnValueNoReference(self) {
+        var top = document.createElement('div');
+        var toInsert = document.createElement('div');
+        self.assertIdentical(top.insertBefore(toInsert, null), toInsert);
+    },
+
+    /**
+     * Verify that C{insertBefore} appends the node to its child array when
+     * the reference node is C{null}.
+     */
+     function test_insertBeforeNoReference(self) {
+        var top = document.createElement('div');
+        var toInsert = document.createElement('div');
+        top.insertBefore(toInsert, null);
+        self.assertIdentical(toInsert.parentNode, top);
+        self.assertIdentical(top.childNodes.length, 1);
+        self.assertIdentical(top.childNodes[0], toInsert);
+    },
+
+    /**
+     * C{insertBefore} should throw a C{DOMError} if its passed a non C{null}
+     * reference node which is not one of its child nodes.
+     */
+    function test_insertBeforeBadReference(self) {
+        self.assertThrows(
+            DOMException,
+            function() {
+                document.createElement('div').insertBefore(
+                    document.createElement('div'),
+                    document.createElement('div'));
+            });
+    },
+
+    /**
      * A node can be replaced in its parent's children list with the parent's
      * C{replaceNode} method.  C{replaceNode} returns the node which was
      * replaced.

@@ -247,6 +247,31 @@ Divmod.MockBrowser.Element.methods(
     },
 
     /**
+     * Stick a child into this element, before the reference element.
+     *
+     * @param newChildNode: The new node to put in the child list.
+     * @param referenceNode: The reference node (the node to put
+     * C{newChildNode} before).
+     *
+     * @throw Divmod.MockBrowser.DOMError: Raised if C{referenceNode} is not a
+     * child of C{self}.
+     */
+    function insertBefore(self, newChildNode, referenceNode) {
+        if(referenceNode === null) {
+            self.appendChild(newChildNode);
+            return newChildNode;
+        }
+        for(var i = 0; i < self.childNodes.length; i++) {
+            if(self.childNodes[i] == referenceNode) {
+                self.childNodes.splice(i, 0, newChildNode);
+                newChildNode._setParent(self);
+                return newChildNode;
+            }
+        }
+        throw Divmod.MockBrowser.DOMError("no such reference node");
+    },
+
+    /**
      * Remove a child from this element.
      */
     function removeChild(self, child) {
