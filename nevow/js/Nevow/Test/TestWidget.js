@@ -2,6 +2,7 @@
 
 // import Divmod.UnitTest
 // import Nevow.Athena
+// import Nevow.Test.WidgetUtil
 
 Nevow.Test.TestWidget.DummyWidget = Nevow.Athena.Widget.subclass(
     'Nevow.Test.TestWidget.DummyWidget');
@@ -21,25 +22,16 @@ Nevow.Test.TestWidget.WidgetTests.methods(
      * Create a widget for use in each test.
      */
     function setUp(self) {
-        self.node = document.createElement("div");
-        self.node.id = "athena:1";
+        self.node = Nevow.Test.WidgetUtil.makeWidgetNode();
         self.otherNode = document.createElement("span");
         self.node.appendChild(self.otherNode);
         self.widget = Nevow.Test.TestWidget.DummyWidget(self.node);
-        Nevow.Athena.Widget._athenaWidgets[1] = self.widget;
-        self._origRDM = Nevow.Athena._rdm;
-        Nevow.Athena._rdm = self;
-    },
-
-    // fake RDM implementation
-
-    function pause(self) {
-    },
-    function unpause(self) {
+        Nevow.Test.WidgetUtil.registerWidget(self.widget);
+        self._unmockRDM = Nevow.Test.WidgetUtil.mockTheRDM();
     },
 
     function tearDown(self) {
-        Nevow.Athena._rdm = self._origRDM;
+        self._unmockRDM();
     },
 
     /**
