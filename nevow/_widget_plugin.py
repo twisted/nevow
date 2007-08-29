@@ -4,13 +4,13 @@
 twistd subcommand plugin for launching an athena widget server.
 """
 
-from twisted.application.internet import TCPServer
-from twisted.python.reflect import namedAny
 from twisted.python.usage import Options, UsageError
+from twisted.python.reflect import namedAny
+from twisted.application.internet import TCPServer
 
-from nevow.appserver import NevowSite
-from nevow.athena import LivePage
 from nevow.loaders import stan
+from nevow.athena import LivePage
+from nevow.appserver import NevowSite
 from nevow.tags import html, head, title, body, div, directive
 
 
@@ -36,6 +36,28 @@ class ElementRenderingLivePage(LivePage):
     def render_element(self, ctx, data):
         self.element.setFragmentParent(self)
         return ctx.tag[self.element]
+
+
+
+class WidgetPluginRoot(LivePage):
+    """
+    Provide a top-level resource for creating new widget elements with each
+    reqest.
+    """
+    def __init__(self, elementFactory):
+        """
+        Initialize the resource with the passwed plugin element.
+        """
+        LivePage.__init__(self)
+        self.elementFactory = elementFactory
+
+
+    def child_(self, ctx):
+        """
+        Instead of returning the default self, return a new instance of this
+        class, thus allowing page reloads (that produce a new instance).
+        """
+        return ElementRenderingLivePage(self.elementFactory())
 
 
 
@@ -65,10 +87,10 @@ class Options(Options):
         Specify the LiveElement or LiveFragment class to serve.
         """
         try:
-            classObj = namedAny(qualifiedName)
+            factory = namedAny(qualifiedName)
         except (ValueError, AttributeError):
             raise UsageError("Specify a valid class name to --element")
-        self['element'] = classObj()
+        self['element'] = factory
 
 
     def postOptions(self):
@@ -95,5 +117,5 @@ def makeService(options):
 
     """
     element = options['element']
-    page = ElementRenderingLivePage(element)
+    page = WidgetPluginRoot(element)
     return TCPServer(options['port'], NevowSite(page))

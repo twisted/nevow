@@ -20,6 +20,7 @@ from nevow.inevow import IRequest
 from nevow.context import WovenContext
 from nevow.testutil import AccumulatingFakeRequest, FakeRequest
 from nevow.testutil import renderPage, renderLivePage
+from nevow._widget_plugin import WidgetPluginRoot
 from nevow._widget_plugin import ElementRenderingLivePage
 
 from twisted.plugins.nevow_widget import widgetServiceMaker
@@ -1082,8 +1083,19 @@ class LiveFragmentTests(LiveMixinTestsMixin, unittest.TestCase):
 
 class DummyLiveElement(LiveElement):
     """
-    Behaviorless Athena element used to test C{makeService}.
+    A "counting" Athena element used for tests involving the plugin system
+    (e.g., supplied as the argument to the "--element" option).
     """
+    classCounter = 0
+
+    def __init__(self):
+        """
+        Create a L{DummyLiveElement} with a 'counter' attribute set to a
+        unique, incremented ID, used for comparing instances.
+        """
+        LiveElement.__init__(self)
+        DummyLiveElement.classCounter += 1
+        self.counter = DummyLiveElement.classCounter
 
 
 class LivePageTests(unittest.TestCase):
@@ -1111,8 +1123,8 @@ class LivePageTests(unittest.TestCase):
 
     def test_bootstraps(self):
         """
-        L{LivePage._bootstraps} should return a list of 2-tuples of (initialization
-        method, arguments) of methods to call in JavaScript.
+        L{LivePage._bootstraps} should return a list of 2-tuples of
+        (initialization method, arguments) of methods to call in JavaScript.
         """
         SEG = "'" + '"'
         URI = "http://localhost/" + SEG
@@ -1167,7 +1179,7 @@ class WidgetSubcommandTests(unittest.TestCase):
         """
         options = widgetServiceMaker.options()
         options.parseOptions(['--element', qual(DummyLiveElement)])
-        self.failUnless(isinstance(options['element'], DummyLiveElement))
+        self.assertEquals(options['element'], DummyLiveElement)
 
 
     def test_invalidWidgetOption(self):
@@ -1197,7 +1209,7 @@ class WidgetSubcommandTests(unittest.TestCase):
         Verify that the default port number is 8080.
         """
         options = widgetServiceMaker.options()
-        options['element'] = DummyLiveElement()
+        options['element'] = DummyLiveElement
         options.parseOptions([])
         self.assertEqual(options['port'], 8080)
 
@@ -1217,14 +1229,15 @@ class WidgetSubcommandTests(unittest.TestCase):
         will run a Nevow site.
         """
         service = widgetServiceMaker.makeService({
-                'element': DummyLiveElement(),
+                'element': DummyLiveElement,
                 'port': 8080,
                 })
         self.failUnless(isinstance(service, TCPServer))
         self.assertEqual(service.args[0], 8080)
         self.failUnless(isinstance(service.args[1], NevowSite))
-        self.failUnless(isinstance(service.args[1].resource, ElementRenderingLivePage))
-        self.failUnless(isinstance(service.args[1].resource.element, DummyLiveElement))
+        self.failUnless(isinstance(service.args[1].resource, WidgetPluginRoot))
+        self.failUnless(isinstance(service.args[1].resource.elementFactory(),
+                                   DummyLiveElement))
 
 
     def test_livePageRendering(self):
@@ -1247,3 +1260,50 @@ class WidgetSubcommandTests(unittest.TestCase):
             self.assertEqual(divs[0].firstChild.nodeValue, 'the element')
         renderDeferred.addCallback(cbRendered)
         return renderDeferred
+
+
+    def test_multipleRendersMultipleWidgets(self):
+        """
+        Each hit to the top-level page created by makeService should result in a
+        new element being created by the specified element factory, so that it
+        can be rendered multiple times.
+        """
+        w = WidgetPluginRoot(DummyLiveElement)
+        page1, seg = w.locateChild(None, [''])
+        page2, seg = w.locateChild(None, [''])
+
+        # Make sure the pages aren't the same.
+        self.failUnless(isinstance(page1, ElementRenderingLivePage))
+        self.failUnless(isinstance(page2, ElementRenderingLivePage))
+        self.assertNotIdentical(page1, page2)
+
+        # Make sure the elements aren't the same.
+        self.assertNotEqual(page1.element.counter, page2.element.counter)
+
+
+    def test_transportHookup(self):
+        """
+        When a LivePage is rendered, it needs to hook up to its transport,
+        which is a special resource (associated with the particular LivePage
+        object in memory).  This hookup is done by some special logic in
+        LivePage.locateChild, among other places.  Let's make sure that we can
+        look up the live page by its client ID with the default transport root.
+
+        Athena's default transport root is whatever URL the page is rendered
+        at.  In the case of this plugin, that will usually be
+        http://localhost:8080/
+        """
+        w = WidgetPluginRoot(DummyLiveElement)
+        page1, seg = w.locateChild(None, [''])
+        page1.element.docFactory = stan('the element')
+        page1.element.jsClass = u'Dummy.ClassName'
+        def cbCheckPageByClientID(result):
+            req = FakeRequest()
+            ctx = WovenContext()
+            ctx.remember(req, IRequest)
+            page1prime, seg = w.locateChild(ctx, [page1.clientID])
+            self.assertIdentical(page1prime, page1)
+        renderDeferred = renderLivePage(page1)
+        renderDeferred.addCallback(cbCheckPageByClientID)
+        return renderDeferred
+
