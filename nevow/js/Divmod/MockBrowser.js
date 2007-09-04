@@ -379,6 +379,4 @@ Divmod.MockBrowser.Element.methods(
 if (Divmod.namedAny("document") === undefined) {
     document = Divmod.MockBrowser.Document();
     DOMException = Divmod.MockBrowser.DOMError;
-    // This line is here _solely_ to fool our _own_ browser-detection code.
-    navigator = {appName: "Netscape"};
 }

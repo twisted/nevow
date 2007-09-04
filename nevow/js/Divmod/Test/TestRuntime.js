@@ -269,5 +269,230 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
 
         self.assertIdentical(
             Divmod.Runtime.theRuntime.getElementByIdWithNode(node, id).id,
-            id)
+            id);
+    },
+
+    /**
+     * I{firstNodeByAttribute} should return the highest, left-most node in the
+     * DOM with a matching attribute value.
+     */
+    function test_firstNodeByAttribute(self) {
+        /*
+         * Save some typing.
+         */
+        function find(root, attrName, attrValue) {
+            return Divmod.Runtime.theRuntime.firstNodeByAttribute(
+                root, attrName, attrValue);
+        }
+        var root = document.createElement('div');
+        root.setAttribute('foo', 'bar');
+        self.assertIdentical(find(root, 'foo', 'bar'), root);
+
+        var childA = document.createElement('h1');
+        childA.setAttribute('foo', 'bar');
+        childA.setAttribute('baz', 'quux');
+        root.appendChild(childA);
+        self.assertIdentical(find(root, 'foo', 'bar'), root);
+        self.assertIdentical(find(root, 'baz', 'quux'), childA);
+
+        var childB = document.createElement('h2');
+        childB.setAttribute('foo', 'bar');
+        childB.setAttribute('baz', 'quux');
+        root.appendChild(childB);
+        self.assertIdentical(find(root, 'foo', 'bar'), root);
+        self.assertIdentical(find(root, 'baz', 'quux'), childA);
+
+        var childC = document.createElement('h3');
+        childC.setAttribute('foo', 'bar');
+        childC.setAttribute('baz', 'quux');
+        childA.appendChild(childC);
+        self.assertIdentical(find(root, 'foo', 'bar'), root);
+        self.assertIdentical(find(root, 'baz', 'quux'), childA);
+
+        var childD = document.createElement('h4');
+        childD.setAttribute('corge', 'grault');
+        childB.appendChild(childD);
+        self.assertIdentical(find(root, 'corge', 'grault'), childD);
+    },
+
+    /**
+     * I{firstNodeByAttribute} should throw an error if no node matches the
+     * attribute name and value supplied.
+     */
+    function test_firstNodeByAttributeThrows(self) {
+        var root = document.createElement('span');
+        self.assertThrows(
+            Error,
+            function() {
+                return Divmod.Runtime.theRuntime.firstNodeByAttribute(
+                    root, 'foo', 'bar');
+            });
+
+        root.setAttribute('foo', 'quux');
+        self.assertThrows(
+            Error,
+            function() {
+                return Divmod.Runtime.theRuntime.firstNodeByAttribute(
+                    root, 'foo', 'bar');
+            });
+
+        root.setAttribute('baz', 'bar');
+        self.assertThrows(
+            Error,
+            function() {
+                return Divmod.Runtime.theRuntime.firstNodeByAttribute(
+                    root, 'foo', 'bar');
+            });
+    },
+
+    /**
+     * I{nodeByAttribute} should return the single node which matches the
+     * attribute name and value supplied.
+     */
+    function test_nodeByAttribute(self) {
+        function find(root, attrName, attrValue) {
+            return Divmod.Runtime.theRuntime.nodeByAttribute(
+                root, attrName, attrValue);
+        };
+        var root = document.createElement('div');
+        root.setAttribute('foo', 'bar');
+        self.assertIdentical(find(root, 'foo', 'bar'), root);
+
+        root.setAttribute('foo', '');
+        var childA = document.createElement('span');
+        childA.setAttribute('foo', 'bar');
+        root.appendChild(childA);
+        self.assertIdentical(find(root, 'foo', 'bar'), childA);
+
+        childA.setAttribute('foo', '');
+        var childB = document.createElement('span');
+        childB.setAttribute('foo', 'bar');
+        root.appendChild(childB);
+        self.assertIdentical(find(root, 'foo', 'bar'), childB);
+
+        childB.setAttribute('foo', '');
+        var childC = document.createElement('span');
+        childC.setAttribute('foo', 'bar');
+        childA.appendChild(childC);
+        self.assertIdentical(find(root, 'foo', 'bar'), childC);
+
+        childC.setAttribute('foo', '');
+        var childD = document.createElement('span');
+        childD.setAttribute('foo', 'bar');
+        childB.appendChild(childD);
+        self.assertIdentical(find(root, 'foo', 'bar'), childD);
+    },
+
+    /**
+     * I{nodeByAttribute} should throw an error if more than one node matches
+     * the specified attribute name and value.
+     */
+    function test_nodeByAttributeThrowsOnMultiple(self) {
+        function find(root, attrName, attrValue) {
+            return Divmod.Runtime.theRuntime.nodeByAttribute(
+                root, attrName, attrValue);
+        };
+
+        var root = document.createElement('div');
+        root.setAttribute('foo', 'bar');
+        var childA = document.createElement('span');
+        childA.setAttribute('foo', 'bar');
+        root.appendChild(childA);
+        self.assertThrows(
+            Error,
+            function() {
+                return find(root, 'foo', 'bar');
+            });
+
+        childA.setAttribute('foo', '');
+        var childB = document.createElement('span');
+        childB.setAttribute('foo', 'bar');
+        root.appendChild(childB);
+        self.assertThrows(
+            Error,
+            function() {
+                return find(root, 'foo', 'bar');
+            });
+
+        childB.setAttribute('foo', '');
+        var childC = document.createElement('span');
+        childC.setAttribute('foo', 'bar');
+        childA.appendChild(childC);
+        self.assertThrows(
+            Error,
+            function() {
+                return find(root, 'foo', 'bar');
+            });
+
+        childC.setAttribute('foo', '');
+        var childD = document.createElement('span');
+        childD.setAttribute('foo', 'bar');
+        childB.appendChild(childD);
+        self.assertThrows(
+            Error,
+            function() {
+                return find(root, 'foo', 'bar');
+            });
+
+        root.setAttribute('foo', '');
+        childC.setAttribute('foo', 'bar');
+        self.assertThrows(
+            Error,
+            function() {
+                return find(root, 'foo', 'bar');
+            });
+    },
+
+    /**
+     * I{nodeByAttribute} should throw an error if no nodes match the specified
+     * attribute name and value.
+     */
+    function test_nodeByAttributeThrowsOnMissing(self) {
+        var root = document.createElement('span');
+        self.assertThrows(
+            Error,
+            function() {
+                return Divmod.Runtime.theRuntime.nodeByAttribute(
+                    root, 'foo', 'bar');
+            });
+
+        root.setAttribute('foo', 'quux');
+        self.assertThrows(
+            Error,
+            function() {
+                return Divmod.Runtime.theRuntime.nodeByAttribute(
+                    root, 'foo', 'bar');
+            });
+
+        root.setAttribute('baz', 'bar');
+        self.assertThrows(
+            Error,
+            function() {
+                return Divmod.Runtime.theRuntime.nodeByAttribute(
+                    root, 'foo', 'bar');
+            });
+    },
+
+    /**
+     * I{nodesByAttribute} should return an array of all nodes which have
+     * matching values for the specified attribute.
+     */
+    function test_nodesByAttribute(self) {
+        var root = document.createElement('div');
+        root.setAttribute('foo', 'bar');
+        var childA = document.createElement('span');
+        var childB = document.createElement('span');
+        childB.setAttribute('foo', 'bar');
+        root.appendChild(childA);
+        root.appendChild(childB);
+
+        var nodes = Divmod.Runtime.theRuntime.nodesByAttribute(
+            root, 'foo', 'bar');
+        self.assertIdentical(nodes.length, 2);
+        self.assertIdentical(nodes[0], root);
+        self.assertIdentical(nodes[1], childB);
+
+        nodes = Divmod.Runtime.theRuntime.nodesByAttribute(
+            root, 'baz', 'quux');
+        self.assertIdentical(nodes.length, 0);
     });
