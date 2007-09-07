@@ -1,3 +1,10 @@
+0.9.24 (2007-09-05):
+  - ESC key no longer disconnects Athena connections.
+  - Fixed a bug where URLs with quote characters will cause the Athena
+     connection to be lost.
+  - Fixed 'twistd athena-widget' to create a fresh widget instance for each
+    hit.
+
 0.9.23 (2007-08-01):
   - Fixed install script to include all JavaScript files.
 
