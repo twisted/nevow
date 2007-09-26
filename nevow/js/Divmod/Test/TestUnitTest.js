@@ -152,7 +152,7 @@ Divmod.Test.TestUnitTest.AssertionTests.methods(
         try {
             self.compare(function () {return false;}, "<->", "a", "b");
         } catch (e) {
-            self.assertIdentical(e.message, 'a <-> b');
+            self.assertIdentical(e.message, '"a" <-> "b"');
         }
     },
 
@@ -166,7 +166,7 @@ Divmod.Test.TestUnitTest.AssertionTests.methods(
             self.compare(function () {return false;}, "<->", "a", "b",
                          "Hello");
         } catch (e) {
-            self.assertIdentical(e.message, 'a <-> b: Hello');
+            self.assertIdentical(e.message, '"a" <-> "b": Hello');
         }
     },
 
@@ -181,7 +181,7 @@ Divmod.Test.TestUnitTest.AssertionTests.methods(
                                   function () {
                                       self.assertIdentical('apple', 'orange');
                                   });
-        self.assert(e.message === 'apple !== orange', e.message);
+        self.assert(e.message === '"apple" !== "orange"', e.message);
     },
 
 
@@ -193,7 +193,7 @@ Divmod.Test.TestUnitTest.AssertionTests.methods(
         try {
             self.assertIdentical('apple', 'orange', 'some message');
         } catch (e) {
-            self.assert(e.message === 'apple !== orange: some message');
+            self.assert(e.message === '"apple" !== "orange": some message');
         }
     },
 
@@ -216,7 +216,7 @@ Divmod.Test.TestUnitTest.AssertionTests.methods(
                                   function () {
                                       self.assertIdentical(1, '1');
                                   });
-        self.assert(e.message === '1 !== 1');
+        self.assert(e.message === '1 !== "1"');
     },
 
 
@@ -992,4 +992,30 @@ Divmod.Test.TestUnitTest.MockDocumentTest.methods(
 
         self.assertIdentical(size.w, 1234);
         self.assertIdentical(size.h, 5678);
+    });
+
+
+/**
+ * Tests for L{Divmod.Runtime.Platform.repr}.
+ */
+Divmod.Test.TestUnitTest.ReprTests =
+    Divmod.UnitTest.TestCase.subclass('Divmod.Test.TestUnitTest.ReprTests');
+Divmod.Test.TestUnitTest.ReprTests.methods(
+    /**
+     * Test that repr(undefined) and repr(null) work.
+     */
+    function test_undefinedAndNull(self) {
+        var repr = Divmod.UnitTest.repr;
+        self.assertIdentical(repr(null), 'null');
+        self.assertIdentical(repr(undefined), 'undefined');
+    },
+
+    /**
+     * Test that some simple values have a reasonable repr().
+     */
+    function test_simpleValues(self) {
+        var repr = Divmod.UnitTest.repr;
+        self.assertIdentical(repr(5), '5');
+        self.assertIdentical(repr('foo'), '"foo"');
+        self.assert(repr(['foo']).search('foo') >= 0);
     });

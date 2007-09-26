@@ -7,6 +7,7 @@
 
 // import Divmod
 // import Divmod.Inspect
+// import Divmod.Runtime
 
 
 /**
@@ -371,8 +372,9 @@ Divmod.UnitTest.TestCase.methods(
      */
     function compare(self, predicate, description, a, b,
                      /* optional */ message) {
+        var repr = Divmod.UnitTest.repr;
         if (!predicate(a, b)) {
-            msg = a + " " + description + " " + b;
+            msg = repr(a) + " " + description + " " + repr(b);
             if (message != null) {
                 msg += ': ' + message;
             }
@@ -569,4 +571,28 @@ Divmod.UnitTest.run = function run(test) {
 Divmod.UnitTest.runRemote = function runRemote(test) {
     var result = Divmod.UnitTest.SubunitTestClient();
     test.run(result);
+};
+
+
+/**
+ * Return a string representation of an arbitrary value, similar to
+ * Python's builtin repr() function.
+ */
+Divmod.UnitTest.repr = function repr(value) {
+    // We can't call methods on undefined or null.
+    if (value === undefined) {
+        return 'undefined';
+    } else if (value === null) {
+        return 'null';
+    } else if (typeof value === 'string') {
+        return '"' + value + '"';
+    } else if (typeof value === 'number') {
+        return '' + value;
+    } else if (value.toSource !== undefined) {
+        return value.toSource();
+    } else if (value.toString !== undefined) {
+        return value.toString();
+    } else {
+        return '' + value;
+    }
 };
