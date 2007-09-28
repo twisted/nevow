@@ -162,6 +162,87 @@ Divmod.Runtime.Tests.Standalone.methods(
 
 Divmod.Runtime.Tests.FindInRootNode = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.FindInRootNode');
 Divmod.Runtime.Tests.FindInRootNode.methods(
+    /**
+     * Test that firstNodeByClass works and can find nodes with multiple
+     * classes
+     */
+    function test_firstNodeByClass(self) {
+        try {
+            var target = document.createElement('div');
+            target.setAttribute(Divmod.Runtime.theRuntime._mangleAttributeName('class'), 'foo bar');
+            var ringer = document.createElement('div');
+            ringer.setAttribute('clas', 'foobar');
+            self.node.appendChild(target);
+            self.node.appendChild(ringer);
+            var found = Divmod.Runtime.theRuntime.firstNodeByClass(self.node,
+                    'bar');
+            self.assertEqual(
+                Divmod.Runtime.theRuntime.getAttribute(found, 'class'),
+                'foo bar');
+        } finally {
+            self.node.removeChild(target);
+            self.node.removeChild(ringer);
+        }
+    },
+
+    /**
+     * Test that firstNodeByClass for a missing node throws the right
+     * exception
+     */
+    function test_firstNodeByClassMissing(self) {
+        try {
+            var ringer = document.createElement('div');
+            ringer.setAttribute('clas', 'foobar');
+            self.node.appendChild(ringer);
+            var error = self.assertThrows(
+                Divmod.Runtime.NodeAttributeError,
+                function() {
+                    Divmod.Runtime.theRuntime.firstNodeByClass(
+                        self.node, 'bar');
+                });
+            self.assertEqual(error.root, self.node);
+            self.assertEqual(error.attribute, 'class');
+            self.assertEqual(error.value, 'bar');
+        } finally {
+            self.node.removeChild(ringer);
+        }
+    },
+
+    /**
+     * Test that nodesByClass works and can find nodes with multiple classes
+     */
+    function test_nodesByClass(self) {
+        try {
+            var target1 = document.createElement('div');
+            target1.setAttribute(
+                Divmod.Runtime.theRuntime._mangleAttributeName('class'),
+                'foo bar');
+            var target2 = document.createElement('div');
+            target2.setAttribute(
+                Divmod.Runtime.theRuntime._mangleAttributeName('class'),
+                'bar');
+            var ringer = document.createElement('div');
+            ringer.setAttribute(
+                Divmod.Runtime.theRuntime._mangleAttributeName('class'),
+                'foobar');
+            self.node.appendChild(target1);
+            self.node.appendChild(target2);
+            self.node.appendChild(ringer);
+            var found = Divmod.Runtime.theRuntime.nodesByClass(self.node, 'bar');
+            self.assertEqual(found.length, 2);
+            self.assertEqual(
+                Divmod.Runtime.theRuntime.getAttribute(found[0], 'class'),
+                'foo bar');
+            self.assertEqual(
+                Divmod.Runtime.theRuntime.getAttribute(found[1], 'class'),
+                'bar');
+        } finally {
+            self.node.removeChild(target1);
+            self.node.removeChild(target2);
+            self.node.removeChild(ringer);
+        }
+    },
+
     function test_nodeByAttribute(self) {
         var node = Divmod.Runtime.theRuntime.nodeByAttribute(
             self.node, 'athena:class', 'Divmod.Runtime.Tests.FindInRootNode');

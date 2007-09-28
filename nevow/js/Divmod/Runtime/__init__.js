@@ -579,6 +579,56 @@ Divmod.Runtime.XPathSupportingPlatform.methods(
         return ns;
     },
 
+    function _xpathNodeByClass(self, className) {
+        return (".//*[contains(concat(' ', normalize-space(@class), ' '), ' " +
+                className + "')]");
+    },
+
+    /**
+     * @return the first node under root containing className in its class attr
+     *
+     * For classes, this is better than *firstNodeByAttribute because it
+     * can find nodes having the given class among multiple classes,
+     * whereas *firstNodeByAttribute only does an exact string comparison.
+     */
+    function firstNodeByClass(self, root, className) {
+        var xepr = self._xpathNodeByClass(className);
+        var node = document.evaluate(
+                xepr,
+                root,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null).singleNodeValue;
+        if (!node) {
+            throw Divmod.Runtime.NodeAttributeError(root, 'class', className);
+        }
+        return node;
+    },
+
+    /**
+     * @return all nodes under root containing className in their class attr
+     *
+     * For classes, this is better than *nodeByAttribute because it
+     * can find nodes having the given class among multiple classes,
+     * whereas *nodeByAttribute only does an exact string comparison.
+     */
+    function nodesByClass(self, root, className) {
+        var results = [];
+        var xepr = self._xpathNodeByClass(className);
+        var nodes = document.evaluate(
+                xepr,
+                root,
+                null,
+                XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+                null);
+        var node = nodes.iterateNext();
+        while(node){
+            results.push(node);
+            node = nodes.iterateNext();
+        }
+        return results;
+    },
+
     function _xpathNodeByAttribute(self, attrName, attrValue) {
         var upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         var lower = upper.toLowerCase();
@@ -911,6 +961,69 @@ Divmod.Runtime.InternetExplorer.methods(
         }
 
         return foundNode;
+    },
+
+
+    /**
+     * @return the first node under root containing className in its class attr
+     *
+     * For classes, this is better than *firstNodeByAttribute because it
+     * can find nodes having the given class among multiple classes,
+     * whereas *firstNodeByAttribute only does an exact string comparison.
+     */
+    function firstNodeByClass(self, root, className) {
+        var result = null;
+        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+        var terminate = Divmod.Runtime.Platform.DOM_TERMINATE;
+        self.traverse(
+            root,
+            function(node) {
+                var cls = node.className;
+                if (!cls) {
+                    return descend;
+                }
+                var classNames = cls.split(' ');
+                for (var j = 0; j < classNames.length; j++) {
+                    if (classNames[j] == className) {
+                        result = node
+                        return terminate;
+                    }
+                }
+                return descend;
+            });
+        if (!result) {
+            throw Divmod.Runtime.NodeAttributeError(root, 'class', className);
+        }
+        return result;
+    },
+
+    /**
+     * @return all nodes under root containing className in their class attr
+     *
+     * For classes, this is better than *nodeByAttribute because it
+     * can find nodes having the given class among multiple classes,
+     * whereas *nodeByAttribute only does an exact string comparison.
+     */
+    function nodesByClass(self, root, className) {
+        var results = [];
+        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+        self.traverse(
+            root,
+            function(node) {
+                var cls = node.className;
+                if (!cls) {
+                    return descend;
+                }
+                var classNames = cls.split(' ');
+                for (var j = 0; j < classNames.length; j++) {
+                    if (classNames[j] == className) {
+                        results.push(node);
+                        break;
+                    }
+                }
+                return descend;
+            });
+        return results;
     });
 
 

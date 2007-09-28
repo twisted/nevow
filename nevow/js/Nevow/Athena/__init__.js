@@ -819,6 +819,14 @@ Nevow.Athena.Widget.methods(
     },
 
 
+    function firstNodeByClass(self, className) {
+        return Divmod.Runtime.theRuntime.firstNodeByClass(self.node, className);
+    },
+
+    function nodesByClass(self, className) {
+        return Divmod.Runtime.theRuntime.nodesByClass(self.node, className);
+    },
+
     function nodeByAttribute(self, attrName, attrValue, /* optional */ defaultNode) {
         return Divmod.Runtime.theRuntime.nodeByAttribute(self.node, attrName, attrValue, defaultNode);
     },
