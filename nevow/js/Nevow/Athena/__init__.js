@@ -818,11 +818,18 @@ Nevow.Athena.Widget.methods(
             domEventName, methodName);
     },
 
-
+    /**
+     * Find the first child node (to any depth) containing the class name in
+     * its class attribute.  If no node is matching, it throws an error.
+     */
     function firstNodeByClass(self, className) {
         return Divmod.Runtime.theRuntime.firstNodeByClass(self.node, className);
     },
 
+    /**
+     * Find all the child nodes containing the class name in their class
+     * attribute.
+     */
     function nodesByClass(self, className) {
         return Divmod.Runtime.theRuntime.nodesByClass(self.node, className);
     },

@@ -280,15 +280,15 @@ Divmod.Runtime.Platform.methods(
         return localName;
     },
 
-//     function setAttribute(self, node, localName, namespaceURI, namespaceIdentifier, value) {
-//         if (namespaceURI !== undefined && node.setAttributeNS) {
-//             node.setAttributeNS(namespaceURI, localName, value);
-//         } else if (namespaceIdentifier !== undefined) {
-//             node.setAttribute(namespaceIdentifier + ':' + localName, value);
-//         } else {
-//             node.setAttribute(self._mangleAttributeName(localName), value);
-//         }
-//     },
+    function setAttribute(self, node, localName, value, namespaceURI, namespaceIdentifier) {
+        if (namespaceURI !== undefined && node.setAttributeNS) {
+            node.setAttributeNS(namespaceURI, localName, value);
+        } else if (namespaceIdentifier !== undefined) {
+            node.setAttribute(namespaceIdentifier + ':' + localName, value);
+        } else {
+            node.setAttribute(self._mangleAttributeName(localName), value);
+        }
+    },
 
     /**
      * This is _the_way_ to get the value of an attribute off of node

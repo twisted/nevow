@@ -163,15 +163,14 @@ Divmod.Runtime.Tests.Standalone.methods(
 Divmod.Runtime.Tests.FindInRootNode = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.FindInRootNode');
 Divmod.Runtime.Tests.FindInRootNode.methods(
     /**
-     * Test that firstNodeByClass works and can find nodes with multiple
-     * classes
+     * Test that firstNodeByClass can find nodes with multiple classes.
      */
     function test_firstNodeByClass(self) {
         try {
             var target = document.createElement('div');
-            target.setAttribute(Divmod.Runtime.theRuntime._mangleAttributeName('class'), 'foo bar');
+            Divmod.Runtime.theRuntime.setAttribute(target, 'class', 'foo bar');
             var ringer = document.createElement('div');
-            ringer.setAttribute('clas', 'foobar');
+            Divmod.Runtime.theRuntime.setAttribute(ringer, 'clas', 'foobar');
             self.node.appendChild(target);
             self.node.appendChild(ringer);
             var found = Divmod.Runtime.theRuntime.firstNodeByClass(self.node,
@@ -192,7 +191,7 @@ Divmod.Runtime.Tests.FindInRootNode.methods(
     function test_firstNodeByClassMissing(self) {
         try {
             var ringer = document.createElement('div');
-            ringer.setAttribute('clas', 'foobar');
+            Divmod.Runtime.theRuntime.setAttribute(ringer, 'clas', 'foobar');
             self.node.appendChild(ringer);
             var error = self.assertThrows(
                 Divmod.Runtime.NodeAttributeError,
@@ -209,22 +208,16 @@ Divmod.Runtime.Tests.FindInRootNode.methods(
     },
 
     /**
-     * Test that nodesByClass works and can find nodes with multiple classes
+     * Test that nodesByClass can find nodes with multiple classes.
      */
     function test_nodesByClass(self) {
         try {
             var target1 = document.createElement('div');
-            target1.setAttribute(
-                Divmod.Runtime.theRuntime._mangleAttributeName('class'),
-                'foo bar');
+            Divmod.Runtime.theRuntime.setAttribute(target1, 'class', 'foo bar');
             var target2 = document.createElement('div');
-            target2.setAttribute(
-                Divmod.Runtime.theRuntime._mangleAttributeName('class'),
-                'bar');
+            Divmod.Runtime.theRuntime.setAttribute(target2, 'class', 'bar');
             var ringer = document.createElement('div');
-            ringer.setAttribute(
-                Divmod.Runtime.theRuntime._mangleAttributeName('class'),
-                'foobar');
+            Divmod.Runtime.theRuntime.setAttribute(ringer, 'class', 'foobar');
             self.node.appendChild(target1);
             self.node.appendChild(target2);
             self.node.appendChild(ringer);
