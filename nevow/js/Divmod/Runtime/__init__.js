@@ -94,9 +94,7 @@ Divmod.Runtime.Platform.methods(
                 return descend;
             });
         if (result === null) {
-            throw new Error("Failed to discover node with " + attrName +
-                            " value " + attrValue + " beneath " + root +
-                            " (programmer error).");
+            throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
         }
         return result;
     },
@@ -121,9 +119,7 @@ Divmod.Runtime.Platform.methods(
             throw new Error("Found too many " + attrName + " = " + attrValue);
         } else if (nodes.length < 1) {
             if (defaultNode === undefined) {
-                throw new Error("Failed to discover node with class value " +
-                                attrValue + " beneath " + root +
-                                " (programmer error).");
+                throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
             } else {
                 return defaultNode;
             }
