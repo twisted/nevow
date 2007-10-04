@@ -32,7 +32,7 @@ for pkg, patterns in setupcommon.package_data.items():
 packages = [
     'formless', 'formless.test', 'nevow', 'nevow.flat',
     'nevow.scripts', 'nevow.test', 'nevow.taglibrary',
-    'nevow.plugins', 'nevow.livetrial']
+    'nevow.plugins', 'nevow.livetrial', 'twisted.plugins']
 
 setup(
     name=setupcommon.name,
