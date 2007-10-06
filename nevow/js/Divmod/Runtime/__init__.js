@@ -49,6 +49,21 @@ Divmod.Runtime.Platform.DOM_DESCEND = 'Divmod.Runtime.Platform.DOM_DESCEND';
 Divmod.Runtime.Platform.DOM_CONTINUE = 'Divmod.Runtime.Platform.DOM_CONTINUE';
 Divmod.Runtime.Platform.DOM_TERMINATE = 'Divmod.Runtime.Platform.DOM_TERMINATE';
 
+/**
+ * The following constants are _supposed_ to be provided by the XHR object
+ * itself, as per http://www.w3.org/TR/XMLHttpRequest/#done
+ *
+ * However, no current browser (Firefox 2, IE6, IE7, Opera, Safari) actually
+ * provides these values, so we provide them here to avoid hard-coding
+ * integers.
+ */
+
+Divmod.Runtime.Platform.XHR_UNSENT = 0;
+Divmod.Runtime.Platform.XHR_OPEN = 1;
+Divmod.Runtime.Platform.XHR_SENT = 2;
+Divmod.Runtime.Platform.XHR_LOADING = 3;
+Divmod.Runtime.Platform.XHR_DONE = 4;
+
 Divmod.Runtime.Platform.methods(
     function __init__(self, name) {
         self.name = name;
@@ -336,30 +351,74 @@ Divmod.Runtime.Platform.methods(
         throw new Error("makeHTTPRequest is unimplemented on " + self);
     },
 
-    function _onReadyStateChange(self, req, d) {
-        return function() {
-            if (d == null) {
-                /* We've been here before, and finished everything we needed
-                 * to finish.
-                 */
-                return;
-            }
-            if (typeof Divmod == 'undefined') {
-                /*
-                 * If I am invoked _after_ onunload is fired, the JS
-                 * environment has been torn down, and there is basically
-                 * nothing useful that any callbacks could do.  You can detect
-                 * this environment brokenness by looking at a top-level module
-                 * object (such as our own, Divmod).
-                 *
-                 * I also eliminate myself as the onreadystatechange handler of
-                 * this request, since at no future point will the execution
-                 * context magically be restored to a working state.
-                 */
-                req.onreadystatechange = null;
-                return;
-            }
-            if (req.readyState == 4) {
+    /**
+     * Asynchronously retrieve an HTTP resource.
+     *
+     * @param url: a string; the relative path of an URL.
+     *
+     * @param args: optional; an array of arrays (key-value pairs)
+     * representing query arguments to add to the URL.  defaults to [].
+     *
+     * @param action: optional; the HTTP method to use.  defaults to 'GET'.
+     *
+     * @param headers: optional; an array of arrays (key-value pairs)
+     * representing HTTP headers to set in the request.  defaults to [].
+     *
+     * @param content: optional; the payload of the HTTP request.  defaults to
+     * ''.
+     *
+     * @return: an array with 2 elements.  The first is an XMLHttpRequest
+     * object, whose API is browser-dependent but bears at least a passing
+     * resemblance to http://www.w3.org/TR/XMLHttpRequest/.  The second is a
+     * Deferred, which will fire when the request has completed, with an
+     * object that has 2 attributes: 'status' and 'response', or errback if
+     * the request fails due to a network error before a status has been
+     * retrieved.  The 'status' will be an integer, giving the HTTP status
+     * code of the response.  For example, 200 if successful.  The 'response'
+     * will be a string, the text of the response.
+     */
+    function getPage(self, url, /* optional */ args, action, headers, content, synchronous) {
+        // Fill out defaults.
+        if (args === undefined) {
+            args = [];
+        }
+        if (action === undefined) {
+            action = 'GET';
+        }
+        if (headers === undefined) {
+            headers = [];
+        }
+        if (content === undefined) {
+            content = '';
+        }
+        if (synchronous === undefined) {
+            synchronous = false;
+        }
+
+        // Construct URL by quoting and appending query arguments.
+        var qargs = [];
+        for (var i = 0; i < args.length; ++i) {
+            /* TODO: encodeURIComponent is not present on Safari, according to
+             * http://aptana.com/reference/api/Global.html: we'll have to
+             * update this to support it.
+             */
+            qargs.push(args[i][0] + '=' + encodeURIComponent(args[i][1]));
+        }
+        if (qargs.length) {
+            url = url + '?' + qargs.join('&');
+        }
+
+        // Build request with appropriate headers.
+        var req = self.makeHTTPRequest();
+        req.open(action, url, !synchronous);
+        for (var i = 0; i < headers.length; ++i) {
+            req.setRequestHeader(headers[i][0], headers[i][1]);
+        }
+
+        // Set up a callback to fire a deferred.
+        var d = new Divmod.Defer.Deferred();
+        req.onreadystatechange = function() {
+            if (req.readyState == Divmod.Runtime.Platform.XHR_DONE) {
                 var result = null;
                 try {
                     result = {'status': req.status,
@@ -370,47 +429,9 @@ Divmod.Runtime.Platform.methods(
                 if (result != null) {
                     d.callback(result);
                 }
-                d = null;
             }
         };
-    },
 
-    function getPage(self, url, /* optional */ args, action, headers, content) {
-        if (args == undefined) {
-            args = [];
-        }
-        if (action == undefined) {
-            action = 'GET';
-        }
-        if (headers == undefined) {
-            headers = [];
-        }
-        if (content == undefined) {
-            content = null;
-        }
-
-        var qargs = [];
-        for (var i = 0; i < args.length; ++i) {
-            /* encodeURIComponent may not exist on some browsers, I guess.  FF
-             * 1.5 and IE 6 have it, anyway.
-             */
-            qargs.push(args[i][0] + '=' + encodeURIComponent(args[i][1]));
-        }
-
-        if (qargs.length) {
-            url = url + '?' + qargs.join('&');
-        }
-
-        var d = new Divmod.Defer.Deferred();
-        var req = self.makeHTTPRequest();
-
-        req.open(action, url, true);
-
-        for (var i = 0; i < headers.length; ++i) {
-            req.setRequestHeader(headers[i][0], headers[i][1]);
-        }
-
-        req.onreadystatechange = self._onReadyStateChange(req, d);
         req.send(content);
         return [req, d];
     },

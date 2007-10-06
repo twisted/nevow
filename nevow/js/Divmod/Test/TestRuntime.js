@@ -15,6 +15,204 @@
 // import Divmod.UnitTest
 // import Divmod.Runtime
 
+Divmod.Test.TestRuntime.FakeRequest = Divmod.Class.subclass(
+    'Divmod.Test.TestRuntime.FakeRequest');
+
+/**
+ * A fake implementation of http://www.w3.org/TR/XMLHttpRequest/ -
+ * specifically as implemented by Firefox.
+ */
+Divmod.Test.TestRuntime.FakeRequest.methods(
+    /**
+     * Initialize attributes to starting values.
+     */
+    function __init__(self) {
+        self.opened = null;
+        self.sent = null;
+        self._status = 0;
+        self.headers = [];
+        self.networkError = false;
+    },
+
+    /**
+     * Implement http://www.w3.org/TR/XMLHttpRequest/#dfn-open by recording the
+     * arguments passed.
+     */
+    function open(self, method, url, async) {
+        self.opened = [method, url, async];
+    },
+
+    /**
+     * Implement http://www.w3.org/TR/XMLHttpRequest/#dfn-send by recording the
+     * arguments passed.
+     */
+    function send(self, data) {
+        self.sent = [data];
+    },
+
+    /**
+     * Implement http://www.w3.org/TR/XMLHttpRequest/#dfn-setrequestheader by
+     * recording the header that was set in this object's 'headers' array.
+     */
+    function setRequestHeader(self, key, val) {
+        if (self.opened === null) {
+            // "1. If the state of the object is not OPEN raise an
+            // INVALID_STATE_ERR exception and terminate these steps."
+            throw new Error("INVALID_STATE_ERR: you didn't open the request first.");
+        }
+        self.headers.push([key, val]);
+    });
+
+/**
+ * Define a 'getter' function for the "status" attribute on FakeRequest which
+ * raises an exception when the 'networkError' attribute is set.
+ *
+ * Note: in general, the tests try to maintain compatibility with standard
+ * ECMAScript, not using features particular to any specific runtime.
+ * __defineGetter__ is a Firefox-specific extension, but there is no
+ * standardized way to affect getting and setting attributes on objects in
+ * javascript.  If we do implement a way to run the tests in browsers such as
+ * IE and Opera, we may need to implement something different.
+ */
+Divmod.Test.TestRuntime.FakeRequest.prototype.__defineGetter__(
+    "status",
+    function () {
+        if (this.networkError) {
+            throw Divmod.Test.TestRuntime.FakeRequestStatusAccessError();
+        }
+        return this._status;
+    });
+
+Divmod.Test.TestRuntime.FakeRequestStatusAccessError = Divmod.Error.subclass(
+    "Divmod.Test.TestRuntime.FakeRequestStatusAccessError");
+
+Divmod.Test.TestRuntime.NetworkTests = Divmod.UnitTest.TestCase.subclass(
+    'Divmod.Test.TestRuntime.NetworkTests');
+/**
+ * These tests cover functionality related to responding to XMLHttpRequest
+ * objects.
+ */
+Divmod.Test.TestRuntime.NetworkTests.methods(
+    /**
+     * Create a platform object and reassign its makeHTTPRequest method, since
+     * these tests should be for the logical state transitions associated with
+     * the request, not browser-specific naming hacks.
+     */
+    function setUp(self) {
+        self.platform = Divmod.Runtime.Platform();
+        self.platform.makeHTTPRequest = function () {
+            return self.makeHTTPRequest();
+        }
+    },
+
+    /**
+     * Stub implementation of the platform's makeHTTPRequest method, so that
+     * we can control the behavior of the fake XMLHttpRequest object.
+     */
+    function makeHTTPRequest(self) {
+        self.httpRequest = Divmod.Test.TestRuntime.FakeRequest();
+        return self.httpRequest;
+    },
+
+    /**
+     * getPage() should yield an array with two elements: an XMLHttpRequest
+     * object that represents the request, and a Deferred which fires with a
+     * string if the request succeeds.
+     */
+    function test_getPage(self) {
+        var gp = self.platform.getPage('/hello/world');
+        var realResult = null;
+        self.assertIdentical(gp.length, 2);
+        self.assertIdentical(gp[0], self.httpRequest);
+        self.assertArraysEqual(self.httpRequest.opened,
+                               ['GET', '/hello/world', true]);
+        self.assertArraysEqual(self.httpRequest.sent, ['']);
+
+        self.assert(gp[1] instanceof Divmod.Defer.Deferred);
+        gp[1].addCallback(function (result) {
+            realResult = result;
+        });
+        self.assertIdentical(realResult, null);
+        self.httpRequest._status = 1234;
+        self.httpRequest.responseText = "this is some text";
+        self.httpRequest.readyState = Divmod.Runtime.Platform.XHR_DONE;
+        self.httpRequest.onreadystatechange();
+        self.assertIdentical(realResult.status, 1234);
+        self.assertIdentical(realResult.response, "this is some text");
+    },
+
+    /**
+     * getPage should translate its 'headers' array into calls to
+     * 'setRequestHeader' on the XMLHttpRequest.
+     */
+    function test_getPageHeaders(self) {
+        var gp = self.platform.getPage('/goodby/cruel/world', [], 'GET',
+                                       [['Content-Type', 'text/html']]);
+        self.assertIdentical(self.httpRequest.headers.length, 1);
+        self.assertArraysEqual(self.httpRequest.headers[0],
+                               ['Content-Type', 'text/html']);
+    },
+
+    /**
+     * getPage should translate its 'args' array into a properly quoted URL
+     * query string.
+     */
+    function test_getPageQueryString(self) {
+        var gp = self.platform.getPage('/hello/again',
+                                       [['q', 'where is the beef?']]);
+        self.assertIdentical(self.httpRequest.opened.length, 3);
+        self.assertArraysEqual(
+            self.httpRequest.opened,
+            ['GET', '/hello/again?q=where%20is%20the%20beef%3F', true]);
+    },
+
+    /**
+     * getPage should return a Deferred which errbacks with the platform
+     * exception in the case where the network has failed (detectable in
+     * firefox by an error when attemtping to access the 'status' attribute in
+     * the callback.)
+     */
+    function test_getPageNetworkFailure(self) {
+        var gp = self.platform.getPage("/hello");
+        var errbacked = false;
+        self.httpRequest.networkError = true;
+        self.httpRequest.readyState = Divmod.Runtime.Platform.XHR_DONE;
+        self.httpRequest.onreadystatechange();
+        gp[1].addErrback(function (err) {
+            errbacked = true;
+            self.assert(
+                err instanceof
+                Divmod.Test.TestRuntime.FakeRequestStatusAccessError);
+        });
+        self.assert(errbacked);
+    },
+
+    /**
+     * getPage should pass the content to XMLHttpReqeust.send.
+     */
+    function test_getPageContent(self) {
+        var gp = self.platform.getPage('/not/again', [], 'GET', [],
+                                       'Hello, content!');
+        self.assertIdentical(self.httpRequest.sent.length, 1);
+        self.assertArraysEqual(self.httpRequest.sent,
+                               ['Hello, content!']);
+    },
+
+    /**
+     * getPage should make a synchronous request if you specifically pass a
+     * 'synchronous' parameter set to 'true'.
+     */
+    function test_getPageSynchronous(self) {
+        var gp = self.platform.getPage('/hello/world', [], 'GET', [],
+                                       '', true);
+        self.assertIdentical(self.httpRequest.sent.length, 1);
+        self.assertArraysEqual(self.httpRequest.opened,
+                               ['GET', '/hello/world', false]);
+        //                                             ^ 'async' flag
+    });
+
+
+
 Divmod.Test.TestRuntime.RuntimeTests = Divmod.UnitTest.TestCase.subclass(
     'Divmod.Test.TestRuntime.RuntimeTests');
 Divmod.Test.TestRuntime.RuntimeTests.methods(

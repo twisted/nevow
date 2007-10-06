@@ -917,6 +917,16 @@ class Transport(unittest.TestCase):
         self.assertEqual(secondTransport, [])
 
 
+    def test_specialUnloadSequence(self):
+        """
+        When the page is unloading in the brosser, it needs to pre-empt its own
+        message queue and send a special identifier to express that this is a
+        "last gasp" message and must be dealt with immediately.
+        """
+        self.rdm.basketCaseReceived(None, [0, [[athena.UNLOAD, [athena.CLOSE, []]]]])
+        self.assertEqual(self.outgoingMessages, [(None, [athena.CLOSE, []])])
+
+
 
 class LiveMixinTestsMixin:
     """

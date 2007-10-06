@@ -26,44 +26,33 @@ Nevow.Athena.baseURL = function() {
 
 
 Nevow.Athena.ReliableMessageDelivery = Divmod.Class.subclass('Nevow.Athena.ReliableMessageDelivery');
+
+/**
+ * A L{ReliableMessageDelivery} is a queue through which messages may be
+ * reliably delivered from and to the Athena server.
+ *
+ * @ivar outputFactory: a callable which takes 1 argument (a boolean
+ * indicating whether the request should be issued synchronously) returns an
+ * L{HTTPRequestOutput} object.
+ */
+
 Nevow.Athena.ReliableMessageDelivery.methods(
     function __init__(self,
                       outputFactory,
                       /* optional */
-                      connectionLost /* = null */,
-                      transportlessTimeout /* = 30 */,
-                      idleTimeout /* = 300 */,
-                      scheduler /* = setTimeout */) {
-
+                      connectionLost /* = null */) {
+        self.running = false;
         self.messages = [];
-        self.outputs = [];
-
         self.ack = -1;
         self.seq = -1;
-
         self._paused = 0;
-
         self.failureCount = 0;
-
         self.outputFactory = outputFactory;
         self.requests = [];
-
-        if (transportlessTimeout == undefined) {
-            transportlessTimeout = 30;
-        }
-        if (idleTimeout == undefined) {
-            idleTimeout = 300;
-        }
         if (connectionLost == undefined) {
             connectionLost = null;
         }
-        if (scheduler == undefined) {
-            scheduler = setTimeout;
-        }
-        self.transportlessTimeout = transportlessTimeout * 1000;
-        self.idleTimeout = idleTimeout * 1000;
         self.connectionLost = connectionLost;
-        self.scheduler = scheduler;
     },
 
     function start(self) {
@@ -79,6 +68,8 @@ Nevow.Athena.ReliableMessageDelivery.methods(
             self.requests[i].abort();
         }
         self.requests = null;
+        var connLost = self.connectionLost;
+        connLost('Connection closed by remote host');
     },
 
     function acknowledgeMessage(self, ack) {
@@ -87,29 +78,111 @@ Nevow.Athena.ReliableMessageDelivery.methods(
         }
     },
 
+    /**
+     * A message representing a list of actions to take, of the format
+     * [[sequenceNumber, [actionName, actionArguments]], ...] has been
+     * received from the server.  Dispatch those messages to methods named
+     * action_* on this object.
+     */
     function messageReceived(self, message) {
         self.pause();
         if (message.length) {
-           if (self.ack + 1 >= message[0][0]) {
-               var ack = self.ack;
-               self.ack = Divmod.max(self.ack, message[message.length - 1][0]);
-               for (var i = 0; i < message.length; ++i) {
-                   var msg = message[i];
-                   var seq = msg[0];
-                   var payload = msg[1];
-                   if (seq > ack) {
-                       try {
-                           Nevow.Athena._actionHandlers[payload[0]].apply(null, payload[1]);
-                       } catch (e) {
-                           Divmod.err(e, 'Action handler ' + payload[0] + ' for ' + seq + ' failed.');
-                       }
-                   }
-               }
-           } else {
-               Divmod.debug("transport", "Sequence gap!  " + Nevow.Athena.livepageId + " went from " + self.ack + " to " + message[0][0]);
-           }
+            if (self.ack + 1 >= message[0][0]) {
+                var ack = self.ack;
+                self.ack = Divmod.max(self.ack, message[message.length - 1][0]);
+                for (var i = 0; i < message.length; ++i) {
+                    var msg = message[i];
+                    var seq = msg[0];
+                    var payload = msg[1];
+                    var actionName = payload[0];
+                    var actionArgs = payload[1];
+                    if (seq > ack) {
+                        try {
+                            self['action_'+actionName].apply(self, actionArgs);
+                        } catch (e) {
+                            Divmod.err(e, 'Action handler ' + payload[0] +
+                                       ' for ' + seq + ' failed.');
+                        }
+                    }
+                }
+            } else {
+                Divmod.debug("transport",
+                             "Sequence gap!  " + Nevow.Athena.livepageId +
+                             " went from " + self.ack + " to " + message[0][0]);
+            }
         }
         self.unpause();
+    },
+
+    /**
+     * No-op action, for testing.
+     */
+    function action_noop(self) {
+    },
+
+    /**
+     * Page-level 'call' action, to invoke a method on a global object with
+     * some given arguments.  Invoke the method and responds with a 'respond'
+     * message.  The given function may return a Deferred.
+     *
+     * @param functionName: the global identifier of a method to call
+     *
+     * @param requestId: an opaque identifier for the request, which will be
+     * relayed back to the server when the response is available.
+     */
+    function action_call(self, functionName, requestId, funcArgs) {
+        var path = [null];
+        var method = Divmod.namedAny(functionName, path);
+        var target = path.pop();
+        var result = undefined;
+        var success = true;
+        try {
+            result = method.apply(target, funcArgs);
+        } catch (error) {
+            result = error;
+            success = false;
+        }
+
+        var isDeferred = false;
+
+        if (result == undefined) {
+            result = null;
+        } else {
+            /* if it quacks like a duck ...  this sucks!!!  */
+            isDeferred = (result.addCallback && result.addErrback);
+        }
+
+        if (isDeferred) {
+            result.addCallbacks(function(result) {
+                self.addMessage(['respond', [requestId, true, result]]);
+            }, function(err) {
+                self.addMessage(['respond', [requestId, false, err.error]]);
+            });
+        } else {
+            self.addMessage(['respond', [requestId, success, result]]);
+        }
+    },
+
+    /**
+     * The server has closed the connection.
+     */
+    function action_close(self) {
+        self.stop();
+    },
+
+    /**
+     * Action that indicates we have received a response to a previous
+     * invocation of RemoteReference.callRemote.
+     */
+    function action_respond(self, responseId, success, result) {
+        var d = Nevow.Athena.remoteCalls[responseId];
+        delete Nevow.Athena.remoteCalls[responseId];
+
+        if (success) {
+            d.callback(result);
+        } else {
+            d.errback(Divmod.namedAny(result[0]).apply(null, result[1]));
+        }
     },
 
     function pause(self) {
@@ -170,11 +243,29 @@ Nevow.Athena.ReliableMessageDelivery.methods(
                     self.flushMessages();
                 }
             } else if (self.connectionLost != null) {
-                var connLost = self.connectionLost;
                 self.stop();
-                connLost();
             }
         });
+    },
+
+    /**
+     * Tear down all currently pending requests, and send a final notification
+     * to the server that this page has been unloaded, and the connection must
+     * be shut down immediately.  This request must be synchronous, because in
+     * the browser we cannot emit or receive any asynchronous events after the
+     * 'onbeforeunload' handler has returned.
+     *
+     * Unfortunately, there is a bug in Firefox (and probably other browsers)
+     * where the user's browser locks up while the final synchronous request
+     * is being made.  Therefore, we want to absolutely minimize the amount of
+     * time spent in this method.  In order to accomplish this, all messages
+     * that have not yet been acknowledged are dropped from the queue and the
+     * final basket case is special: its sequence identifier is "close", as is
+     * its message.
+     */
+    function sendCloseMessage(self) {
+        self.stop();
+        self.outputFactory(true).send(self.ack, [["unload", ["close", []]]]);
     });
 
 Nevow.Athena.AbortableHTTPRequest = Divmod.Class.subclass("Nevow.Athena.AbortableHTTPRequest");
@@ -198,13 +289,18 @@ Nevow.Athena.HTTPRequestOutput.methods(
                       /* optional */
                       baseURL /* = Nevow.Athena.baseURL() */,
                       queryArgs /* = [] */,
-                      headers /* = [] */) {
-        if (baseURL == undefined) {
+                      headers /* = [] */,
+                      synchronous /* = false */) {
+        if (baseURL === undefined) {
             baseURL = Nevow.Athena.baseURL();
+        }
+        if (synchronous === undefined) {
+            synchronous = false;
         }
         self.baseURL = baseURL;
         self.queryArgs = queryArgs;
         self.headers = headers;
+        self.synchronous = synchronous;
     },
 
     function send(self, ack, message) {
@@ -214,7 +310,8 @@ Nevow.Athena.HTTPRequestOutput.methods(
             self.queryArgs,
             'POST',
             self.headers,
-            serialized);
+            serialized,
+            self.synchronous);
         var requestWrapper = new Nevow.Athena.AbortableHTTPRequest(
             response[0], response[1]);
         requestWrapper.deferred.addCallback(function(result) {
@@ -271,76 +368,6 @@ Nevow.Athena.notifyOnDisconnect = function(callback) {
     Nevow.Athena._notifyOnDisconnectCounter++;
     d.addBoth(callback);
 };
-
-
-Nevow.Athena._actionHandlers = {
-    noop: function() {
-        /* Noop! */
-    },
-
-    call: function(functionName, requestId, funcArgs) {
-        var path = [null];
-        var funcObj = Divmod.namedAny(functionName, path);
-        var self = path.pop();
-        var result = undefined;
-        var success = true;
-        try {
-            result = funcObj.apply(self, funcArgs);
-        } catch (error) {
-            result = error;
-            success = false;
-        }
-
-        var isDeferred = false;
-
-        if (result == undefined) {
-            result = null;
-        } else {
-            /* if it quacks like a duck ...  this sucks!!!  */
-            isDeferred = (result.addCallback && result.addErrback);
-        }
-
-        if (isDeferred) {
-            result.addCallbacks(function(result) {
-                    Nevow.Athena._rdm.addMessage(['respond', [requestId, true, result]]);
-                }, function(err) {
-                    Nevow.Athena._rdm.addMessage(['respond', [requestId, false, err.error]]);
-                });
-        } else {
-            Nevow.Athena._rdm.addMessage(['respond', [requestId, success, result]]);
-        }
-    },
-
-    respond: function(responseId, success, result) {
-        var d = Nevow.Athena.remoteCalls[responseId];
-        delete Nevow.Athena.remoteCalls[responseId];
-
-        if (success) {
-            d.callback(result);
-        } else {
-            d.errback(Divmod.namedAny(result[0]).apply(null, result[1]));
-        }
-    },
-
-    close: function() {
-        Nevow.Athena._rdm.stop();
-        Nevow.Athena._connectionLost('Connection closed by remote host');
-    }
-};
-
-Nevow.Athena._rf = (function() {
-    var rf;
-    return function() {
-        if (rf == undefined) {
-            rf = new Nevow.Athena.HTTPRequestOutput(
-                Nevow.Athena.baseURL(),
-                [],
-                [['Livepage-Id', Nevow.Athena.livepageId],
-                 ['Content-Type', 'text/x-json+athena']]);
-        }
-        return rf;
-    };
-})();
 
 Nevow.Athena.getAttribute = function() {
     /* Deprecated alias */
@@ -539,19 +566,19 @@ Nevow.Athena.server = new Nevow.Athena.RemoteReference(0);
 var server = Nevow.Athena.server;
 
 /**
- * Inform the server that we no longer wish to exchange data, then
- * abort all outstanding requests (Hey, is there a race here?
- * Probably.) and set the local state to reflect that we are no longer
- * connected.
+ * _pageUnloaded is a boolean which tracks whether the page has already been
+ * unloaded, so we do not erroneously pop up the "connection lost!" widget
+ * every time the user clicks on a link.
  */
-Nevow.Athena._finalize = function() {
-    Nevow.Athena._rdm.addMessage(['close', []]);
-};
-
 Nevow.Athena._pageUnloaded = false;
+
+/**
+ * The page is being unloaded, so flag it in _pageUnloaded and then tear the
+ * connection down.
+ */
 Nevow.Athena._unloaded = function() {
     Nevow.Athena._pageUnloaded = true;
-    Nevow.Athena._finalize();
+    Nevow.Athena._rdm.sendCloseMessage();
 };
 
 /**
@@ -574,16 +601,36 @@ Nevow.Athena._checkEscape = function(event) {
 };
 
 /**
- *
+ * Create a ReliableMessageDelivery hooked in to the appropriate global state
+ * to manage the connection associated with the page.
+ */
+Nevow.Athena._createMessageDelivery = function () {
+    return Nevow.Athena.ReliableMessageDelivery(
+        function (synchronous /* = false */) {
+            if (synchronous === undefined) {
+                synchronous = false;
+            }
+            return Nevow.Athena.HTTPRequestOutput(
+                Nevow.Athena.baseURL(),
+                [],
+                [['Livepage-Id', Nevow.Athena.livepageId],
+                 ['Content-Type', 'text/x-json+athena']],
+                synchronous);
+        },
+        Nevow.Athena._connectionLost);
+};
+
+/**
+ * Initialize global state required for Athena client-server communication.
  */
 Nevow.Athena._initialize = function() {
-    Divmod.Base.addToCallStack(window, 'onunload',
+    Divmod.Base.addToCallStack(window, 'onbeforeunload',
                                Nevow.Athena._unloaded, true);
     Divmod.Base.addToCallStack(window, 'onkeypress',
                                Nevow.Athena._checkEscape, false);
 
-    Nevow.Athena._rdm = Nevow.Athena.ReliableMessageDelivery(
-        Nevow.Athena._rf, Nevow.Athena._connectionLost);
+
+    Nevow.Athena._rdm = Nevow.Athena._createMessageDelivery();
     /* Delay initialization for just a moment so that Safari stops whirling
      * its loading icon.
      */

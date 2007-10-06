@@ -487,6 +487,7 @@ class ConnectionLost(Exception):
 
 
 CLOSE = u'close'
+UNLOAD = u'unload'
 
 class ReliableMessageDelivery(object):
     _paused = 0
@@ -674,8 +675,23 @@ class ReliableMessageDelivery(object):
 
         if incomingMessages:
             log.msg(athena_received_messages=True, count=len(incomingMessages))
-
-            if self.outgoingAck + 1 >= incomingMessages[0][0]:
+            if incomingMessages[0][0] == UNLOAD:
+                # Page-unload messages are special, because they are not part
+                # of the normal message stream: they are a notification that
+                # the message stream can't continue.  Browser bugs force us to
+                # handle this as quickly as possible, since the browser can
+                # lock up hard while waiting for a response to this message
+                # (and the user has already navigated away from the page, so
+                # there's no useful communication that can take place any more)
+                # so only one message is allowed.  In the actual Athena JS,
+                # only one is ever sent, so there is no need to handle more.
+                # The structure of the packet is preserved for symmetry,
+                # however, if we ever need to expand on it.  Realistically, the
+                # only message that can be usefully processed here is CLOSE.
+                msg = incomingMessages[0][1]
+                self.livePage.liveTransportMessageReceived(ctx, msg)
+                return self._createOutputDeferred()
+            elif self.outgoingAck + 1 >= incomingMessages[0][0]:
                 lastSentAck = self.outgoingAck
                 self.outgoingAck = max(incomingMessages[-1][0], self.outgoingAck)
                 self.pause()
@@ -693,7 +709,7 @@ class ReliableMessageDelivery(object):
             else:
                 d = defer.succeed([self.outgoingAck, []])
                 log.msg(
-                    "Sequence gap! %r went from %d to %d" %
+                    "Sequence gap! %r went from %s to %s" %
                     (self.livePage.clientID,
                      self.outgoingAck,
                      incomingMessages[0][0]))

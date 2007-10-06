@@ -43,3 +43,7 @@ class JSUnitTests(JavaScriptTestCase):
 
     def test_init(self):
         return 'Nevow.Test.TestInit'
+
+
+    def test_rdm(self):
+        return 'Nevow.Test.TestMessageDelivery'
