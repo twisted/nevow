@@ -520,7 +520,7 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
     function test_firstNodeByAttributeThrows(self) {
         var root = document.createElement('span');
         self.assertThrows(
-            Error,
+            Divmod.Runtime.NodeAttributeError,
             function() {
                 return Divmod.Runtime.theRuntime.firstNodeByAttribute(
                     root, 'foo', 'bar');
@@ -528,7 +528,7 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
 
         root.setAttribute('foo', 'quux');
         self.assertThrows(
-            Error,
+            Divmod.Runtime.NodeAttributeError,
             function() {
                 return Divmod.Runtime.theRuntime.firstNodeByAttribute(
                     root, 'foo', 'bar');
@@ -536,7 +536,7 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
 
         root.setAttribute('baz', 'bar');
         self.assertThrows(
-            Error,
+            Divmod.Runtime.NodeAttributeError,
             function() {
                 return Divmod.Runtime.theRuntime.firstNodeByAttribute(
                     root, 'foo', 'bar');
@@ -648,7 +648,7 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
     function test_nodeByAttributeThrowsOnMissing(self) {
         var root = document.createElement('span');
         self.assertThrows(
-            Error,
+            Divmod.Runtime.NodeAttributeError,
             function() {
                 return Divmod.Runtime.theRuntime.nodeByAttribute(
                     root, 'foo', 'bar');
@@ -656,7 +656,7 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
 
         root.setAttribute('foo', 'quux');
         self.assertThrows(
-            Error,
+            Divmod.Runtime.NodeAttributeError,
             function() {
                 return Divmod.Runtime.theRuntime.nodeByAttribute(
                     root, 'foo', 'bar');
@@ -664,7 +664,7 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
 
         root.setAttribute('baz', 'bar');
         self.assertThrows(
-            Error,
+            Divmod.Runtime.NodeAttributeError,
             function() {
                 return Divmod.Runtime.theRuntime.nodeByAttribute(
                     root, 'foo', 'bar');
