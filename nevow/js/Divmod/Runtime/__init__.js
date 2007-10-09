@@ -579,13 +579,17 @@ Divmod.Runtime.XPathSupportingPlatform.methods(
         return ns;
     },
 
+    /**
+     * @return: the xpath expression that returns true if a node has the given
+     * class.
+     */
     function _xpathNodeByClass(self, className) {
         return (".//*[contains(concat(' ', normalize-space(@class), ' '), ' " +
                 className + "')]");
     },
 
     /**
-     * @return the first node under root containing className in its class attr
+     * @return: the first node under root containing className in its class attr
      *
      * For classes, this is better than *firstNodeByAttribute because it
      * can find nodes having the given class among multiple classes,
@@ -606,7 +610,7 @@ Divmod.Runtime.XPathSupportingPlatform.methods(
     },
 
     /**
-     * @return all nodes under root containing className in their class attr
+     * @return: all nodes under root containing className in their class attr
      *
      * For classes, this is better than *nodeByAttribute because it
      * can find nodes having the given class among multiple classes,
@@ -963,9 +967,25 @@ Divmod.Runtime.InternetExplorer.methods(
         return foundNode;
     },
 
+    /**
+     * @return: whether or not the given node has a class.
+     */
+    function _hasClassName(self, node, className) {
+        var cls = node.className;
+        if (!cls) {
+            return false;
+        }
+        var classNames = cls.split(' ');
+        for (var j = 0; j < classNames.length; j++) {
+            if (classNames[j] == className) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
-     * @return the first node under root containing className in its class attr
+     * @return: the first node under root containing className in its class attr
      *
      * For classes, this is better than *firstNodeByAttribute because it
      * can find nodes having the given class among multiple classes,
@@ -978,16 +998,9 @@ Divmod.Runtime.InternetExplorer.methods(
         self.traverse(
             root,
             function(node) {
-                var cls = node.className;
-                if (!cls) {
-                    return descend;
-                }
-                var classNames = cls.split(' ');
-                for (var j = 0; j < classNames.length; j++) {
-                    if (classNames[j] == className) {
-                        result = node
-                        return terminate;
-                    }
+                if self._hasClassName(node, className) {
+                    result = node;
+                    return terminate;
                 }
                 return descend;
             });
@@ -998,7 +1011,7 @@ Divmod.Runtime.InternetExplorer.methods(
     },
 
     /**
-     * @return all nodes under root containing className in their class attr
+     * @return: all nodes under root containing className in their class attr
      *
      * For classes, this is better than *nodeByAttribute because it
      * can find nodes having the given class among multiple classes,
@@ -1010,16 +1023,8 @@ Divmod.Runtime.InternetExplorer.methods(
         self.traverse(
             root,
             function(node) {
-                var cls = node.className;
-                if (!cls) {
-                    return descend;
-                }
-                var classNames = cls.split(' ');
-                for (var j = 0; j < classNames.length; j++) {
-                    if (classNames[j] == className) {
-                        results.push(node);
-                        break;
-                    }
+                if self._hasClassName(node, className) {
+                    results.push(node);
                 }
                 return descend;
             });
