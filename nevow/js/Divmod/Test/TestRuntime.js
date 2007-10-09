@@ -495,4 +495,61 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
         nodes = Divmod.Runtime.theRuntime.nodesByAttribute(
             root, 'baz', 'quux');
         self.assertIdentical(nodes.length, 0);
+    },
+
+    /**
+     * I{firstNodeByClass} should find nodes with multiple classes.
+     */
+    function test_firstNodeByClass(self) {
+        var target = document.createElement('div');
+        Divmod.Runtime.theRuntime.setAttribute(target, 'class', 'foo bar');
+        var ringer = document.createElement('div');
+        Divmod.Runtime.theRuntime.setAttribute(ringer, 'clas', 'foobar');
+        target.appendChild(ringer);
+        var found = Divmod.Runtime.theRuntime.firstNodeByClass(target,
+                'bar');
+        self.assertIdentical(
+            Divmod.Runtime.theRuntime.getAttribute(found, 'class'),
+            'foo bar');
+    },
+
+    /**
+     * I{firstNodeByClass} for a missing node must throw the right exception.
+     */
+    function test_firstNodeByClassMissing(self) {
+        var target = document.createElement('div');
+        var ringer = document.createElement('div');
+        Divmod.Runtime.theRuntime.setAttribute(ringer, 'clas', 'foobar');
+        target.appendChild(ringer);
+        var error = self.assertThrows(
+            Divmod.Runtime.NodeAttributeError,
+            function() {
+                Divmod.Runtime.theRuntime.firstNodeByClass(
+                    target, 'bar');
+            });
+        self.assertIdentical(error.root, target);
+        self.assertIdentical(error.attribute, 'class');
+        self.assertIdentical(error.value, 'bar');
+    },
+
+    /**
+     * I{nodesByClass} should return an array of all nodes which have the
+     * matching class.
+     */
+    function test_nodesByClass(self) {
+        var root = document.createElement('div');
+        var childA = document.createElement('span');
+        var childB = document.createElement('span');
+        var childC = document.createElement('span');
+        root.appendChild(childA);
+        root.appendChild(childB);
+        root.appendChild(childC);
+        childB.setAttribute('class', 'foo bar');
+        childC.setAttribute('class', 'bar');
+
+        var nodes = Divmod.Runtime.theRuntime.nodesByClass(
+            root, 'bar');
+        self.assertIdentical(nodes.length, 2);
+        self.assertIdentical(nodes[0], childB);
+        self.assertIdentical(nodes[1], childC);
     });

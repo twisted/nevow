@@ -135,6 +135,70 @@ Divmod.Runtime.Platform.methods(
     },
 
     /**
+     * @return: whether or not the given node owns the given class.
+     */
+    function _hasClassName(self, node, className) {
+        var cls = node.className;
+        if (!cls) {
+            return false;
+        }
+        var classNames = cls.split(' ');
+        for (var j = 0; j < classNames.length; j++) {
+            if (classNames[j] == className) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    /**
+     * @return: the first node under root containing className in its class attr
+     *
+     * For classes, this is better than *firstNodeByAttribute because it
+     * can find nodes having the given class among multiple classes,
+     * whereas *firstNodeByAttribute only does an exact string comparison.
+     */
+    function firstNodeByClass(self, root, className) {
+        var result = null;
+        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+        var terminate = Divmod.Runtime.Platform.DOM_TERMINATE;
+        self.traverse(
+            root,
+            function(node) {
+                if (self._hasClassName(node, className)) {
+                    result = node;
+                    return terminate;
+                }
+                return descend;
+            });
+        if (!result) {
+            throw Divmod.Runtime.NodeAttributeError(root, 'class', className);
+        }
+        return result;
+    },
+
+    /**
+     * @return: all nodes under root containing className in their class attr
+     *
+     * For classes, this is better than *nodeByAttribute because it
+     * can find nodes having the given class among multiple classes,
+     * whereas *nodeByAttribute only does an exact string comparison.
+     */
+    function nodesByClass(self, root, className) {
+        var results = [];
+        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
+        self.traverse(
+            root,
+            function(node) {
+                if (self._hasClassName(node, className)) {
+                    results.push(node);
+                }
+                return descend;
+            });
+        return results;
+    },
+
+    /**
      * Calculate the X/Y coordinates of event C{event} on the
      * page in a cross-browser fashion.  If C{event} is not defined,
      * then window.event will be used.
@@ -965,70 +1029,6 @@ Divmod.Runtime.InternetExplorer.methods(
         }
 
         return foundNode;
-    },
-
-    /**
-     * @return: whether or not the given node has a class.
-     */
-    function _hasClassName(self, node, className) {
-        var cls = node.className;
-        if (!cls) {
-            return false;
-        }
-        var classNames = cls.split(' ');
-        for (var j = 0; j < classNames.length; j++) {
-            if (classNames[j] == className) {
-                return true;
-            }
-        }
-        return false;
-    },
-
-    /**
-     * @return: the first node under root containing className in its class attr
-     *
-     * For classes, this is better than *firstNodeByAttribute because it
-     * can find nodes having the given class among multiple classes,
-     * whereas *firstNodeByAttribute only does an exact string comparison.
-     */
-    function firstNodeByClass(self, root, className) {
-        var result = null;
-        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
-        var terminate = Divmod.Runtime.Platform.DOM_TERMINATE;
-        self.traverse(
-            root,
-            function(node) {
-                if (self._hasClassName(node, className)) {
-                    result = node;
-                    return terminate;
-                }
-                return descend;
-            });
-        if (!result) {
-            throw Divmod.Runtime.NodeAttributeError(root, 'class', className);
-        }
-        return result;
-    },
-
-    /**
-     * @return: all nodes under root containing className in their class attr
-     *
-     * For classes, this is better than *nodeByAttribute because it
-     * can find nodes having the given class among multiple classes,
-     * whereas *nodeByAttribute only does an exact string comparison.
-     */
-    function nodesByClass(self, root, className) {
-        var results = [];
-        var descend = Divmod.Runtime.Platform.DOM_DESCEND;
-        self.traverse(
-            root,
-            function(node) {
-                if (self._hasClassName(node, className)) {
-                    results.push(node);
-                }
-                return descend;
-            });
-        return results;
     });
 
 
