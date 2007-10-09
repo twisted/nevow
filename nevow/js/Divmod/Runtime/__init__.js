@@ -982,7 +982,7 @@ Divmod.Runtime.InternetExplorer.methods(
             }
         }
         return false;
-    }
+    },
 
     /**
      * @return: the first node under root containing className in its class attr
@@ -998,7 +998,7 @@ Divmod.Runtime.InternetExplorer.methods(
         self.traverse(
             root,
             function(node) {
-                if self._hasClassName(node, className) {
+                if (self._hasClassName(node, className)) {
                     result = node;
                     return terminate;
                 }
@@ -1023,7 +1023,7 @@ Divmod.Runtime.InternetExplorer.methods(
         self.traverse(
             root,
             function(node) {
-                if self._hasClassName(node, className) {
+                if (self._hasClassName(node, className)) {
                     results.push(node);
                 }
                 return descend;
