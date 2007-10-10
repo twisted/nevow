@@ -768,6 +768,18 @@ Divmod.Test.TestUnitTest.MockDocumentTest.methods(
     },
 
     /**
+     * Verify that setting an attribute and then removing it results in
+     * getAttribute subsequently returning C{undefined}.
+     */
+    function test_getRemoveAttribute(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var anElement = aDocument.createElement('test');
+        anElement.setAttribute("abc", "123");
+        anElement.removeAttribute("abc");
+        self.assertIdentical(anElement.getAttribute("abc"), undefined);
+    },
+
+    /**
      * Verify that an Element will have a "style" attribute that can be
      * manipulated.
      */

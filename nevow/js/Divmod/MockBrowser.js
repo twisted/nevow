@@ -338,6 +338,15 @@ Divmod.MockBrowser.Element.methods(
     },
 
     /**
+     * Removes the atribute C{name} from this element.  Subsequent calls to
+     * C{getAttribute} which are passed C{name} will return C{undefined} until
+     * the attribute is re-set.
+     */
+    function removeAttribute(self, name) {
+        delete self._attributes[name];
+    },
+
+    /**
      * Handle node insertion event by sending it on to all this element's
      * children and setting this element's size.
      */
