@@ -17,11 +17,15 @@ Mostly, you'll use the renderers:
  - B{mapping} - publish a dictionary by filling slots
 """
 
+from time import time as now
 from cStringIO import StringIO
+import random
+import warnings
+
 from zope.interface import implements, providedBy
 
 import twisted.python.components as tpc
-from twisted.python.reflect import accumulateClassList
+from twisted.python.reflect import qual, accumulateClassList
 
 from nevow.context import WovenContext, NodeNotFound, PageContext
 from nevow import inevow, tags, flat, util, url
@@ -29,11 +33,6 @@ from nevow.util import log
 
 import formless
 from formless import iformless, annotate
-
-from time import time as now
-import random
-
-import warnings
 
 
 def _getPreprocessors(inst):
@@ -69,6 +68,11 @@ class RenderFactory(object):
 
         callable = getattr(self, 'render_%s' % name, None)
         if callable is None:
+            warnings.warn(
+                "Renderer %r missing on %s will result in an exception." % (
+                    name, qual(type(self))),
+                category=DeprecationWarning,
+                stacklevel=1)
             callable = lambda *a, **kw: context.tag[
                 "The renderer named '%s' was not found in %r." % (name, self)]
 
@@ -419,7 +423,6 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
             doc = self.docFactory.load(context, preprocessors)
         else:
             if old == 'content':
-                import warnings
                 warnings.warn(
                     """[v0.5] Using a Page with a 'content' pattern is
                                deprecated.""",

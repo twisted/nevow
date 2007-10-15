@@ -6,6 +6,7 @@ from zope.interface import implements, Interface
 from twisted.internet import defer
 from twisted.trial import unittest
 from twisted.trial.util import suppress as SUPPRESS
+from twisted.python.reflect import qual
 
 from nevow import appserver
 from nevow import inevow
@@ -416,16 +417,18 @@ class TestPage(unittest.TestCase):
         self.failIf("'foo' was not found" in result)
         self.failIf("'after' was not found" in result)
 
-    # Current behaviour: missing renderers etc. cause a textual
-    # warning in the web page.
-    #
-    # Wanted behaviour: missing renderers etc. raise an exception,
-    # with some helpful hints on where to locate the typo.
-    #
-    # Feel free to replace test_renderer_not_found{,_parametrized}
-    # with unit tests for the exception raising behaviour, if you do
-    # implement it.
-    def test_renderer_not_found(self):
+
+    def test_rendererNotFound(self):
+        """
+        An unparameterized renderer which is not defined should render a
+        message about the renderer not being defined.
+
+        Wanted behaviour: missing renderers etc. raise an exception, with some
+        helpful hints on where to locate the typo.
+
+        Feel free to replace test_rendererNotFound{,Parametrized} with unit
+        tests for the exception raising behaviour, if you do implement it.
+        """
         class Page(rend.Page):
             docFactory = loaders.stan(html(render=directive("notfound")))
         page = Page()
@@ -434,8 +437,17 @@ class TestPage(unittest.TestCase):
             result,
             "<html>The renderer named 'notfound' was not found in %s.</html>"
             % util.escapeToXML(repr(page)))
+    test_rendererNotFound.suppress = [
+        SUPPRESS(category=DeprecationWarning,
+            message=("Renderer 'notfound' missing on nevow.test.test_rend.Page"
+                     " will result in an exception."))]
 
-    def test_renderer_not_found_parametrized(self):
+
+    def test_rendererNotFoundParameterized(self):
+        """
+        A parameterized renderer which is not defined should render a message
+        about the renderer not being defined.
+        """
         class Page(rend.Page):
             docFactory = loaders.stan(html(render=directive("notfound dummy")))
         page = Page()
@@ -444,6 +456,29 @@ class TestPage(unittest.TestCase):
             result,
             "<html>The renderer named 'notfound' was not found in %s.</html>"
             % util.escapeToXML(repr(page)))
+    test_rendererNotFoundParameterized.suppress = [
+        SUPPRESS(
+            category=DeprecationWarning,
+            message=("Renderer 'notfound' missing on nevow.test.test_rend.Page"
+                     " will result in an exception."))]
+
+
+    def test_missingRendererDeprecated(self):
+        """
+        Using a renderer which is not defined should emit a deprecation
+        warning.
+        """
+        renderer = "notfound"
+        class MisdefinedPage(rend.Page):
+            docFactory = loaders.stan(html(render=directive(renderer)))
+        page = MisdefinedPage()
+        message = "Renderer %r missing on %s will result in an exception."
+        message %= (renderer, qual(MisdefinedPage))
+        self.assertWarns(
+            DeprecationWarning, message, rend.__file__,
+            page.renderSynchronously)
+
+
 
 class TestFragment(unittest.TestCase):
 
