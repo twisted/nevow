@@ -144,7 +144,7 @@ Divmod.Runtime.Platform.methods(
         }
         var classNames = cls.split(' ');
         for (var j = 0; j < classNames.length; j++) {
-            if (classNames[j] == className) {
+            if (classNames[j] === className) {
                 return true;
             }
         }
@@ -648,7 +648,7 @@ Divmod.Runtime.XPathSupportingPlatform.methods(
      * class.
      */
     function _xpathNodeByClass(self, className) {
-        return (".//*[contains(concat(' ', normalize-space(@class), ' '), ' " +
+        return (".//*[contains(concat(' ', normalize-space(@class)), ' " +
                 className + "')]");
     },
 
