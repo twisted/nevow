@@ -694,3 +694,95 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
             root, 'baz', 'quux');
         self.assertIdentical(nodes.length, 0);
     });
+
+
+Divmod.Test.TestRuntime.ConnectSingleDOMEventTestCase = Divmod.UnitTest.TestCase.subclass(
+    'Divmod.Test.TestRuntime.ConnectSingleDOMEventTestCase');
+/**
+ * Tests for L{Divmod.Runtime.Platform.connectSingleDOMEvent}.
+ */
+Divmod.Test.TestRuntime.ConnectSingleDOMEventTestCase.methods(
+    /**
+     * Make an instance of a L{Divmod.Class} subclass which keeps track of
+     * method calls.
+     */
+    function setUp(self) {
+        var ConnectSingleDOMEventTester = Divmod.Class.subclass(
+            'ConnectSingleDOMEventTester');
+        ConnectSingleDOMEventTester.methods(
+            function __init__(self) {
+                self.onclickHandlerCalls = [];
+                self.handlerReturnValue = {};
+            },
+
+            function onclickHandler(self, node) {
+                self.onclickHandlerCalls.push(node);
+                return self.handlerReturnValue;
+            });
+        self.handlerObject = ConnectSingleDOMEventTester();
+    },
+
+    /**
+     * Verify that the handler set by
+     * L{Divmod.Runtime.Platform.connectSingleDOMEvent} calls the method with
+     * the given name on the handler object and passes it the node that the
+     * DOM event handler was passed.
+     */
+    function test_callsMethod(self) {
+        var node = {};
+        Divmod.Runtime.theRuntime.connectSingleDOMEvent(
+            'onclick', self.handlerObject, node, 'onclickHandler');
+        node['onclick'](node);
+        self.assertIdentical(
+            self.handlerObject.onclickHandlerCalls.length, 1);
+        self.assertIdentical(
+            self.handlerObject.onclickHandlerCalls[0], node);
+    },
+
+    /**
+     * Verify that the handler set by
+     * L{Divmod.Runtime.Platform.connectSingleDOMEvent} returns the value it
+     * got from the handler method.
+     */
+    function test_forwardsReturnValue(self) {
+        var node = {};
+        Divmod.Runtime.theRuntime.connectSingleDOMEvent(
+            'onclick', self.handlerObject, node, 'onclickHandler');
+        self.assertIdentical(
+            node['onclick'](node),
+            self.handlerObject.handlerReturnValue);
+    },
+
+    /**
+     * Verify that the handler set by
+     * L{Divmod.Runtime.Platform.connectSingleDOMEvent} removes itself after
+     * it's called.
+     */
+    function test_removesHandlerAfterCall(self) {
+        var node = {};
+        Divmod.Runtime.theRuntime.connectSingleDOMEvent(
+            'onclick', self.handlerObject, node, 'onclickHandler');
+        node['onclick'](node);
+        self.assertIdentical(node['onclick'], undefined);
+    },
+
+    /**
+     * Verify that the handler set by
+     * L{Divmod.Runtime.Platform.connectSingleDOMEvent} removes the handler
+     * object's entry from L{Divmod.Runtime._eventHandlerObjects}.
+     */
+    function test_forgetsObject(self) {
+        var node = {};
+        Divmod.Runtime.theRuntime.connectSingleDOMEvent(
+            'onclick', self.handlerObject, node, 'onclickHandler');
+        /* sanity check */
+        self.assertIdentical(
+            Divmod.Runtime._eventHandlerObjects[
+                self.handlerObject.__id__],
+            self.handlerObject);
+        node['onclick'](node);
+        self.assertIdentical(
+            Divmod.Runtime._eventHandlerObjects[
+                self.handlerObject.__id__],
+            undefined);
+    });

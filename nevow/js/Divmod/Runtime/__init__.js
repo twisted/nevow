@@ -64,12 +64,78 @@ Divmod.Runtime.Platform.XHR_SENT = 2;
 Divmod.Runtime.Platform.XHR_LOADING = 3;
 Divmod.Runtime.Platform.XHR_DONE = 4;
 
+
+/**
+ * A mapping of instance C{__id__}s to instances, used by
+ * Divmod.Runtime.Platform.connectSingleDOMEvent
+ */
+Divmod.Runtime._eventHandlerObjects = {};
+
+
+/**
+ * Make a DOM event handler for the L{Divmod.Class} instance with
+ * C{handlerObjectID}, which calls C{methodName} on the corresponding instance
+ * from L{Divmod.Runtime._eventHandlerObjects}, and then removes itself.
+ *
+ * This is a top level function (rather than a part of
+ * L{Divmod.Runtime.Platform.connectSingleDOMEvent}) to avoid closing over any
+ * DOM nodes, or anything which might hold a reference to one.  IE leaks
+ * memory when you do that.
+ *
+ * @see http://www.bazon.net/mishoo/articles.epl?art_id=824
+ */
+Divmod.Runtime._makeSingleEventHandler = function _makeSingleEventHandler(
+    handlerObjectID, domEventName, methodName) {
+
+    return function(node) {
+        delete node[domEventName];
+
+        var handlerObject = Divmod.Runtime._eventHandlerObjects[
+            handlerObjectID];
+
+        delete Divmod.Runtime._eventHandlerObjects[handlerObjectID];
+
+        return handlerObject[methodName].call(handlerObject, node);
+    };
+};
+
+
 Divmod.Runtime.Platform.methods(
     function __init__(self, name) {
         self.name = name;
         self.attrNameToMangled = {};
         self._scriptCounter = 0;
         self._scriptDeferreds = {};
+    },
+
+    /**
+     * Attach a DOM event handler to C{domNode} for the event C{domEventName}
+     * which will call the method named C{methodName} on the object
+     * C{handlerObject}.  The event handler will be removed from the node
+     * after the event is triggered.
+     *
+     * @param domEventName: the name of an event in the DOM, such as
+     * "onclick", "onscroll", "onchange", etc.
+     * @type domEventName: C{String}
+     *
+     * @param handlerObject: The object on which call C{methodName}.
+     * @type handlerObject: L{Divmod.Class}
+     *
+     * @param domNode: The node to attach the event handler to.
+     *
+     * @param methodName: The method name to call on C{handlerObject} when the
+     * event fires.
+     *
+     * @rtype: C{undefined}
+     */
+    function connectSingleDOMEvent(
+        self, domEventName, handlerObject, domNode, methodName) {
+
+        Divmod.Runtime._eventHandlerObjects[
+            handlerObject.__id__] = handlerObject;
+
+        domNode[domEventName] = Divmod.Runtime._makeSingleEventHandler(
+            handlerObject.__id__, domEventName, methodName);
     },
 
     /**

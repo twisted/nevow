@@ -137,11 +137,17 @@ Divmod.dir = function(obj) {
 
 Divmod.__classDebugCounter__ = 0;
 
+/**
+ * This tracks the number of instances of L{Divmod.Class} subclasses.
+ */
+Divmod.__instanceCounter__ = 0;
+
 Divmod._CONSTRUCTOR = {};
 
 Divmod.Class = function() {};
 
 Divmod.Class.subclass = function(/* optional */ className) {
+    Divmod.__classDebugCounter__ += 1;
 
     /*
      * subclass() must always be called on Divmod.Class or an object returned
@@ -180,6 +186,11 @@ Divmod.Class.subclass = function(/* optional */ className) {
          * instance's C{__init__}.
          */
         if (asConstructor !== Divmod._CONSTRUCTOR) {
+            Divmod.__instanceCounter__++;
+
+            /* set an ID unique to this instance */
+            self.__id__ = Divmod.__instanceCounter__;
+
             self.__class__ = subClass;
             self.__init__.apply(self, arguments);
         }
@@ -271,24 +282,18 @@ Divmod.Class.subclass = function(/* optional */ className) {
                 || subClass == superClass);
     };
 
-    /**
-       Not quite sure what to do with this...
-    **/
-    Divmod.__classDebugCounter__ += 1;
-    subClass.__classDebugCounter__ = Divmod.__classDebugCounter__;
+    var classIdentifier;
+    if(className === undefined) {
+        classIdentifier = '#' + Divmod.__classDebugCounter__;
+    } else {
+        classIdentifier = className;
+    }
+
     subClass.toString = function() {
-        if (className == undefined) {
-            return '<Class #' + subClass.__classDebugCounter__ + '>';
-        } else {
-            return '<Class ' + className + '>';
-        }
+        return '<Class ' + classIdentifier + '>';
     };
     subClass.prototype.toString = function() {
-        if (className == undefined) {
-            return '<"Instance" of #' + subClass.__classDebugCounter__ + '>';
-        } else {
-            return '<"Instance" of ' + className + '>';
-        }
+        return '<"Instance" of ' + classIdentifier + '>';
     };
     return subClass;
 };

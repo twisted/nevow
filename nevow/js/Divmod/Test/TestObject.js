@@ -90,6 +90,107 @@ Divmod.Test.TestObject.TestObject.methods(
         self.assertIdentical(instance.__class__, cls);
     },
 
+    /**
+     * Calling C{toString} on a L{Divmod.Class} should return something
+     * informative.
+     */
+    function test_classToString(self) {
+        var cls = Divmod.Class.subclass('test_classToString');
+        self.assertIdentical(cls.toString(), '<Class test_classToString>');
+    },
+
+
+    /**
+     * Calling C{toString} on a L{Divmod.Class} instance should return
+     * something informative.
+     */
+    function test_instanceToString(self) {
+        var cls = Divmod.Class.subclass('test_instanceToString');
+        self.assertIdentical(
+            cls().toString(), '<"Instance" of test_instanceToString>');
+    },
+
+
+    /**
+     * Like L{test_classToString}, but for unnamed L{Divmod.Class} subclasses.
+     */
+    function test_unnamedClassToString(self) {
+        var cls = Divmod.Class.subclass();
+        var classDebugCounter = Divmod.__classDebugCounter__;
+        self.assertIdentical(
+            cls.toString(), '<Class #' + classDebugCounter + '>');
+    },
+
+
+    /**
+     * Like L{test_instanceToString} but for instances of unnamed
+     * L{Divmod.Class} subclasses.
+     */
+    function test_unnamedInstanceToString(self) {
+        var cls = Divmod.Class.subclass();
+        var classDebugCounter = Divmod.__classDebugCounter__;
+        self.assertIdentical(
+            cls().toString(),
+            '<"Instance" of #' + classDebugCounter + '>');
+    },
+
+
+    /**
+     * Test that L{Divmod.__instanceCounter__} is not incremented when a new
+     * *class* is created.
+     */
+    function test_instanceCounterNoInstances(self) {
+        var instanceCounter = Divmod.__instanceCounter__;
+        var cls = Divmod.Class.subclass('test_instanceCounterNoInstances');
+        self.assertIdentical(
+            Divmod.__instanceCounter__,
+            instanceCounter);
+    },
+
+
+    /**
+     * Test that L{Divmod.__instanceCounter__} is incremented when a class is
+     * instantiated.
+     */
+    function test_instanceCounterIncremented(self) {
+        var cls = Divmod.Class.subclass('test_instanceCounterIncremented');
+        var instanceCounter = Divmod.__instanceCounter__;
+        cls();
+        self.assertIdentical(
+            Divmod.__instanceCounter__, instanceCounter + 1);
+        cls();
+        self.assertIdentical(
+            Divmod.__instanceCounter__, instanceCounter + 2);
+    },
+
+
+    /**
+     * Like L{test_instanceCounterIncremented}, but using the C{new} statement
+     * to instantiate classes.
+     */
+    function test_instanceCounterIncrementedNew(self) {
+        var cls = Divmod.Class.subclass('test_instanceCounterIncremented');
+        var instanceCounter = Divmod.__instanceCounter__;
+        new cls();
+        self.assertIdentical(
+            Divmod.__instanceCounter__, instanceCounter + 1);
+        new cls();
+        self.assertIdentical(
+            Divmod.__instanceCounter__, instanceCounter + 2);
+    },
+
+
+    /**
+     * Verify that the C{__id__} attribute is not the same for two instances
+     * of the same L{Divmod.Class}.
+     */
+    function test_uniqueID(self) {
+        var cls = Divmod.Class.subclass('test_uniqueID');
+        if(cls().__id__ === cls().__id__) {
+            self.fail('__id__ attribute not unique');
+        }
+    },
+
 
     function test_newlessInstantiation(self) {
         /*
