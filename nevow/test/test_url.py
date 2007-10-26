@@ -1,5 +1,9 @@
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2007 Divmod.
 # See LICENSE for details.
+
+"""
+Tests for L{nevow.url}.
+"""
 
 import urlparse, urllib
 
@@ -138,6 +142,20 @@ class TestURL(TestCase):
         urlpath = url.URL.fromString(theurl)
         self.assertEquals("http://www.foo.com:80/a/nice/?zot=23&zut",
                           str(urlpath.parent()))
+
+
+    def test_path(self):
+        """
+        L{URL.path} should be a C{str} giving the I{path} portion of the URL
+        only.  Certain bytes should not be quoted.
+        """
+        urlpath = url.URL.fromString("http://example.com/foo/bar?baz=quux#foobar")
+        self.assertEqual(urlpath.path, "foo/bar")
+        urlpath = url.URL.fromString("http://example.com/foo%2Fbar?baz=quux#foobar")
+        self.assertEqual(urlpath.path, "foo%2Fbar")
+        urlpath = url.URL.fromString("http://example.com/-_.!*'()?baz=quux#foo")
+        self.assertEqual(urlpath.path, "-_.!*'()")
+
 
     def test_parentdir(self):
         urlpath = url.URL.fromString(theurl)

@@ -1,22 +1,23 @@
-# -*- test-case-name: "nevow.test.test_url" -*-
-# Copyright (c) 2004 Divmod.
+# -*- test-case-name: nevow.test.test_url -*-
+# Copyright (c) 2004-2007 Divmod.
 # See LICENSE for details.
 
-"""URL parsing, construction and rendering.
+"""
+URL parsing, construction and rendering.
 """
 
-from __future__ import generators
 import weakref
+import urlparse
+import urllib
+
 from zope.interface import implements
+
+from twisted.web.util import redirectTo
 
 from nevow import inevow, flat
 from nevow.stan import raw
 from nevow.flat import serialize
 from nevow.context import WovenContext
-
-import urlparse
-import urllib
-from twisted.web.util import redirectTo
 
 def _uqf(query):
     for x in query.split('&'):
@@ -29,20 +30,20 @@ unquerify = lambda query: list(_uqf(query))
 
 class URL(object):
     """Represents a URL and provides a convenient API for modifying its parts.
-    
+
     A URL is split into a number of distinct parts: scheme, netloc (domain
     name), path segments, query parameters and fragment identifier.
-    
+
     Methods are provided to modify many of the parts of the URL, especially
     the path and query parameters. Values can be passed to methods as-is;
     encoding and escaping is handled automatically.
-    
+
     There are a number of ways to create a URL:
         * Standard Python creation, i.e. __init__.
         * fromString, a class method that parses a string.
         * fromContext, a class method that creates a URL to represent the
           the current URL in the path traversal process.
-          
+
     URL instances can be used in a stan tree or to fill template slots. They can
     also be used as a redirect mechanism - simply return an instance from an
     IResource method. See URLRedirectAdapter for details.
@@ -64,7 +65,19 @@ class URL(object):
         self._querylist = querysegs
         self.fragment = fragment
 
-    path = property(lambda self: '/'.join(self._qpathlist))
+    def path():
+        def get(self):
+            return '/'.join([
+                    # Note that this set of safe things is pretty arbitrary.
+                    # It is this particular set in order to match that used by
+                    # nevow.flat.flatstan.StringSerializer, so that url.path
+                    # will give something which is contained by flatten(url).
+                    urllib.quote(seg, safe="-_.!*'()") for seg in self._qpathlist])
+        doc = """
+        The path portion of the URL.
+        """
+        return get, None, None, doc
+    path = property(*path())
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -216,7 +229,7 @@ class URL(object):
 
     def click(self, href):
         """Build a path by merging 'href' and this path.
-        
+
         Return a path which is the URL where a browser would presumably
         take you if you clicked on a link with an 'href' as given.
         """
@@ -275,7 +288,7 @@ class URL(object):
 
     def replace(self, name, value=None):
         """Remove all existing occurrances of the query
-        argument 'name', *if it exists*, then add the argument 
+        argument 'name', *if it exists*, then add the argument
         with the given value.
         None indicates that the argument has no value
         """
@@ -358,10 +371,10 @@ class URL(object):
 def normURLPath(path):
     '''Normalise the URL path by resolving segments of '.' and ',,'.
     '''
-    
+
     segs = []
     addEmpty = False
-    
+
     pathSegs = path.split('/')
 
     for seg in pathSegs:
@@ -372,24 +385,24 @@ def normURLPath(path):
                 segs.pop()
         else:
             segs.append(seg)
-            
-    if pathSegs[-1:] in (['.'],['..']): 
+
+    if pathSegs[-1:] in (['.'],['..']):
         segs.append('')
-    
+
     return '/'.join(segs)
 
-    
+
 class URLOverlay(object):
     def __init__(self, urlaccessor, doc=None, dolater=None, keep=None):
         """A Proto like object for abstractly specifying urls in stan trees.
 
         @param urlaccessor: a function which takes context and returns a URL
-        
+
         @param doc: a a string documenting this URLOverlay instance's usage
 
         @param dolater: a list of tuples of (command, args, kw) where
-        command is a string, args is a tuple and kw is a dict; when the 
-        URL is returned from urlaccessor during rendering, these 
+        command is a string, args is a tuple and kw is a dict; when the
+        URL is returned from urlaccessor during rendering, these
         methods will be applied to the URL in order
         """
         if doc is not None:
@@ -429,7 +442,7 @@ for cmd in [
 def hereaccessor(context):
     return URL.fromContext(context).clear()
 here = URLOverlay(
-    hereaccessor, 
+    hereaccessor,
     "A lazy url construction object representing the current page's URL. "
     "The URL which will be used will be determined at render time by "
     "looking at the request. Any query parameters will be "
@@ -556,20 +569,20 @@ class URLGenerator:
 class URLRedirectAdapter:
     """Adapter for URL and URLOverlay instances that results in an HTTP
     redirect.
-    
+
     Whenever a URL or URLOverlay instance is returned from locateChild or
     renderHTTP an HTTP response is generated that causes a redirect to
     the adapted URL. Any remaining segments of the current request are
     consumed.
-    
+
     Note that URLOverlay instances are lazy so their use might not be entirely
     obvious when returned from locateChild, i.e. url.here means the request's
     URL and not the URL of the resource that is self.
-    
+
         def renderHTTP(self, ctx):
             # Redirect to my immediate parent
             return url.here.up()
-            
+
         def locateChild(self, ctx, segments):
             # Redirect to the URL of this resource
             return url.URL.fromContext(ctx)
@@ -595,4 +608,3 @@ class URLRedirectAdapter:
             u = flat.flatten(URL.fromContext(ctx).click(u), ctx)
             return redirectTo(u, inevow.IRequest(ctx))
         return flat.flattenFactory(self.original, ctx, bits.append, flattened)
-
