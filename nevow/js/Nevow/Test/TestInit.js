@@ -2,18 +2,52 @@
 
 // import Divmod.UnitTest
 // import Nevow.Athena
+// import Nevow.Test.Util
 
 Nevow.Test.TestInit.InitTests = Divmod.UnitTest.TestCase.subclass(
     'Nevow.Test.TestInit.InitTests');
 Nevow.Test.TestInit.InitTests.methods(
     /**
-     * Bootstrapping the Nevow.Athena module should set its 'livepageId'
-     * attribute.
+     * Set up a faker so that this test can fake global variables.
+     */
+    function setUp(self) {
+        self.faker = Nevow.Test.Util.Faker();
+    },
+    /**
+     * Restore global state to what it was before this test's faker was put
+     * into effect.
+     */
+    function tearDown(self) {
+        self.faker.stop();
+    },
+
+    /**
+     * Bootstrapping the Nevow.Athena module should create a page widget
+     * object of the requested class and assign it to Nevow.Athena.page, then
+     * notify the page to bind its events to the global window.
      */
     function test_bootstrap(self) {
         var notAthena = {};
+        var myWind = self.faker.fake('window', {});
         var SOME_ID = 'asdfjkl;';
         notAthena.bootstrap = Nevow.Athena.bootstrap;
-        notAthena.bootstrap(SOME_ID);
-        self.assertIdentical(notAthena.livepageId, SOME_ID);
+        notAthena.bootstrap('Nevow.Athena.PageWidget', SOME_ID);
+        self.assert(notAthena.page instanceof Nevow.Athena.PageWidget);
+        self.assertIdentical(notAthena.page.livepageID, SOME_ID);
+        // fake handlers for simple testing of just bootstrap behavior, not
+        // the full pile of stuff that they do
+        var keyPressed = 0;
+        var beforeUnloaded = false;
+        notAthena.page.onkeypress = function () {
+            keyPressed++;
+        };
+        notAthena.page.onbeforeunload = function () {
+            beforeUnloaded = true;
+        };
+        myWind.onkeypress();
+        self.assertIdentical(keyPressed, 1);
+        myWind.onkeypress();
+        self.assertIdentical(keyPressed, 2);
+        myWind.onbeforeunload();
+        self.assert(beforeUnloaded);
     });

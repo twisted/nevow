@@ -44,21 +44,23 @@ Nevow.Test.WidgetUtil.registerWidget = function registerWidget(widget, athenaID/
 }
 
 /**
- * Replace L{Nevow.Athena._rdm} with an object which doesn't attempt to do any
- * network stuff.
+ * Replace required global state for operating Athena widgets and events.
  *
- * @return: a thunk which will restore L{Nevow.Athena._rdm} to what it was at
- * the time this function was called.
+ * @return: a thunk which will restore the global state to what it was at the
+ * time this function was called.
  * @rtype: C{Function}
  */
 Nevow.Test.WidgetUtil.mockTheRDM = function mockTheRDM() {
-    // this should probably be a "callWithMockRDM" function
-    var originalRDM = Nevow.Athena._rdm;
-    Nevow.Athena._rdm = {
-        pause: function() {},
-        unpause: function() {}
-    };
+    var originalRDM = Nevow.Athena.page;
+    Nevow.Athena.page = Nevow.Athena.PageWidget("fake-page-id", function (page) {
+        var c = {
+          pause: function () {
+            },
+          unpause: function () {
+            }};
+        return c;
+    });
     return function() {
-        Nevow.Athena._rdm = originalRDM;
-    }
+        Nevow.Athena.page = originalRDM;
+    };
 }

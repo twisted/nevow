@@ -20,25 +20,9 @@ Divmod.baseURL = function() {
     if (Divmod._baseURL != undefined) {
         return Divmod._baseURL;
     }
-    var baseURL = Divmod._location;
-    if (baseURL == undefined) {
-        baseURL = window.location.toString();
-    }
-
-    var queryParamIndex = baseURL.indexOf('?');
-
-    if (queryParamIndex != -1) {
-        baseURL = baseURL.substring(0, queryParamIndex);
-    }
-
-    if (baseURL.charAt(baseURL.length - 1) != '/') {
-        baseURL += '/';
-    }
-
-    baseURL += Nevow.Athena.livepageId + '/';
-
+    var nevowURL = Nevow.Athena.page.baseURL();
     // "Cache" and return
-    Divmod._baseURL = baseURL;
+    Divmod._baseURL = nevowURL;
     return Divmod._baseURL;
 };
 

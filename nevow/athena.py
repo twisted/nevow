@@ -19,6 +19,7 @@ from nevow.useragent import UserAgent, browsers
 from nevow.page import Element, renderer
 
 ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
+ATHENA_RECONNECT = "__athena_reconnect__"
 
 expose = util.Expose(
     """
@@ -723,9 +724,40 @@ BOOTSTRAP_NODE_ID = 'athena:bootstrap'
 BOOTSTRAP_STATEMENT = ("eval(document.getElementById('" + BOOTSTRAP_NODE_ID +
                        "').getAttribute('payload'));")
 
+class _HasJSClass(object):
+    """
+    A utility to share some code between the L{LivePage}, L{LiveElement}, and
+    L{LiveFragment} classes which all have a jsClass attribute that represents
+    a JavaScript class.
+
+    @ivar jsClass: a JavaScript class.
+    @type jsClass: L{unicode}
+    """
+
+    def _getModuleForClass(self):
+        """
+        Get a L{JSModule} object for the class specified by this object's
+        jsClass string.
+        """
+        return jsDeps.getModuleForClass(self.jsClass)
 
 
-class LivePage(rend.Page):
+    def _getRequiredModules(self):
+        """
+        Return a list of two-tuples containing module names and URLs at which
+        those modules are accessible.  All of these modules must be loaded into
+        the page before this Fragment's widget can be instantiated.  modules
+        are accessible.
+        """
+        return [
+            (dep.name, self.page.getJSModuleURL(dep.name))
+            for dep
+            in self._getModuleForClass().allDependencies()
+            if self.page._shouldInclude(dep.name)]
+
+
+
+class LivePage(rend.Page, _HasJSClass):
     """
     A resource which can receive messages from and send messages to the client
     after the initial page load has completed and which can send messages.
@@ -738,6 +770,8 @@ class LivePage(rend.Page):
     @ivar unsupportedBrowserLoader: A document loader which will be used to
         generate the content shown to unsupported browsers.
     """
+
+    jsClass = u'Nevow.Athena.PageWidget'
 
     factory = LivePageFactory()
     _rendered = False
@@ -780,7 +814,8 @@ class LivePage(rend.Page):
                 'Your browser is not supported by the Athena toolkit.']])
 
 
-    def __init__(self, iface=None, rootObject=None, jsModules=None, jsModuleRoot=None, transportRoot=None, *a, **kw):
+    def __init__(self, iface=None, rootObject=None, jsModules=None,
+                 jsModuleRoot=None, transportRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
 
         self.iface = iface
@@ -793,7 +828,7 @@ class LivePage(rend.Page):
             transportRoot = url.here
         self.transportRoot = transportRoot
         self.liveFragmentChildren = []
-        self._includedModules = self.BOOTSTRAP_MODULES[:]
+        self._includedModules = []
         self._disconnectNotifications = []
 
 
@@ -899,21 +934,59 @@ class LivePage(rend.Page):
 
 
     def renderHTTP(self, ctx):
-        assert not self._rendered, "Cannot render a LivePage more than once"
-        assert self.factory is not None, "Cannot render a LivePage without a factory"
-        self._rendered = True
+        """
+        Attach this livepage to its transport, and render it and all of its
+        attached widgets to the browser.  During rendering, the page is
+        attached to its factory, acquires a clientID, and has headers set
+        appropriately to prevent a browser from ever caching the page, since
+        the clientID it gives to the browser is transient and changes every
+        time.
 
+        These state changes associated with rendering mean that L{LivePage}s
+        can only be rendered once, because they are attached to a particular
+        user's browser, and it must be unambiguous what browser
+        L{LivePage.callRemote} will invoke the method in.
+
+        The page's contents are rendered according to its docFactory, as with a
+        L{Page}, unless the user-agent requesting this LivePage is determined
+        to be unsupported by the JavaScript runtime required by Athena.  In
+        that case, a static page is rendered by this page's
+        C{renderUnsupported} method.
+
+        If a special query argument is set in the URL, "__athena_reconnect__",
+        the page will instead render the JSON-encoded clientID by itself as the
+        page's content.  This allows an existing live page in a browser to
+        programmatically reconnect without re-rendering and re-loading the
+        entire page.
+
+        @see L{LivePage.renderUnsupported}
+
+        @see L{Page.renderHTTP}
+
+        @param ctx: a L{WovenContext} with L{IRequest} remembered.
+
+        @return: a string (the content of the page) or a Deferred which will
+        fire with the same.
+
+        @raise RuntimeError: if the page has already been rendered, or this
+        page has not been given a factory.
+        """
+        if self._rendered:
+            raise RuntimeError("Cannot render a LivePage more than once")
+        if self.factory is None:
+            raise RuntimeError("Cannot render a LivePage without a factory")
+
+        self._rendered = True
         request = inevow.IRequest(ctx)
         if not self._supportedBrowser(request):
             request.write(self.renderUnsupported(ctx))
             return ''
 
-        self._becomeLive(
-            url.URL.fromString(
-                flat.flatten(
-                    url.here, ctx)))
+        self._becomeLive(url.URL.fromString(flat.flatten(url.here, ctx)))
 
         neverEverCache(request)
+        if request.args.get(ATHENA_RECONNECT):
+            return json.serialize(self.clientID.decode("ascii"))
         return rend.Page.renderHTTP(self, ctx)
 
 
@@ -987,8 +1060,8 @@ class LivePage(rend.Page):
             # Hit jsDeps.getModuleForName to force it to load some plugins :/
             # This really needs to be redesigned.
             [self.getImportStan(jsDeps.getModuleForName(name).name)
-             for name
-             in self.BOOTSTRAP_MODULES],
+             for (name, url)
+             in self._getRequiredModules()],
             tags.script(type='text/javascript',
                         id=BOOTSTRAP_NODE_ID,
                         payload=bootstrapString)[
@@ -1008,7 +1081,7 @@ class LivePage(rend.Page):
             ("Divmod.bootstrap",
              [flat.flatten(self.transportRoot, ctx).decode("ascii")]),
             ("Nevow.Athena.bootstrap",
-             [self.clientID.decode('ascii')])]
+             [self.jsClass, self.clientID.decode('ascii')])]
 
 
     def _bootstrapCall(self, methodName, args):
@@ -1184,7 +1257,7 @@ def rewriteAthenaIds(root):
     return root
 
 
-class _LiveMixin(object):
+class _LiveMixin(_HasJSClass):
     jsClass = u'Nevow.Athena.Widget'
 
     preprocessors = [rewriteEventHandlerNodes, rewriteAthenaIds]
@@ -1266,24 +1339,6 @@ class _LiveMixin(object):
         self.fragmentParent = fragmentParent
         self.page = fragmentParent.page
         fragmentParent.liveFragmentChildren.append(self)
-
-
-    def _getModuleForClass(self):
-        return jsDeps.getModuleForClass(self.jsClass)
-
-
-    def _getRequiredModules(self):
-        """
-        Return a list of two-tuples containing module names and URLs at which
-        those modules are accessible.  All of these modules must be loaded into
-        the page before this Fragment's widget can be instantiated.  modules
-        are accessible.
-        """
-        return [
-            (dep.name, self.page.getJSModuleURL(dep.name))
-            for dep
-            in self._getModuleForClass().allDependencies()
-            if self.page._shouldInclude(dep.name)]
 
 
     def _structured(self):
@@ -1607,16 +1662,20 @@ class IntrospectionFragment(LiveFragment):
 
 
 
-
 __all__ = [
+    # Constants
     'ATHENA_XMLNS_URI',
 
+    # Errors
     'LivePageError', 'OrphanedFragment', 'ConnectFailed', 'ConnectionLost'
 
+    # JS support
     'JSModules', 'JSModule', 'JSPackage', 'AutoJSPackage', 'allJavascriptPackages',
     'JSDependencies', 'JSException', 'JSCode', 'JSFrame', 'JSTraceback',
 
+    # Core objects
     'LivePage', 'LiveFragment', 'LiveElement', 'IntrospectionFragment',
 
+    # Decorators
     'expose', 'handler',
     ]

@@ -12,7 +12,7 @@ from twisted.python.reflect import qual
 from twisted.python.usage import UsageError
 from twisted.plugin import IPlugin
 
-from nevow import athena, rend, tags, flat, loaders
+from nevow import athena, rend, tags, flat, loaders, url
 from nevow.loaders import stan
 from nevow.athena import LiveElement
 from nevow.appserver import NevowSite
@@ -1120,6 +1120,14 @@ class LivePageTests(unittest.TestCase):
         self.page = athena.LivePage()
 
 
+    def tearDown(self):
+        """
+        Shut this test's L{LivePage} timers down, if the test started them up.
+        """
+        if hasattr(self.page, '_messageDeliverer'):
+            self.page._messageDeliverer.close()
+
+
     def test_bootstrapCall(self):
         """
         L{LivePage.bootstrapCall} should generate a JSON-serialized string for
@@ -1131,10 +1139,32 @@ class LivePageTests(unittest.TestCase):
             bc, 'SomeModule.someMethod("one", 2, {"three":4.1});')
 
 
+    def test_pageJsClassDependencies(self):
+        """
+        L{LivePage.render_liveglue} should include modules that the
+        L{LivePage}'s jsClass depends on.
+        """
+        self.page.jsClass = u'PythonTestSupport.Dependor.PageTest'
+        freq = FakeRequest()
+        self.page._becomeLive(url.URL.fromRequest(freq))
+        ctx = WovenContext(tag=tags.div())
+        ctx.remember(freq, IRequest)
+        self.assertEqual(self.page.render_liveglue(ctx, None), ctx.tag)
+        expectDependor = flat.flatten(self.page.getImportStan(u'PythonTestSupport.Dependor'))
+        expectDependee = flat.flatten(self.page.getImportStan(u'PythonTestSupport.Dependee'))
+        result = flat.flatten(ctx.tag, ctx)
+        self.assertIn(expectDependor, result)
+        self.assertIn(expectDependee, result)
+
+
     def test_bootstraps(self):
         """
         L{LivePage._bootstraps} should return a list of 2-tuples of
         (initialization method, arguments) of methods to call in JavaScript.
+
+        Specifically, it should invoke Divmod.bootstrap with the page's own
+        URL, and Nevow.Athena.bootstrap with the name of the client-side Page
+        class to instantiate and the URL to instantiate it with.
         """
         SEG = "'" + '"'
         URI = "http://localhost/" + SEG
@@ -1149,7 +1179,22 @@ class LivePageTests(unittest.TestCase):
               # flattener's fault, not mine.  Adjust to taste if that changes
               # (it won't) -glyph
               [u"http://localhost/'%22"]),
-             ("Nevow.Athena.bootstrap", [u'asdf'])])
+             ("Nevow.Athena.bootstrap",
+              [u'Nevow.Athena.PageWidget', u'asdf'])])
+
+
+    def test_renderReconnect(self):
+        """
+        L{LivePage.renderHTTP} should render a JSON-encoded version of its
+        clientID rather than a rendered version of its template when provided
+        with a special __athena_reconnect__ parameter.
+        """
+        req = FakeRequest(args={athena.ATHENA_RECONNECT: ["1"]})
+        ctx = WovenContext()
+        ctx.remember(req, IRequest)
+        string = self.page.renderHTTP(ctx)
+        jsonifiedID = '"%s"' % (self.page.clientID,)
+        self.assertEqual(string, jsonifiedID)
 
 
 
