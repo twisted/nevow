@@ -1,12 +1,17 @@
 # -*- test-case-name: nevow.test.test_json -*-
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2007 Divmod.
 # See LICENSE for details.
 
-"""JavaScript Object Notation
+"""
+JavaScript Object Notation.
+
+This is not (nor does it intend to be) a faithful JSON implementation, but it
+is kind of close.
 """
 
 import re, types
 
+from nevow.inevow import IAthenaTransportable
 from nevow import rend, page, flat, tags
 
 class ParseError(ValueError):
@@ -243,6 +248,7 @@ _translation.update({
 def stringEncode(s):
     return s.translate(_translation).encode('utf-8')
 
+
 def _serialize(obj, w, seen):
     from nevow import athena
 
@@ -285,7 +291,19 @@ def _serialize(obj, w, seen):
         w(stringEncode(flat.flatten(wrapper[obj]).decode('utf-8')))
         w('"')
     else:
-        raise TypeError("Unsupported type %r: %r" % (type(obj), obj))
+        transportable = IAthenaTransportable(obj, None)
+        if transportable is not None:
+            w('(new ' + transportable.jsClass.encode('ascii') + '(')
+            arguments = transportable.getInitialArguments()
+            for n, e in enumerate(arguments):
+                _serialize(e, w, seen)
+                if n != len(arguments) - 1:
+                    w(',')
+            w('))')
+        else:
+            raise TypeError("Unsupported type %r: %r" % (type(obj), obj))
+
+
 
 _undefined = object()
 def serialize(obj=_undefined, **kw):

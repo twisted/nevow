@@ -1,9 +1,16 @@
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2007 Divmod.
 # See LICENSE for details.
 
-from twisted.trial import unittest
+"""
+Tests for L{nevow.json}.
+"""
 
+from zope.interface import implements
+
+from nevow.inevow import IAthenaTransportable
 from nevow import json, rend, page, loaders, tags, athena
+
+from twisted.trial import unittest
 
 TEST_OBJECTS = [
     0,
@@ -185,3 +192,54 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         instances.
         """
         return self._doubleLiveSerialization(athena.LiveElement, 'liveElement')
+
+
+    def test_unsupportedSerialization(self):
+        """
+        L{json.serialize} should raise a L{TypeError} if it is passed an object
+        which it does not know how to serialize.
+        """
+        class Unsupported(object):
+            def __repr__(self):
+                return 'an unsupported object'
+        exception = self.assertRaises(TypeError, json.serialize, Unsupported())
+        self.assertEqual(
+            str(exception),
+            "Unsupported type <class 'nevow.test.test_json.Unsupported'>: "
+            "an unsupported object")
+
+
+    def test_customSerialization(self):
+        """
+        L{json.serialize} should emit JavaScript calls to the JavaScript object
+        named by L{IAthenaTransportable.jsClass} with the arguments returned by
+        L{IAthenaTransportable.getInitialArguments} when passed an object which
+        can be adapted to L{IAthenaTransportable}.
+        """
+        class Transportable(object):
+            """
+            Completely parameterized L{IAthenaTransportable} implementation so
+            different data can be easily tested.
+            """
+            implements(IAthenaTransportable)
+
+            def __init__(self, jsClass, initialArgs):
+                self.jsClass = jsClass
+                self.getInitialArguments = lambda: initialArgs
+
+        self.assertEqual(
+            json.serialize(Transportable(u"Foo", ())),
+            "(new Foo())")
+        self.assertEqual(
+            json.serialize(Transportable(u"Bar", (None,))),
+            "(new Bar(null))")
+        self.assertEqual(
+            json.serialize(Transportable(u"Baz.Quux", (1, 2))),
+            "(new Baz.Quux(1,2))")
+
+        # The style of the quotes in this assertion is basically irrelevant.
+        # If, for some reason, the serializer changes to use ' instead of ",
+        # there's no reason not to change this test to reflect that. -exarkun
+        self.assertEqual(
+            json.serialize(Transportable(u"Quux", (u"Foo",))),
+            '(new Quux("Foo"))')

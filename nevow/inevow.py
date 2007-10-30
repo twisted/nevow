@@ -16,12 +16,12 @@ class IQ(Interface):
         """Returns a pseudo-Tag which will generate clones of matching
         pattern tags forever, looping around to the beginning when running
         out of unique matches.
-        
+
         If no matches are found, and default is None, raise an exception,
         otherwise, generate clones of default forever.
 
         You can use the normal stan syntax on the return value.
-        
+
         Useful to find repeating pattern elements. Example rendering
         function:
 
@@ -32,10 +32,10 @@ class IQ(Interface):
 
     def allPatterns(pattern):
         """Return a list of all matching pattern tags, cloned.
-        
+
         Useful if you just want to insert them in the output in one
         place.
-        
+
         E.g. the sequence renderer's header and footer are found with this.
         """
 
@@ -106,7 +106,7 @@ class IMacroFactory(Interface):
 class IData(Interface):
     """Any python object to be used as model data to be passed
     to view functions. Used for marking the context stack only.
-    
+
     ANY python object is said to implement IData.
     """
 
@@ -114,7 +114,7 @@ class IData(Interface):
 class IGettable(Interface):
     def get(context):
         """Return the data
-        
+
         Return any object
         """
 
@@ -131,13 +131,13 @@ class IContainer(Interface):
     def child(context, name):
         """Return a conceptual child; an attribute, or a key,
         or the result of a function call.
-    
+
         Returns any object; the result may be adapted to IGettable
         if possible.
-        
+
         Return None if the adaptee does not have a child with the
         given name.
-        
+
         TODO: Maybe returning None is bad, and .child should just
         raise whatever exception is natural
         """
@@ -158,7 +158,7 @@ class IComponentized(Interface):
         """
         Add a component to me for the indicated interface.
         """
-    
+
     def addComponent(component, ignoreClass=0, registry=None):
         """
         Add a component to me, for all appropriate interfaces.
@@ -192,7 +192,7 @@ class IComponentized(Interface):
         interfaces (with addComponent), set the attribute 'multiComponent' to
         True on your adapter class.
         """
-        
+
     def unsetComponent(interfaceClass):
         """Remove my component specified by the given interface class."""
 
@@ -202,14 +202,14 @@ class IComponentized(Interface):
         it has been registered.
 
         @return: a list of the interfaces that were removed.
-        """        
+        """
 
 class ISession(IComponentized):
     """A web session
 
     You can locate a Session object to represent a unique web session using
     ISession(ctx). This default session implementation uses cookies to
-    store a session identifier in the user's browser. 
+    store a session identifier in the user's browser.
 
     uid: Session uid
 
@@ -223,7 +223,7 @@ class ISession(IComponentized):
         parameters about when this session will expire.  A callback will be
         scheduled each 'lifetime' seconds, and if I have not been 'touch()'ed
         in half a lifetime, I will be immediately expired.
-        
+
         If you need to change the lifetime of all the sessions change sessionsLifeTime
         attribute in class guard.SessionWrapper
         """
@@ -255,7 +255,7 @@ class IRequest(IComponentized):
 
     Subclasses should override the process() method to determine how
     the request will be processed.
-    
+
     @ivar method: The HTTP method that was used.
     @ivar uri: The full URI that was requested (includes arguments).
     @ivar path: The path only (arguments not included).
@@ -295,7 +295,7 @@ class IRequest(IComponentized):
         copied remotely.  For information on this method's return value, see
         twisted.internet.tcp.Port.
         """
-        
+
     def getClientIP():
         pass
 
@@ -313,7 +313,7 @@ class IRequest(IComponentized):
 
     def getSession(sessionInterface = None):
         pass
-    
+
     def URLPath():
         pass
 
@@ -325,12 +325,12 @@ class IRequest(IComponentized):
         Remember the currently-processed part of the URL for later
         recalling.
         """
-        
+
     def getRootURL():
         """
         Get a previously-remembered URL.
         """
-        
+
     # Methods for outgoing request
     def finish():
         """We are finished writing data."""
@@ -494,8 +494,8 @@ class ISession(Interface):
 
     You can locate a Session object to represent a unique web session using
     ctx.locate(ISession). This default session implementation uses cookies to
-    store a session identifier in the user's browser. 
-    
+    store a session identifier in the user's browser.
+
     TODO: Need better docs; what's a session and why and how do you use it
     """
 
@@ -503,7 +503,7 @@ class ISession(Interface):
 class IRemainingSegments(Interface):
     """During the URL traversal process, requesting this from the context
     will result in a tuple of the segments remaining to be processed.
-    
+
     Equivalent to request.postpath in twisted.web
     """
 
@@ -524,9 +524,9 @@ class IViewParameters(Interface):
     to perform on the url object before returning it.
     """
     def __iter__():
-        """Return an iterator which yields a series of (command, args, kw) triples, 
-        where 'command' is a string, indicating which url method to call, 'args' is a 
-        list indicating the arguments to be passed to this method, and 'kw' is a dict 
+        """Return an iterator which yields a series of (command, args, kw) triples,
+        where 'command' is a string, indicating which url method to call, 'args' is a
+        list indicating the arguments to be passed to this method, and 'kw' is a dict
         of keyword arguments to pass to this method.
         """
 
@@ -546,13 +546,13 @@ class II18NConfig(Interface):
     domain = Attribute("The gettext domain")
     localeDir = Attribute("Path to the messages files or None to use the system default")
 
-        
+
 class ILanguages(Interface):
     """
     Marker interface for the sequence of strings that defines the
     languages requested by the user.
     """
-    
+
 
 class ILogger(Interface):
     """
@@ -576,3 +576,32 @@ class IJavascriptPackage(Interface):
     locations in the filesystem where the implementation of each module can
     be found.
     """
+
+
+class IAthenaTransportable(Interface):
+    """
+    An object which can be sent by Athena from the Python server to the
+    JavaScript client.
+    """
+    jsClass = Attribute(
+        """
+        A C{unicode} string giving the fully-qualified name of a JavaScript
+        function which will be invoked to unserialize the serialized form of
+        this object.
+
+        The current serialization implementation is limited to supporting
+        values for this attribute which refer to JavaScript functions which
+        are defined in modules which have already been imported by the
+        client receiving the serialized data.  An attempt to lift this
+        limitation will likely be made at some future point.
+        """)
+
+
+    def getInitialArguments():
+        """
+        Define the arguments which will be passed to L{jsClass}.
+
+        @rtype: L{tuple}
+        @return: A tuple of simple types which will be passed as positional
+            arguments to L{jsClass}.
+        """

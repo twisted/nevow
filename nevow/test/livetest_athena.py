@@ -1,7 +1,16 @@
+# Copyright (c) 2004-2007 Divmod.
+# See LICENSE for details.
+
+"""
+Browser integration tests for Athena.
+"""
+
+from zope.interface import implements
+
 from twisted.internet import defer
 
+from nevow.inevow import IAthenaTransportable
 from nevow import loaders, tags, athena
-from nevow.flat import flatten
 from nevow.page import Element, renderer
 from nevow.athena import expose, LiveElement
 from nevow.livetrial import testcase
@@ -155,6 +164,20 @@ class AsyncExceptionFromClient(testcase.TestCase):
         else:
             raise f
 
+
+class CustomTransportable(object):
+    """
+    A simple transportable object used to verify customization is possible.
+    """
+    implements(IAthenaTransportable)
+
+    jsClass = u'Nevow.Athena.Tests.CustomTransportable'
+
+    def getInitialArguments(self):
+        return (u"Hello", 5, u"world")
+
+
+
 class ServerToClientArgumentSerialization(testcase.TestCase):
     """
     Tests that a method invoked on the client by the server is passed the
@@ -164,7 +187,9 @@ class ServerToClientArgumentSerialization(testcase.TestCase):
     jsClass = u'Nevow.Athena.Tests.ServerToClientArgumentSerialization'
 
     def test(self):
-        return self.callRemote('reverse', 1, 1.5, u'hello', {u'world': u'value'});
+        return self.callRemote(
+            'reverse', 1, 1.5, u'hello', {u'world': u'value'},
+            CustomTransportable())
     expose(test)
 
 

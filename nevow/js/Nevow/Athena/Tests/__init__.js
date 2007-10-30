@@ -141,17 +141,37 @@ Nevow.Athena.Tests.AsyncExceptionFromClient.methods(
         return Divmod.Defer.fail(Error('This is a deferred test exception'));
     });
 
+
+/**
+ * Helper class used to verify that a Python object which provides
+ * nevow.inevow.IAthenaTransportable can specify a JavaScript class which
+ * will be instantiated to represent it in the browser.
+ */
+Nevow.Athena.Tests.CustomTransportable = Divmod.Class.subclass(
+    'Nevow.Athena.Tests.CustomTransportable');
+Nevow.Athena.Tests.CustomTransportable.methods(
+    function __init__(self, firstArgument, secondArgument, thirdArgument) {
+        self.firstArgument = firstArgument;
+        self.secondArgument = secondArgument;
+        self.thirdArgument = thirdArgument;
+    });
+
+
 Nevow.Athena.Tests.ServerToClientArgumentSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientArgumentSerialization');
 Nevow.Athena.Tests.ServerToClientArgumentSerialization.methods(
     function test_serverToClientArgumentSerialization(self) {
         return self.callRemote('test');
     },
 
-    function reverse(self, i, f, s, o) {
-        self.assertEquals(i, 1);
-        self.assertEquals(f, 1.5);
-        self.assertEquals(s, 'hello');
-        self.assertEquals(o['world'], 'value');
+    function reverse(self, anInteger, aFloat, aString, anObject, aCustomObject) {
+        self.assertEquals(anInteger, 1);
+        self.assertEquals(aFloat, 1.5);
+        self.assertEquals(aString, 'hello');
+        self.assertEquals(anObject['world'], 'value');
+        self.failUnless(aCustomObject instanceof Nevow.Athena.Tests.CustomTransportable);
+        self.assertEquals(aCustomObject.firstArgument, "Hello");
+        self.assertEquals(aCustomObject.secondArgument, 5);
+        self.assertEquals(aCustomObject.thirdArgument, "world");
     });
 
 Nevow.Athena.Tests.ServerToClientResultSerialization = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.ServerToClientResultSerialization');
