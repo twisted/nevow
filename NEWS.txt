@@ -1,3 +1,7 @@
+0.9.25 (2007-10-16):
+  - The Athena message queue implementation has been improved, fixing problems
+    masked by bugs in Firebug/YSlow.
+
 0.9.24 (2007-09-05):
   - ESC key no longer disconnects Athena connections.
   - Fixed a bug where URLs with quote characters will cause the Athena
