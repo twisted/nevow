@@ -202,11 +202,12 @@ class Annotation(TestCase):
     def testTypedInterfaceProperties(self):
         class Other(formless.TypedInterface):
             pass
+        _indirectOther = lambda: Other  # XXX work around Python issue1569356
         class Test(formless.TypedInterface):
             foo = formless.String()
             bar = formless.Text()
             baz = formless.Integer()
-            quux = formless.Object(interface=Other)
+            quux = formless.Object(interface=_indirectOther())
 
         self.assertEquals(Test.__properties__, Test.__spec__)
 
@@ -228,6 +229,7 @@ class Annotation(TestCase):
         class IFoo(formless.TypedInterface):
             pass
 
+        _indirectIFoo = lambda: IFoo    # XXX work around Python issue1569356
         class Test2(formless.TypedInterface):
             def foo(foobar=formless.String()):
                 """This is a description of foo"""
@@ -243,6 +245,7 @@ class Annotation(TestCase):
                 """The Label
 
                 The description"""
+                IFoo = _indirectIFoo()
                 return IFoo
             baz = formless.autocallable(baz)
 
