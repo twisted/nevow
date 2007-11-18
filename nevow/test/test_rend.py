@@ -468,12 +468,12 @@ class TestPage(unittest.TestCase):
         Using a renderer which is not defined should emit a deprecation
         warning.
         """
-        renderer = "notfound"
+        rendererName = "notfound"
         class MisdefinedPage(rend.Page):
-            docFactory = loaders.stan(html(render=directive(renderer)))
+            docFactory = loaders.stan(html(render=directive(rendererName)))
         page = MisdefinedPage()
         message = "Renderer %r missing on %s will result in an exception."
-        message %= (renderer, qual(MisdefinedPage))
+        message %= (rendererName, qual(MisdefinedPage))
         self.assertWarns(
             DeprecationWarning, message, rend.__file__,
             page.renderSynchronously)
