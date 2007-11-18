@@ -153,14 +153,14 @@ class SuperLaterDataTest(RenderHelper):
         render function is called only once.
         """
         calls = []
-        def renderer(ctx, data):
+        def recorder(ctx, data):
             calls.append(None)
             return str(len(calls))
         doc = tags.html[tags.directive('renderer')]
         class RendererPage(rend.Page):
             docFactory = loaders.stan(doc)
             def render_renderer(self, ctx, data):
-                return defer.succeed(renderer)
+                return defer.succeed(recorder)
         self.r = RendererPage()
         req = self.renderIt()
         self.assertEquals(req.v, '<html>1</html>')
