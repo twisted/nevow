@@ -492,12 +492,23 @@ root = URLOverlay(rootaccessor,
 
 
 def URLSerializer(original, context):
+    """
+    Serialize the given L{URL}.
+
+    Unicode path, query and fragment components are handled according to the
+    IRI standard (RFC 3987).
+    """
+    def _maybeEncode(s):
+        if isinstance(s, unicode):
+            s = s.encode('utf-8')
+        return s
     urlContext = WovenContext(parent=context, precompile=context.precompile, inURL=True)
     if original.scheme:
+        # TODO: handle Unicode (see #2409)
         yield "%s://%s" % (original.scheme, original.netloc)
     for pathsegment in original._qpathlist:
         yield '/'
-        yield serialize(pathsegment, urlContext)
+        yield serialize(_maybeEncode(pathsegment), urlContext)
     query = original._querylist
     if query:
         yield '?'
@@ -511,13 +522,13 @@ def URLSerializer(original, context):
                     yield '&'
             else:
                 first = False
-            yield serialize(key, urlContext)
+            yield serialize(_maybeEncode(key), urlContext)
             if value is not None:
                 yield '='
-                yield serialize(value, urlContext)
+                yield serialize(_maybeEncode(value), urlContext)
     if original.fragment:
         yield "#"
-        yield serialize(original.fragment, urlContext)
+        yield serialize(_maybeEncode(original.fragment), urlContext)
 
 
 def URLOverlaySerializer(original, context):

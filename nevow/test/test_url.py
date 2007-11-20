@@ -619,6 +619,17 @@ class Serialization(TestCase):
     test_rfc1808.todo = 'Many of these fail miserably at the moment; often with a / where there shouldn\'t be'
 
 
+    def test_unicode(self):
+        """
+        L{URLSerializer} should provide basic IRI (RFC 3987) support by
+        encoding Unicode to UTF-8 before percent-encoding.
+        """
+        iri = u'http://localhost/expos\xe9?doppelg\xe4nger=Bryan O\u2019Sullivan#r\xe9sum\xe9'
+        uri = 'http://localhost/expos%C3%A9?doppelg%C3%A4nger=Bryan%20O%E2%80%99Sullivan#r%C3%A9sum%C3%A9'
+        self.assertEquals(flatten(url.URL.fromString(iri)), uri)
+
+
+
 class RedirectResource(TestCase):
     """Test the url redirect resource adapters.
     """
