@@ -1,3 +1,6 @@
+0.9.27 (2007-11-27):
+  - Unicode URLs now supported.
+
 0.9.26 (2007-11-02):
   - url.URL.path now correctly escapes segments in the string it
     evaluates to.
