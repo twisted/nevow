@@ -477,6 +477,8 @@ class TestPage(unittest.TestCase):
         self.assertWarns(
             DeprecationWarning, message, rend.__file__,
             page.renderSynchronously)
+    if getattr(unittest.TestCase, 'assertWarns', None) is None:
+        test_missingRendererDeprecated.skip = "TestCase.assertWarns missing"
 
 
 
