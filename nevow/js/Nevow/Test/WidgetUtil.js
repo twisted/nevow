@@ -21,7 +21,7 @@ Nevow.Test.WidgetUtil.makeWidgetNode = function makeWidgetNode(athenaID/*=1*/) {
         athenaID = 1;
     }
     var node = document.createElement('div');
-    node.id = 'athena:' + athenaID;
+    node.id = Nevow.Athena.Widget.translateAthenaID(athenaID);
     return node;
 }
 

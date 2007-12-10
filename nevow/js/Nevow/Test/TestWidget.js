@@ -23,7 +23,7 @@ Nevow.Test.TestWidget.WidgetTests.methods(
      * Create a widget for use in each test.
      */
     function setUp(self) {
-        self.node = Nevow.Test.WidgetUtil.makeWidgetNode();
+        self.node = Nevow.Test.WidgetUtil.makeWidgetNode(1);
         self.otherNode = document.createElement("span");
         self.node.appendChild(self.otherNode);
         self.widget = Nevow.Test.TestWidget.DummyWidget(self.node);
@@ -33,6 +33,14 @@ Nevow.Test.TestWidget.WidgetTests.methods(
 
     function tearDown(self) {
         self._unmockRDM();
+    },
+
+    /**
+     * Verify that translateNodeId returns a correctly translated id.
+     */
+    function test_translateNodeId(self) {
+        var translatedId = self.widget.translateNodeId('foo');
+        self.assert(translatedId == 'athenaid:1-foo');
     },
 
     /**

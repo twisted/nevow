@@ -974,7 +974,7 @@ Nevow.Athena.Widget.methods(
                     Divmod.Runtime.theRuntime.importNode(
                         Divmod.Runtime.theRuntime.parseXHTMLString(markup).documentElement,
                         true),
-                    'id', 'athena:' + widgetID);
+                    'id', Nevow.Athena.Widget.translateAthenaID(widgetID));
 
                 topWidgetClass = Divmod.namedAny(widgetClassName);
                 if (topWidgetClass === undefined) {
@@ -994,7 +994,8 @@ Nevow.Athena.Widget.methods(
                         throw new Error("You blew it: " + childID);
                     }
 
-                    childNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(topNode, 'id', 'athena:' + childID);
+                    childNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(
+                        topNode, 'id', Nevow.Athena.Widget.translateAthenaID(childID));
 
                     if (childWidgetClass === undefined) {
                         throw new Error("Broken: " + children[childIndex]['class']);
@@ -1074,8 +1075,17 @@ Nevow.Athena.Widget.methods(
         return Divmod.Runtime.theRuntime.firstNodeByAttribute(self.node, attrName, attrValue);
     },
 
+
+    /**
+     * Return translated version of the ID attribute value for the
+     * provided id.
+     */
+    function translateNodeId(self, id) {
+        return 'athenaid:' + self.objectID + '-' + id;
+    },
+
     function nodeById(self, id) {
-        var translatedId = 'athenaid:' + self.objectID + '-' + id;
+        var translatedId = self.translateNodeId(id);
         return Divmod.Runtime.theRuntime.getElementByIdWithNode(self.node, translatedId);
     },
 
@@ -1217,6 +1227,13 @@ Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerN
 };
 
 /**
+ * Return translated widget id.
+ */
+Nevow.Athena.Widget.translateAthenaID = function(widgetId) {
+    return 'athena:' + widgetId;
+};
+
+/**
  * Retrieve the Widget with the given widget id.
  */
 Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
@@ -1226,9 +1243,8 @@ Nevow.Athena.Widget.fromAthenaID = function(widgetId) {
     }
 
     return Nevow.Athena.Widget.get(
-        document.getElementById('athena:' + widgetId));
+        document.getElementById(Nevow.Athena.Widget.translateAthenaID(widgetId)));
 };
-
 
 Nevow.Athena.callByAthenaID = function(athenaID, methodName, varargs) {
     var widget = Nevow.Athena.Widget.fromAthenaID(athenaID);
@@ -1420,7 +1436,7 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
     Nevow.Athena.Widget._instantiationTimer = null;
 
     for (var widgetId in widgetIds) {
-        var node = document.getElementById('athena:' + widgetId);
+        var node = document.getElementById(Nevow.Athena.Widget.translateAthenaID(widgetId));
         if (node == null) {
             Divmod.debug("widget", "Widget scheduled for addition was missing.  Id = " + widgetId);
         } else {
