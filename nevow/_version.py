@@ -1,3 +1,3 @@
-# This is an auto-generated file. Use admin/change-versions to update.
+# This is an auto-generated file. Use Epsilon/bin/release-divmod to update.
 from twisted.python import versions
-version = versions.Version(__name__[:__name__.rfind('.')], 0, 9, 27)
+version = versions.Version(__name__[:__name__.rfind('.')], 0, 9, 28)
