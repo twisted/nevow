@@ -284,7 +284,8 @@ class NevowSite(server.Site):
 
         ## We found a Resource... update the request.prepath and postpath
         for x in xrange(len(path) - len(newpath)):
-            request.prepath.append(request.postpath.pop(0))
+            if request.postpath:
+                request.prepath.append(request.postpath.pop(0))
 
         ## Create a context object to represent this new resource
         ctx = context.PageContext(tag=newres, parent=pageContext)

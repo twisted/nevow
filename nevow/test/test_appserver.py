@@ -1,15 +1,26 @@
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2007 Divmod.
 # See LICENSE for details.
+
+"""
+Tests for L{nevow.appserver}.
+"""
+
+from zope.interface import implements
 
 from cStringIO import StringIO
 
-from zope.interface import implements
+from twisted.trial.unittest import TestCase
+
 from nevow import inevow
 from nevow import appserver
 from nevow import context
 from nevow import testutil
 from nevow import util
 
+from nevow.appserver import NevowSite
+from nevow.context import RequestContext
+from nevow.rend import Page
+from nevow.testutil import FakeRequest
 
 class Render:
     implements(inevow.IResource)
@@ -196,3 +207,29 @@ class Logging(testutil.TestCase):
                           [
             ('fakeLog', 'fakeaddress2', 'GET', '/foo', 'HTTP/1.0', 200, 6),
             ])
+
+
+
+class HandleSegment(TestCase):
+    """
+    Tests for L{NevowSite.handleSegment}.
+
+    L{NevowSite.handleSegment} interprets the return value of a single call to
+    L{IResource.locateChild} and makes subsequent calls to that API or returns
+    a context object which will render a resource.
+    """
+    def test_emptyPostPath(self):
+        """
+        If more path segments are consumed than remain in the request's
+        I{postpath}, L{NevowSite.handleSegment} should silently not update
+        I{prepath}.
+        """
+        request = FakeRequest(currentSegments=('',))
+        context = RequestContext(tag=request)
+        rootResource = Page()
+        childResource = Page()
+        site = NevowSite(rootResource)
+        result = site.handleSegment(
+            (childResource, ()), request, ('foo', 'bar'), context)
+        self.assertEqual(request.prepath, [''])
+        self.assertEqual(request.postpath, [])
