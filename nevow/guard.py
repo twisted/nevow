@@ -274,9 +274,6 @@ class SessionWrapper:
 
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
-        request.setupSession = lambda : self.createSession(ctx, segments=[])
-        # ctx.remember(self, ILoginManager)
-
         d = defer.maybeDeferred(self._delegate, ctx, [])
         def _cb((resource, segments), ctx):
             assert not segments
@@ -287,13 +284,11 @@ class SessionWrapper:
 
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
-        # ctx.remember(self, ILoginManager)
         path = segments[0]
         if self.useCookies:
             cookie = request.getCookie(self.cookieKey)
         else:
             cookie = ''
-        request.setupSession = lambda : self.createSession(ctx, segments)
 
         if path.startswith(SESSION_KEY):
             key = path[len(SESSION_KEY):]
