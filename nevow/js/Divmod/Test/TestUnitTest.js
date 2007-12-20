@@ -734,8 +734,8 @@ Divmod.Test.TestUnitTest.MockDocumentTest.methods(
     },
 
     /**
-     * Verify that text nodes are created with appropriate 'length' and
-     * 'nodeValue' attributes.
+     * Verify that text nodes are created with appropriate 'length',
+     * 'nodeValue', and (empty) 'childNodes' attributes.
      */
 
     function test_createTextNode(self) {
@@ -743,6 +743,7 @@ Divmod.Test.TestUnitTest.MockDocumentTest.methods(
         var aNode = aDocument.createTextNode("hello, world!");
         self.assertIdentical(aNode.length, 13);
         self.assertIdentical(aNode.nodeValue, "hello, world!");
+        self.assertIdentical(aNode.childNodes.length, 0);
     },
 
     /**

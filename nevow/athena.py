@@ -39,8 +39,8 @@ expose = util.Expose(
 
 class OrphanedFragment(Exception):
     """
-    Raised if you try to render a L{LiveFragment} without somehow first setting
-    its fragment parent.
+    Raised when an operation requiring a parent is attempted on an unattached
+    child.
     """
 
 
@@ -1445,7 +1445,11 @@ class _LiveMixin(_HasJSClass):
     def _athenaDetachServer(self):
         """
         Locally remove this from its parent.
+
+        @raise OrphanedFragment: if not attached to a parent.
         """
+        if self.fragmentParent is None:
+            raise OrphanedFragment(self)
         for ch in self.liveFragmentChildren:
             ch._athenaDetachServer()
         self.fragmentParent.liveFragmentChildren.remove(self)

@@ -59,6 +59,7 @@ Divmod.MockBrowser.Node.methods(
         self.ELEMENT_NODE = 1;
         self.TEXT_NODE = 3;
         self.DOCUMENT_NODE = 9;
+        self.childNodes = [];
     });
 
 

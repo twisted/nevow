@@ -973,6 +973,19 @@ class LiveMixinTestsMixin:
         self.assertIdentical(child.page, None)
 
 
+    def test_localDetachOrphaned(self):
+        """
+        L{_athenaDetachServer} should raise L{athena.OrphanedFragment} if the
+        element is not attached.
+        """
+        element = self.elementFactory()
+        self.assertRaises(athena.OrphanedFragment, element._athenaDetachServer)
+        page = athena.LivePage()
+        element.setFragmentParent(page)
+        element._athenaDetachServer()
+        self.assertRaises(athena.OrphanedFragment, element._athenaDetachServer)
+
+
     def test_detach(self):
         """
         Verify that L{detach} informs the client of the event and returns a
