@@ -145,7 +145,7 @@ data object is whatever we pass as the first argument to the Page constructor,
 we can create a Page which renders differently depending on the data we pass to
 the Page constructor::
 
-  class Root(page.Page):
+  class Root(rend.Page):
       docFactory = loaders.stan(tags.html[
       tags.h1["Welcome."],
       tags.a(href="foo")["Foo"],
