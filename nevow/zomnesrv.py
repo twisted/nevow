@@ -1,4 +1,7 @@
 
+import warnings
+warnings.warn("nevow.zomnesrv is deprecated.", category=DeprecationWarning)
+
 import time
 
 from nevow import wsgi

@@ -12,6 +12,7 @@
 extern char **environ;
 const char* STDIN_FN_KEY = "STDIN_FILENAME=";
 
+#warning "zomne.c is deprecated, don't use it."
 
 int copyfds(int ind, int outd) {
   size_t read, written;

@@ -2,6 +2,9 @@
 #  1. make exception renderer work (currently the code is in appserver.py)
 # - srid
 
+import warnings
+warnings.warn("nevow.wsgi is deprecated.", category=DeprecationWarning)
+
 import sys, socket, math, time
 import cgi # for FieldStorage
 import types
