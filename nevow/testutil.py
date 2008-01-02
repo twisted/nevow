@@ -2,8 +2,11 @@
 # See LICENSE for details.
 
 import sys, signal
-from popen2 import Popen3
 from os import WEXITSTATUS, WIFSIGNALED, WTERMSIG
+try:
+    from popen2 import Popen3
+except ImportError:
+    Popen3 = None
 
 from zope.interface import implements
 
@@ -350,6 +353,8 @@ class JavaScriptTestCase(TrialTestCase):
             raise NotSupported("Could not find JavaScript interpreter")
         if subunit is None:
             raise NotSupported("Could not import 'subunit'")
+        if Popen3 is None:
+            raise NotSupported("Could not import 'popen2.Popen3'")
 
 
     def _writeToTemp(self, contents):
