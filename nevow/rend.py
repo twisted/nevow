@@ -502,7 +502,7 @@ class ChildLookupMixin(FreeformChildMixin):
         dynamically. Note that higher level interfaces use only locateChild,
         and only nevow.rend.Page.locateChild uses this.
 
-        segment is a string represnting one element of the URI. Request is a
+        segment is a string representing one element of the URI. Request is a
         nevow.appserver.NevowRequest.
 
         The default implementation of this always returns None; it is intended

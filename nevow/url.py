@@ -369,7 +369,7 @@ class URL(object):
 
 
 def normURLPath(path):
-    '''Normalise the URL path by resolving segments of '.' and ',,'.
+    '''Normalise the URL path by resolving segments of '.' and '..'.
     '''
 
     segs = []
