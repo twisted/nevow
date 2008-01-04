@@ -1,8 +1,9 @@
-# Copyright (c) 2004 Divmod.
+# -*- test-case-name: nevow.test.test_flatstan,nevow.test.test_later -*-
+# Copyright (c) 2004,2008 Divmod.
 # See LICENSE for details.
 
-from twisted.python.context import get as getCtx
 from twisted.internet import defer
+
 from nevow import flat
 
 
@@ -64,10 +65,25 @@ def deferflatten(stan, ctx, writer):
 
 
 def DeferredSerializer(original, context):
+    """
+    Serialize the result of the given Deferred without affecting its result.
+
+    @type original: L{defer.Deferred}
+    @param original: The Deferred being serialized.
+
+    @rtype: L{defer.Deferred}
+    @return: A Deferred which will be called back with the result of
+        serializing the result of C{original} or which will errback if
+        either C{original} errbacks or there is an error serializing the
+        result of C{original}.
+    """
     d = defer.Deferred()
     def cb(result):
         d2 = defer.maybeDeferred(flat.serialize, result, context)
         d2.chainDeferred(d)
         return result
-    original.addCallback(cb)
+    def eb(error):
+        d.errback(error)
+        return error
+    original.addCallbacks(cb, eb)
     return d

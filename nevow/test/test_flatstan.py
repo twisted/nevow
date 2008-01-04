@@ -1,7 +1,5 @@
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004,2008 Divmod.
 # See LICENSE for details.
-
-from __future__ import generators
 
 from twisted.internet import defer
 
@@ -160,7 +158,7 @@ class TestComplexSerialization(Base):
     def test_precompileTwice(self):
         def render_same(context, data):
             return context.tag
-        
+
         doc = tags.html[
             tags.body(render=render_same, data={'foo':5})[
                 tags.p["Hello"],
@@ -177,7 +175,7 @@ class TestComplexSerialization(Base):
     def test_precompilePrecompiled(self):
         def render_same(context, data):
             return context.tag
-        
+
         doc = tags.html[
             tags.body(render=render_same, data={'foo':5})[
                 tags.p["Hello"],
@@ -193,10 +191,10 @@ class TestComplexSerialization(Base):
 
     def test_precompileDoesntChangeOriginal(self):
         doc = tags.html(data="foo")[tags.p['foo'], tags.p['foo']]
-        
+
         result = self.render(doc, precompile=True)
         rendered = self.render(result)
-        
+
         self.assertEquals(len(doc.children), 2)
         self.assertEquals(rendered, "<html><p>foo</p><p>foo</p></html>")
 
@@ -204,18 +202,18 @@ class TestComplexSerialization(Base):
         tag = self.makeComplex()
         prelude, dynamic, postlude = self.render(tag, precompile=True)
         self.assertEquals(prelude, '<html><body>')
-        
+
         self.assertEquals(dynamic.tag.tagName, 'table')
         self.failUnless(dynamic.tag.children)
         self.assertEquals(dynamic.tag.data, 5)
-        
+
         childPrelude, childDynamic, childPostlude = dynamic.tag.children
-        
+
         self.assertEquals(childPrelude, '<tr><td>')
         self.assertEquals(childDynamic.tag.tagName, 'span')
         self.assertEquals(childDynamic.tag.render, str)
         self.assertEquals(childPostlude, '</td></tr>')
-        
+
         self.assertEquals(postlude, '</body></html>')
 
     def test_precompileThenRender(self):
@@ -344,14 +342,14 @@ class TestComplexSerialization(Base):
             pass
         class Foo(str):
             implements(IFoo)
-            
+
         def checkContext(ctx, data):
             self.assertEquals(ctx.locate(IFoo), Foo("inner"))
             self.assertEquals(ctx.locate(IFoo, depth=2), Foo("outer"))
             return 'Hi'
         tag = tags.html(remember=Foo("outer"))[tags.span(render=lambda ctx,data: ctx.tag, remember=Foo("inner"))[checkContext]]
         self.assertEquals(self.render(tag), "<html><span>Hi</span></html>")
-        
+
     def test_deferredRememberInRenderer(self):
         class IFoo(Interface):
             pass
@@ -391,7 +389,7 @@ class TestComplexSerialization(Base):
 
         self.assertEquals(result, '<div>one</div>')
 
-        
+
 class TestMultipleRenderWithDirective(Base):
     def test_it(self):
         class Cool(object):
@@ -431,7 +429,7 @@ class TestEntity(Base):
 
 
 class TestNoneAttribute(Base):
-    
+
     def test_simple(self):
         val = self.render(tags.html(foo=None)["Bar"])
         self.assertEquals(val, "<html>Bar</html>")
@@ -466,28 +464,32 @@ class TestKey(Base):
                         tags.div(key="four", render=appendKey)]]])
         self.assertEquals(val, ["one", "one.two", "one.two", "one.two.four"])
 
-        
+
+
 class TestDeferFlatten(Base):
-        
+
+    def flatten(self, obj):
+        """
+        Flatten the given object using L{twist.deferflatten} and a simple context.
+
+        Return the Deferred returned by L{twist.deferflatten}.
+        it.
+        """
+        # Simple context with None IData
+        ctx = context.WovenContext()
+        ctx.remember(None, inevow.IData)
+        return twist.deferflatten(obj, ctx, lambda bytes: None)
+
+
     def test_errorPropogation(self):
-        
         # A generator that raises an error
         def gen(ctx, data):
             yield 1
             raise Exception('This is an exception!')
             yield 2
-            
-        # Hacky imports
-        from cStringIO import StringIO
-        from nevow.flat import twist
-        
-        # Simple context with None IData
-        ctx = context.WovenContext()
-        ctx.remember(None, inevow.IData)
-        
+
         # The actual test
         notquiteglobals = {}
-        io = StringIO()
         def finished(spam):
             print 'FINISHED'
         def error(failure):
@@ -496,9 +498,41 @@ class TestDeferFlatten(Base):
             if not isinstance(notquiteglobals['exception'], Exception):
                 self.fail('deferflatten did not errback with the correct failure')
             return result
-        d = twist.deferflatten(gen, ctx, io.write)
+        d = self.flatten(gen)
         d.addCallback(finished)
         d.addErrback(error)
         d.addBoth(checker)
         return d
-    
+
+
+    def test_failurePropagation(self):
+        """
+        Passing a L{Deferred}, the current result of which is a L{Failure}, to
+        L{twist.deferflatten} causes it to return a L{Deferred} which will be
+        errbacked with that failure.  The original Deferred will also errback
+        with that failure even after having been passed to
+        L{twist.deferflatten}.
+        """
+        error = RuntimeError("dummy error")
+        deferred = defer.fail(error)
+
+        d = self.flatten(deferred)
+        self.assertFailure(d, RuntimeError)
+        d.addCallback(self.assertIdentical, error)
+
+        self.assertFailure(deferred, RuntimeError)
+        deferred.addCallback(self.assertIdentical, error)
+
+        return defer.gatherResults([d, deferred])
+
+
+    def test_resultPreserved(self):
+        """
+        The result of a L{Deferred} passed to L{twist.deferflatten} is the
+        same before and after the call.
+        """
+        result = 1357
+        deferred = defer.succeed(result)
+        d = self.flatten(deferred)
+        deferred.addCallback(self.assertIdentical, result)
+        return defer.gatherResults([d, deferred])

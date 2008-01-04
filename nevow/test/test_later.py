@@ -138,7 +138,11 @@ class LaterDataTest(RenderHelper):
 
 
 class SuperLaterDataTest(RenderHelper):
-    def test_realDeferredSupport(self):
+    def test_reusedDeferredSupport(self):
+        """
+        Two occurrences of a particular slot are each replaced with the
+        result of the Deferred which is used to fill that slot.
+        """
         doc = tags.html[
             tags.slot('foo'), tags.slot('foo')]
         doc.fillSlots('foo', defer.succeed(tags.span['Foo!!!']))
