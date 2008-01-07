@@ -1,3 +1,8 @@
+0.9.29 (2008-01-02):
+  - Prevent NevowSite.handleSegment from raising IndexError in certain
+    situations.
+  - Deprecated wsgi and zomne modules.
+
 0.9.28 (2007-12-10):
   - Added two APIs to Athena, one for creating the string used as the id
     attribute of the top node of a widget and one for creating the string
