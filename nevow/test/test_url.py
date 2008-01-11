@@ -62,11 +62,6 @@ rfc1808_relative_link_tests = [
     ]
 
 
-class FR(FakeRequest):
-    def prePathURL(Self):
-        return theurl
-
-
 
 class _IncompatibleSignatureURL(url.URL):
     """
@@ -115,7 +110,10 @@ class TestURL(TestCase):
             self.assertEquals(test, result)
 
     def test_fromRequest(self):
-        urlpath = url.URL.fromRequest(FR())
+        request = FakeRequest(uri='/a/nice/path/?zot=23&zut',
+                              currentSegments=["a", "nice", "path", ""])
+        request.setHeader('host', 'www.foo.com:80')
+        urlpath = url.URL.fromRequest(request)
         self.assertEquals(theurl, str(urlpath))
 
     def test_fromContext(self):

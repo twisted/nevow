@@ -13,23 +13,8 @@ from nevow import loaders
 from nevow import util
 from nevow import tags
 
-class req(testutil.FakeRequest):
-    def __init__(self):
-        testutil.FakeRequest.__init__(self)
-        self.d = util.Deferred()
-        self.accumulator = ''
-
-    def write(self, data):
-        testutil.FakeRequest.write(self, data)
-        self.accumulator+=data
-
-    def finish(self):
-        testutil.FakeRequest.finish(self)
-        self.d.callback(self.accumulator)
-
-
 def deferredRender(res):
-    defres = req()
+    defres = testutil.FakeRequest()
     d = res.renderHTTP(context.PageContext(tag=res, parent=context.RequestContext(tag=defres)))
     def accumulated(result, req):
         return req.accumulator

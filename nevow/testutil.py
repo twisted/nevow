@@ -1,7 +1,8 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-import sys, signal
+import sys, signal, warnings
+
 from os import WEXITSTATUS, WIFSIGNALED, WTERMSIG
 try:
     from popen2 import Popen3
@@ -49,14 +50,32 @@ fs = FakeSession(None)
 
 
 class FakeRequest(Componentized):
+    """
+    Implementation of L{inevow.IRequest} which is convenient to use in unit
+    tests.
+
+    @ivar lastModified: The value passed to L{setLastModified} or C{None} if
+        that method has not been called.
+
+    @type accumulator: C{str}
+    @ivar accumulator: The bytes written to the response body.
+
+    @type deferred: L{Deferred}
+    @ivar deferred: The deferred which represents rendering of the response
+        to this request.  This is basically an implementation detail of
+        L{NevowRequest}.  Application code should probably never use this.
+    """
     implements(inevow.IRequest)
     args = {}
     failure = None
     context = None
     redirected_to = None
+    lastModified = None
     content = ""
     method = 'GET'
     code = http.OK
+    deferred = None
+    accumulator = ''
 
     def __init__(self, headers=None, args=None, avatar=None,
                  uri='/', currentSegments=None, cookies=None,
@@ -106,6 +125,7 @@ class FakeRequest(Componentized):
         self.user = user
         self.password = password
         self.secure = isSecure
+        self.deferred = defer.Deferred()
 
     def URLPath(self):
         from nevow import url
@@ -114,13 +134,39 @@ class FakeRequest(Componentized):
     def getSession(self):
         return self.sess
 
-    v = ''
-    def write(self, x):
-        self.v += x
+    def registerProducer(self, producer, streaming):
+        """
+        Synchronously cause the given producer to produce all of its data.
 
-    finished=False
-    def finish(self):
+        This will not work with push producers.  Do not use it with them.
+        """
+        keepGoing = [None]
+        self.unregisterProducer = keepGoing.pop
+        while keepGoing:
+            producer.resumeProducing()
+        del self.unregisterProducer
+
+    def v():
+        def get(self):
+            return self.accumulator
+        return get,
+    v = property(*v())
+
+    def write(self, bytes):
+        """
+        Accumulate the given bytes as part of the response body.
+
+        @type bytes: C{str}
+        """
+        self.accumulator += bytes
+
+
+    finished = False
+    def finishRequest(self, success):
         self.finished = True
+
+    def finish(self):
+        self.deferred.callback('')
 
     def getHeader(self, key):
         return self.headers.get(key)
@@ -139,6 +185,9 @@ class FakeRequest(Componentized):
 
     def setResponseCode(self, code):
         self.code = code
+
+    def setLastModified(self, when):
+        self.lastModified = when
 
     def prePathURL(self):
         """
@@ -231,21 +280,17 @@ if not hasattr(TrialTestCase, 'mktemp'):
 
 class AccumulatingFakeRequest(FakeRequest):
     """
-    I am a fake IRequest that stores data written out in an instance variable.
-    I also have a stub implementation of IFormDefaults.
+    I am a fake IRequest that is also a stub implementation of
+    IFormDefaults.
 
-    @ivar accumulator: The accumulated data from write().
+    This class is named I{accumulating} for historical reasons only.  You
+    probably want to ignore this and use L{FakeRequest} instead.
     """
     implements(iformless.IFormDefaults)
-    method = 'GET'
+
     def __init__(self, *a, **kw):
         FakeRequest.__init__(self, *a, **kw)
         self.d = defer.Deferred()
-        self.accumulator = ''
-
-    def write(self, data):
-        FakeRequest.write(self, data)
-        self.accumulator+=data
 
     def getDefault(self, key, context):
         return ''

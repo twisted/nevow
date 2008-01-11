@@ -4,6 +4,7 @@ from twisted.trial import unittest
 from cStringIO import StringIO
 from nevow import inevow, flat, context, tags, loaders, rend
 from nevow import i18n
+from nevow.testutil import FakeRequest
 
 def mockTranslator(s, languages=None, domain=None):
     args = {}
@@ -93,12 +94,7 @@ class Format(unittest.TestCase):
         r = flat.ten.flatten(s, None)
         self.assertEquals(r, "MOCK()[foo bar baz]")
 
-class FakeRequest(object):
-    implements(inevow.IRequest)
-    def __init__(self, headers):
-        self.headers = headers
-    def getHeader(self, key):
-        return self.headers.get(key, None)
+
 
 class Languages(unittest.TestCase):
     def test_noLanguages(self):
