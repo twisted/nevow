@@ -42,7 +42,7 @@ class URL(object):
         * Standard Python creation, i.e. __init__.
         * fromString, a class method that parses a string.
         * fromContext, a class method that creates a URL to represent the
-          the current URL in the path traversal process.
+          current URL in the path traversal process.
 
     URL instances can be used in a stan tree or to fill template slots. They can
     also be used as a redirect mechanism - simply return an instance from an
@@ -52,9 +52,13 @@ class URL(object):
     L{cloneURL} to ensure that the numerous instance methods which return
     copies do so correctly.  Additionally, the L{fromString}, L{fromContext}
     and L{fromRequest} class methods need overriding.
+
+    @type fragment: C{str}
+    @ivar fragment: The fragment portion of the URL.
     """
 
-    def __init__(self, scheme='http', netloc='localhost', pathsegs=None, querysegs=None, fragment=''):
+    def __init__(self, scheme='http', netloc='localhost', pathsegs=None,
+                 querysegs=None, fragment=None):
         self.scheme = scheme
         self.netloc = netloc
         if pathsegs is None:
@@ -63,7 +67,10 @@ class URL(object):
         if querysegs is None:
             querysegs = []
         self._querylist = querysegs
+        if fragment is None:
+            fragment = ''
         self.fragment = fragment
+
 
     def path():
         def get(self):
@@ -287,10 +294,11 @@ class URL(object):
         return self._pathMod(self.pathList(copy=False), q)
 
     def replace(self, name, value=None):
-        """Remove all existing occurrances of the query
-        argument 'name', *if it exists*, then add the argument
-        with the given value.
-        None indicates that the argument has no value
+        """
+        Remove all existing occurrences of the query argument 'name', *if it
+        exists*, then add the argument with the given value.
+
+        C{None} indicates that the argument has no value.
         """
         ql = self.queryList(False)
         ## Preserve the original position of the query key in the list
@@ -346,9 +354,11 @@ class URL(object):
     ## fragment/anchor manipulation
 
     def anchor(self, anchor=None):
-        '''Modify the fragment/anchor and return a new URL. An anchor of
-        None (the default) or '' (the empty string) will the current anchor.
-        '''
+        """
+        Modify the fragment/anchor and return a new URL. An anchor of
+        C{None} (the default) or C{''} (the empty string) will remove the
+        current anchor.
+        """
         return self.cloneURL(
             self.scheme, self.netloc, self._qpathlist, self._querylist, anchor)
 
@@ -369,11 +379,10 @@ class URL(object):
 
 
 def normURLPath(path):
-    '''Normalise the URL path by resolving segments of '.' and '..'.
-    '''
-
+    """
+    Normalise the URL path by resolving segments of '.' and '..'.
+    """
     segs = []
-    addEmpty = False
 
     pathSegs = path.split('/')
 

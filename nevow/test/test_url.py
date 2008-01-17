@@ -136,6 +136,15 @@ class TestURL(TestCase):
         self.failUnlessEqual(urlpath, url.URL.fromString(theurl))
         self.failIfEqual(urlpath, url.URL.fromString('ftp://www.anotherinvaliddomain.com/foo/bar/baz/?zot=21&zut'))
 
+
+    def test_fragmentEquality(self):
+        """
+        An URL created with the empty string for a fragment compares equal
+        to an URL created with C{None} for a fragment.
+        """
+        self.assertEqual(url.URL(fragment=''), url.URL(fragment=None))
+
+
     def test_parent(self):
         urlpath = url.URL.fromString(theurl)
         self.assertEquals("http://www.foo.com:80/a/nice/?zot=23&zut",
