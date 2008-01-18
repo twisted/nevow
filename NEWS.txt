@@ -1,3 +1,10 @@
+0.9.30 (2008-01-16):
+   - Change DeferredSerializer so that it passes failures from the
+     Deferred being serialized on to the Deferred returned by the
+     flattening function.  Without this behavior, the Deferred
+     returned by the flattening function is never fired when a
+     Deferred which fails is serialized.
+
 0.9.29 (2008-01-02):
   - Prevent NevowSite.handleSegment from raising IndexError in certain
     situations.
