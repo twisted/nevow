@@ -1,9 +1,8 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-import sys, signal, warnings
+import os, sys, signal, warnings
 
-from os import WEXITSTATUS, WIFSIGNALED, WTERMSIG
 try:
     from popen2 import Popen3
 except ImportError:
@@ -400,6 +399,9 @@ class JavaScriptTestCase(TrialTestCase):
             raise NotSupported("Could not import 'subunit'")
         if Popen3 is None:
             raise NotSupported("Could not import 'popen2.Popen3'")
+        for name in ['WEXITSTATUS', 'WIFSIGNALED' ,'WTERMSIG']:
+            if getattr(os, name, None) is None:
+                raise NotSupported("os.%s unavailable" % (name,))
 
 
     def _writeToTemp(self, contents):
@@ -488,14 +490,14 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
                 else:
                     break
             exitCode = child.wait()
-            if WIFSIGNALED(exitCode):
+            if os.WIFSIGNALED(exitCode):
                 result.addError(
                     self,
                     (Exception,
-                     "JavaScript interpreter exited due to signal %d" % (WTERMSIG(exitCode),),
+                     "JavaScript interpreter exited due to signal %d" % (os.WTERMSIG(exitCode),),
                      None))
             else:
-                exitStatus = WEXITSTATUS(exitCode)
+                exitStatus = os.WEXITSTATUS(exitCode)
                 if exitStatus:
                     result.addError(
                         self,
