@@ -1,5 +1,5 @@
 # -*- test-case-name: nevow.test.test_guard -*-
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2008 Divmod.
 # See LICENSE for details.
 
 """
@@ -9,11 +9,11 @@ L{SessionWrapper}.
 """
 
 __metaclass__ = type
-__version__ = "$Revision: 1.5 $"[11:-2]
 
 import random
 import time
 import md5
+import StringIO
 
 from zope.interface import implements
 
@@ -219,10 +219,8 @@ class Forbidden(object):
                 "<body><h1>Forbidden</h1>Request was forbidden.</body></html>")
 
 class SessionWrapper:
-    """SessionWrapper
-
-
-
+    """
+    SessionWrapper
 
     The following class attributes can be modified on an instance
     of the class.
@@ -372,8 +370,7 @@ class SessionWrapper:
                               secure=secure, expires=expires)
         sz = self.sessions[newCookie] = self.sessionFactory(self, newCookie)
         sz.args = request.args
-        sz.fields = getattr(request, 'fields', {})
-        sz.content = request.content
+        sz.fields = request.fields
         sz.method = request.method
         sz.received_headers = request.received_headers
         sz.checkExpired()
@@ -387,6 +384,10 @@ class SessionWrapper:
 
             - log the user out from our portal (calling their logout callback),
               if they are logged in and accessing a logout URL
+
+            - Move the request parameters saved on the session, if there are
+              any, onto the request if a session just started or a login
+              just succeeded.
 
         @return:
 
@@ -422,9 +423,13 @@ class SessionWrapper:
         if spoof and hasattr(session, 'args'):
             request.args = session.args
             request.fields = session.fields
-            request.content = session.content
+            request.content = StringIO.StringIO()
+            request.content.close()
             request.method = session.method
             request.received_headers = session.received_headers
+
+            del session.args, session.fields, session.method, session.received_headers
+
 
         if segments and segments[0] in (LOGIN_AVATAR, LOGOUT_AVATAR):
             authCommand = segments[0]
@@ -555,4 +560,3 @@ class SessionWrapper:
         session.expire()
         error.trap(UnauthorizedLogin)
         return Forbidden(), ()
-

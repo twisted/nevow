@@ -65,7 +65,8 @@ class FakeRequest(Componentized):
         L{NevowRequest}.  Application code should probably never use this.
     """
     implements(inevow.IRequest)
-    args = {}
+
+    fields = None
     failure = None
     context = None
     redirected_to = None
@@ -318,7 +319,7 @@ class FragmentWrapper(athena.LivePage):
 
 
 def renderLivePage(res, topLevelContext=context.WebContext,
-                   reqFactory=AccumulatingFakeRequest):
+                   reqFactory=FakeRequest):
     """
     Render the given LivePage resource, performing LivePage-specific cleanup.
     Return a Deferred which fires when it has rendered.
@@ -328,7 +329,7 @@ def renderLivePage(res, topLevelContext=context.WebContext,
 
 
 def renderPage(res, topLevelContext=context.WebContext,
-               reqFactory=AccumulatingFakeRequest):
+               reqFactory=FakeRequest):
     """
     Render the given resource.  Return a Deferred which fires when it has
     rendered.

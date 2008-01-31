@@ -17,6 +17,21 @@ from nevow.loaders import stan
 
 
 class TestFakeRequest(TestCase):
+    """
+    Bad tests for L{FakeRequest}.
+
+    These tests verify that L{FakeRequest} has some behavior, but not that
+    that behavior is the same as the behavior of an actual request object. 
+    In other words, these tests do not actually verify the fake.  They
+    should be replaced with something which verifies that L{FakeRequest} and
+    L{NevowRequest} actually have the same behavior.
+    """
+    def test_fields(self):
+        """
+        L{FakeRequest.fields} is C{None} for all fake requests.
+        """
+        self.assertIdentical(FakeRequest().fields, None)
+
 
     def test_prePathURL(self):
         """
