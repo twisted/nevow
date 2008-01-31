@@ -1,25 +1,22 @@
-# Copyright (c) 2004-2008 Divmod.
+# Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-"""
-Tests for L{nevow.guard}.
-"""
 
 import gc
-
 from zope.interface import implements
-
-from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse, AllowAnonymousAccess, ANONYMOUS
-from twisted.cred.portal import Portal, IRealm
-from twisted.cred.credentials import IUsernamePassword, IAnonymous
-from twisted.internet import address
-from twisted.trial.unittest import TestCase
 
 from nevow import rend
 from nevow import inevow
 from nevow import guard
 from nevow import context
 from nevow import appserver
+
+from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse, AllowAnonymousAccess, ANONYMOUS
+from twisted.cred.portal import Portal, IRealm
+from twisted.cred.credentials import IUsernamePassword, IAnonymous
+from twisted.internet import address
+
+from nevow.testutil import TestCase
 
 
 class FakeHTTPChannel:
@@ -61,7 +58,7 @@ class FakeHTTPChannel:
         req.user = username
         req.password = password
         req.received_cookies.update(self.received_cookies)
-        req.requestReceived("GET", path, "HTTP/1.0")
+        req.requestReceived("GET", path, "1.0")
         return req
 
 
@@ -117,74 +114,8 @@ class FakeHTTPRequest_noCookies(FakeHTTPRequest):
 class FakeHTTPRequest_forceSSL(FakeHTTPRequest):
     _forceSSL = True
 
-
-class SillyPage(rend.Page):
-    def locateChild(self, context, segments):
-        return self.__class__(), segments[1:]
-
-
-class InspectfulPage(rend.Page):
-    """
-    IResource avatar which records important state from the request
-    with which it is rendered.
-
-    @ivar renders: A C{list} to which fields of the request will be appended
-        when this page is rendered.
-    """
-    def __init__(self, renders):
-        self.renders = renders
-        rend.Page.__init__(self)
-
-
-    def child_(self, context):
-        """
-        Give back this resource.  This lets this page work as the root
-        resource.
-        """
-        return self
-
-
-    def renderHTTP(self, context):
-        request = inevow.IRequest(context)
-        try:
-            content = request.content.read()
-        except ValueError:
-            content = None
-        self.renders.append((
-                request.args,
-                request.fields,
-                content,
-                request.method,
-                request.received_headers))
-        return ''
-
-
-class SillyAvatar(SillyPage):
-    def renderHTTP(self, context):
-        return 'Yes'
-
-
-class SillyAnonymous(SillyPage):
-    def renderHTTP(self, ctx):
-        return 'No'
-
-
-class SillyRealm:
-    implements(IRealm)
-
-    def __init__(self, anonymousAvatarFactory=SillyAnonymous,
-                 authenticatedAvatarFactory=SillyAvatar):
-        self.anonymousAvatarFactory = anonymousAvatarFactory
-        self.authenticatedAvatarFactory = authenticatedAvatarFactory
-
-
-    def requestAvatar(self, avatarId, mind, *interfaces):
-        if avatarId == ANONYMOUS:
-            avatar = self.anonymousAvatarFactory()
-        else:
-            avatar = self.authenticatedAvatarFactory()
-        return inevow.IResource, avatar, lambda: None
-
+class FakeSite(appserver.NevowSite):
+    pass
 
 
 class GuardTestSuper(TestCase):
@@ -208,7 +139,7 @@ class GuardTestSuper(TestCase):
         return swrap
 
     def createChannel(self, resource):
-        s = appserver.NevowSite(resource)
+        s = FakeSite(resource)
         c = FakeHTTPChannel()
         c.site = s
         return c
@@ -272,34 +203,16 @@ class GuardTestFuncs:
         else:
             return '/' + '/'.join(self.guardPath)
 
-    def test_httpAuthInit(self):
-        """
-        A request for a guarded URL which includes HTTP AUTH headers giving
-        valid credentials is responded to with the resource given back by the
-        realm for the avatar identified by those credentials and a single
-        session is created for that avatar.
-        """
+    def testHttpAuthInit(self):
         p = self.createPortal()
         chan = self.createGuard(p)
         p.registerChecker(InMemoryUsernamePasswordDatabaseDontUse(test='test'), IUsernamePassword)
-
-        # Make the request three times.  The same resource should come back
-        # each time, and there should only ever be one session.
         for x in range(3):
             req = chan.makeFakeRequest('%s/' % self.getGuardPath(), "test", "test")
             self.assertEquals(req.written.getvalue(), "Yes")
-            self.assertEquals(len(self.sessions), 1)
+        self.assertEquals(len(self.sessions),1)
 
-
-    def test_sessionInit(self):
-        """
-        Without including credentials or a session cookie, a request for a
-        guarded URL is responded to with a cookie and a redirect to an URL
-        which includes a session key.  When requested with the cookie, the
-        redirect target is responded to with a redirect back to the original
-        URL.  When requested with the cookie, the original URL is responded to
-        with the resource for the anonymous avatar.
-        """
+    def testSessionInit(self):
         p = self.createPortal()
         chan = self.createGuard(p)
 
@@ -328,17 +241,7 @@ class GuardTestFuncs:
         # We should have the final resource, which is an anonymous resource
         self.assertEquals(req.written.getvalue(), "No")
 
-
-    def test_sessionInit_noCookies(self):
-        """
-        Without including credentials or a session cookie, a request for a
-        guarded URL is responded to with a cookie and a redirect to an URL
-        which includes a session key.  When requested without the cookie, the
-        redirect target is responded to with a redirect back to the original
-        URL modified to include a session token.  When requested, again without
-        the cookie, the new redirect target is responded to with the resource
-        for the anonymous avatar.
-        """
+    def testSessionInit_noCookies(self):
         p = self.createPortal()
         chan = self.createGuard(p)
 
@@ -364,7 +267,6 @@ class GuardTestFuncs:
         # We should have the final resource, which is an anonymous resource
         self.assertEquals(req.written.getvalue(), "No")
 
-
     def testUsernamePassword(self):
         p = self.createPortal()
         p.registerChecker(InMemoryUsernamePasswordDatabaseDontUse(test='test'), IUsernamePassword)
@@ -385,7 +287,6 @@ class GuardTestFuncs:
         k = chan.makeFakeRequest("%s/" % self.getGuardPath())
         self.assertEquals(k.written.getvalue(), "No")
 
-
     def testLoginWithNoSession(self):
         p = self.createPortal()
         p.registerChecker(InMemoryUsernamePasswordDatabaseDontUse(test='test'), IUsernamePassword)
@@ -394,105 +295,12 @@ class GuardTestFuncs:
         req = chan.makeFakeRequest('%s/__login__/?username=test&password=test' % self.getGuardPath()).followAllRedirects()
         self.assertEquals(req.written.getvalue(), "Yes")
 
+    def testFormWithNoSession(self):
+        p = self.createPortal()
+        chan = self.createGuard(p)
 
-    def test_sessionNegotiationSavesRequestParameters(self):
-        """
-        After a session has been negotiated, the GET arguments, POST arguments,
-        body, method, and headers from the request which initiated session
-        negotiation are set on the request which will be responded to with the
-        guarded resource.
-        """
-        renders = []
-        portal = self.createPortal(
-            lambda: SillyRealm(
-                anonymousAvatarFactory=lambda: InspectfulPage(renders)))
-        channel = self.createGuard(portal)
-
-        request = channel.makeFakeRequest(
-            '%s/?foo=1&bar=2' % self.getGuardPath()).followAllRedirects()
-        self.assertEquals(request.written.getvalue(), '')
-        self.assertEqual(
-            renders, [({'foo': ['1'], 'bar': ['2']},
-                       None,
-                       None,
-                       'GET',
-                       {'host': 'fake.com'})])
-
-
-    def test_loginRestoresRequestParameters(self):
-        """
-        After login has succeeded, the GET arguments, POST arguments, body,
-        method, and headers from the request which triggered the login are set
-        on the request which will be responded to with the guarded resource.
-        """
-        renders = []
-        portal = self.createPortal(
-            lambda: SillyRealm(
-                authenticatedAvatarFactory=lambda: InspectfulPage(renders)))
-        portal.registerChecker(
-            InMemoryUsernamePasswordDatabaseDontUse(test='test'),
-            IUsernamePassword)
-        channel = self.createGuard(portal)
-
-        # Negotiate a session.
-        request = channel.makeFakeRequest(self.getGuardPath())
-        request = request.followAllRedirects()
-
-        # Pretend to be a resource before login which requires login and saves
-        # request state.
-        request.session.args = {'foo': ['1'], 'bar': ['2']}
-        request.session.fields = None
-        request.session.method = 'GET'
-        request.session.content = None
-        request.session.received_headers = {'host': 'fake.com',
-                                            'extra': 'bar'}
-
-        # Perform the login.
-        request = channel.makeFakeRequest(
-            self.getGuardPath() + '/__login__?username=test&password=test')
-        request = request.followAllRedirects()
-
-        self.assertEquals(request.written.getvalue(), '')
-        self.assertEqual(
-            renders, [({'foo': ['1'], 'bar': ['2']},
-                       None,
-                       None,
-                       'GET',
-                       {'host': 'fake.com', 'extra': 'bar'})])
-
-
-    def test_oldRequestParametersIgnored(self):
-        """
-        The request parameters from the initial session negotiation request are
-        I{not} set on the login request.
-        """
-        renders = []
-        portal = self.createPortal(
-            lambda: SillyRealm(
-                authenticatedAvatarFactory=lambda: InspectfulPage(renders)))
-        portal.registerChecker(
-            InMemoryUsernamePasswordDatabaseDontUse(test='test'),
-            IUsernamePassword)
-        channel = self.createGuard(portal)
-
-        # Negotiate a session using a request with some parameters.
-        request = channel.makeFakeRequest(
-            self.getGuardPath() + "?foo=bar&bar=baz")
-        request = request.followAllRedirects()
-
-        # Perform the login.
-        request = channel.makeFakeRequest(
-            self.getGuardPath() + '/__login__?username=test&password=test')
-        request = request.followAllRedirects()
-
-        self.assertEquals(request.written.getvalue(), '')
-        self.assertEqual(
-            renders, [({'username': ['test'], 'password': ['test']},
-                       None,
-                       '',
-                       'GET',
-                       {'host': 'fake.com'})])
-
+        req = chan.makeFakeRequest('%s/?aFormArgument=1' % self.getGuardPath()).followAllRedirects()
+        self.assertEquals(req.written.getvalue(), 'We got the form.')
 
     def testNoSlash(self):
         """URL-based sessions do not fail even if there is no slash after the session key."""
@@ -818,6 +626,33 @@ class GuardTest_NotAtRoot_oneLevel(GuardTestSuper, GuardTestFuncs):
 
 class GuardTest_NotAtRoot_manyLevels(GuardTestSuper, GuardTestFuncs):
     guardPath = ['foo', 'bar', 'baz']
+
+class SillyPage(rend.Page):
+    def locateChild(self, context, segments):
+        return self.__class__(), segments[1:]
+
+
+class SillyAvatar(SillyPage):
+    def renderHTTP(self, context):
+        return 'Yes'
+
+
+class SillyAnonymous(SillyPage):
+    def renderHTTP(self, ctx):
+        if ctx.arg('aFormArgument'):
+            return "We got the form."
+        return 'No'
+
+
+class SillyRealm:
+    implements(IRealm)
+
+    def requestAvatar(self, avatarId, mind, *interfaces):
+        if avatarId == ANONYMOUS:
+            return inevow.IResource, SillyAnonymous(), lambda: None
+        else:
+            return inevow.IResource, SillyAvatar(), lambda: None
+
 
 class LeakyPage(SillyPage):
     def renderHTTP(self, context):

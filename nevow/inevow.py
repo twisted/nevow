@@ -1,9 +1,8 @@
-# -*- test-case-name: nevow -*-
-# Copyright (c) 2004-2008 Divmod.
+# Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-"""
-Nevow interface definitions.
+
+"""Nevow interface definitions.
 """
 
 from zope.interface import Interface, Attribute
@@ -62,16 +61,8 @@ class IQ(Interface):
 
 class IResource(Interface):
     def locateChild(ctx, segments):
-        """
-        Locate another object which can be adapted to IResource.
-
-        @param ctx: The context object for the request being responded to.
-        @param segments: A tuple of strings giving the remaining query segments
-            to resolve into an IResource.
-
-        @return: A two-tuple of an L{IResource} provider and a tuple giving the
-            query segments which remain to be processed.  A L{Deferred} which
-            is called back with such a two-tuple may also be returned.
+        """Locate another object which can be adapted to IResource
+        Return a tuple of resource, path segments
         """
 
     def renderHTTP(ctx):
