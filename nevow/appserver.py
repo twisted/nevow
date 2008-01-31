@@ -1,9 +1,9 @@
 # -*- test-case-name: nevow.test.test_appserver -*-
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2008 Divmod.
 # See LICENSE for details.
 
-
-"""A web application server built using twisted.web
+"""
+A web application server built using twisted.web
 """
 
 import cgi
@@ -31,7 +31,7 @@ from nevow import stan
 
 class UninformativeExceptionHandler:
     implements(inevow.ICanHandleException)
-    
+
     def renderHTTP_exception(self, ctx, reason):
         request = inevow.IRequest(ctx)
         log.err(reason)
@@ -89,7 +89,7 @@ def processingFailed(reason, request, ctx):
         request.write("<html><head><title>Internal Server Error</title></head>")
         request.write("<body><h1>Internal Server Error</h1>An error occurred rendering the requested page. Additionally, an error occured rendering the error page.</body></html>")
         request.finishRequest( False )
-    
+
     return errorMarker
 
 
@@ -98,24 +98,29 @@ def defaultExceptionHandlerFactory(ctx):
 
 
 class NevowRequest(tpc.Componentized, server.Request):
-    """A Request subclass which does additional
+    """
+    A Request subclass which does additional
     processing if a form was POSTed. When a form is POSTed,
     we create a cgi.FieldStorage instance using the data posted,
     and set it as the request.fields attribute. This way, we can
     get at information about filenames and mime-types of
     files that were posted.
-    
+
     TODO: cgi.FieldStorage blocks while decoding the MIME.
     Rewrite it to do the work in chunks, yielding from time to
     time.
-    """
 
+    @ivar fields: C{None} or, if the HTTP method is B{POST}, a
+        L{cgi.FieldStorage} instance giving the content of the POST.
+    """
     implements(inevow.IRequest)
+
+    fields = None
 
     def __init__(self, *args, **kw):
         server.Request.__init__(self, *args, **kw)
         tpc.Componentized.__init__(self)
-        
+
     def process(self):
         # extra request parsing
         if self.method == 'POST':
@@ -229,16 +234,16 @@ requestFactory = lambda ctx: ctx.tag
 
 class NevowSite(server.Site):
     requestFactory = NevowRequest
-    
+
     def __init__(self, resource, *args, **kwargs):
         resource.addSlash = True
         server.Site.__init__(self, resource, *args, **kwargs)
         self.context = context.SiteContext()
-        
+
     def remember(self, obj, inter=None):
         """Remember the given object for the given interfaces (or all interfaces
         obj implements) in the site's context.
-        
+
         The site context is the parent of all other contexts. Anything
         remembered here will be available throughout the site.
         """
