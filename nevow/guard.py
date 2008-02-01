@@ -241,7 +241,6 @@ class SessionWrapper:
         closed before the session timeout, both the session
         and the cookie go away.
     """
-
     implements(inevow.IResource)
 
     sessionLifetime = 3600
@@ -350,8 +349,10 @@ class SessionWrapper:
         return rd, ()
 
     def createSession(self, ctx, segments):
-        """Create a new session for this request, and redirect back to the path
-        given by segments."""
+        """
+        Create a new session for this request, and redirect back to the path
+        given by segments.
+        """
 
         request = inevow.IRequest(ctx)
 
@@ -367,7 +368,8 @@ class SessionWrapper:
                 expires = None
             request.addCookie(self.cookieKey, newCookie,
                               path="/%s" % '/'.join(request.prepath),
-                              secure=secure, expires=expires)
+                              secure=secure, expires=expires,
+                              domain=self.cookieDomainForRequest(request))
         sz = self.sessions[newCookie] = self.sessionFactory(self, newCookie)
         sz.args = request.args
         sz.fields = request.fields
@@ -560,3 +562,16 @@ class SessionWrapper:
         session.expire()
         error.trap(UnauthorizedLogin)
         return Forbidden(), ()
+
+
+    def cookieDomainForRequest(self, request):
+        """
+        Specify the domain restriction on the session cookie.
+
+        @param request: The request object in response to which a cookie is
+            being set.
+
+        @return: C{None} or a C{str} giving the domain restriction to set on
+            the cookie.
+        """
+        return None

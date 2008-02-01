@@ -188,6 +188,12 @@ class SillyRealm:
 
 
 class GuardTestSuper(TestCase):
+    """
+    @ivar wrapperFactory: A callable which will be invoked with a portal and
+        which should return a session wrapper resource.
+    """
+    wrapperFactory = guard.SessionWrapper
+
     sessions = {}
 
     def tearDown(self):
@@ -203,7 +209,7 @@ class GuardTestSuper(TestCase):
         return p
 
     def createSessionWrapper(self, portal):
-        swrap = guard.SessionWrapper(portal)
+        swrap = self.wrapperFactory(portal)
         self.sessions = swrap.sessions
         return swrap
 
@@ -677,6 +683,41 @@ class GuardTestFuncs:
         if wanted == '':
             wanted = '/'
         self.failUnlessEqual(path, wanted)
+
+
+    def test_defaultCookieDomain(self):
+        """
+        No domain restriction is set on a cookie by default.
+        """
+        portal = self.createPortal()
+        channel = self.createGuard(portal)
+        request = channel.makeFakeRequest('%s/abc' % (self.getGuardPath(),))
+        cookie, args, kwargs = request._cookieCache.values()[0]
+        self.assertEqual(kwargs['domain'], None)
+
+
+    def test_specifiedCookieDomain(self):
+        """
+        The domain restriction defined by
+        L{SessionWrapper.cookieDomainForRequest} is set on the cookie.
+        """
+        portal = self.createPortal()
+
+        requests = []
+
+        class SpecialSessionWrapper(guard.SessionWrapper):
+            def cookieDomainForRequest(self, request):
+                requests.append(request)
+                return 'example.com'
+
+        self.wrapperFactory = SpecialSessionWrapper
+        channel = self.createGuard(portal)
+
+        request = channel.makeFakeRequest('%s/abc' % (self.getGuardPath(),))
+        cookie, args, kwargs = request._cookieCache.values()[0]
+        self.assertEqual(kwargs['domain'], 'example.com')
+        self.assertEqual(requests, [request])
+
 
     def testLoginExtraPath(self):
         p = self.createPortal()
