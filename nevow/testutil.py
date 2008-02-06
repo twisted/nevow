@@ -1,7 +1,7 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-import os, sys, signal, warnings
+import os, sys, signal
 
 try:
     from popen2 import Popen3
@@ -63,6 +63,8 @@ class FakeRequest(Componentized):
     @ivar deferred: The deferred which represents rendering of the response
         to this request.  This is basically an implementation detail of
         L{NevowRequest}.  Application code should probably never use this.
+
+    @ivar _appRootURL: C{None} or the object passed to L{rememberRootURL}.
     """
     implements(inevow.IRequest)
 
@@ -76,6 +78,7 @@ class FakeRequest(Componentized):
     code = http.OK
     deferred = None
     accumulator = ''
+    _appRootURL = None
 
     def __init__(self, headers=None, args=None, avatar=None,
                  uri='/', currentSegments=None, cookies=None,
@@ -113,7 +116,10 @@ class FakeRequest(Componentized):
                 self.prepath.append(self.postpath.pop(0))
         else:
             self.prepath.append('')
-        self.headers = headers or {}
+        self.headers = {}
+        if headers:
+            for k, v in headers.iteritems():
+                self.setHeader(k, v)
         self.args = args or {}
         self.sess = FakeSession(avatar)
         self.site = FakeSite()
@@ -169,16 +175,13 @@ class FakeRequest(Componentized):
         self.deferred.callback('')
 
     def getHeader(self, key):
-        return self.headers.get(key)
+        return self.headers.get(key.lower())
 
     def setHeader(self, key, val):
-        self.headers[key] = val
+        self.headers[key.lower()] = val
 
     def redirect(self, url):
         self.redirected_to = url
-
-    def getRootURL(self):
-        return None
 
     def processingFailed(self, f):
         self.failure = f
@@ -225,11 +228,22 @@ class FakeRequest(Componentized):
         """
         return self.password
 
+    def getRootURL(self):
+        """
+        Return the previously remembered URL.
+        """
+        return self._appRootURL
+
+
     def rememberRootURL(self, url=None):
         """
         For compatibility with appserver.NevowRequest.
         """
-        pass
+        if url is None:
+            raise NotImplementedError(
+                "Default URL remembering logic is not implemented.")
+        self._appRootURL = url
+
 
     def isSecure(self):
         """

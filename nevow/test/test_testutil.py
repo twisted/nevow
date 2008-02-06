@@ -52,6 +52,19 @@ class TestFakeRequest(TestCase):
         self.assertEqual(req.prePathURL(), 'http://foo.bar/a/b')
 
 
+    def test_getRootURL(self):
+        """
+        L{FakeRequest.getRootURL} returns C{None} when
+        L{FakeRequest.rememberRootURL} has not yet been called.  After
+        L{FakeRequest.rememberRootURL} has been called,
+        L{FakeRequest.getRootURL} returns the value which was passed to it.
+        """
+        request = FakeRequest()
+        self.assertIdentical(request.getRootURL(), None)
+        request.rememberRootURL("foo/bar")
+        self.assertEqual(request.getRootURL(), "foo/bar")
+
+
     def test_headers(self):
         """
         Check that one can get headers from L{FakeRequest} after they
@@ -61,6 +74,29 @@ class TestFakeRequest(TestCase):
         req = FakeRequest()
         req.setHeader('host', host)
         self.assertEqual(req.getHeader('host'), host)
+
+
+    def test_caseInsensitiveHeaders(self):
+        """
+        L{FakeRequest.getHeader} will return the value of a header previously
+        set with L{Request.setHeader} even if the header names have differing
+        case.
+        """
+        host = 'example.com'
+        request = FakeRequest()
+        request.setHeader('HoSt', host)
+        self.assertEqual(request.getHeader('hOsT'), host)
+
+
+    def test_smashInitialHeaderCase(self):
+        """
+        L{FakeRequest.getHeader} will return the value of a header specified to
+        L{FakeRequest.__init__} even if the header names have differing case.
+        """
+        host = 'example.com'
+        request = FakeRequest(headers={'HoSt': host})
+        self.assertEqual(request.getHeader('hOsT'), host)
+
 
     def test_urls(self):
         """
