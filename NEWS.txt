@@ -1,3 +1,10 @@
+0.9.31 (2008-02-06):
+   - Fixed Guard's request parameter save/restore feature to not
+     clobber request state after login succeeds when a session has
+     already been negotiated.
+   - Added a hook to nevow.guard.SessionWrapper which allows the
+     domain parameter of the session cookie to be specified.
+
 0.9.30 (2008-01-16):
    - Change DeferredSerializer so that it passes failures from the
      Deferred being serialized on to the Deferred returned by the
