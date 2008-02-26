@@ -39,7 +39,8 @@ Divmod.MockBrowser.Node.methods(
     },
 
     /**
-     * Internal mock DOM notification that the parent of this node has changed.
+     * Internal mock DOM notification that the parent of this node has
+     * changed.
      */
     function _setParent(self, newParent) {
         var justAdded = (self.parentNode === undefined);
@@ -50,9 +51,40 @@ Divmod.MockBrowser.Node.methods(
     },
 
     /**
-     * Internal mock DOM notification that the node was inserted into the document.
+     * Internal mock DOM notification that the node was inserted into the
+     * document.
      */
     function _insertedIntoDocument(self) {
+    },
+
+    /*
+     * Return an array of all L{Element} instances with the given tag name
+     * which live below the given elements.
+     *
+     * @type tagName: C{String}
+     * @param tagName: Tag name to look for.
+     *
+     * @type parents: C{Array} of L{Element}
+     * @param parents: Sequence of parent nodes below which to search.
+     *
+     * @rtype: C{Array} of L{Element}.
+     */
+    function _getElementsByTagName(self, tagName, parents) {
+        tagName = tagName.toUpperCase();
+        var elements = [];
+        var node;
+        for(var i = 0; i < parents.length; i++) {
+            node = parents[i];
+            if(node.nodeType !== self.ELEMENT_NODE) {
+                continue;
+            }
+            if(node.tagName === tagName || tagName === '*') {
+                elements.push(node);
+            }
+            elements = elements.concat(
+                self._getElementsByTagName(tagName, node.childNodes));
+        }
+        return elements;
     },
 
     function __init__(self) {
@@ -92,6 +124,7 @@ Divmod.MockBrowser.Document.methods(
         self.body = self.createElement("body");
         self.body._containingDocument = self;
     },
+
     /**
      * Create an L{Element} with the given tag name.
      */
@@ -127,8 +160,15 @@ Divmod.MockBrowser.Document.methods(
         var aNode = Divmod.MockBrowser.TextNode(text);
         aNode._setOwnerDocument(self);
         return aNode;
-    });
+    },
 
+    /**
+     * Return all L{Element} instances in this document which have the
+     * specified tag name.
+     */
+    function getElementsByTagName(self, tagName) {
+        return self._getElementsByTagName(tagName, [self.body]);
+    });
 
 
 /**
@@ -381,7 +421,21 @@ Divmod.MockBrowser.Element.methods(
      */
     function getAttribute(self, name) {
         return self._attributes[name];
+    },
+
+    /**
+     * Return an array of all L{Element} instances with the given tag name
+     * which live below this element.
+     *
+     * @type tagName: C{String}
+     * @param tagName: Tag name to look for.
+     *
+     * @rtype: C{Array} of L{Element}.
+     */
+    function getElementsByTagName(self, tagName) {
+        return self._getElementsByTagName(tagName, self.childNodes);
     });
+
 
 /* Only install ourselves as a global document if there isn't already a global
  * document.  This should minimise the impact of this module.

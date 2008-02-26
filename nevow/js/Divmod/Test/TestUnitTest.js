@@ -946,6 +946,114 @@ Divmod.Test.TestUnitTest.MockDocumentTest.methods(
     },
 
     /**
+     * Make a L{Document} containing some C{<span>} and C{<div>} nodes at
+     * various depths.
+     */
+    function _makeNestedDocument(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var outerNode = aDocument.createElement("div");
+        var innerNode = aDocument.createElement("div");
+        var spanOne = aDocument.createElement("span");
+        spanOne.appendChild(aDocument.createTextNode("LULZ"));
+        innerNode.appendChild(spanOne);
+        outerNode.appendChild(innerNode);
+        var spanTwo = aDocument.createElement("span");
+        spanTwo.appendChild(aDocument.createTextNode("OK"));
+        outerNode.appendChild(spanTwo);
+        aDocument.body.appendChild(outerNode);
+        return aDocument;
+    },
+
+    /**
+     * getElementsByTagName, when called on L{Document}, should return all
+     * nodes with the specified tag name, at any depth inside the document's
+     * body.
+     */
+    function test_getElementsByTagNameDocument(self) {
+        var aDocument = self._makeNestedDocument();
+        var outerNode = aDocument.body.childNodes[0];
+        var deepSpan = outerNode.childNodes[0].childNodes[0];
+        var shallowSpan = outerNode.childNodes[1];
+        var result = aDocument.getElementsByTagName('span');
+        self.assertIdentical(result.length, 2);
+        self.assertIdentical(result[0], deepSpan);
+        self.assertIdentical(result[1], shallowSpan);
+    },
+
+    /**
+     * getElementsByTagName, when called on L{Document.body}, should exclude
+     * its body node from the result.
+     */
+    function test_getElementsByTagNameBodyNoBody(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        self.assertIdentical(
+            aDocument.body.getElementsByTagName('body').length, 0);
+    },
+
+    /**
+     * getElementsByTagName, when called on L{Document}, should include its
+     * body node from the result.
+     */
+    function test_getElementsByTagNameDocumentIncludesBody(self) {
+        var aDocument = Divmod.MockBrowser.Document();
+        var nodes = aDocument.getElementsByTagName('body');
+        self.assertIdentical(nodes.length, 1);
+        self.assertIdentical(nodes[0], aDocument.body);
+    },
+
+    /**
+     * getElementsByTagName should also work on L{Element}.
+     */
+    function test_getElementsByTagNameElement(self) {
+        var aDocument = self._makeNestedDocument();
+        var outerNode = aDocument.body.childNodes[0];
+        var deepSpan = outerNode.childNodes[0].childNodes[0];
+        var shallowSpan = outerNode.childNodes[1];
+        var result = outerNode.getElementsByTagName('span');
+        self.assertIdentical(result.length, 2);
+        self.assertIdentical(result[0], deepSpan);
+        self.assertIdentical(result[1], shallowSpan);
+    },
+
+    /**
+     * getElementsByTagName, when called on L{Element}, should exclude the
+     * node it's called on from the result.
+     */
+    function test_getElementsByTagNameElementNoTop(self) {
+        var aDocument = self._makeNestedDocument();
+        var shallowDiv = aDocument.body.childNodes[0];
+        var deepDiv = shallowDiv.childNodes[0];
+        var result = shallowDiv.getElementsByTagName('div');
+        self.assertIdentical(result.length, 1);
+        self.assertIdentical(result[0], deepDiv);
+    },
+
+    /**
+     * getElementsByTagName should return all elements (no text nodes) when
+     * passed C{*}.
+     */
+    function test_getElementsByTagNameWildcard(self) {
+        var aDocument = self._makeNestedDocument();
+        var result = aDocument.getElementsByTagName('*');
+        self.assertIdentical(result.length, 5);
+        self.assertIdentical(result[0], aDocument.body);
+        var outerNode = aDocument.body.childNodes[0];
+        self.assertIdentical(result[1], outerNode);
+        var innerNode = outerNode.childNodes[0];
+        self.assertIdentical(result[2], innerNode);
+        var spanOne = innerNode.childNodes[0];
+        self.assertIdentical(result[3], spanOne);
+        var spanTwo = outerNode.childNodes[1];
+        self.assertIdentical(result[4], spanTwo);
+
+        result = outerNode.getElementsByTagName('*');
+        self.assertIdentical(result.length, 3);
+        self.assertIdentical(result[0], innerNode);
+        self.assertIdentical(result[1], spanOne);
+        self.assertIdentical(result[2], spanTwo);
+    },
+
+    /**
      * Verify that the string representation of a mock element captures all of
      * its interesting features to provide something to introspect while
      * debugging.
