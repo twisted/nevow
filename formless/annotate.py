@@ -504,7 +504,7 @@ class Binding(object):
     keyword argument, a Typed instance, as the binding typeValue.
     
     One more thing. When an autocallable method is found, it is called with
-    None as the self argument. The return value is passed the the Method
+    None as the self argument. The return value is passed the Method
     Binding when it is constructed to keep track of what the method is
     supposed to return.
     """

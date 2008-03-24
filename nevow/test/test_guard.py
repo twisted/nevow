@@ -270,7 +270,7 @@ class GuardTestFuncs:
 
     def getGuardPath(self):
         """
-        Return a path to the guard. An empty string if guard is a the root,
+        Return a path to the guard. An empty string if guard is the root,
         otherwise guaranteed to start with a slash and end with a non-slash.
         """
         if not self.guardPath:

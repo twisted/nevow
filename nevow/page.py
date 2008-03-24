@@ -84,7 +84,7 @@ class Element(object):
     # IRenderer
     def rend(self, ctx, data):
         # Unfortunately, we still need a context to make the rest of the
-        # rendering process work.  A goal should be to elimate this completely.
+        # rendering process work.  A goal should be to eliminate this completely.
         context = WovenContext()
 
         if self.docFactory is None:

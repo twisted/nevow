@@ -535,7 +535,7 @@ Divmod.UnitTest.formatErrors = function formatErrors(result) {
 
 
 /**
- * Return a formatting string showing the failure/error that occured in a test.
+ * Return a formatting string showing the failure/error that occurred in a test.
  *
  * @param test: A test which had a failure or error.
  * @type test: L{Divmod.UnitTest.TestCase}

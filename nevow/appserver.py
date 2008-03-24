@@ -87,7 +87,7 @@ def processingFailed(reason, request, ctx):
         log.err("Original exception:", isErr=1)
         log.err(reason)
         request.write("<html><head><title>Internal Server Error</title></head>")
-        request.write("<body><h1>Internal Server Error</h1>An error occurred rendering the requested page. Additionally, an error occured rendering the error page.</body></html>")
+        request.write("<body><h1>Internal Server Error</h1>An error occurred rendering the requested page. Additionally, an error occurred rendering the error page.</body></html>")
         request.finishRequest( False )
 
     return errorMarker

@@ -38,7 +38,7 @@ from formless import iformless, annotate
 def _getPreprocessors(inst):
     """
     Accumulate elements from the sequences bound at the C{preprocessors}
-    attribute on all classes in the inheritence hierarchy of the class of
+    attribute on all classes in the inheritance hierarchy of the class of
     C{inst}.  A C{preprocessors} attribute on the given instance overrides
     all preprocessors from the class inheritance hierarchy.
     """

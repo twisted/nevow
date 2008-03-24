@@ -309,7 +309,7 @@ Nevow.Athena.PageWidget.methods(
 
     /**
      * Display an error dialog to the user, containing some information
-     * about the uncaught error C{err}, which occured while trying to call
+     * about the uncaught error C{err}, which occurred while trying to call
      * the remote method C{methodName}.  To avoid this happening, errbacks
      * should be added synchronously to the deferred returned by L{callRemote}
      * (the errback that triggers this dialog is added via setTimeout(..., 0))
@@ -338,7 +338,7 @@ Nevow.Athena.PageWidget.methods(
         e.appendChild(titlebar);
 
         e.appendChild(
-            document.createTextNode("Your action could not be completed because an error occured."));
+            document.createTextNode("Your action could not be completed because an error occurred."));
 
 // Useful for debugging sometimes, except it really isn't very pretty.
 // toPrettyNode needs unit tests or something, though.
