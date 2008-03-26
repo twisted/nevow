@@ -86,7 +86,7 @@ class FakeRequest(Componentized):
         """Create a FakeRequest instance.
 
         headers:
-            dict of headers
+            dict of request headers
         args:
             dict of args
         avatar:
@@ -117,13 +117,13 @@ class FakeRequest(Componentized):
         else:
             self.prepath.append('')
         self.headers = {}
-        if headers:
-            for k, v in headers.iteritems():
-                self.setHeader(k, v)
         self.args = args or {}
         self.sess = FakeSession(avatar)
         self.site = FakeSite()
         self.received_headers = {}
+        if headers:
+            for k, v in headers.iteritems():
+                self.received_headers[k.lower()] = v
         if cookies is not None:
             self.cookies = cookies
         else:
@@ -175,7 +175,7 @@ class FakeRequest(Componentized):
         self.deferred.callback('')
 
     def getHeader(self, key):
-        return self.headers.get(key.lower())
+        return self.received_headers.get(key.lower())
 
     def setHeader(self, key, val):
         self.headers[key.lower()] = val

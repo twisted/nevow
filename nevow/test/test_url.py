@@ -111,8 +111,8 @@ class TestURL(TestCase):
 
     def test_fromRequest(self):
         request = FakeRequest(uri='/a/nice/path/?zot=23&zut',
-                              currentSegments=["a", "nice", "path", ""])
-        request.setHeader('host', 'www.foo.com:80')
+                              currentSegments=["a", "nice", "path", ""],
+                              headers={'host': 'www.foo.com:80'})
         urlpath = url.URL.fromRequest(request)
         self.assertEquals(theurl, str(urlpath))
 

@@ -29,7 +29,8 @@ from formless import iformless
 
 def deferredRender(res, request=None):
     if request is None:
-        request = testutil.AccumulatingFakeRequest()
+        request = testutil.FakeRequest()
+        request.d = defer.Deferred()
 
     d = util.maybeDeferred(res.renderHTTP,
         context.PageContext(

@@ -18,8 +18,7 @@ from nevow.athena import LiveElement
 from nevow.appserver import NevowSite
 from nevow.inevow import IRequest
 from nevow.context import WovenContext
-from nevow.testutil import AccumulatingFakeRequest, FakeRequest
-from nevow.testutil import renderPage, renderLivePage
+from nevow.testutil import FakeRequest, renderPage, renderLivePage
 from nevow._widget_plugin import WidgetPluginRoot
 from nevow._widget_plugin import ElementRenderingLivePage
 
@@ -331,11 +330,11 @@ the end
                        "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 5.0)"]
         for ua in supported:
             req = FakeRequest()
-            req.headers['user-agent'] = ua
+            req.received_headers['user-agent'] = ua
             self.assertTrue(page._supportedBrowser(req))
         for ua in unsupported:
             req = FakeRequest()
-            req.headers['user-agent'] = ua
+            req.received_headers['user-agent'] = ua
             self.assertFalse(page._supportedBrowser(req))
 
 
@@ -345,8 +344,8 @@ the end
         """
         ctx = WovenContext()
         page = athena.LivePage()
-        req = AccumulatingFakeRequest()
-        req.headers['user-agent'] = "Mozilla/4.0 (compatible; MSIE 2.0; Windows NT 5.1)"
+        req = FakeRequest()
+        req.received_headers['user-agent'] = "Mozilla/4.0 (compatible; MSIE 2.0; Windows NT 5.1)"
         ctx.remember(req, IRequest)
         d = renderPage(page, reqFactory=lambda: req)
         d.addCallback(
