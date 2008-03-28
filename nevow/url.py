@@ -123,6 +123,15 @@ class URL(object):
     ## class methods used to build URL objects ##
 
     def fromString(klass, st):
+        """
+        This method returns an URL object from a string object containing an URL.
+
+        @type st: C{str}
+        @param st: A string of an url.
+
+        @rtype: C{nevow.url.URL}
+        @returns: an URL object representing the string passed.
+        """
         scheme, netloc, path, query, fragment = urlparse.urlsplit(st)
         u = klass(
             scheme, netloc,
@@ -131,11 +140,18 @@ class URL(object):
         return u
     fromString = classmethod(fromString)
 
+
     def fromRequest(klass, request):
         """
         Create a new L{URL} instance which is the same as the URL represented
         by C{request} except that it includes only the path segments which have
         already been processed.
+
+        @type request: C{nevow.inevow.IRequest}
+        @param request: A web request object
+
+        @rtype: C{nevow.url.URL}
+        @returns: an URL object representing the current lookup state.
         """
         uri = request.prePathURL()
         if '?' in request.uri:
@@ -143,9 +159,46 @@ class URL(object):
         return klass.fromString(uri)
     fromRequest = classmethod(fromRequest)
 
+
+    def fromRequestAbsolute(klass, request):
+        """
+        This method returns an URL object of the full request.uri attribute.
+
+        @type request: C{nevow.inevow.IRequest}
+        @param request: A web request object
+
+        @rtype: C{nevow.url.URL}
+        @returns: an URL object representing the full request URI.
+        """
+        port = request.getHost().port
+        if request.isSecure():
+            default = 443
+        else:
+            default = 80
+        if port == default:
+            hostport = ''
+        else:
+            hostport = ':%d' % port
+        u = "http%s://%s%s" % (
+                    ('', 's')[request.isSecure()],
+                    request.getRequestHostname(),
+                    hostport)
+        u = urllib.quote(u, "/:")
+        return klass.fromString("%s%s" % (u, request.uri))
+    fromRequestAbsolute = classmethod(fromRequestAbsolute)
+
+
     def fromContext(klass, context):
-        '''Create a URL object that represents the current URL in the traversal
-        process.'''
+        """
+        This method returns an URL object of the current
+        position inside the child locating process.
+
+        @type context: Any context except SiteContext.
+        @param context: A web context that contains a reference to the request.
+
+        @rtype: C{nevow.url.URL}
+        @returns: an URL object representing the current lookup state.
+        """
         request = inevow.IRequest(context)
         uri = request.prePathURL()
         if '?' in request.uri:

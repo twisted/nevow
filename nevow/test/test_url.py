@@ -109,15 +109,31 @@ class TestURL(TestCase):
             result = str(url.URL.fromString(test))
             self.assertEquals(test, result)
 
-    def test_fromRequest(self):
-        request = FakeRequest(uri='/a/nice/path/?zot=23&zut',
-                              currentSegments=["a", "nice", "path", ""],
-                              headers={'host': 'www.foo.com:80'})
-        urlpath = url.URL.fromRequest(request)
-        self.assertEquals(theurl, str(urlpath))
+
+    def test_fromRequestAbsolute(self):
+        """
+        Test that url.URL.fromRequest returns an url based on request.uri
+        whatever the prePath is.
+        """
+        r = FakeRequest(uri='/a/b/c')
+        urlpath = url.URL.fromRequestAbsolute(r)
+        self.assertEquals('http://localhost/a/b/c', str(urlpath))
+
+        r.prepath = ['a']
+        urlpath = url.URL.fromRequestAbsolute(r)
+        self.assertEquals('http://localhost/a/b/c', str(urlpath))
+
+        r = FakeRequest(uri='/a/b/c?foo=bar')
+        r.prepath = ['a','b']
+        urlpath = url.URL.fromRequestAbsolute(r)
+        self.assertEquals('http://localhost/a/b/c?foo=bar', str(urlpath))
+
 
     def test_fromContext(self):
-
+        """
+        Test that url.URL.fromContext returns an url based on the
+        prePath whatever the url actually is.
+        """
         r = FakeRequest(uri='/a/b/c')
         urlpath = url.URL.fromContext(context.RequestContext(tag=r))
         self.assertEquals('http://localhost/', str(urlpath))
@@ -130,6 +146,26 @@ class TestURL(TestCase):
         r.prepath = ['a','b']
         urlpath = url.URL.fromContext(context.RequestContext(tag=r))
         self.assertEquals('http://localhost/a/b?foo=bar', str(urlpath))
+
+
+    def test_fromRequest(self):
+        """
+        Test that url.URL.fromRequest returns an url based on the
+        prePath whatever the url actually is.
+        """
+        r = FakeRequest(uri='/a/b/c')
+        urlpath = url.URL.fromRequest(r)
+        self.assertEquals('http://localhost/', str(urlpath))
+
+        r.prepath = ['a']
+        urlpath = url.URL.fromRequest(r)
+        self.assertEquals('http://localhost/a', str(urlpath))
+
+        r = FakeRequest(uri='/a/b/c?foo=bar')
+        r.prepath = ['a','b']
+        urlpath = url.URL.fromRequest(r)
+        self.assertEquals('http://localhost/a/b?foo=bar', str(urlpath))
+
 
     def test_equality(self):
         urlpath = url.URL.fromString(theurl)
@@ -259,7 +295,7 @@ class TestURL(TestCase):
         # replace just the query
         self.assertEquals("http://www.foo.com:80/a/nice/path/?burp",
                           str(urlpath.click("?burp")))
-        # one full url to another should not generate '//' between netloc and pathsegs 
+        # one full url to another should not generate '//' between netloc and pathsegs
         self.failIfIn("//foobar", str(urlpath.click('http://www.foo.com:80/foobar')))
 
         # from a url with no query clicking a url with a query,
