@@ -47,8 +47,9 @@ class TestFakeRequest(TestCase):
         Verify that L{FakeRequest.prePathURL} will turn the C{Host} header of
         the request into the netloc of the returned URL, if it's present.
         """
-        req = FakeRequest(currentSegments=['a', 'b'], uri='/a/b/c/')
-        req.setHeader('host', 'foo.bar')
+        req = FakeRequest(currentSegments=['a', 'b'],
+                          uri='/a/b/c/',
+                          headers={'host': 'foo.bar'})
         self.assertEqual(req.prePathURL(), 'http://foo.bar/a/b')
 
 
@@ -67,24 +68,23 @@ class TestFakeRequest(TestCase):
 
     def test_headers(self):
         """
-        Check that one can get headers from L{FakeRequest} after they
-        have been set with L{FakeRequest.setHeader}.
+        Check that setting a header with L{FakeRequest.setHeader} actually
+        places it in the headers dictionary.
         """
         host = 'divmod.com'
         req = FakeRequest()
         req.setHeader('host', host)
-        self.assertEqual(req.getHeader('host'), host)
+        self.assertEqual(req.headers['host'], host)
 
 
     def test_caseInsensitiveHeaders(self):
         """
-        L{FakeRequest.getHeader} will return the value of a header previously
-        set with L{Request.setHeader} even if the header names have differing
-        case.
+        L{FakeRequest.getHeader} will return the value of a header regardless
+        of casing.
         """
         host = 'example.com'
         request = FakeRequest()
-        request.setHeader('HoSt', host)
+        request.received_headers['host'] = host
         self.assertEqual(request.getHeader('hOsT'), host)
 
 
@@ -126,6 +126,21 @@ class TestFakeRequest(TestCase):
         req = FakeRequest()
         req.setResponseCode(BAD_REQUEST)
         self.assertEqual(req.code, BAD_REQUEST)
+
+
+    def test_headerSeparation(self):
+        """
+        Request headers and response headers are different things.
+
+        Test that they are handled separately.
+        """
+        req = FakeRequest()
+        req.setHeader('foo', 'bar')
+        self.assertNotIn('foo', req.received_headers)
+        self.assertEqual(req.getHeader('foo'), None)
+        req.received_headers['foo'] = 'bar'
+        self.assertEqual(req.getHeader('foo'), 'bar')
+
 
 
 class JavaScriptTests(TestCase):
