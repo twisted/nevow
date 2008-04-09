@@ -143,6 +143,15 @@ class TestFakeRequest(TestCase):
 
 
 
+    def test_path(self):
+        """
+        Test that the path attribute of a fake request is set.
+        """
+        req = FakeRequest(uri='/foo')
+        self.assertEqual(req.path, '/foo')
+
+
+
 class JavaScriptTests(TestCase):
     """
     Tests for the JavaScript UnitTest runner, L{JavaScriptTestCase}.

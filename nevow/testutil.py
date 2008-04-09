@@ -106,6 +106,9 @@ class FakeRequest(Componentized):
         """
         Componentized.__init__(self)
         self.uri = uri
+        if not uri.startswith('/'):
+            raise ValueError('uri must be relative with absolute path')
+        self.path = uri
         self.prepath = []
         postpath = uri.split('?')[0]
         assert postpath.startswith('/')

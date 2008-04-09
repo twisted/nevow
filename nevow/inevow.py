@@ -272,8 +272,19 @@ class IRequest(IComponentized):
     @type args: A mapping of strings (the argument names) to lists of values.
                 i.e., ?foo=bar&foo=baz&quux=spam results in
                 {'foo': ['bar', 'baz'], 'quux': ['spam']}.
-    @ivar received_headers: All received headers
+    @ivar received_headers: All received headers.
     """
+    method = Attribute("The HTTP method that was used.")
+    uri = Attribute("The full URI that was requested (includes arguments).")
+    path = Attribute("The path only (arguments not included).")
+    prepath = Attribute("Path segments that have already been handled.")
+    postpath = Attribute("Path segments still to be handled.")
+    args = Attribute("All of the arguments, including URL and POST arguments.")
+    received_headers = Attribute("All received headers.")
+    deferred = Attribute("Fired once request processing is finished.")
+    client = Attribute("The client that sent this request.")
+    content = Attribute("File-like object containing the request body.")
+
     # Methods for received request
     def getHeader(key):
         """Get a header that was sent from the network.
@@ -428,6 +439,17 @@ class IRequest(IComponentized):
 
         This method is experimental.
         """
+
+
+    def notifyFinish(success):
+        """
+        Return a deferred that fires when the request is finished.
+
+        The deferred will fire with C{None} if the request finished
+        successfully, or with the error that caused it to be unsuccessful.
+        """
+
+
 
 class ISerializable(Interface):
     """DEPRECATED. Use nevow.flat.registerFlattener instead of registering
