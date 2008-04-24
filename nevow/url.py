@@ -376,7 +376,7 @@ class URL(object):
     def __repr__(self):
         return (
             '%s(scheme=%r, netloc=%r, pathsegs=%r, querysegs=%r, fragment=%r)'
-            % (self.__class__,
+            % (type(self).__name__,
                self.scheme,
                self.netloc,
                self._qpathlist,

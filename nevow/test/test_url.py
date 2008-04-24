@@ -162,6 +162,17 @@ class TestURL(TestCase):
                            u'http', u'', [f], [(f, f)], f)
 
 
+    def test_repr(self):
+        """
+        L{URL.__repr__} should return something meaningful.
+        """
+        self.assertEquals(
+            repr(URL(scheme='http', netloc='foo', pathsegs=['bar'],
+                     querysegs=[('baz', None), ('k', 'v')], fragment='frob')),
+            "URL(scheme=u'http', netloc=u'foo', pathsegs=[u'bar'], "
+                "querysegs=[(u'baz', None), (u'k', u'v')], fragment=u'frob')")
+
+
     def test_fromString(self):
         urlpath = URL.fromString(theurl)
         self.assertEquals(theurl, str(urlpath))
