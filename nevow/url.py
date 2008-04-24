@@ -79,19 +79,18 @@ class URL(object):
         self.fragment = _maybeDecode(fragment)
 
 
-    def path():
-        def get(self):
-            return '/'.join([
-                    # Note that this set of safe things is pretty arbitrary.
-                    # It is this particular set in order to match that used by
-                    # nevow.flat.flatstan.StringSerializer, so that url.path
-                    # will give something which is contained by flatten(url).
-                    urllib.quote(seg, safe="-_.!*'()") for seg in self._qpathlist])
-        doc = """
-        The path portion of the URL.
+    def path(self):
         """
-        return get, None, None, doc
-    path = property(*path())
+        The path portion of the URL.
+
+        The resulting string is flattened, such that it is contained in
+        C{flatten(url)}.
+
+        @rtype: str
+        """
+        urlContext = WovenContext(inURL=True)
+        return '/'.join(serialize(seg, urlContext) for seg in self._qpathlist)
+    path = property(path)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
@@ -514,17 +513,12 @@ def URLSerializer(original, context):
     Unicode path, query and fragment components are handled according to the
     IRI standard (RFC 3987).
     """
-    def _maybeEncode(s):
-        if isinstance(s, unicode):
-            s = s.encode('utf-8')
-        return s
     urlContext = WovenContext(parent=context, precompile=context.precompile, inURL=True)
     if original.scheme:
-        # TODO: handle Unicode (see #2409)
         yield "%s://%s" % (original.scheme, original.netloc)
     for pathsegment in original._qpathlist:
         yield '/'
-        yield serialize(_maybeEncode(pathsegment), urlContext)
+        yield serialize(pathsegment, urlContext)
     query = original._querylist
     if query:
         yield '?'
@@ -538,13 +532,13 @@ def URLSerializer(original, context):
                     yield '&'
             else:
                 first = False
-            yield serialize(_maybeEncode(key), urlContext)
+            yield serialize(key, urlContext)
             if value is not None:
                 yield '='
-                yield serialize(_maybeEncode(value), urlContext)
+                yield serialize(value, urlContext)
     if original.fragment:
         yield "#"
-        yield serialize(_maybeEncode(original.fragment), urlContext)
+        yield serialize(original.fragment, urlContext)
 
 
 def URLOverlaySerializer(original, context):

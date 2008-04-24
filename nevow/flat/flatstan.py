@@ -153,8 +153,8 @@ def StringSerializer(original, context):
     # Otherwise we use normal XML escaping rules but also replacing "
     # in an attribute because Nevow always uses "..." for values.
     if context.inURL:
-        # The magic string "-_.!*'()" also appears in url.py.  Thinking about
-        # changing this?  Change that, too.
+        if isinstance(original, unicode):
+            original = original.encode('utf-8')
         return urllib.quote(original, safe="-_.!*'()")
     ## quote it
     if context.inJS:
