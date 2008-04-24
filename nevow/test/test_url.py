@@ -87,6 +87,81 @@ class _IncompatibleSignatureURL(URL):
 
 
 class TestURL(TestCase):
+    """
+    Tests for L{URL}.
+    """
+
+    def assertUnicoded(self, u):
+        """
+        The given L{URL}'s components should be L{unicode}.
+        """
+        self.assertTrue(isinstance(u.scheme, unicode), repr(u))
+        self.assertTrue(isinstance(u.netloc, unicode), repr(u))
+        for seg in u.pathList():
+            self.assertTrue(isinstance(seg, unicode), repr(u))
+        for (k, v) in u.queryList():
+            self.assertTrue(isinstance(k, unicode), repr(u))
+            self.assertTrue(v is None or isinstance(v, unicode), repr(u))
+        self.assertTrue(isinstance(u.fragment, unicode), repr(u))
+
+
+    def assertURL(self, u, scheme, netloc, pathsegs, querysegs, fragment):
+        """
+        The given L{URL} should have the given components.
+        """
+        self.assertEqual(
+            (u.scheme, u.netloc, u.pathList(), u.queryList(), u.fragment),
+            (scheme, netloc, pathsegs, querysegs, fragment))
+
+
+    def test_initDefaults(self):
+        """
+        L{URL} should have appropriate default values.
+        """
+        for u in [URL(),
+                  URL(u'http', u'', None, None, None),
+                  URL(u'http', u'', [u''], [], u''),
+                  URL('http', '', [''], [], '')]:
+            self.assertUnicoded(u)
+            self.assertURL(u, u'http', u'', [u''], [], u'')
+
+
+    def test_initASCII(self):
+        """
+        L{URL} should percent-decode its parameters, and coerce L{str} to
+        L{unicode}.
+        """
+        for u in [URL(u's', u'h', [u'p'], [(u'k', u'v'), (u'k', None)], u'f'),
+                  URL('s', 'h', ['p'], [('k', 'v'), ('k', None)], 'f'),
+                  URL(u's', u'%68', [u'%70'], [(u'%6B', u'%76'), (u'%6B', None)], u'%66'),
+                  URL('s', '%68', ['%70'], [('%6B', '%76'), ('%6B', None)], '%66')]:
+            self.assertUnicoded(u)
+            self.assertURL(u, u's', u'h', [u'p'], [(u'k', u'v'), (u'k', None)], u'f')
+
+
+    def test_initUnicode(self):
+        """
+        L{URL} should accept non-ASCII L{unicode} parameters, and decode
+        non-ASCII L{str} parameters according to RFC 3987.
+        """
+        for u in [URL(u'http', u'\xe0', [u'\xe9'],
+                      [(u'\u03bb', u'\u03c0')], u'\u22a5'),
+                  URL('http', '%C3%A0', ['%C3%A9'],
+                      [('%CE%BB', '%CF%80')], '%E2%8A%A5')]:
+            self.assertUnicoded(u)
+            self.assertURL(u, u'http', u'\xe0', [u'\xe9'],
+                           [(u'\u03bb', u'\u03c0')], u'\u22a5')
+
+
+    def test_initNonString(self):
+        """
+        L{URL} should store non-string parameters (flattenables) as-is.
+        """
+        for f in [5, lambda: 5, tags.slot('five')]:
+            self.assertURL(URL(u'http', u'', [f], [(f, f)], f),
+                           u'http', u'', [f], [(f, f)], f)
+
+
     def test_fromString(self):
         urlpath = URL.fromString(theurl)
         self.assertEquals(theurl, str(urlpath))

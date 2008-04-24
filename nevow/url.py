@@ -57,19 +57,26 @@ class URL(object):
     @ivar fragment: The fragment portion of the URL.
     """
 
-    def __init__(self, scheme='http', netloc='localhost', pathsegs=None,
+    def __init__(self, scheme=u'http', netloc=u'', pathsegs=None,
                  querysegs=None, fragment=None):
-        self.scheme = scheme
-        self.netloc = netloc
+        def _maybeDecode(s):
+            if isinstance(s, basestring):
+                s = urllib.unquote(s)
+            if isinstance(s, str):
+                s = s.decode('utf-8')
+            return s
+        self.scheme = _maybeDecode(scheme)
+        self.netloc = _maybeDecode(netloc)
         if pathsegs is None:
-            pathsegs = ['']
-        self._qpathlist = pathsegs
+            pathsegs = [u'']
+        self._qpathlist = map(_maybeDecode, pathsegs)
         if querysegs is None:
             querysegs = []
-        self._querylist = querysegs
+        self._querylist = [(_maybeDecode(k), _maybeDecode(v))
+                           for (k, v) in querysegs]
         if fragment is None:
-            fragment = ''
-        self.fragment = fragment
+            fragment = u''
+        self.fragment = _maybeDecode(fragment)
 
 
     def path():
