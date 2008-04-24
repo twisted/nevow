@@ -130,12 +130,12 @@ class URL(object):
     ## class methods used to build URL objects ##
 
     def fromString(klass, st):
+        """
+        Parse the given string into a URL object.
+        """
         scheme, netloc, path, query, fragment = urlparse.urlsplit(st)
-        u = klass(
-            scheme, netloc,
-            [urllib.unquote(seg) for seg in path.split('/')[1:]],
-            unquerify(query), fragment)
-        return u
+        return klass(
+            scheme, netloc, path.split('/')[1:], unquerify(query), fragment)
     fromString = classmethod(fromString)
 
     def fromRequest(klass, request):
