@@ -34,10 +34,6 @@ class WebContext(object):
 
     precompile = property(lambda self: False)
 
-    def with(self, tag):
-        warnings.warn("use WovenContext(parent, tag) instead", DeprecationWarning, stacklevel=2)
-        return WovenContext(self, tag)
-
     def arg(self, get, default=None):
         """Placeholder until I can find Jerub's implementation of this
 
