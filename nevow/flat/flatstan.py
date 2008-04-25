@@ -148,10 +148,15 @@ def RawSerializer(original, context):
 
 
 def StringSerializer(original, context):
-    # Quote the string as necessary. URLs need special quoting - only
-    # alphanumeric and a few punctation characters are valid.
-    # Otherwise we use normal XML escaping rules but also replacing "
-    # in an attribute because Nevow always uses "..." for values.
+    """
+    Serialize a string, quoting and escaping as necessary.
+
+     * In URI context, UTF-8- and percent-encode according to RFC 3987
+     * In JavaScript context, backslash-escape and single-quote
+     * Elsewhere, escape XML delimiters as character references
+        * In attribute values, also escape C{"}, which Nevow always uses to
+          quote values
+    """
     if context.inURL:
         if isinstance(original, unicode):
             original = original.encode('utf-8')

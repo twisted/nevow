@@ -53,8 +53,21 @@ class URL(object):
     copies do so correctly.  Additionally, the L{fromString}, L{fromContext}
     and L{fromRequest} class methods need overriding.
 
-    @type fragment: C{str}
-    @ivar fragment: The fragment portion of the URL.
+    @type scheme: C{unicode}
+    @ivar scheme: the URI scheme
+
+    @type netloc: C{unicode}
+    @ivar netloc: the host (and possibly port)
+
+    @type pathsegs: list of C{unicode}/flattenable
+    @ivar pathsegs: the path
+
+    @type querysegs: list of pairs of C{unicode}/flattenable (or C{None},
+                     for values)
+    @ivar querysegs: the query parameters, as name-value pairs
+
+    @type fragment: C{unicode} or flattenable
+    @ivar fragment: the fragment identifier
     """
 
     def __init__(self, scheme=u'http', netloc=u'', pathsegs=None,

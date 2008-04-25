@@ -191,6 +191,7 @@ class TestURL(TestCase):
             "http://localhost/foo?n=%2Fa%2Fb",
             "http://example.com/foo!%40%24bar?b!%40z=123",
             "http://localhost/asd?a=asd%20sdf%2F345",
+            "http://example.com/r%C3%A9sum%C3%A9",
             )
         for test in tests:
             result = str(URL.fromString(test))
@@ -770,3 +771,6 @@ class RedirectResource(TestCase):
             self.assertEquals("http://localhost/child?foo=bar", redirected_to)
         return D.addCallback(after)
 
+
+
+__doctests__ = ['nevow.url']
