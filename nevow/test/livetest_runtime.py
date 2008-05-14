@@ -32,6 +32,18 @@ class ElementSize(testcase.TestCase):
             tags.div(class_='bar', style='padding: 1px 2px 3px 4px; height: 12px; width: 70px')]
 
 
+class ElementsByTagNameShallow(testcase.TestCase):
+    jsClass = u'Divmod.Runtime.Tests.ElementsByTagNameShallow'
+
+    def getWidgetDocument(self):
+        """
+        Return part of a document which consists of an element with some
+        immediate child and some grandchild.  The client portion of this test
+        will make sure only the immediate children are returned by
+        C{getElementsByTagNameShallow}.
+        """
+        return tags.div(class_="foo")[tags.p["foo"], tags.div[tags.p["bar"]]]
+
 
 class PageSize(testcase.TestCase):
     jsClass = u'Divmod.Runtime.Tests.PageSize'

@@ -805,7 +805,7 @@ class LivePage(rend.Page, _HasJSClass):
     requiredBrowserVersions = {
         browsers.GECKO: (20051111,),
         browsers.INTERNET_EXPLORER: (6, 0),
-        browsers.WEBKIT: (maxint,),
+        browsers.WEBKIT: (523,),
         browsers.OPERA: (9,)}
 
     unsupportedBrowserLoader = loaders.stan(

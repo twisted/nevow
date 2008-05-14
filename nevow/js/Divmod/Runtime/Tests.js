@@ -54,6 +54,22 @@ Divmod.Runtime.Tests.ElementSize.methods(
         self.assertEquals(size.h, 1 + 12 + 3);
     });
 
+Divmod.Runtime.Tests.ElementsByTagNameShallow = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.ElementsByTagNameShallow');
+Divmod.Runtime.Tests.ElementsByTagNameShallow.methods(
+    /**
+     * C{Divmod.Runtime.theRuntime.getElementsByTagNameShallow} returns an
+     * Array of tags with the specified name which are immediate children of
+     * the specified root node.
+     */
+    function test_getElementsByTagNameShallow(self) {
+        var node = self.nodeByAttribute("class", "foo");
+        var tags = Divmod.Runtime.theRuntime.getElementsByTagNameShallow(
+            node, "p");
+        self.assertEquals(tags.length, 1);
+        self.assertEquals(tags[0].tagName, "P");
+        self.assertEquals(tags[0].firstChild.nodeValue, "foo");
+    });
+
 Divmod.Runtime.Tests.PageSize = Nevow.Athena.Test.TestCase.subclass('PageSize');
 /* Tests for Runtime's getPageSize() method */
 Divmod.Runtime.Tests.PageSize.methods(

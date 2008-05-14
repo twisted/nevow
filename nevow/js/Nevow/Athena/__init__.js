@@ -1446,16 +1446,6 @@ Nevow.Athena.Widget._instantiateWidgets = function() {
     }
 };
 
-Nevow.Athena.Widget._initialize = function() {
-    Divmod.debug("widget", "Instantiating live widgets");
-    Nevow.Athena.Widget._pageLoaded = true;
-    Nevow.Athena.Widget._instantiateWidgets();
-    Divmod.debug("widget", "Finished instantiating live widgets");
-};
-
-Divmod.Base.addLoadEvent(Nevow.Athena.Widget._initialize);
-
-
 /**
  * Initialize state in this module that only the server knows about.
  *
@@ -1473,14 +1463,16 @@ Nevow.Athena.bootstrap = function (pageClassName, clientID) {
     self.page = pageClass(clientID, Nevow.Athena._createMessageDelivery);
     self.page.bindEvents(window);
 
-    /* Delay initialization for just a moment so that Safari stops whirling
-     * its loading icon.
-     */
-    setTimeout(function() {
-        Divmod.debug("transport", "starting up");
-        self.page.deliveryChannel.start();
-        Divmod.debug("transport", "started up");
-    }, 1);
+    Divmod.Runtime.theRuntime.addLoadEvent(function transportStartup() {
+            Divmod.debug("transport", "starting up");
+            self.page.deliveryChannel.start();
+            Divmod.debug("transport", "started up");
+
+            Divmod.debug("widget", "Instantiating live widgets");
+            Nevow.Athena.Widget._pageLoaded = true;
+            Nevow.Athena.Widget._instantiateWidgets();
+            Divmod.debug("widget", "Finished instantiating live widgets");
+        });
 };
 
 /**

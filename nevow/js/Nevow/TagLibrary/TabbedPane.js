@@ -6,15 +6,6 @@ Nevow.TagLibrary.TabbedPane.methods(
     function __init__(self, node, selectedTabName) {
         self._loaded = false;
         self._pendingTabSwitch = null;
-        Divmod.Base.addLoadEvent(function() {
-            self.node.style.opacity = "";
-            self._loaded = true;
-            if(self._pendingTabSwitch) {
-                /* switch to the tab that was most recently clicked
-                   while we were busy loading */
-                self.tabClicked(self._pendingTabSwitch);
-            }
-        });
 
         var name = node.getAttribute("name");
         var getElementsByTagNameShallow = function(root, tagName) {
@@ -32,6 +23,16 @@ Nevow.TagLibrary.TabbedPane.methods(
         self._lastSelectedTabName = selectedTabName;
 
         Nevow.TagLibrary.TabbedPane.upcall(self, "__init__", node);
+    },
+
+    function loaded(self) {
+        self.node.style.opacity = "";
+        self._loaded = true;
+        if(self._pendingTabSwitch) {
+            /* switch to the tab that was most recently clicked
+               while we were busy loading */
+            self.tabClicked(self._pendingTabSwitch);
+        }
     },
 
     function tabClicked(self, tab) {

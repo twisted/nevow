@@ -43,6 +43,59 @@ Divmod.Runtime.DelayedCall.methods(
     });
 
 
+/**
+ * Move the given node so that it is a child of the given document and then try
+ * to find its node with the given id.  Restore the node to its original parent
+ * before returning the result.
+ */
+Divmod.Runtime._getElementByIdWithDocument = function _getElementByIdWithDocument(node, doc, id) {
+    var currentParent = node.parentNode;
+    var nextSibling = node.nextSibling;
+
+    // Insert ourselves into the document temporarily.
+    currentParent.removeChild(node);
+    doc.documentElement.appendChild(node);
+
+    // Try to find it.
+    var foundNode = node.ownerDocument.getElementById(id);
+
+    // And now put us back where we used to be.
+    node.parentNode.removeChild(node);
+    currentParent.insertBefore(node, nextSibling);
+
+    return foundNode;
+};
+
+/**
+ * XML parser for platforms which have the builtin "DOMParser" object.
+ */
+Divmod.Runtime._XMLParser = Divmod.Class.subclass("Divmod.Runtime._XMLParser");
+Divmod.Runtime._XMLParser.methods(
+    /**
+     * Return the cached DOM parser for this runtime.  Create one if one does
+     * not yet exist.
+     */
+    function _getParser(self) {
+        if (self._cachedParser === undefined) {
+            self._cachedParser = new DOMParser();
+        }
+        return self._cachedParser;
+    },
+
+    function parseXHTMLString(self, s) {
+        var doc = self._getParser().parseFromString(s, "application/xml");
+        var uri = doc.documentElement.namespaceURI;
+        if (uri != "http://www.w3.org/1999/xhtml") {
+            throw new Error(
+                "Unknown namespace (" + uri +
+                ") used with parseXHTMLString" +
+                "- only XHTML 1.0 is supported.");
+        }
+        return doc;
+    });
+
+
+
 Divmod.Runtime.Platform = Divmod.Class.subclass("Divmod.Runtime.Platform");
 
 Divmod.Runtime.Platform.DOM_DESCEND = 'Divmod.Runtime.Platform.DOM_DESCEND';
@@ -99,13 +152,18 @@ Divmod.Runtime._makeSingleEventHandler = function _makeSingleEventHandler(
     };
 };
 
-
+/**
+ * @type _loadEventDelay: Number
+ * @ivar: The number of milliseconds by which to delay invocation of events
+ *     registered with C{addLoadEvent}.
+ */
 Divmod.Runtime.Platform.methods(
     function __init__(self, name) {
         self.name = name;
         self.attrNameToMangled = {};
         self._scriptCounter = 0;
         self._scriptDeferreds = {};
+        self._loadEventDelay = 1;
     },
 
     /**
@@ -629,6 +687,19 @@ Divmod.Runtime.Platform.methods(
             throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
         }
         return foundNode;
+    },
+
+    /**
+     * Arrange for the given function to be called when the page is fully
+     * loaded.  Due to the behavior of various browsers (particularly with
+     * respect to their "page loading" aka "throbber" user interface element)
+     * this callable is not invoked directly in response to the DOM page load
+     * event, but in a delayed call scheduled from that event.
+     */
+    function addLoadEvent(self, callable) {
+        Divmod.Base.addLoadEvent(function() {
+                setTimeout(callable, self._loadEventDelay);
+            });
     });
 
 
@@ -736,7 +807,6 @@ Divmod.Runtime.XPathSupportingPlatform.methods(
         return results;
     });
 
-
 Divmod.Runtime.Firefox = Divmod.Runtime.XPathSupportingPlatform.subclass(
     'Divmod.Runtime.Firefox');
 
@@ -755,6 +825,7 @@ Divmod.Runtime.Firefox.isThisTheOne = function isThisTheOne() {
 Divmod.Runtime.Firefox.methods(
     function __init__(self) {
         Divmod.Runtime.Firefox.upcall(self, '__init__', 'Firefox');
+        self._xmlparser = Divmod.Runtime._XMLParser();
     },
 
     function makeHTML(self, element) {
@@ -781,23 +852,8 @@ Divmod.Runtime.Firefox.methods(
         return HTML_ELEMENT;
     },
 
-    /**
-     * Return the cached DOM parser for this runtime.  Create one if one does
-     * not yet exist.
-     */
-    function _getParser(self) {
-        if (self._cachedParser === undefined) {
-            self._cachedParser = new DOMParser();
-        }
-        return self._cachedParser;
-    },
-
     function parseXHTMLString(self, s) {
-        var doc = self._getParser().parseFromString(s, "application/xml");
-        if (doc.documentElement.namespaceURI != "http://www.w3.org/1999/xhtml") {
-            throw new Error("Unknown namespace used with parseXHTMLString - only XHTML 1.0 is supported.");
-        }
-        return doc;
+        return self._xmlparser.parseXHTMLString(s);
     },
 
     function appendNodeContent(self, node, innerHTML) {
@@ -827,6 +883,89 @@ Divmod.Runtime.Firefox.methods(
             }
             node.appendChild(newScript);
         }
+        node.appendChild(document.importNode(doc.documentElement, true));
+    },
+
+    function makeHTTPRequest(self) {
+        return new XMLHttpRequest();
+    });
+
+Divmod.Runtime.WebKit = Divmod.Runtime.Platform.subclass(
+    'Divmod.Runtime.WebKit');
+
+Divmod.Runtime.WebKit.isThisTheOne = function isThisTheOne() {
+    try {
+        return navigator.userAgent.indexOf('WebKit') != -1;
+    } catch (err) {
+        if (err instanceof ReferenceError) {
+            return false;
+        } else {
+            throw err;
+        }
+    }
+};
+
+Divmod.Runtime.WebKit.methods(
+    function __init__(self) {
+        Divmod.Runtime.WebKit.upcall(self, '__init__', 'WebKit');
+        self._xmlparser = Divmod.Runtime._XMLParser();
+        // WebKit has no equivalent to the stacktrace that FF provides, so this
+        // JSON adapter will provide a dummy object to make Athena happy when
+        // it tries to send exceptions from the client to the server
+        Divmod.Base.registerJSON(
+            'Error',
+            function(obj) {
+                return arguments[1] instanceof Error;
+            },
+            function(obj) {
+                var exc = arguments[1];
+                return {
+                    'name': exc.name,
+                    'message': exc.message,
+                    'stack': 'No stacktrace available\n'
+                };
+            }
+        );
+        /*
+         * WebKit fires the onload event long before the page has actually
+         * loaded.  This has two consequences.  First, if the Athena transport
+         * is started when the onload event fires, then WebKit will believe
+         * that the page never actually completes loading, since there will be
+         * an open, long-lived XHR.  This means its spinner will never stop
+         * spinning, which will aggravate users.  Second, if the Athena
+         * transport is started before the page fully loads, application-level
+         * JavaScript may fail, since the page is supposed to have loaded by
+         * the time that event fires.  This delay is a complete and utter hack
+         * to try to work around these two problems in *most* cases.  It will
+         * certainly fail in some cases.  Unless WebKit exposes a real event
+         * which fires when the page is really loaded, though, I don't see any
+         * easy way around this. -exarkun
+         */
+        self._loadEventDelay = 200;
+    },
+
+    function getElementByIdWithNode(self, node, id) {
+        var foundNode = node.ownerDocument.getElementById(id);
+        if (foundNode === null) {
+            // We didn't find it, maybe we need a workaround.
+            // Let's insert ourselves into the document temporarily.
+            foundNode = Divmod.Runtime._getElementByIdWithDocument(
+                node, document, id);
+        }
+
+        if (foundNode === null) {
+            throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
+        }
+
+        return foundNode;
+    },
+
+    function parseXHTMLString(self, s) {
+        return self._xmlparser.parseXHTMLString(s);
+    },
+
+    function appendNodeContent(self, node, innerHTML) {
+        var doc = self.parseXHTMLString(innerHTML);
         node.appendChild(document.importNode(doc.documentElement, true));
     },
 
@@ -974,19 +1113,9 @@ Divmod.Runtime.InternetExplorer.methods(
             var DOCUMENT_FRAGMENT_NODE = 11;
             if (root.nodeType == DOCUMENT_FRAGMENT_NODE) {
                 // We're in a DocumentFragment, and thus getElementById won't
-                // find any of our children. Let's insert ourselves into the
-                // document temporarily.
-                var currentParent = node.parentNode;
-                var nextSibling = node.nextSibling;
-                currentParent.removeChild(node);
-                document.documentElement.appendChild(node);
-
-                // Try again
-                foundNode = node.ownerDocument.getElementById(id);
-
-                // And now put us back where we used to be.
-                node.parentNode.removeChild(node);
-                currentParent.insertBefore(node, nextSibling);
+                // find any of our children.
+                foundNode = Divmod.Runtime._getElementByIdWithDocument(
+                    node, document, id);
             }
         }
 
@@ -1063,6 +1192,7 @@ Divmod.Runtime.Opera.methods(
 
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
     var platforms = [
+        Divmod.Runtime.WebKit,
         Divmod.Runtime.Firefox,
         Divmod.Runtime.InternetExplorer,
         Divmod.Runtime.Opera,
