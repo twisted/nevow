@@ -7,7 +7,7 @@ Tests for L{nevow.url}.
 
 import urlparse, urllib
 
-from nevow.url import URL
+from nevow.url import URL, iridecode, iriencode, IRIDecodeError
 from nevow import context, url, inevow, util, loaders
 from nevow import tags
 from nevow.testutil import TestCase, FakeRequest
@@ -61,6 +61,132 @@ rfc1808_relative_link_tests = [
     #('http:g', 'http:g'),          # Not sure whether the spec means
     #('http:', 'http:'),            # these two are valid tests or not.
     ]
+
+
+
+_percentenc = lambda s: ''.join('%%%02X' % ord(c) for c in s)
+
+class TestComponentCoding(TestCase):
+    """
+    Test basic encoding and decoding of URI/IRI components.
+    """
+
+    # 0x00 - 0x7F (unreserved subset)
+    unreserved_dec = (u'abcdefghijklmnopqrstuvwxyz' +
+                      u'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+                      u'0123456789' + u'-._~')
+    unreserved_enc = unreserved_dec.encode('ascii')
+
+    # 0x00 - 0x7F (maybe-reserved subset)
+    otherASCII_dec = u''.join(sorted(set(map(unichr, range(0x80)))
+                                     - set(unreserved_dec)))
+    otherASCII_enc = _percentenc(otherASCII_dec.encode('ascii'))
+
+    # 0x80 - 0xFF, non-ASCII octets
+    nonASCII_dec = u''.join(map(unichr, range(0x80, 0x100)))
+    nonASCII_enc = _percentenc(nonASCII_dec.encode('utf-8'))
+
+    # non-octet Unicode codepoints
+    nonOctet_dec = u'\u0100\u0800\U00010000'
+    nonOctet_enc = _percentenc(nonOctet_dec.encode('utf-8'))
+
+    # Random non-string types
+    nonStrings = [5, lambda: 5, [], {}, object()]
+
+
+    def assertMatches(self, x, y):
+        """
+        Like L{assertEquals}, but also require matching types.
+        """
+        self.assertEquals(type(x), type(y))
+        self.assertEquals(x, y)
+
+
+    def test_iriencode(self):
+        """
+        L{iriencode} should encode URI/IRI components (L{unicode} values)
+        according to RFC 3986/3987.
+        """
+        for (dec, enc) in [(self.unreserved_dec, self.unreserved_enc),
+                           (self.otherASCII_dec, self.otherASCII_enc),
+                           (self.nonASCII_dec, self.nonASCII_enc),
+                           (self.nonOctet_dec, self.nonOctet_enc)]:
+            self.assertMatches(iriencode(dec), enc)
+
+
+    def test_iriencodeASCII(self):
+        """
+        L{iriencode} should accept ASCII-encoded L{str} values.
+        """
+        for (dec, enc) in [(self.unreserved_dec, self.unreserved_enc),
+                           (self.otherASCII_dec, self.otherASCII_enc)]:
+            self.assertMatches(iriencode(dec.encode('ascii')), enc)
+
+
+    def test_iridecode(self):
+        """
+        L{iridecode} should decode encoded URI/IRI components (L{unicode} or
+        ASCII L{str} values) to unencoded L{unicode} according to RFC 3986/3987.
+        """
+        for (enc, dec) in [(self.unreserved_enc, self.unreserved_dec),
+                           (self.otherASCII_enc, self.otherASCII_dec),
+                           (self.nonASCII_enc, self.nonASCII_dec),
+                           (self.nonOctet_enc, self.nonOctet_dec)]:
+            self.assertMatches(iridecode(enc), dec)
+            self.assertMatches(iridecode(enc.decode('ascii')), dec)
+
+
+    def test_iridecodeNonPercent(self):
+        """
+        L{iridecode} should return non-percent-encoded values as-is.
+        """
+        for dec in [self.unreserved_dec, self.otherASCII_dec.replace('%', ''),
+                    self.nonASCII_dec, self.nonOctet_dec]:
+            self.assertMatches(iridecode(dec), dec)
+
+
+    def test_iridecodeIRIDecodeError(self):
+        """
+        L{iridecode} should raise L{IRIDecodeError} for percent-encoded
+        sequences that do not describe valid UTF-8.
+        """
+        for s in [u'r%E9sum%E9', u'D%FCrst']:
+            self.assertRaises(IRIDecodeError, iridecode, s)
+            self.assertRaises(IRIDecodeError, iridecode, s.decode('ascii'))
+
+
+    def test_nonASCII(self):
+        """
+        L{iriencode} and L{iridecode} should not try to interpret non-ASCII
+        L{str} values.
+        """
+        for s in [self.nonASCII_dec.encode('latin1'),
+                  self.nonASCII_dec.encode('utf-8'),
+                  self.nonOctet_dec.encode('utf-8')]:
+            self.assertRaises(UnicodeDecodeError, iriencode, s)
+            self.assertRaises(UnicodeDecodeError, iridecode, s)
+
+
+    def test_nonString(self):
+        """
+        L{iriencode} and L{iridecode} should raise L{TypeError} for non-string
+        values.
+        """
+        for x in self.nonStrings:
+            self.assertRaises(TypeError, iridecode, x)
+            self.assertRaises(TypeError, iriencode, x)
+
+
+    def test_doubleEncode(self):
+        """
+        Encoding and decoding an already-encoded value should not change it.
+        """
+        for dec in [self.unreserved_dec, self.otherASCII_dec,
+                    self.nonASCII_dec, self.nonOctet_dec]:
+            enc = iriencode(dec)
+            uenc = enc.decode('ascii')
+            self.assertMatches(iridecode(iriencode(uenc)), uenc)
+            self.assertMatches(iridecode(iriencode(enc)), uenc)
 
 
 
@@ -347,7 +473,7 @@ class TestURL(TestCase):
         # replace just the query
         self.assertEquals("http://www.foo.com:80/a/nice/path/?burp",
                           str(urlpath.click("?burp")))
-        # one full url to another should not generate '//' between netloc and pathsegs 
+        # one full url to another should not generate '//' between netloc and pathsegs
         self.failIfIn("//foobar", str(urlpath.click('http://www.foo.com:80/foobar')))
 
         # from a url with no query clicking a url with a query,

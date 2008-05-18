@@ -28,6 +28,71 @@ def _uqf(query):
 unquerify = lambda query: list(_uqf(query))
 
 
+
+class IRIDecodeError(ValueError):
+    """
+    Failed to decode string as an IRI component.
+
+    If the original URI contains non-ASCII percent-encoded octets not from
+    UTF-8, those octets should be separately decoded to L{unicode} first.
+    """
+
+
+
+def iriencode(s):
+    """
+    Encode the given URI/IRI component to RFC 3987 percent-encoded form.
+
+    @param s: string to encode
+    @type s: L{unicode} (or ASCII L{str})
+
+    @rtype: ASCII L{str}
+
+    @raise UnicodeDecodeError: C{s} is a non-ASCII L{str}
+    @raise TypeError: C{s} is not a string
+    """
+    # TODO: parameterize the safe character set for standard contexts
+    if isinstance(s, str):
+        s = s.decode('ascii')
+    if isinstance(s, unicode):
+        return urllib.quote(s.encode('utf-8'), safe='-._~')
+    else:
+        raise TypeError(s)
+
+
+
+def iridecode(s):
+    """
+    Decode the given URI/IRI component from RFC 3987 percent-encoded form.
+
+    @param s: string to decode
+    @type s: ASCII L{str} or L{unicode}
+
+    @rtype: L{unicode}
+
+    @raise IRIDecodeError: C{s} contained invalid percent-encoded octets
+    @raise UnicodeDecodeError: C{s} is a non-ASCII L{str}
+    @raise TypeError: C{s} is not a string
+    """
+    # Note:  urllib.unquote interprets percent-encoded octets in unicode strings
+    # as Unicode codepoints (effectively decoding them as Latin1), so we cannot
+    # pass it unicode strings directly.
+    # It doesn't change non-percent-encoded octets in strings, though, so we can
+    # encode unicode strings to UTF-8 first:  decoding the result from UTF-8
+    # then restores the original Unicode characters in addition to the ones that
+    # were percent-encoded.
+    if isinstance(s, str):
+        s = s.decode('ascii')
+    if isinstance(s, unicode):
+        try:
+            return urllib.unquote(s.encode('utf-8')).decode('utf-8')
+        except UnicodeDecodeError:
+            raise IRIDecodeError(s)
+    else:
+        raise TypeError(s)
+
+
+
 class URL(object):
     """Represents a URL and provides a convenient API for modifying its parts.
 
