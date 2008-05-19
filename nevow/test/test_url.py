@@ -7,7 +7,7 @@ Tests for L{nevow.url}.
 
 import urlparse, urllib
 
-from nevow.url import URL, iridecode, iriencode, IRIDecodeError
+from nevow.url import URL, iridecode, iriencode, iriencodePath, IRIDecodeError
 from nevow import context, url, inevow, util, loaders
 from nevow import tags
 from nevow.testutil import TestCase, FakeRequest
@@ -112,6 +112,15 @@ class TestComponentCoding(TestCase):
                            (self.nonASCII_dec, self.nonASCII_enc),
                            (self.nonOctet_dec, self.nonOctet_enc)]:
             self.assertMatches(iriencode(dec), enc)
+            self.assertMatches(iriencode(dec, unencoded=''), enc)
+
+
+    def test_iriencodeUnencoded(self):
+        """
+        L{iriencode} should not percent-encode octets in C{unencoded}.
+        """
+        self.assertMatches(iriencode(u'_:_/_', unencoded=':'), '_:_%2F_')
+        self.assertMatches(iriencode(u'_:_/_', unencoded='/'), '_%3A_/_')
 
 
     def test_iriencodeASCII(self):
@@ -121,6 +130,8 @@ class TestComponentCoding(TestCase):
         for (dec, enc) in [(self.unreserved_dec, self.unreserved_enc),
                            (self.otherASCII_dec, self.otherASCII_enc)]:
             self.assertMatches(iriencode(dec.encode('ascii')), enc)
+            self.assertMatches(iriencode(dec.encode('ascii'), unencoded=''),
+                               enc)
 
 
     def test_iridecode(self):
@@ -187,6 +198,14 @@ class TestComponentCoding(TestCase):
             uenc = enc.decode('ascii')
             self.assertMatches(iridecode(iriencode(uenc)), uenc)
             self.assertMatches(iridecode(iriencode(enc)), uenc)
+
+
+    def test_iriencodePath(self):
+        """
+        L{iriencodePath} should avoid percent-encoding path characters.
+        """
+        self.assertMatches(iriencodePath(url.gen_delims+url.sub_delims),
+                           ":%2F%3F%23%5B%5D@!$&'()*+,;=")
 
 
 

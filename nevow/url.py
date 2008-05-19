@@ -19,6 +19,10 @@ from nevow.stan import raw
 from nevow.flat import serialize
 from nevow.context import WovenContext
 
+# RFC 3986 section 2.2, Reserved Characters
+gen_delims = ':/?#[]@'
+sub_delims = "!$&'()*+,;="
+
 def _uqf(query):
     for x in query.split('&'):
         if '=' in x:
@@ -39,25 +43,43 @@ class IRIDecodeError(ValueError):
 
 
 
-def iriencode(s):
+def iriencode(s, unencoded=''):
     """
     Encode the given URI/IRI component to RFC 3987 percent-encoded form.
 
+    Characters in the unreserved set (see RFC 3986 section 2, Characters) appear
+    in the result without percent-encoding.  Particular components (for example,
+    path segments) may define additional characters that do not need
+    percent-encoding:  these can be specified with the C{unencoded} parameter.
+
     @param s: string to encode
     @type s: L{unicode} (or ASCII L{str})
+
+    @param unencoded: additional characters to exempt from percent-encoding
+    @type unencoded: L{str}
 
     @rtype: ASCII L{str}
 
     @raise UnicodeDecodeError: C{s} is a non-ASCII L{str}
     @raise TypeError: C{s} is not a string
     """
-    # TODO: parameterize the safe character set for standard contexts
     if isinstance(s, str):
         s = s.decode('ascii')
     if isinstance(s, unicode):
-        return urllib.quote(s.encode('utf-8'), safe='-._~')
+        return urllib.quote(s.encode('utf-8'), safe='-._~'+unencoded)
     else:
         raise TypeError(s)
+
+
+
+def iriencodePath(s):
+    """
+    L{iriencode} convenience wrapper for path segments:  avoid percent-encoding
+    L{sub_delims} and C{':@'}
+
+    @see: RFC 3986 section 3.3, Path
+    """
+    return iriencode(s, unencoded=sub_delims + ':@')
 
 
 
