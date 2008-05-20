@@ -194,15 +194,11 @@ class URL(object):
 
     def path(self):
         """
-        The path portion of the URL.
-
-        The resulting string is flattened, such that it is contained in
-        C{flatten(url)}.
+        The percent-encoded path portion of the URL.
 
         @rtype: str
         """
-        urlContext = WovenContext(inURL=True)
-        return '/'.join(serialize(seg, urlContext) for seg in self._qpathlist)
+        return '/'.join(map(iriencodePath, self._qpathlist))
     path = property(path)
 
     def __eq__(self, other):
