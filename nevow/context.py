@@ -278,7 +278,9 @@ class WovenContext(WebContext):
     inJS = False
     inJSSingleQuoteString = False
 
-    def __init__(self, parent=None, tag=None, precompile=None, remembrances=None, key=None, isAttrib=None, inURL=None, inJS=None, inJSSingleQuoteString=None):
+    def __init__(self, parent=None, tag=None, precompile=None,
+                 remembrances=None, key=None, isAttrib=None, inURL=None,
+                 inJS=None, inJSSingleQuoteString=None):
         WebContext.__init__(self, parent, tag, remembrances)
         if self.parent:
             self.precompile = parent.precompile
