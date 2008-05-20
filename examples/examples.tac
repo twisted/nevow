@@ -176,7 +176,7 @@ class Examples(rend.Page):
         )
 
     def child_calculator(self, ctx):
-        return calculator.CalculatorResource(calculator.ICalculator, calculator.Calculator())
+        return calculator.CalculatorParentPage(calc=calculator.Calculator())
 
     def child_widgets(self, ctx):
         return widgets.WidgetPage(None, None)

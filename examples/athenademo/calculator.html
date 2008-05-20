@@ -2,65 +2,59 @@
     <head>
         <n:invisible n:render="liveglue" />
         <style type="text/css">
-            #calculator {
+            .calculator {
                 font-family: monospace;
                 margin-top: 5em;
                 margin-left: auto;
                 margin-right: auto;
             }
-            button {
+            input {
                 width: 2em;
                 border: 1px solid #999;
             }
-            #output {
+            .output {
                 border: 1px solid #999;
                 text-align: right;
             }
         </style>
-        <script type="text/javascript">
-        buttonClicked = function(symbol) {
-            d = server.callRemote('buttonClicked', symbol);
-            d.addCallback(updateDisplay);
-        }
-        updateDisplay = function(expression) {
-            getElement('output').innerHTML = expression;
-        }
-        </script>
     </head>
     <body>
-        <table id="calculator">
+        <div n:render="calculator">Calculator Goes Here</div>
+
+        <table class="calculator" id="calculator" n:pattern="CalculatorPattern" n:render="liveElement"
+                xmlns:athena="http://divmod.org/ns/athena/0.7">
             <tr>
-                <td colspan="4" id="output">0</td>
+                <td colspan="4" class="output" id="output">0</td>
             </tr>
             <tr>
                 <td></td>
                 <td></td>
                 <td></td>
-                <td><button onclick="return buttonClicked('C');">C</button></td>
+                <td><input type="button" value="C"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
             </tr>
             <tr>
-                <td><button onclick="return buttonClicked('7');">7</button></td>
-                <td><button onclick="return buttonClicked('8');">8</button></td>
-                <td><button onclick="return buttonClicked('9');">9</button></td>
-                <td><button onclick="return buttonClicked('/');">/</button></td>
+                <td><input type="button" value="7"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="8"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="9"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="/"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
             </tr>
             <tr>
-                <td><button onclick="return buttonClicked('6');">6</button></td>
-                <td><button onclick="return buttonClicked('5');">5</button></td>
-                <td><button onclick="return buttonClicked('4');">4</button></td>
-                <td><button onclick="return buttonClicked('*');">*</button></td>
+                <td><input type="button" value="4"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="5"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="6"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="*"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
             </tr>
             <tr>
-                <td><button onclick="return buttonClicked('3');">3</button></td>
-                <td><button onclick="return buttonClicked('2');">2</button></td>
-                <td><button onclick="return buttonClicked('1');">1</button></td>
-                <td><button onclick="return buttonClicked('-');">-</button></td>
+                <td><input type="button" value="1"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="2"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="3"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="-"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
             </tr>
             <tr>
-                <td><button onclick="return buttonClicked('0');">0</button></td>
-                <td><button onclick="return buttonClicked('.');">.</button></td>
-                <td><button onclick="return buttonClicked('=');">=</button></td>
-                <td><button onclick="return buttonClicked('+');">+</button></td>
+                <td><input type="button" value="0"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="."><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="="><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="+"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
             </tr>
         </table>
     </body>
