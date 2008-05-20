@@ -13,6 +13,7 @@ from nevow.inevow import ICanHandleException, IData, IMacroFactory, IRenderer, I
 from nevow.flat import precompile, serialize
 from nevow.accessors import convertToData
 from nevow.context import WovenContext
+from nevow.url import iriencode, iriencodePath, iriencodeParam
 
 allowSingleton = ('img', 'br', 'hr', 'base', 'meta', 'link', 'param', 'area',
                   'input', 'col', 'basefont', 'isindex', 'frame')
@@ -151,16 +152,23 @@ def StringSerializer(original, context):
     """
     Serialize a string, quoting and escaping as necessary.
 
-     * In URI context, UTF-8- and percent-encode according to RFC 3987
      * In JavaScript context, backslash-escape and single-quote
      * Elsewhere, escape XML delimiters as character references
+        * In URI components, percent-encode (RFC 3986/3987) first
         * In attribute values, also escape C{"}, which Nevow always uses to
           quote values
     """
     if context.inURL:
-        if isinstance(original, unicode):
-            original = original.encode('utf-8')
-        return urllib.quote(original, safe="-_.!*'()")
+        if context.inURLPath:
+            s = iriencodePath(original)
+        elif context.inURLParam:
+            s = iriencodeParam(original)
+        else:
+            s = iriencode(original)
+        # Encoded URIs should never contain these delimiters.
+        assert '<' not in s and '"' not in s, (
+            'URI component %r encoded to invalid %r?' % (original, s))
+        return s.replace("&", "&amp;")
     ## quote it
     if context.inJS:
         original = _jsSingleQuoteQuote(original)

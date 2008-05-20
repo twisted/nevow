@@ -844,7 +844,7 @@ class TestLocateChild(unittest.TestCase):
 
     def test_redirectQuoting(self):
         return self._testRedirecting('http://example.com/foo!!bar').addCallback(
-            lambda ign: self._testRedirecting('http://example.com/foo!%40%24bar?b!%40z=123'))
+            lambda ign: self._testRedirecting('http://example.com/foo!@$bar?b!@z=123'))
 
     def test_stringChild(self):
         theString = "<html>Hello, world</html>"

@@ -626,12 +626,17 @@ def URLSerializer(original, context):
     Unicode path, query and fragment components are handled according to the
     IRI standard (RFC 3987).
     """
-    urlContext = WovenContext(parent=context, precompile=context.precompile, inURL=True)
+    urlContext = WovenContext(parent=context, precompile=context.precompile,
+                              inURL=True)
+    pathContext = WovenContext(parent=urlContext, precompile=context.precompile,
+                               inURLPath=True)
+    paramContext = WovenContext(parent=urlContext, precompile=context.precompile,
+                               inURLParam=True)
     if original.scheme:
         yield "%s://%s" % (original.scheme, original.netloc)
     for pathsegment in original._qpathlist:
         yield '/'
-        yield serialize(pathsegment, urlContext)
+        yield serialize(pathsegment, pathContext)
     query = original._querylist
     if query:
         yield '?'
@@ -639,19 +644,16 @@ def URLSerializer(original, context):
         for key, value in query:
             if not first:
                 # xhtml can't handle unescaped '&'
-                if context.isAttrib is True:
-                    yield '&amp;'
-                else:
-                    yield '&'
+                yield '&amp;'
             else:
                 first = False
-            yield serialize(key, urlContext)
+            yield serialize(key, paramContext)
             if value is not None:
                 yield '='
-                yield serialize(value, urlContext)
+                yield serialize(value, paramContext)
     if original.fragment:
         yield "#"
-        yield serialize(original.fragment, urlContext)
+        yield serialize(original.fragment, paramContext)
 
 
 def URLOverlaySerializer(original, context):

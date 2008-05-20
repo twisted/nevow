@@ -343,9 +343,9 @@ class TestURL(TestCase):
             "http://localhost/foo%2Fbar/",
             "http://localhost/foo?n",
             "http://localhost/foo?n=v",
-            "http://localhost/foo?n=%2Fa%2Fb",
-            "http://example.com/foo!%40%24bar?b!%40z=123",
-            "http://localhost/asd?a=asd%20sdf%2F345",
+            "http://localhost/foo?n=/a/b",
+            "http://example.com/foo!@$bar?b!@z=123",
+            "http://localhost/asd?a=asd%20sdf/345",
             "http://example.com/r%C3%A9sum%C3%A9",
             )
         for test in tests:
@@ -761,10 +761,10 @@ class TestURL(TestCase):
     def test_parseEqualInParamValue(self):
         u = URL.fromString('http://localhost/?=x=x=x')
         self.failUnless(u.query == ['=x=x=x'])
-        self.failUnless(str(u) == 'http://localhost/?=x%3Dx%3Dx')
+        self.failUnless(str(u) == 'http://localhost/?=x=x=x')
         u = URL.fromString('http://localhost/?foo=x=x=x&bar=y')
         self.failUnless(u.query == ['foo=x=x=x', 'bar=y'])
-        self.failUnless(str(u) == 'http://localhost/?foo=x%3Dx%3Dx&bar=y')
+        self.failUnless(str(u) == 'http://localhost/?foo=x=x=x&bar=y')
 
 class Serialization(TestCase):
 
@@ -783,7 +783,10 @@ class Serialization(TestCase):
         self.assertEquals(scheme, parsedScheme)
         self.assertEquals(loc, parsedLoc)
         self.assertEquals('/' + '/'.join(map(lambda p: urllib.quote(p,safe=''),path)), parsedPath)
-        self.assertEquals(query, url.unquerify(parsedQuery))
+        self.assertEquals(parsedQuery.split('&amp;'),
+                          ['foo=bar', 'baz==quux', 'foobar=?'])
+        self.assertEquals(query,
+                          url.unquerify(parsedQuery.replace('&amp;', '&')))
         self.assertEquals(fragment, parsedFragment)
 
     def test_slotQueryParam(self):
@@ -795,7 +798,8 @@ class Serialization(TestCase):
             ctx.fillSlots('param', 5)
             return ctx.tag
 
-        self.assertEquals(flatten(tags.invisible(render=fillIt)[u]), original + '&toot=5')
+        self.assertEquals(flatten(tags.invisible(render=fillIt)[u]),
+                          original + '&amp;toot=5')
 
     def test_childQueryParam(self):
         original = 'http://foo/bar'
@@ -812,9 +816,9 @@ class Serialization(TestCase):
         base = 'http://localhost/'
         tests = (
             (r'/foo/', '%2Ffoo%2F'),
-            (r'c:\foo\bar bar', 'c%3A%5Cfoo%5Cbar%20bar'),
-            (r'&<>', '%26%3C%3E'),
-            (u'!"\N{POUND SIGN}$%^&*()_+'.encode('utf-8'), '!%22%C2%A3%24%25%5E%26*()_%2B'),
+            (r'c:\foo\bar bar', 'c:%5Cfoo%5Cbar%20bar'),
+            (r'&<>', '&amp;%3C%3E'),
+            (u'!"\N{POUND SIGN}$%^&*()_+'.encode('utf-8'), '!%22%C2%A3$%25%5E&amp;*()_+'),
             )
         for test, result in tests:
             u = URL.fromString(base).child(test)
@@ -822,23 +826,23 @@ class Serialization(TestCase):
 
     def test_urlContent(self):
         u = URL.fromString('http://localhost/').child(r'<c:\foo\bar&>')
-        self.assertEquals(flatten(tags.p[u]), '<p>http://localhost/%3Cc%3A%5Cfoo%5Cbar%26%3E</p>')
+        self.assertEquals(flatten(tags.p[u]), '<p>http://localhost/%3Cc:%5Cfoo%5Cbar&amp;%3E</p>')
 
     def test_urlAttr(self):
         u = URL.fromString('http://localhost/').child(r'<c:\foo\bar&>')
-        self.assertEquals(flatten(tags.img(src=u)), '<img src="http://localhost/%3Cc%3A%5Cfoo%5Cbar%26%3E" />')
+        self.assertEquals(flatten(tags.img(src=u)), '<img src="http://localhost/%3Cc:%5Cfoo%5Cbar&amp;%3E" />')
 
     def test_urlSlot(self):
         u = URL.fromString('http://localhost/').child(r'<c:\foo\bar&>')
         tag = tags.img(src=tags.slot('src'))
         tag.fillSlots('src', u)
-        self.assertEquals(flatten(tag), '<img src="http://localhost/%3Cc%3A%5Cfoo%5Cbar%26%3E" />')
+        self.assertEquals(flatten(tag), '<img src="http://localhost/%3Cc:%5Cfoo%5Cbar&amp;%3E" />')
 
     def test_urlXmlAttrSlot(self):
         u = URL.fromString('http://localhost/').child(r'<c:\foo\bar&>')
         tag = tags.invisible[loaders.xmlstr('<img xmlns:n="http://nevow.com/ns/nevow/0.1" src="#"><n:attr name="src"><n:slot name="src"/></n:attr></img>')]
         tag.fillSlots('src', u)
-        self.assertEquals(flatten(tag), '<img src="http://localhost/%3Cc%3A%5Cfoo%5Cbar%26%3E" />')
+        self.assertEquals(flatten(tag), '<img src="http://localhost/%3Cc:%5Cfoo%5Cbar&amp;%3E" />')
 
     def test_safe(self):
         u = URL.fromString('http://localhost/').child(r"foo-_.!*'()bar")
