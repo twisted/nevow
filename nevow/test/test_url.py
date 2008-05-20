@@ -7,7 +7,7 @@ Tests for L{nevow.url}.
 
 import urlparse, urllib
 
-from nevow.url import URL, iridecode, iriencode, iriencodePath, IRIDecodeError
+from nevow.url import URL, iridecode, iriencode, IRIDecodeError
 from nevow import context, url, inevow, util, loaders
 from nevow import tags
 from nevow.testutil import TestCase, FakeRequest
@@ -202,10 +202,20 @@ class TestComponentCoding(TestCase):
 
     def test_iriencodePath(self):
         """
-        L{iriencodePath} should avoid percent-encoding path characters.
+        L{iriencodePath} should avoid percent-encoding characters not reserved
+        in path segments.
         """
-        self.assertMatches(iriencodePath(url.gen_delims+url.sub_delims),
+        self.assertMatches(url.iriencodePath(url.gen_delims+url.sub_delims),
                            ":%2F%3F%23%5B%5D@!$&'()*+,;=")
+
+
+    def test_iriencodeParam(self):
+        """
+        L{iriencodeParam} should avoid percent-encoding characters not reserved
+        in query and fragment components.
+        """
+        self.assertMatches(url.iriencodeParam(url.gen_delims+url.sub_delims),
+                           ":/?%23%5B%5D@!$&'()*+,;=")
 
 
 
