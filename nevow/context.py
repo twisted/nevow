@@ -29,6 +29,8 @@ class WebContext(object):
     # XXX: can we get rid of these somehow?
     isAttrib = property(lambda self: False)
     inURL = property(lambda self: False)
+    inURLPath = property(lambda self: False)
+    inURLParam = property(lambda self: False)
     inJS = property(lambda self: False)
     inJSSingleQuoteString = property(lambda self: False)
 
@@ -274,18 +276,23 @@ class WovenContext(WebContext):
     key = None
     isAttrib = False
     inURL = False
+    inURLPath = False
+    inURLParam = False
     precompile = False
     inJS = False
     inJSSingleQuoteString = False
 
     def __init__(self, parent=None, tag=None, precompile=None,
                  remembrances=None, key=None, isAttrib=None, inURL=None,
-                 inJS=None, inJSSingleQuoteString=None):
+                 inJS=None, inJSSingleQuoteString=None, inURLPath=None,
+                 inURLParam=None):
         WebContext.__init__(self, parent, tag, remembrances)
         if self.parent:
             self.precompile = parent.precompile
             self.isAttrib = parent.isAttrib
             self.inURL = parent.inURL
+            self.inURLPath = parent.inURLPath
+            self.inURLParam = parent.inURLParam
             self.inJS = parent.inJS
             self.inJSSingleQuoteString = parent.inJSSingleQuoteString
 
@@ -309,6 +316,8 @@ class WovenContext(WebContext):
         if precompile is not None: self.precompile = precompile
         if isAttrib is not None: self.isAttrib = isAttrib
         if inURL is not None: self.inURL = inURL
+        if inURLPath is not None: self.inURLPath = inURLPath
+        if inURLParam is not None: self.inURLParam = inURLParam
         if inJS is not None: self.inJS = inJS
         if inJSSingleQuoteString is not None: self.inJSSingleQuoteString = inJSSingleQuoteString
 
@@ -340,5 +349,7 @@ class WovenContext(WebContext):
         cloned = WebContext.clone(self, deep, cloneTags)
         cloned.isAttrib = self.isAttrib
         cloned.inURL = self.inURL
+        cloned.inURLPath = self.inURLPath
+        cloned.inURLParam = self.inURLParam
         return cloned
         
