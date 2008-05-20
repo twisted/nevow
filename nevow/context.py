@@ -322,16 +322,16 @@ class WovenContext(WebContext):
         if inJSSingleQuoteString is not None: self.inJSSingleQuoteString = inJSSingleQuoteString
 
     def __repr__(self):
-        rstr = ''
+        params = ['tag=%r' % self.tag]
         if self._remembrances:
-            rstr = ', remembrances=%r' % self._remembrances
-        attribstr=''
-        if self.isAttrib:
-            attribstr=", isAttrib=True"
-        urlStr = ''
-        if self.inURL:
-            urlStr = ', inURL=True'
-        return "%s(tag=%r%s%s%s)" % (self.__class__.__name__, self.tag, rstr,attribstr,urlStr)
+            params.append('remembrances=%r' % self._remembrances)
+        params.extend('%s=True' % flag
+                      for flag in ['isAttrib', 'inURL', 'inJS',
+                                   'inJSSingleQuoteString', 'inURLPath',
+                                   'inURLParam']
+                      if getattr(self, flag))
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(params))
+        
 
     def patternGenerator(self, pattern, default=None):
         warnings.warn("use Tag.patternGenerator instead", DeprecationWarning, stacklevel=2)
