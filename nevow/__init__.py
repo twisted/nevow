@@ -207,16 +207,6 @@ nevow.flat.flatstan.inlineJSSerializer nevow.stan.inlineJS
 nevow.i18n.flattenL10n              nevow.i18n.PlaceHolder
 """
 
-flatteners_stackless = """
-nevow.flat.flatstan.FunctionSerializer            stackless.function
-nevow.flat.flatstan.MethodSerializer              stackless.instancemethod
-"""
-try:
-    import stackless
-    flatteners += flatteners_stackless
-except ImportError:
-    pass
-
 flatteners_2_4 = """
 nevow.flat.flatstan.StringCastSerializer          decimal.Decimal
 """
