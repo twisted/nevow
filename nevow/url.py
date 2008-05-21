@@ -480,7 +480,7 @@ class URL(object):
     ## object protocol override ##
 
     def __str__(self):
-        return str(flat.flatten(self))
+        return str(flat.flatten(self)).replace('&amp;', '&')  # FIXME temporary
 
     def __repr__(self):
         return (
