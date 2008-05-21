@@ -346,7 +346,8 @@ class TestURL(TestCase):
             "http://localhost/foo?n=/a/b",
             "http://example.com/foo!@$bar?b!@z=123",
             "http://localhost/asd?a=asd%20sdf/345",
-            "http://example.com/r%C3%A9sum%C3%A9",
+            "http://(%2525)/(%2525)?(%2525)&(%2525)=(%2525)#(%2525)",
+            "http://(%C3%A9)/(%C3%A9)?(%C3%A9)&(%C3%A9)=(%C3%A9)#(%C3%A9)",
             )
         for test in tests:
             result = str(URL.fromString(test))

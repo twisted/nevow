@@ -24,11 +24,12 @@ gen_delims = ':/?#[]@'
 sub_delims = "!$&'()*+,;="
 
 def _uqf(query):
+    query = query.replace('+', ' ')
     for x in query.split('&'):
         if '=' in x:
-            yield tuple( [urllib.unquote_plus(s) for s in x.split('=', 1)] )
+            yield tuple(x.split('=', 1))
         elif x:
-            yield (urllib.unquote_plus(x), None)
+            yield (x, None)
 unquerify = lambda query: list(_uqf(query))
 
 
@@ -629,7 +630,9 @@ def URLSerializer(original, context):
     paramContext = WovenContext(parent=urlContext, precompile=context.precompile,
                                inURLParam=True)
     if original.scheme:
-        yield "%s://%s" % (original.scheme, original.netloc)
+        yield serialize(original.scheme, urlContext)
+        yield '://'
+        yield serialize(original.netloc, pathContext)
     for pathsegment in original._qpathlist:
         yield '/'
         yield serialize(pathsegment, pathContext)
