@@ -23,17 +23,6 @@ from nevow.context import WovenContext
 gen_delims = ':/?#[]@'
 sub_delims = "!$&'()*+,;="
 
-def _uqf(query):
-    query = query.replace('+', ' ')
-    for x in query.split('&'):
-        if '=' in x:
-            yield tuple(x.split('=', 1))
-        elif x:
-            yield (x, None)
-unquerify = lambda query: list(_uqf(query))
-
-
-
 class IRIDecodeError(ValueError):
     """
     Failed to decode string as an IRI component.
@@ -126,6 +115,17 @@ def iridecode(s):
             raise IRIDecodeError(s)
     else:
         raise TypeError(s)
+
+
+
+def _uqf(query):
+    query = query.replace('+', ' ')
+    for x in query.split('&'):
+        if '=' in x:
+            yield tuple(x.split('=', 1))
+        elif x:
+            yield (x, None)
+unquerify = lambda query: list(_uqf(query))
 
 
 
