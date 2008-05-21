@@ -31,6 +31,9 @@ class TestTag(TestCase):
     def test_clone(self):
         tag = proto(hello="world")["How are you"]
         tag.fillSlots('foo', 'bar')
+        tag.filename = "foo/bar"
+        tag.lineNumber = 6
+        tag.columnNumber = 12
         clone = tag.clone()
         self.assertEquals(clone.attributes['hello'], 'world')
         self.assertNotIdentical(clone.attributes, tag.attributes)
@@ -38,6 +41,9 @@ class TestTag(TestCase):
         self.assertNotIdentical(clone.children, tag.children)
         self.assertEquals(tag.slotData, clone.slotData)
         self.assertNotIdentical(tag.slotData, clone.slotData)
+        self.assertEqual(clone.filename, "foo/bar")
+        self.assertEqual(clone.lineNumber, 6)
+        self.assertEqual(clone.columnNumber, 12)
 
     ## TODO: need better clone test here to test clone(deep=True),
     ## and behavior of cloning nested lists.

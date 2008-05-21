@@ -142,6 +142,22 @@ class TestComplexSerialization(Base):
         precompiled = self.render(tag, precompile=True)
         self.assertEquals(self.render(precompiled), '<p>bar</p>')
 
+
+    def test_precompiledSlotLocation(self):
+        """
+        The result of precompiling a slot preserves the location information
+        associated with the slot.
+        """
+        filename = 'foo/bar'
+        line = 123
+        column = 432
+        [slot] = self.render(
+            tags.slot('foo', None, filename, line, column), precompile=True)
+        self.assertEqual(slot.filename, filename)
+        self.assertEqual(slot.lineNumber, line)
+        self.assertEqual(slot.columnNumber, column)
+
+
     def makeComplex(self):
         return tags.html[
             tags.body[

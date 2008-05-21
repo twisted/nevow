@@ -285,7 +285,10 @@ def SlotSerializer(original, context):
                 context.isAttrib,
                 context.inURL,
                 context.inJS,
-                context.inJSSingleQuoteString)
+                context.inJSSingleQuoteString,
+                original.filename,
+                original.lineNumber,
+                original.columnNumber)
         else:
             return serialize(data, context)
     try:

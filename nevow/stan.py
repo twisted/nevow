@@ -104,14 +104,32 @@ class directive(object):
 
 
 class slot(object):
-    """Marker for slot insertion in a template
     """
-    __slots__ = ['name', 'children', 'default']
+    Marker for markup insertion in a template.
 
-    def __init__(self, name, default=None):
+    @type filename: C{str} or C{NoneType}
+    @ivar filename: The name of the XML file from which this tag was parsed.
+        If it was not parsed from an XML file, C{None}.
+
+    @type lineNumber: C{int} or C{NoneType}
+    @ivar lineNumber: The line number on which this tag was encountered in the
+        XML file from which it was parsed.  If it was not parsed from an XML
+        file, C{None}.
+
+    @type columnNumber: C{int} or C{NoneType}
+    @ivar columnNumber: The column number at which this tag was encountered in
+        the XML file from which it was parsed.  If it was not parsed from an
+        XML file, C{None}.
+    """
+    __slots__ = ['name', 'children', 'default', 'filename', 'lineNumber', 'columnNumber']
+
+    def __init__(self, name, default=None, filename=None, lineNumber=None, columnNumber=None):
         self.name = name
         self.children = []
         self.default = default
+        self.filename = filename
+        self.lineNumber = lineNumber
+        self.columnNumber = columnNumber
 
     def __repr__(self):
         return "slot('%s')" % self.name
@@ -140,12 +158,27 @@ class _PrecompiledSlot(object):
     This differs from a normal slot in that it captures some attributes of its
     context at precompilation time so that it can be rendered properly (as
     these attributes are typically lost during precompilation).
+
+    @type filename: C{str} or C{NoneType}
+    @ivar filename: The name of the XML file from which this tag was parsed.
+        If it was not parsed from an XML file, C{None}.
+
+    @type lineNumber: C{int} or C{NoneType}
+    @ivar lineNumber: The line number on which this tag was encountered in the
+        XML file from which it was parsed.  If it was not parsed from an XML
+        file, C{None}.
+
+    @type columnNumber: C{int} or C{NoneType}
+    @ivar columnNumber: The column number at which this tag was encountered in
+        the XML file from which it was parsed.  If it was not parsed from an
+        XML file, C{None}.
     """
     __slots__ = [
         'name', 'children', 'default', 'isAttrib',
-        'inURL', 'inJS', 'inJSSingleQuoteString']
+        'inURL', 'inJS', 'inJSSingleQuoteString',
+        'filename', 'lineNumber', 'columnNumber']
 
-    def __init__(self, name, children, default, isAttrib, inURL, inJS, inJSSingleQuoteString):
+    def __init__(self, name, children, default, isAttrib, inURL, inJS, inJSSingleQuoteString, filename, lineNumber, columnNumber):
         self.name = name
         self.children = children
         self.default = default
@@ -153,6 +186,9 @@ class _PrecompiledSlot(object):
         self.inURL = inURL
         self.inJS = inJS
         self.inJSSingleQuoteString = inJSSingleQuoteString
+        self.filename = filename
+        self.lineNumber = lineNumber
+        self.columnNumber = columnNumber
 
 
     def __repr__(self):
@@ -166,19 +202,38 @@ class _PrecompiledSlot(object):
 
 
 class Tag(object):
-    """Tag instances represent XML tags with a tag name, attributes,
-    and children. Tag instances can be constructed using the Prototype
-    tags in the 'tags' module, or may be constructed directly with a tag
-    name. Tags have two special methods, __call__ and __getitem__,
-    which make representing trees of XML natural using pure python
-    syntax. See the docstrings for these methods for more details.
+    """
+    Tag instances represent XML tags with a tag name, attributes, and
+    children. Tag instances can be constructed using the Prototype tags in the
+    'tags' module, or may be constructed directly with a tag name. Tags have
+    two special methods, __call__ and __getitem__, which make representing
+    trees of XML natural using pure python syntax. See the docstrings for these
+    methods for more details.
+
+    @type filename: C{str} or C{NoneType}
+    @ivar filename: The name of the XML file from which this tag was parsed.
+        If it was not parsed from an XML file, C{None}.
+
+    @type lineNumber: C{int} or C{NoneType}
+    @ivar lineNumber: The line number on which this tag was encountered in the
+        XML file from which it was parsed.  If it was not parsed from an XML
+        file, C{None}.
+
+    @type columnNumber: C{int} or C{NoneType}
+    @ivar columnNumber: The column number at which this tag was encountered in
+        the XML file from which it was parsed.  If it was not parsed from an
+        XML file, C{None}.
     """
     implements(inevow.IQ)
 
     specials = ['data', 'render', 'remember', 'pattern', 'key', 'macro']
 
     slotData = None
-    def __init__(self, tag, attributes=None, children=None, specials=None):
+    filename = None
+    lineNumber = None
+    columnNumber = None
+
+    def __init__(self, tag, attributes=None, children=None, specials=None, filename=None, lineNumber=None, columnNumber=None):
         self.tagName = tag
         if attributes is None:
             self.attributes = {}
@@ -192,6 +247,12 @@ class Tag(object):
             self._specials = {}
         else:
             self._specials = specials
+        if filename is not None:
+            self.filename = filename
+        if lineNumber is not None:
+            self.lineNumber = lineNumber
+        if columnNumber is not None:
+            self.columnNumber = columnNumber
 
 
     def fillSlots(self, slotName, slotValue):
@@ -397,8 +458,10 @@ class Tag(object):
             self.tagName,
             attributes=newattrs,
             children=newchildren,
-            specials=self._specials.copy()
-            )
+            specials=self._specials.copy(),
+            filename=self.filename,
+            lineNumber=self.lineNumber,
+            columnNumber=self.columnNumber)
         newtag.slotData = newslotdata
         if clearPattern:
             newtag.pattern = None
