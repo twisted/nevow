@@ -13,7 +13,7 @@ from nevow.inevow import ICanHandleException, IData, IMacroFactory, IRenderer, I
 from nevow.flat import precompile, serialize
 from nevow.accessors import convertToData
 from nevow.context import WovenContext
-from nevow.url import iriencode, iriencodePath, iriencodeParam
+from nevow import url
 
 allowSingleton = ('img', 'br', 'hr', 'base', 'meta', 'link', 'param', 'area',
                   'input', 'col', 'basefont', 'isindex', 'frame')
@@ -160,11 +160,13 @@ def StringSerializer(original, context):
     """
     if context.inURL:
         if context.inURLPath:
-            s = iriencodePath(original)
-        elif context.inURLParam:
-            s = iriencodeParam(original)
+            s = url.iriencodePath(original)
+        elif context.inURLQuery:
+            s = url.iriencodeQuery(original)
+        elif context.inURLFragment:
+            s = url.iriencodeFragment(original)
         else:
-            s = iriencode(original)
+            s = url.iriencode(original)
         # Encoded URIs should never contain these delimiters.
         assert '<' not in s and '"' not in s, (
             'URI component %r encoded to invalid %r?' % (original, s))

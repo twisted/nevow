@@ -827,10 +827,10 @@ class TestURL(TestCase):
     def test_parseEqualInParamValue(self):
         u = URL.fromString('http://localhost/?=x=x=x')
         self.failUnless(u.query == ['=x=x=x'])
-        self.failUnless(str(u) == 'http://localhost/?=x=x=x')
+        self.failUnless(str(u) == 'http://localhost/?=x%3Dx%3Dx')
         u = URL.fromString('http://localhost/?foo=x=x=x&bar=y')
         self.failUnless(u.query == ['foo=x=x=x', 'bar=y'])
-        self.failUnless(str(u) == 'http://localhost/?foo=x=x=x&bar=y')
+        self.failUnless(str(u) == 'http://localhost/?foo=x%3Dx%3Dx&bar=y')
 
 class Serialization(TestCase):
 
@@ -850,9 +850,7 @@ class Serialization(TestCase):
         self.assertEquals(loc, parsedLoc)
         self.assertEquals('/' + '/'.join(map(lambda p: urllib.quote(p,safe=''),path)), parsedPath)
         self.assertEquals(parsedQuery.split('&amp;'),
-                          ['foo=bar', 'baz==quux', 'foobar=?'])
-        self.assertEquals(query,
-                          url.unquerify(parsedQuery.replace('&amp;', '&')))
+                          ['foo=bar', 'baz=%3Dquux', 'foobar=?'])
         self.assertEquals(fragment, parsedFragment)
 
     def test_slotQueryParam(self):

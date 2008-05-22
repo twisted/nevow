@@ -30,7 +30,8 @@ class WebContext(object):
     isAttrib = property(lambda self: False)
     inURL = property(lambda self: False)
     inURLPath = property(lambda self: False)
-    inURLParam = property(lambda self: False)
+    inURLQuery = property(lambda self: False)
+    inURLFragment = property(lambda self: False)
     inJS = property(lambda self: False)
     inJSSingleQuoteString = property(lambda self: False)
 
@@ -277,7 +278,8 @@ class WovenContext(WebContext):
     isAttrib = False
     inURL = False
     inURLPath = False
-    inURLParam = False
+    inURLQuery = False
+    inURLFragment = False
     precompile = False
     inJS = False
     inJSSingleQuoteString = False
@@ -285,14 +287,15 @@ class WovenContext(WebContext):
     def __init__(self, parent=None, tag=None, precompile=None,
                  remembrances=None, key=None, isAttrib=None, inURL=None,
                  inJS=None, inJSSingleQuoteString=None, inURLPath=None,
-                 inURLParam=None):
+                 inURLQuery=None, inURLFragment=None):
         WebContext.__init__(self, parent, tag, remembrances)
         if self.parent:
             self.precompile = parent.precompile
             self.isAttrib = parent.isAttrib
             self.inURL = parent.inURL
             self.inURLPath = parent.inURLPath
-            self.inURLParam = parent.inURLParam
+            self.inURLQuery = parent.inURLQuery
+            self.inURLFragment = parent.inURLFragment
             self.inJS = parent.inJS
             self.inJSSingleQuoteString = parent.inJSSingleQuoteString
 
@@ -317,7 +320,8 @@ class WovenContext(WebContext):
         if isAttrib is not None: self.isAttrib = isAttrib
         if inURL is not None: self.inURL = inURL
         if inURLPath is not None: self.inURLPath = inURLPath
-        if inURLParam is not None: self.inURLParam = inURLParam
+        if inURLQuery is not None: self.inURLQuery = inURLQuery
+        if inURLFragment is not None: self.inURLFragment = inURLFragment
         if inJS is not None: self.inJS = inJS
         if inJSSingleQuoteString is not None: self.inJSSingleQuoteString = inJSSingleQuoteString
 
@@ -328,7 +332,7 @@ class WovenContext(WebContext):
         params.extend('%s=True' % flag
                       for flag in ['isAttrib', 'inURL', 'inJS',
                                    'inJSSingleQuoteString', 'inURLPath',
-                                   'inURLParam']
+                                   'inURLQuery', 'inURLFragment']
                       if getattr(self, flag))
         return "%s(%s)" % (self.__class__.__name__, ', '.join(params))
         
@@ -350,6 +354,7 @@ class WovenContext(WebContext):
         cloned.isAttrib = self.isAttrib
         cloned.inURL = self.inURL
         cloned.inURLPath = self.inURLPath
-        cloned.inURLParam = self.inURLParam
+        cloned.inURLQuery = self.inURLQuery
+        cloned.inURLFragment = self.inURLFragment
         return cloned
         

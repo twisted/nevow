@@ -669,8 +669,6 @@ def URLSerializer(original, context):
                               inURL=True)
     pathContext = WovenContext(parent=urlContext, precompile=context.precompile,
                                inURLPath=True)
-    paramContext = WovenContext(parent=urlContext, precompile=context.precompile,
-                               inURLParam=True)
     if original.scheme:
         yield serialize(original.scheme, urlContext)
         yield '://'
@@ -680,6 +678,9 @@ def URLSerializer(original, context):
         yield serialize(pathsegment, pathContext)
     query = original._querylist
     if query:
+        queryContext = WovenContext(parent=urlContext,
+                                    precompile=context.precompile,
+                                    inURLQuery=True)
         yield '?'
         first = True
         for key, value in query:
@@ -688,13 +689,16 @@ def URLSerializer(original, context):
                 yield '&amp;'
             else:
                 first = False
-            yield serialize(key, paramContext)
+            yield serialize(key, queryContext)
             if value is not None:
                 yield '='
-                yield serialize(value, paramContext)
+                yield serialize(value, queryContext)
     if original.fragment:
+        fragmentContext = WovenContext(parent=urlContext,
+                                       precompile=context.precompile,
+                                       inURLFragment=True)
         yield "#"
-        yield serialize(original.fragment, paramContext)
+        yield serialize(original.fragment, fragmentContext)
 
 
 def URLOverlaySerializer(original, context):
