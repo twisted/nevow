@@ -202,19 +202,28 @@ class TestComponentCoding(TestCase):
 
     def test_iriencodePath(self):
         """
-        L{iriencodePath} should avoid percent-encoding characters not reserved
+        L{url.iriencodePath} should not percent-encode characters not reserved
         in path segments.
         """
         self.assertMatches(url.iriencodePath(url.gen_delims+url.sub_delims),
                            ":%2F%3F%23%5B%5D@!$&'()*+,;=")
 
 
-    def test_iriencodeParam(self):
+    def test_iriencodeQuery(self):
         """
-        L{iriencodeParam} should avoid percent-encoding characters not reserved
-        in query and fragment components.
+        L{url.iriencodeQuery} should not percent-encode characters not reserved
+        in x-www-form-urlencoded queries.
         """
-        self.assertMatches(url.iriencodeParam(url.gen_delims+url.sub_delims),
+        self.assertMatches(url.iriencodeQuery(url.gen_delims+url.sub_delims),
+                           ":/?%23%5B%5D@!$%26'()*%2B,;%3D")
+
+
+    def test_iriencodeFragment(self):
+        """
+        L{url.iriencodeFragment} should not percent-encode characters not reserved
+        in fragment components.
+        """
+        self.assertMatches(url.iriencodeFragment(url.gen_delims+url.sub_delims),
                            ":/?%23%5B%5D@!$&'()*+,;=")
 
 

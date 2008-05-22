@@ -65,24 +65,38 @@ def iriencode(s, unencoded=''):
 def iriencodePath(s):
     """
     L{iriencode} convenience wrapper for path segments.
-    
-    This avoid percent-encoding characters in L{sub_delims} and C{':@'}.
+
+    This avoids percent-encoding characters in L{sub_delims} and C{':@'}.
 
     @see: RFC 3986 section 3.3, Path
     """
     return iriencode(s, unencoded=sub_delims + ':@')
 
 
+_queryfield_safe = ((sub_delims + ':@/?')
+                    .replace('&', '')
+                    .replace('=', '')
+                    .replace('+', ''))
 
-def iriencodeParam(s):
+def iriencodeQuery(s):
     """
-    L{iriencode} convenience wrapper for query and fragment components.
+    L{iriencode} convenience wrapper for x-www-form-urlencoded query fields.
     
+    This is like L{iriencodeFragment}, but without C{'&=+'}.
+    """
+    return iriencode(s, unencoded=_queryfield_safe)
+
+
+
+def iriencodeFragment(s):
+    """
+    L{iriencode} convenience wrapper for fragment components.
+
     This is like L{iriencodePath}, but with the addition of C{'/?'}.
 
-    @see: RFC 3986 section 3.4, Query and section 3.5, Fragment
+    @see: RFC 3986 section 3.5, Fragment
     """
-    return iriencode(s, unencoded=sub_delims + ':@/?' )
+    return iriencode(s, unencoded=sub_delims + ':@/?')
 
 
 
