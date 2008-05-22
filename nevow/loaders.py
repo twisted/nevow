@@ -27,9 +27,7 @@ from zope.interface import implements
 from twisted.python.reflect import getClass
 from twisted.web import microdom
 
-from nevow import context
 from nevow import inevow
-from nevow import tags
 from nevow import flat
 from nevow.flat import flatsax
 from nevow.util import CachedFile

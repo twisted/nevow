@@ -54,7 +54,7 @@ class URL(object):
     and L{fromRequest} class methods need overriding.
 
     @type fragment: C{str}
-    @ivar fragment: The fragment portion of the URL.
+    @ivar fragment: The fragment portion of the URL, decoded.
     """
 
     def __init__(self, scheme='http', netloc='localhost', pathsegs=None,
@@ -127,7 +127,7 @@ class URL(object):
         u = klass(
             scheme, netloc,
             [urllib.unquote(seg) for seg in path.split('/')[1:]],
-            unquerify(query), fragment)
+            unquerify(query), urllib.unquote(fragment))
         return u
     fromString = classmethod(fromString)
 

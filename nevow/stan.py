@@ -563,6 +563,16 @@ for forward in ['__call__', '__getitem__', 'fillSlots']:
     setattr(PatternTag, forward, makeForwarder(forward))
 
 def _locatePatterns(tag, pattern, default, loop=True):
+    """
+    Find tags with the given pattern which are children of the given tag.
+
+    @param tag: The L{Tag} the children of which to search.
+    @param pattern: A C{str} giving the name of the patterns to find.
+    @param default: The value to yield if no tags with the given pattern are
+        found.
+    @param loop: A C{bool} indicating whether to cycle through all results
+        infinitely.
+    """
     gen = specialMatches(tag, 'pattern', pattern)
     produced = []
 
@@ -586,7 +596,7 @@ def _locatePatterns(tag, pattern, default, loop=True):
         while True:  yield default.clone(deep=False)
     else:
         while True:  yield default
-Tag._locatePatterns = staticmethod(_locatePatterns)
+Tag._locatePatterns = _locatePatterns
 
 
 def _locateOne(name, locator, descr):

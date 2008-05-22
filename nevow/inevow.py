@@ -88,6 +88,34 @@ class IRenderer(Interface):
         """
 
 
+class IRenderable(Interface):
+    def renderer(name):
+        """
+        Return the render function associated with the given name.
+
+        @type name: C{str}
+        @param name: The value of a render directive encountered in the
+            document returned by a call to L{IRenderable.render}.
+
+        @return: A two-argument callable which will be invoked with the request
+            being responded to and the tag object on which the render directive
+            was encountered.
+        """
+
+
+    def render(request):
+        """
+        Get the document for this L{IRenderable}.
+
+        @type request: L{IRequest} provider or L{NoneType}
+        @param request: The request in response to which this method is being
+            invoked.
+
+        @return: An object which can be flattened.
+        """
+
+
+
 class IRendererFactory(Interface):
     """A renderer factory is capable of taking a renderer directive (a string)
     and returning a callable which when called, will render a portion of DOM.
@@ -511,12 +539,12 @@ class IDocFactory(Interface):
     actually rendered.
     """
 
-    def load(ctx=None, preprocessors=()):
+    def load(ctx=None, preprocessors=(), precompile=None):
         """
         Load a template and return a stan document tree.
 
         @param preprocessors: An iterable of one-argument callables which will
-        be given the stan document tree to transform before it is compiled.
+            be given the stan document tree to transform before it is compiled.
         """
 
 

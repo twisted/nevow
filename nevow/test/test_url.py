@@ -104,6 +104,7 @@ class TestURL(TestCase):
             "http://localhost/foo?n=%2Fa%2Fb",
             "http://example.com/foo!%40%24bar?b!%40z=123",
             "http://localhost/asd?a=asd%20sdf%2F345",
+            "http://localhost/#%7F",
             )
         for test in tests:
             result = str(url.URL.fromString(test))

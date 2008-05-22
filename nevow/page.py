@@ -8,13 +8,16 @@ API Stability: Completely unstable.
 
 from zope.interface import implements
 
-from nevow.inevow import IRequest, IData, IRenderer, IRendererFactory
-from nevow.context import WovenContext
-from nevow.tags import invisible
+from nevow.inevow import IRequest, IRenderable, IRendererFactory
 from nevow.errors import MissingRenderMethod, MissingDocumentFactory
 
 from nevow.util import Expose
 from nevow.rend import _getPreprocessors
+
+from nevow.flat.ten import registerFlattener
+from nevow._flat import FlattenerError, _OldRendererFactory, _ctxForRequest
+from nevow._flat import deferflatten
+
 
 renderer = Expose(
     """
@@ -41,13 +44,17 @@ renderer = Expose(
 
 class Element(object):
     """
-    An Element is an object responsible for rendering part or all of a page.
+    Base for classes which can render part of a page.
 
-    Elements provide a way to separate the responsibility for page rendering
-    into different units of code.
+    An Element is a renderer that can be embedded in a stan document and can
+    hook its template (from the docFactory) up to render methods.
 
-    Elements implement L{IRendererFactory} to return render methods which are
-    registered using L{nevow.page.renderer}.  For example::
+    An Element might be used to encapsulate the rendering of a complex piece of
+    data which is to be displayed in multiple different contexts.  The Element
+    allows the rendering logic to be easily re-used in different ways.
+
+    Element implements L{IRenderable.renderer} to return render methods which
+    are registered using L{nevow.page.renderer}.  For example::
 
         class Menu(Element):
             def items(self, request, tag):
@@ -58,10 +65,14 @@ class Element(object):
     L{nevow.inevow.IRequest} being served and second, the tag object which
     "invoked" the render method.
 
-    @ivar docFactory: The L{inevow.IDocFactory} which will be used during
-    rendering.
+    Element implements L{IRenderable.render} to load C{docFactory} and return
+    the result.
+
+    @type docFactory: L{IDocFactory} provider
+    @ivar docFactory: The factory which will be used to load documents to
+        return from C{render}.
     """
-    implements(IRendererFactory, IRenderer)
+    implements(IRenderable)
 
     docFactory = None
     preprocessors = ()
@@ -71,38 +82,72 @@ class Element(object):
             self.docFactory = docFactory
 
 
-    # IRendererFactory
-    def renderer(self, context, name):
-        renderMethod = renderer.get(self, name, None)
-        if renderMethod is None:
+    def renderer(self, name):
+        """
+        Get the named render method using C{nevow.page.renderer}.
+        """
+        method = renderer.get(self, name, None)
+        if method is None:
             raise MissingRenderMethod(self, name)
-        # XXX Hack to avoid passing context and data to the render method.
-        # Eventually the rendering system should just not pass these to us.
-        return lambda self, ctx, data: renderMethod(IRequest(ctx), ctx.tag)
+        return method
 
 
-    # IRenderer
-    def rend(self, ctx, data):
-        # Unfortunately, we still need a context to make the rest of the
-        # rendering process work.  A goal should be to eliminate this completely.
-        context = WovenContext()
+    def render(self, request):
+        """
+        Load and return C{self.docFactory}.
+        """
+        rend = self.rend
+        if rend.im_func is not Element.__dict__['rend']:
+            context = _ctxForRequest(request, [], self, False)
+            return rend(context, None)
 
-        if self.docFactory is None:
+        docFactory = self.docFactory
+        if docFactory is None:
             raise MissingDocumentFactory(self)
+        return docFactory.load(None, _getPreprocessors(self))
 
-        preprocessors = _getPreprocessors(self)
 
-        doc = self.docFactory.load(context, preprocessors)
+    def rend(self, context, data):
+        """
+        Backwards compatibility stub.  This is only here so that derived
+        classes can upcall to it.  It is not otherwise used in the rendering
+        process.
+        """
+        context.remember(_OldRendererFactory(self), IRendererFactory)
+        docFactory = self.docFactory
+        if docFactory is None:
+            raise MissingDocumentFactory(self)
+        return docFactory.load(None, _getPreprocessors(self))
 
-        context.remember(self, IData)
-        context.remember(self, IRenderer)
-        context.remember(self, IRendererFactory)
-        context.tag = invisible[doc]
-        return context
+
+
+def _flattenElement(element, ctx):
+    """
+    Use the new flattener implementation to flatten the given L{IRenderable} in
+    a manner appropriate for the specified context.
+    """
+    if ctx.precompile:
+        return element
+
+    synchronous = []
+    accumulator = []
+    request = IRequest(ctx, None) # XXX None case is DEPRECATED
+    finished = deferflatten(request, element, ctx.isAttrib, True, accumulator.append)
+    def cbFinished(ignored):
+        synchronous.append(None)
+        return accumulator
+    finished.addCallback(cbFinished)
+    if synchronous:
+        return accumulator
+    return finished
+
+registerFlattener(_flattenElement, Element)
 
 
 __all__ = [
-    'renderer',
+    'FlattenerError',
 
     'Element',
+
+    'renderer', 'deferflatten',
     ]

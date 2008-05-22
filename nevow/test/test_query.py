@@ -270,3 +270,12 @@ class TestGenerator(testutil.TestCase):
     def testXmlMissing(self):
         self.assertRaises(stan.NodeNotFound, IQ(stan.xml('<html>hello</html>')).patternGenerator, 'foo')
 
+
+    def test_listOfTagPatternGenerator(self):
+        """
+        Querying a list which contains a tag for patterns gives back the tag if
+        the tag has a matching pattern special.
+        """
+        patterns = IQ([tags.div(pattern="foo", bar="baz")]).patternGenerator("foo")
+        for i in xrange(3):
+            self.assertEqual(patterns.next().attributes['bar'], "baz")

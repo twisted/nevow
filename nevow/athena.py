@@ -10,7 +10,7 @@ from twisted.python import log, failure, context
 from twisted.python.util import sibpath
 from twisted import plugin
 
-from nevow import inevow, plugins, flat
+from nevow import inevow, plugins, flat, _flat
 from nevow import rend, loaders, url, static
 from nevow import json, util, tags, guard, stan
 from nevow.util import CachedFile
@@ -1304,14 +1304,18 @@ class _LiveMixin(_HasJSClass):
         return ()
 
 
-    def rend(self, context, data):
+    def _prepare(self, tag):
+        """
+        Check for clearly incorrect settings of C{self.jsClass} and
+        C{self.page}, add this object to the page and fill the I{athena:id}
+        slot with this object's Athena identifier.
+        """
         assert isinstance(self.jsClass, unicode), "jsClass must be a unicode string"
 
         if self.page is None:
             raise OrphanedFragment(self)
         self._athenaID = self.page.addLocalObject(self)
-        context.fillSlots('athena:id', self._athenaID)
-        return super(_LiveMixin, self).rend(context, data)
+        tag.fillSlots('athena:id', str(self._athenaID))
 
 
     def setFragmentParent(self, fragmentParent):
@@ -1341,6 +1345,20 @@ class _LiveMixin(_HasJSClass):
         fragmentParent.liveFragmentChildren.append(self)
 
 
+    def _flatten(self, what):
+        """
+        Synchronously flatten C{what} and return the result as a C{str}.
+        """
+        # Nested import because in a significant stroke of misfortune,
+        # nevow.testutil already depends on nevow.athena.  It makes more sense
+        # for the dependency to go from nevow.athena to nevow.testutil.
+        # Perhaps a sane way to fix this would be to move FakeRequest to a
+        # different module from whence nevow.athena and nevow.testutil could
+        # import it. -exarkun
+        from nevow.testutil import FakeRequest
+        return "".join(_flat.flatten(FakeRequest(), what, False, False))
+
+
     def _structured(self):
         """
         Retrieve an opaque object which may be usable to construct the
@@ -1360,7 +1378,7 @@ class _LiveMixin(_HasJSClass):
         markup = context.call(
             {'children': children,
              'requiredModules': requiredModules},
-            flat.flatten, tags.div(xmlns="http://www.w3.org/1999/xhtml")[self]).decode('utf-8')
+            self._flatten, tags.div(xmlns="http://www.w3.org/1999/xhtml")[self]).decode('utf-8')
 
         del children[0]
 
@@ -1490,86 +1508,28 @@ class _LiveMixin(_HasJSClass):
 
 class LiveFragment(_LiveMixin, rend.Fragment):
     """
-    Base-class for fragments of a LivePage.  When being rendered, a
-    LiveFragment has a special ID attribute added to its top-level
-    tag.  This attribute is used to dispatch calls from the client
-    onto the correct object (this one).
+    This class is deprecated because it relies on context objects
+    U{which are being removed from Nevow<http://divmod.org/trac/wiki/WitherContext>}.
 
-    A LiveFragment must use the `liveFragment' renderer somewhere in
-    its document template.  The node given this renderer will be the
-    node used to construct a Widget instance in the browser (where it
-    will be saved as the `node' property on the widget object).
-
-    JavaScript handlers for elements inside this node can use
-    C{Nevow.Athena.Widget.get} to retrieve the widget associated with
-    this LiveFragment.  For example:
-
-        <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
-
-    Methods of the JavaScript widget class can also be bound as event
-    handlers using the handler tag type in the Athena namespace:
-
-        <form xmlns:athena="http://divmod.org/ns/athena/0.7">
-            <athena:handler event="onsubmit" handler="doFoo" />
-        </form>
-
-    This will invoke the C{doFoo} method of the widget which contains the
-    form node.
-
-    Because this mechanism sets up error handling and otherwise reduces the
-    required boilerplate for handling events, it is preferred and
-    recommended over directly including JavaScript in the event handler
-    attribute of a node.
-
-    The C{jsClass} attribute of a LiveFragment instance determines the
-    JavaScript class used to construct its corresponding Widget.  This
-    appears as the 'athena:class' attribute.
-
-    JavaScript modules may import other JavaScript modules by using a
-    special comment which Athena recognizes:
-
-        // import Module.Name
-
-    Different imports must be placed on different lines.  No other
-    comment style is supported for these directives.  Only one space
-    character must appear between the string 'import' and the name of
-    the module to be imported.  No trailing whitespace or
-    non-whitespace is allowed.  There must be exactly one space
-    between '//' and 'import'.  There must be no preceeding whitespace
-    on the line.
-
-    C{Nevow.Athena.Widget.callRemote} can be given permission to invoke methods
-    on L{LiveFragment} instances by passing the functions which implement those
-    methods to L{nevow.athena.expose} in this way::
-
-        class SomeFragment(LiveFragment):
-            def someMethod(self, ...):
-                ...
-            expose(someMethod)
-
-    Only methods exposed in this way will be accessible.
-
-    L{LiveFragment.callRemote} can be used to invoke any method of the widget
-    on the client.
-
-    Elements with id attributes will be rewritten so that the id is unique to
-    that particular instance. The client-side C{Nevow.Athena.Widget.nodeById}
-    API is provided to locate these later on. For example:
-
-        <div id="foo" />
-
-    and then:
-
-        var node = self.nodyById('foo');
-
-    On most platforms, this API will be much faster than similar techniques
-    using C{Nevow.Athena.Widget.nodeByAttribute} etc.
+    @see: L{LiveElement}
     """
     def __init__(self, *a, **kw):
         super(LiveFragment, self).__init__(*a, **kw)
         warnings.warn("[v0.10] LiveFragment has been superceded by LiveElement.",
-                      category=PendingDeprecationWarning,
+                      category=DeprecationWarning,
                       stacklevel=2)
+
+
+    def rend(self, context, data):
+        """
+        Hook into the rendering process in order to check preconditions and
+        make sure the document will actually be renderable by satisfying
+        certain Athena requirements.
+        """
+        context = rend.Fragment.rend(self, context, data)
+        self._prepare(context.tag)
+        return context
+
 
 
 
@@ -1590,20 +1550,20 @@ class LiveElement(_LiveMixin, Element):
 
         <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
 
-    Methods of the JavaScript widget class can also be bound as event
-    handlers using the handler tag type in the Athena namespace:
+    Methods of the JavaScript widget class can also be bound as event handlers
+    using the handler tag type in the Athena namespace:
 
         <form xmlns:athena="http://divmod.org/ns/athena/0.7">
             <athena:handler event="onsubmit" handler="doFoo" />
         </form>
 
-    This will invoke the C{doFoo} method of the widget which contains the
-    form node.
+    This will invoke the C{doFoo} method of the widget which contains the form
+    node.
 
     Because this mechanism sets up error handling and otherwise reduces the
-    required boilerplate for handling events, it is preferred and
-    recommended over directly including JavaScript in the event handler
-    attribute of a node.
+    required boilerplate for handling events, it is preferred and recommended
+    over directly including JavaScript in the event handler attribute of a
+    node.
 
     The C{jsClass} attribute of a LiveElement instance determines the
     JavaScript class used to construct its corresponding Widget.  This appears
@@ -1635,9 +1595,10 @@ class LiveElement(_LiveMixin, Element):
     L{LiveElement.callRemote} can be used to invoke any method of the widget on
     the client.
 
-    Elements with id attributes will be rewritten so that the id is unique to
-    that particular instance. The client-side C{Nevow.Athena.Widget.nodeById}
-    API is provided to locate these later on. For example:
+    XML elements with id attributes will be rewritten so that the id is unique
+    to that particular instance. The client-side
+    C{Nevow.Athena.Widget.nodeById} API is provided to locate these later
+    on. For example:
 
         <div id="foo" />
 
@@ -1648,6 +1609,16 @@ class LiveElement(_LiveMixin, Element):
     On most platforms, this API will be much faster than similar techniques
     using C{Nevow.Athena.Widget.nodeByAttribute} etc.
     """
+    def render(self, request):
+        """
+        Hook into the rendering process in order to check preconditions and
+        make sure the document will actually be renderable by satisfying
+        certain Athena requirements.
+        """
+        document = tags.invisible[Element.render(self, request)]
+        self._prepare(document)
+        return document
+
 
 
 class IntrospectionFragment(LiveFragment):

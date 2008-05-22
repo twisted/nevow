@@ -12,7 +12,7 @@ is kind of close.
 import re, types
 
 from nevow.inevow import IAthenaTransportable
-from nevow import rend, page, flat, tags
+from nevow import rend, page, _flat, tags
 
 class ParseError(ValueError):
     pass
@@ -288,7 +288,9 @@ def _serialize(obj, w, seen):
     elif isinstance(obj, (rend.Fragment, page.Element)):
         wrapper = tags.div(xmlns="http://www.w3.org/1999/xhtml")
         w('"')
-        w(stringEncode(flat.flatten(wrapper[obj]).decode('utf-8')))
+        w(stringEncode(
+                "".join(_flat.flatten(None, wrapper[obj],
+                                      False, False)).decode('utf-8')))
         w('"')
     else:
         transportable = IAthenaTransportable(obj, None)

@@ -8,7 +8,7 @@ Tests for L{nevow.json}.
 from zope.interface import implements
 
 from nevow.inevow import IAthenaTransportable
-from nevow import json, rend, page, loaders, tags, athena
+from nevow import json, rend, page, loaders, tags, athena, testutil
 
 from twisted.trial import unittest
 
@@ -171,7 +171,8 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         livePage = DummyLivePage()
         liveFragment = cls(
             docFactory=loaders.stan(
-                tags.div(render=tags.directive(renderer))['Hello']))
+                [tags.div(render=tags.directive(renderer))['Hello'],
+                 tags.div(render=tags.directive('foo'))]))
         liveFragment.setFragmentParent(livePage)
         self.assertEqual(
             json.serialize(liveFragment),
@@ -183,7 +184,14 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         Like L{test_doubleFragmentSerialization} but for L{athena.LiveFragment}
         instances.
         """
-        return self._doubleLiveSerialization(athena.LiveFragment, 'liveFragment')
+        class AnyLiveFragment(athena.LiveFragment):
+            """
+            Just some L{LiveFragment} subclass, such as an application might
+            define.
+            """
+            def render_foo(self, ctx, data):
+                return ctx.tag
+        self._doubleLiveSerialization(AnyLiveFragment, 'liveFragment')
 
 
     def test_doubleLiveElementSerialization(self):
@@ -191,7 +199,18 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         Like L{test_doubleFragmentSerialization} but for L{athena.LiveElement}
         instances.
         """
-        return self._doubleLiveSerialization(athena.LiveElement, 'liveElement')
+        requests = []
+        class AnyLiveElement(athena.LiveElement):
+            """
+            Just some L{LiveElement} subclass, such as an application might
+            define.
+            """
+            def foo(self, request, tag):
+                requests.append(request)
+                return tag
+            page.renderer(foo)
+        self._doubleLiveSerialization(AnyLiveElement, 'liveElement')
+        self.assertTrue(isinstance(requests[0], testutil.FakeRequest))
 
 
     def test_unsupportedSerialization(self):

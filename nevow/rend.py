@@ -363,15 +363,11 @@ def originalFactory(ctx):
 
 
 class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
-    """A fragment is a renderer that can be embedded in a stan document and
-    hooks its template (from the docFactory) up to its data_ and render_
-    methods, i.e. it remembers itself as the IRendererFactory and IContainer.
+    """
+    This class is deprecated because it relies on context objects
+    U{which are being removed from Nevow<http://divmod.org/trac/wiki/WitherContext>}.
 
-    Fragment primarily serves as the base for Page, Nevow's web resource, but
-    it can be used for more complex rendering. For instance, a fragment might
-    be used to encapsulate the rendering of a complex piece of data where the
-    template is read from disk and contains standard renderers (sequence,
-    mapping etc) and/or custom render methods.
+    @see: L{Element}
     """
     implements(inevow.IRenderer, inevow.IGettable)
 
