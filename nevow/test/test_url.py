@@ -218,6 +218,62 @@ class TestComponentCoding(TestCase):
                            ":/?%23%5B%5D@!$&'()*+,;=")
 
 
+    # Examples for querify/unquerify.
+    queryPairs = [('=', [('', '')]),
+                  ('==', [('', '=')]),
+                  ('k', [('k', None)]),
+                  ('k=', [('k', '')]),
+                  ('k=v', [('k', 'v')]),
+                  ('%26', [('%26', None)]),
+                  ('%3D', [('%3D', None)]),
+                  ('%26=%3D', [('%26', '%3D')]),
+                  ('%3D=%26', [('%3D', '%26')]),
+                  ('%2B=%2B', [('%2B', '%2B')])]
+
+
+    def test_querify(self):
+        """
+        L{url.querify} should compose x-www-form-urlencoded strings.
+        """
+        for (q, p) in self.queryPairs:
+            self.assertEquals(url.querify(p), q)
+            for (q2, p2) in self.queryPairs:
+                self.assertEquals(url.querify(p+p2), q+'&'+q2)
+
+
+    def test_unquerify(self):
+        """
+        L{url.unquerify} should decompose x-www-form-urlencoded strings.
+        """
+        for (q, p) in self.queryPairs:
+            self.assertEquals(url.unquerify(q), p)
+            for (q2, p2) in self.queryPairs:
+                self.assertEquals(url.unquerify(q+'&'+q2), p+p2)
+
+
+    def test_querifyEmpty(self):
+        """
+        L{url.querify} should coalesce empty fields.
+        """
+        for p in [[], [('', None)], [('', None), ('', None)]]:
+            self.assertEquals(url.querify(p), '')
+
+
+    def test_unquerifyEmpty(self):
+        """
+        L{url.unquerify} should coalesce empty fields.
+        """
+        for q in ['', '&', '&&']:
+            self.assertEquals(url.unquerify(q), [])
+
+
+    def test_unquerifyPlus(self):
+        """
+        L{url.unquerify} should replace C{'+'} with C{' '}.
+        """
+        self.assertEquals(url.unquerify('foo=bar+baz'), [('foo', 'bar baz')])
+
+
 
 class _IncompatibleSignatureURL(URL):
     """

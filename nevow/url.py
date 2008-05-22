@@ -118,14 +118,44 @@ def iridecode(s):
 
 
 
-def _uqf(query):
+def _querify(querysegs):
+    """
+    Join key/value components into an x-www-form-urlencoded string.
+
+    No character encoding occurs.
+
+    @param querysegs: list of L{str} pairs
+
+    @rtype: L{str}
+    """
+    for (k, v) in querysegs:
+        if v is not None:
+            yield '='.join((k, v))
+        elif k:
+            yield k
+querify = lambda querysegs: '&'.join(_querify(querysegs))
+
+
+
+def _unquerify(query):
+    """
+    Split an x-www-form-urlencoded string into key/value components.
+
+    C{'+'} is replaced with C{' '}, but no other character decoding occurs.
+
+    @param query: application/x-www-form-urlencoded type
+    @type query: L{str}
+
+    @return: list of L{str} pairs
+
+    """
     query = query.replace('+', ' ')
     for x in query.split('&'):
         if '=' in x:
             yield tuple(x.split('=', 1))
         elif x:
             yield (x, None)
-unquerify = lambda query: list(_uqf(query))
+unquerify = lambda query: list(_unquerify(query))
 
 
 
