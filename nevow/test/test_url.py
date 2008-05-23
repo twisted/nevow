@@ -283,6 +283,64 @@ class TestComponentCoding(TestCase):
         self.assertEquals(url.unquerify('foo=bar+baz'), [('foo', 'bar baz')])
 
 
+    # Examples for parseIRI/unparseIRI.
+    uriParses = [
+        ('', (u'', u'', [u''], [], u'')),
+        ('/', (u'', u'', [u'', u''], [], u'')),
+        ('foo', (u'', u'', [u'foo'], [], u'')),
+        ('/foo', (u'', u'', [u'', u'foo'], [], u'')),
+        ('foo/', (u'', u'', [u'foo', u''], [], u'')),
+        ('http://foo', (u'http', u'foo', [u''], [], u'')),
+        ('http://foo/', (u'http', u'foo', [u'', u''], [], u'')),
+        ('http://foo/p#f', (u'http', u'foo', [u'', u'p'], [], u'f')),
+        ('http://foo/p/p?q&q=q#f', (u'http', u'foo', [u'', u'p', u'p'],
+                                    [(u'q', None), (u'q', u'q')], u'f')),
+        (theurl, (u'http', u'www.foo.com:80',
+                  [u'', u'a', u'nice', u'path', u''],
+                  [(u'zot', u'23'), (u'zut', None)], u'')),
+        # nesting
+        ('http://foo/p?q=http://foo/p?q%26q%3Dq%23f&@=:#g',
+         (u'http', u'foo', [u'', u'p'],
+          [(u'q', u'http://foo/p?q&q=q#f'), ('@',':')], u'g')),
+        # percent-decoding
+        ('http://%2525/%2525/%2525?%2525&%2525=%2525#%2525',
+         (u'http', u'%25', [u'', u'%25', u'%25'],
+          [(u'%25', None), (u'%25', u'%25')], u'%25')),
+        # UTF-8 decoding
+        ('http://%C3%A9/%C3%A9/%C3%A9?%C3%A9&%C3%A9=%C3%A9#%C3%A9',
+         (u'http', u'\xe9', [u'', u'\xe9', u'\xe9'],
+          [(u'\xe9', None), (u'\xe9', u'\xe9')], u'\xe9')),
+    ]
+
+
+    def test_parseIRI(self):
+        """
+        L{url.parseIRI} should parse and decode URIs and URI-encoded IRIs.
+        """
+        for (s, p) in self.uriParses:
+            self.assertEquals(url.parseIRI(s), p)
+
+
+    def test_parseIRIUnicode(self):
+        """
+        L{url.parseIRI} should parse and decode L{unicode} IRIs.
+        """
+        for (s, p) in self.uriParses:
+            self.assertEquals(url.parseIRI(s.decode('ascii')), p)
+        self.assertEquals(
+            url.parseIRI(u'http://\xe9/\xe9/\xe9?\xe9&\xe9=\xe9#\xe9'),
+            (u'http', u'\xe9', [u'', u'\xe9', u'\xe9'],
+             [(u'\xe9', None), (u'\xe9', u'\xe9')], u'\xe9'))
+
+
+    def test_unparseIRI(self):
+        """
+        L{url.unparseIRI} should encode and format IRI components.
+        """
+        for (s, p) in self.uriParses:
+            self.assertMatches(url.unparseIRI(p), s)
+
+
 
 class _IncompatibleSignatureURL(URL):
     """

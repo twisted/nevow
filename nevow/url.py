@@ -171,6 +171,61 @@ unquerify = lambda query: list(_unquerify(query))
 
 
 
+def _maybe(f, x):
+    if x is not None:
+        return f(x)
+
+def parseIRI(s):
+    """
+    Parse a URI/IRI into its components.
+
+    The URI is split into five major components:  I{scheme}, I{netloc}, I{path},
+    I{query}, and I{fragment}.
+
+    The I{path} and I{query} components are further parsed:
+
+        I{path} is split into a list of segments, such that a path containing
+        I{N} C{'/'} separators will always have I{N+1} segments.  A leading
+        segment of C{u''} indicates an absolute path reference;  otherwise, the
+        path is relative (this implies that I{netloc} is absent).
+
+        I{query} is split into a list of key and (optional) value fields.
+        (see L{unquerify})
+
+    All returned components are fully percent-decoded to L{unicode} strings.
+
+    @return: C{(scheme, netloc, pathsegs, querysegs, fragment)}, per above
+    """
+    (scheme, netloc, path, query, fragment) = urlparse.urlsplit(s)
+    pathsegs = map(iridecode, path.split('/'))
+    querysegs = [(iridecode(k), _maybe(iridecode, v))
+                 for (k, v) in unquerify(query)]
+    return (iridecode(scheme),
+            iridecode(netloc),
+            pathsegs,
+            querysegs,
+            iridecode(fragment))
+
+
+
+def unparseIRI((scheme, netloc, pathsegs, querysegs, fragment)):
+    """
+    Format a URI/IRI from its components.
+
+    See L{parseIRI};  this is the inverse.
+    """
+    path = '/'.join(map(iriencodePath, pathsegs))
+    query = querify((iriencodeQuery(k), _maybe(iriencodeQuery, v))
+                    for (k, v) in querysegs)
+    return urlparse.urlunsplit(
+        (iriencode(scheme),
+         iriencodePath(netloc),
+         path,
+         query,
+         iriencodeFragment(fragment)))
+
+
+
 class URL(object):
     """Represents a URL and provides a convenient API for modifying its parts.
 
