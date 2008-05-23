@@ -257,37 +257,34 @@ class URL(object):
     @type netloc: C{unicode}
     @ivar netloc: the host (and possibly port)
 
-    @type pathsegs: list of C{unicode}/flattenable
+    @type pathsegs: list of C{unicode}
     @ivar pathsegs: the path
 
-    @type querysegs: list of pairs of C{unicode}/flattenable (or C{None},
-                     for values)
+    @type querysegs: list of pairs of C{unicode} (or C{None}, for values)
     @ivar querysegs: the query parameters, as name-value pairs
 
-    @type fragment: C{unicode} or flattenable
+    @type fragment: C{unicode}
     @ivar fragment: the fragment identifier
     """
 
     def __init__(self, scheme=u'http', netloc=u'', pathsegs=None,
                  querysegs=None, fragment=None):
-        def _maybeDecode(s):
-            if isinstance(s, basestring):
-                s = urllib.unquote(s)
+        def _unicodify(s):
             if isinstance(s, str):
-                s = s.decode('utf-8')
+                s = s.decode('ascii')
             return s
-        self.scheme = _maybeDecode(scheme)
-        self.netloc = _maybeDecode(netloc)
+        self.scheme = _unicodify(scheme)
+        self.netloc = _unicodify(netloc)
         if pathsegs is None:
             pathsegs = [u'']
-        self._qpathlist = map(_maybeDecode, pathsegs)
+        self._qpathlist = map(_unicodify, pathsegs)
         if querysegs is None:
             querysegs = []
-        self._querylist = [(_maybeDecode(k), _maybeDecode(v))
+        self._querylist = [(_unicodify(k), _unicodify(v))
                            for (k, v) in querysegs]
         if fragment is None:
             fragment = u''
-        self.fragment = _maybeDecode(fragment)
+        self.fragment = _unicodify(fragment)
 
 
     def path(self):
@@ -335,13 +332,21 @@ class URL(object):
 
     ## class methods used to build URL objects ##
 
-    def fromString(klass, st):
+    def fromString(cls, s):
         """
         Parse the given string into a URL object.
+
+        Relative path references are not supported.
+
+        @param s: a valid URI or IRI
+        @type s: L{unicode} or L{str}
         """
-        scheme, netloc, path, query, fragment = urlparse.urlsplit(st)
-        return klass(
-            scheme, netloc, path.split('/')[1:], unquerify(query), fragment)
+        (scheme, netloc, pathsegs, querysegs, fragment) = parseIRI(s)
+        # We don't store the leading u'' segment.
+        if not pathsegs.pop(0) == u'':
+            raise NotImplementedError(
+                'relative path references not supported: %r' % (s,))
+        return cls(scheme, netloc, pathsegs, querysegs, fragment)
     fromString = classmethod(fromString)
 
     def fromRequest(klass, request):
@@ -578,7 +583,10 @@ class URL(object):
     ## object protocol override ##
 
     def __str__(self):
-        return str(flat.flatten(self)).replace('&amp;', '&')  # FIXME temporary
+        # Note:  we store our path with an implied leading u'' segment, so add
+        # it back in before passing to unparseIRI.
+        return unparseIRI((self.scheme, self.netloc, [u'']+self._qpathlist,
+                           self._querylist, self.fragment))
 
     def __repr__(self):
         return (

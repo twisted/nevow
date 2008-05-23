@@ -404,31 +404,41 @@ class TestURL(TestCase):
             self.assertURL(u, u'http', u'', [u''], [], u'')
 
 
-    def test_initASCII(self):
+    def test_init(self):
         """
-        L{URL} should percent-decode its parameters, and coerce L{str} to
-        L{unicode}.
+        L{URL} should accept L{unicode} and ASCII L{str} parameters.
         """
         for u in [URL(u's', u'h', [u'p'], [(u'k', u'v'), (u'k', None)], u'f'),
-                  URL('s', 'h', ['p'], [('k', 'v'), ('k', None)], 'f'),
-                  URL(u's', u'%68', [u'%70'], [(u'%6B', u'%76'), (u'%6B', None)], u'%66'),
-                  URL('s', '%68', ['%70'], [('%6B', '%76'), ('%6B', None)], '%66')]:
+                  URL('s', 'h', ['p'], [('k', 'v'), ('k', None)], 'f')]:
             self.assertUnicoded(u)
             self.assertURL(u, u's', u'h', [u'p'], [(u'k', u'v'), (u'k', None)], u'f')
 
+        self.assertURL(URL(u'http', u'\xe0', [u'\xe9'],
+                           [(u'\u03bb', u'\u03c0')], u'\u22a5'),
+                       u'http', u'\xe0', [u'\xe9'],
+                       [(u'\u03bb', u'\u03c0')], u'\u22a5')
 
-    def test_initUnicode(self):
+
+    def test_initPercent(self):
         """
-        L{URL} should accept non-ASCII L{unicode} parameters, and decode
-        non-ASCII L{str} parameters according to RFC 3987.
+        L{URL} should accept (and not interpret) percent characters.
         """
-        for u in [URL(u'http', u'\xe0', [u'\xe9'],
-                      [(u'\u03bb', u'\u03c0')], u'\u22a5'),
-                  URL('http', '%C3%A0', ['%C3%A9'],
-                      [('%CE%BB', '%CF%80')], '%E2%8A%A5')]:
+        for u in [URL(u's', u'%68', [u'%70'], [(u'%6B', u'%76'), (u'%6B', None)], u'%66'),
+                  URL('s', '%68', ['%70'], [('%6B', '%76'), ('%6B', None)], '%66')]:
             self.assertUnicoded(u)
-            self.assertURL(u, u'http', u'\xe0', [u'\xe9'],
-                           [(u'\u03bb', u'\u03c0')], u'\u22a5')
+            self.assertURL(u, u's', u'%68', [u'%70'], [(u'%6B', u'%76'), (u'%6B', None)], u'%66')
+
+
+    def test_initNonASCII(self):
+        """
+        L{URL} should reject non-ASCII L{str} parameters.
+        """
+        self.assertRaises(UnicodeDecodeError, URL, scheme='\xe9')
+        self.assertRaises(UnicodeDecodeError, URL, netloc='\xe9')
+        self.assertRaises(UnicodeDecodeError, URL, pathsegs=['\xe9'])
+        self.assertRaises(UnicodeDecodeError, URL, querysegs=[('\xe9', None)])
+        self.assertRaises(UnicodeDecodeError, URL, querysegs=[('', '\xe9')])
+        self.assertRaises(UnicodeDecodeError, URL, fragment='\xe9')
 
 
     def test_initNonString(self):
@@ -772,7 +782,7 @@ class TestURL(TestCase):
         # note the two values for the same name
         self.assertEquals(
             "http://www.foo.com:80/a/nice/path/?zot=23&zut&burp=xxx&zot=32",
-            str(urlpath.add("burp", "xxx").add("zot", 32)))
+            str(urlpath.add("burp", "xxx").add("zot", '32')))
 
     def test_add_noquery(self):
         # fromString is a different code path, test them both
@@ -788,7 +798,7 @@ class TestURL(TestCase):
         urlpath = URL.fromString(theurl)
         self.assertEquals(
             "http://www.foo.com:80/a/nice/path/?zot=32&zut",
-            str(urlpath.replace("zot", 32)))
+            str(urlpath.replace("zot", '32')))
         # replace name without value with name/value and vice-versa
         self.assertEquals(
             "http://www.foo.com:80/a/nice/path/?zot&zut=itworked",
@@ -797,7 +807,7 @@ class TestURL(TestCase):
         # A: we replace both values with a single one
         self.assertEquals(
             "http://www.foo.com:80/a/nice/path/?zot=32&zut",
-            str(urlpath.add("zot", "xxx").replace("zot", 32)))
+            str(urlpath.add("zot", "xxx").replace("zot", '32')))
 
     def test_fragment(self):
         urlpath = URL.fromString(theurl)
@@ -940,7 +950,7 @@ class Serialization(TestCase):
             (r'/foo/', '%2Ffoo%2F'),
             (r'c:\foo\bar bar', 'c:%5Cfoo%5Cbar%20bar'),
             (r'&<>', '&amp;%3C%3E'),
-            (u'!"\N{POUND SIGN}$%^&*()_+'.encode('utf-8'), '!%22%C2%A3$%25%5E&amp;*()_+'),
+            (u'!"\N{POUND SIGN}$%^&*()_+', '!%22%C2%A3$%25%5E&amp;*()_+'),
             )
         for test, result in tests:
             u = URL.fromString(base).child(test)
