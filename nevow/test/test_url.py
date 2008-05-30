@@ -15,11 +15,11 @@ from nevow.flat import flatten
 
 theurl = "http://www.foo.com:80/a/nice/path/?zot=23&zut"
 
-# RFC1808 relative tests. Not all of these pass yet.
-rfc1808_relative_link_base='http://a/b/c/d;p?q#f'
-rfc1808_relative_link_tests = [
+# Examples from RFC 3986 section 5.4, Reference Resolution Examples
+rfc3986_relative_link_base = 'http://a/b/c/d;p?q'
+rfc3986_relative_link_tests = [
     # "Normal"
-    ('g:h', 'g:h'),
+    #('g:h', 'g:h'),     # Not supported:  scheme with relative path
     ('g', 'http://a/b/c/g'),
     ('./g', 'http://a/b/c/g'),
     ('g/', 'http://a/b/c/g/'),
@@ -27,41 +27,50 @@ rfc1808_relative_link_tests = [
     ('//g', 'http://g'),
     ('?y', 'http://a/b/c/d;p?y'),
     ('g?y', 'http://a/b/c/g?y'),
-    ('g?y/./x', 'http://a/b/c/g?y/./x'),
     ('#s', 'http://a/b/c/d;p?q#s'),
     ('g#s', 'http://a/b/c/g#s'),
-    ('g#s/./x', 'http://a/b/c/g#s/./x'),
     ('g?y#s', 'http://a/b/c/g?y#s'),
-    #(';x', 'http://a/b/c/d;x'),
+    (';x', 'http://a/b/c/;x'),
     ('g;x', 'http://a/b/c/g;x'),
     ('g;x?y#s', 'http://a/b/c/g;x?y#s'),
+    ('', 'http://a/b/c/d;p?q'),
     ('.', 'http://a/b/c/'),
     ('./', 'http://a/b/c/'),
     ('..', 'http://a/b/'),
     ('../', 'http://a/b/'),
     ('../g', 'http://a/b/g'),
-    #('../..', 'http://a/'),
-    #('../../', 'http://a/'),
+    ('../..', 'http://a/'),
+    ('../../', 'http://a/'),
     ('../../g', 'http://a/g'),
 
-    # "Abnormal"
-    ('', 'http://a/b/c/d;p?q#f'),
-    #('../../../g', 'http://a/../g'),
-    #('../../../../g', 'http://a/../../g'),
-    #('/./g', 'http://a/./g'),
-    #('/../g', 'http://a/../g'),
+    # Abnormal examples
+    # ".." cannot be used to change the authority component of a URI
+    ('../../../g', 'http://a/g'),
+    ('../../../../g', 'http://a/g'),
+    # "." and ".." when they are only part of a segment
+    ('/./g', 'http://a/g'),
+    ('/../g', 'http://a/g'),
     ('g.', 'http://a/b/c/g.'),
     ('.g', 'http://a/b/c/.g'),
     ('g..', 'http://a/b/c/g..'),
     ('..g', 'http://a/b/c/..g'),
+    # unnecessary or nonsensical forms of "." and ".."
     ('./../g', 'http://a/b/g'),
     ('./g/.', 'http://a/b/c/g/'),
     ('g/./h', 'http://a/b/c/g/h'),
     ('g/../h', 'http://a/b/c/h'),
-    #('http:g', 'http:g'),          # Not sure whether the spec means
-    #('http:', 'http:'),            # these two are valid tests or not.
-    ]
+    ('g;x=1/./y', 'http://a/b/c/g;x=1/y'),
+    ('g;x=1/../y', 'http://a/b/c/y'),
+    # separating the reference's query and/or fragment components from the path
+    ('g?y/./x', 'http://a/b/c/g?y/./x'),
+    ('g?y/../x', 'http://a/b/c/g?y/../x'),
+    ('g#s/./x', 'http://a/b/c/g#s/./x'),
+    ('g#s/../x', 'http://a/b/c/g#s/../x'),
 
+    # Not supported:  scheme with relative path
+    #("http:g", "http:g"),              # strict
+    #("http:g", "http://a/b/c/g"),      # non-strict
+    ]
 
 
 _percentenc = lambda s: ''.join('%%%02X' % ord(c) for c in s)
@@ -648,7 +657,35 @@ class TestURL(TestCase):
         # Check that everything from the path onward is removed when the click link
         # has no path.
         u = URL.fromString('http://localhost/foo?abc=def')
-        self.failUnlessEqual(str(u.click('http://www.python.org')), 'http://www.python.org/')
+        self.failUnlessEqual(str(u.click('http://www.python.org')),
+                             'http://www.python.org')
+
+
+    def test_clickDecode(self):
+        """
+        L{URL.click} should decode the reference.
+        """
+        s = ''.join(map(chr, range(0x80)))
+        u = URL.fromString('http://example.com/').click(url.iriencodePath(s))
+        self.assertEqual(u.pathList(), [s])
+
+
+    def test_clickRFC3986(self):
+        """
+        L{URL.click} should correctly resolve the examples in RFC 3986.
+        """
+        base = URL.fromString(rfc3986_relative_link_base)
+        for (ref, result) in rfc3986_relative_link_tests:
+            self.failUnlessEqual(str(base.click(ref)), result)
+
+
+    def test_clickSchemeRelPath(self):
+        """
+        L{URL.click} should not accept schemes with relative paths.
+        """
+        base = URL.fromString(rfc3986_relative_link_base)
+        self.assertRaises(NotImplementedError, base.click, 'g:h')
+        self.assertRaises(NotImplementedError, base.click, 'http:h')
 
 
     def test_cloneUnchanged(self):
@@ -993,16 +1030,6 @@ class Serialization(TestCase):
         tag = tags.invisible[loaders.xmlstr('<a xmlns:n="http://nevow.com/ns/nevow/0.1" href="#"><n:attr name="href"><n:slot name="href"/></n:attr></a>')]
         tag.fillSlots('href', URL.fromString('http://localhost/').add('foo', 'bar').add('baz', 'spam'))
         self.assertEquals(flatten(tag), '<a href="http://localhost/?foo=bar&amp;baz=spam"></a>')
-
-
-    def test_rfc1808(self):
-        """Test the relative link resolving stuff I found in rfc1808 section 5.
-        """
-        base = URL.fromString(rfc1808_relative_link_base)
-        for link, result in rfc1808_relative_link_tests:
-            #print link
-            self.failUnlessEqual(result, flatten(base.click(link)))
-    test_rfc1808.todo = 'Many of these fail miserably at the moment; often with a / where there shouldn\'t be'
 
 
     def test_unicode(self):

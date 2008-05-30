@@ -458,40 +458,45 @@ class URL(object):
         Return a path which is the URL where a browser would presumably
         take you if you clicked on a link with an 'href' as given.
         """
-        scheme, netloc, path, query, fragment = urlparse.urlsplit(href)
-
-        if (scheme, netloc, path, query, fragment) == ('', '', '', '', ''):
+        if not len(href):
             return self
 
-        query = unquerify(query)
+        (scheme, netloc, path, query, fragment) = parseIRI(href)
+        leading = path.pop(0)
 
         if scheme:
-            if path and path[0] == '/':
-                path = path[1:]
-            return self.cloneURL(
-                scheme, netloc, map(raw, path.split('/')), query, fragment)
+            if len(leading):
+                # Schemes with relative paths are not well-defined.  RFC 3986
+                # calls them a "loophole in prior specifications" that should be
+                # avoided, or supported only for backwards compatibility.
+                raise NotImplementedError(
+                    'scheme with relative path: %r' % (href,))
+            return self.cloneURL(scheme, netloc, path, query, fragment)
         else:
             scheme = self.scheme
 
         if not netloc:
             netloc = self.netloc
-            if not path:
-                path = self.path
+            # Merge the paths.
+            if len(leading):
+                # Relative path:  replace the existing path's last segment.
+                path = self._qpathlist[:-1] + [leading] + path
+            elif not len(path):
+                # No path:  keep the existing path (and if possible, the
+                # existing query / fragment).
+                path = self._qpathlist
                 if not query:
                     query = self._querylist
                     if not fragment:
                         fragment = self.fragment
-            else:
-                if path[0] == '/':
-                    path = path[1:]
-                else:
-                    l = self.pathList()
-                    l[-1] = path
-                    path = '/'.join(l)
+            # (Otherwise, the path is absolute, replacing the existing path.)
+        else:
+            # If the netloc (authority) is present, only absolute paths should
+            # be possible.
+            assert not len(leading), '%r: relative path with netloc?' % (href,)
 
         path = normURLPath(path)
-        return self.cloneURL(
-            scheme, netloc, map(raw, path.split('/')), query, fragment)
+        return self.cloneURL(scheme, netloc, path, query, fragment)
 
     ## query manipulation ##
 
@@ -599,13 +604,13 @@ class URL(object):
                self.fragment))
 
 
-def normURLPath(path):
+def normURLPath(pathSegs):
     """
     Normalise the URL path by resolving segments of '.' and '..'.
+
+    @param pathSegs: list of path segments
     """
     segs = []
-
-    pathSegs = path.split('/')
 
     for seg in pathSegs:
         if seg == '.':
@@ -619,7 +624,7 @@ def normURLPath(path):
     if pathSegs[-1:] in (['.'],['..']):
         segs.append('')
 
-    return '/'.join(segs)
+    return segs
 
 
 class URLOverlay(object):
