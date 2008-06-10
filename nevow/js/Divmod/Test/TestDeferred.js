@@ -230,10 +230,29 @@ Divmod.Test.TestDeferred.TestDeferred.methods(
     },
 
 
+    /**
+     * L{Divmod.Defer.DeferredList} should fire immediately if the list of
+     * deferreds is empty.
+     */
     function test_emptyDeferredList(self) {
         var result = null;
         var dl = new Divmod.Defer.DeferredList([]).addCallback(function(res) {
                 result = res;
+            });
+        self.assert(result instanceof Array);
+        self.assertIdentical(result.length, 0);
+    },
+
+
+    /**
+     * L{Divmod.Defer.DeferredList} should fire immediately if the list of
+     * deferreds is empty, even when C{fireOnOneErrback} is passed.
+     */
+    function test_emptyDeferredListErrback(self) {
+        var result;
+        Divmod.Defer.DeferredList([], false, true).addCallback(
+            function(theResult) {
+                result = theResult;
             });
         self.assert(result instanceof Array);
         self.assertIdentical(result.length, 0);

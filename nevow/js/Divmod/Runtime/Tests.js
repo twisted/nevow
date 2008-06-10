@@ -255,3 +255,26 @@ Divmod.Runtime.Tests.ElementPosition.methods(
         document.body.appendChild(div);
         self.assertEqual(parseInt(Divmod.Runtime.theRuntime.findPosY(div)), 5);
     });
+
+
+Divmod.Runtime.Tests.LoadScript = Nevow.Athena.Test.TestCase.subclass('Divmod.Runtime.Tests.LoadScript');
+/**
+ * Tests for L{Divmod.Runtime.Platform.loadScript}.
+ */
+Divmod.Runtime.Tests.LoadScript.methods(
+    /**
+     * L{Divmod.Runtime.Platform.loadScript}'s deferred should errback if
+     * there is an error loading the script.
+     */
+    function test_loadScriptError(self) {
+        var result = Divmod.Runtime.theRuntime.loadScript(
+            '/test_loadScriptError'); // 404
+        result.addCallbacks(
+            function(what) {
+                self.fail('Should have failed: ' + what);
+            },
+            function(err) {
+                err.check(Divmod.Runtime.ScriptLoadingError);
+            });
+        return result;
+    });

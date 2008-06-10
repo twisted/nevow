@@ -967,7 +967,10 @@ Nevow.Athena.Widget.methods(
                 Divmod.Runtime.theRuntime.loadScript(
                     moduleURL));
         }
-        allImportsDone = Divmod.Defer.DeferredList(importDeferreds);
+        allImportsDone = Divmod.Defer.DeferredList(
+            importDeferreds,
+            /* fireOnOneCallback= */false,
+            /* fireOnOneErrback= */true);
         allImportsDone.addCallback(
             function(ignored) {
                 topNode = Divmod.Runtime.theRuntime.firstNodeByAttribute(

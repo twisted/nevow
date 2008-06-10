@@ -336,7 +336,9 @@ Divmod.Defer.DeferredList.methods(
                       consumeErrors /* = false */) {
         self.resultList = new Array(deferredList.length);
         Divmod.Defer.DeferredList.upcall(self, '__init__');
-        if (deferredList.length == 0 && !fireOnOneErrback) {
+        // don't callback in the fireOnOneCallback case because the result
+        // type is different.
+        if (deferredList.length == 0 && !fireOnOneCallback) {
             self.callback(self.resultList);
         }
 

@@ -36,6 +36,43 @@ Nevow.Test.TestWidget.WidgetTests.methods(
     },
 
     /**
+     * L{Nevow.Athena.Widget.addChildWidgetFromWidgetInfo}'s deferred should
+     * errback if one of the import deferreds does.
+     */
+    function test_addChildWidgetFromWidgetInfoError(self) {
+        var requiredModules = [
+            ['test_addChildWidgetFromWidgetInfoError1',
+             '/test_addChildWidgetFromWidgetInfoError1']];
+        var widgetInfo = {
+            requiredModules: requiredModules,
+            id: 'test_addChildWidgetFromWidgetInfoError',
+            'class': 'test_addChildWidgetFromWidgetInfoError',
+            children: [],
+            initArguments: [],
+            markup: ''};
+        var loadScriptError = new Error(
+            'test_addChildWidgetFromWidgetInfoloadScriptError');
+        var origLoadScript = Divmod.Runtime.theRuntime.loadScript;
+        var loadScript = function loadScript(location) {
+            self.assertIdentical(location, requiredModules[0][1]);
+            return Divmod.Defer.fail(loadScriptError);
+        }
+        Divmod.Runtime.theRuntime.loadScript = loadScript;
+        try {
+            var result = self.widget.addChildWidgetFromWidgetInfo(widgetInfo);
+        } finally {
+            Divmod.Runtime.theRuntime.loadScript = origLoadScript;
+        }
+        var theFailure;
+        result.addErrback(
+            function(err) {
+                theFailure = err;
+            });
+        var firstError = theFailure.check(Divmod.Defer.FirstError);
+        self.assertIdentical(firstError.err.error, loadScriptError);
+    }, 
+
+    /**
      * Verify that translateNodeId returns a correctly translated id.
      */
     function test_translateNodeId(self) {

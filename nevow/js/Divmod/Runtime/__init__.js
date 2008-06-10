@@ -25,6 +25,11 @@ Divmod.Runtime.NodeAttributeError.methods(
     });
 
 
+
+Divmod.Runtime.ScriptLoadingError = Divmod.Error.subclass('Divmod.Runtime.ScriptLoadingError');
+
+
+
 /**
  * Wrapper around a lower-level scheduled timed call which provides additional
  * useful operations.
@@ -161,8 +166,6 @@ Divmod.Runtime.Platform.methods(
     function __init__(self, name) {
         self.name = name;
         self.attrNameToMangled = {};
-        self._scriptCounter = 0;
-        self._scriptDeferreds = {};
         self._loadEventDelay = 1;
     },
 
@@ -617,48 +620,16 @@ Divmod.Runtime.Platform.methods(
         self.appendNodeContent(node, innerHTML);
     },
 
-    /**
-     * Load the JavaScript module at the given URL.
-     *
-     * The manner in which the JavaScript is evaluated is implementation
-     * dependent.
-     *
-     * @return: A Deferred which fires when the contents of the module have
-     * been evaluated.
-     */
     function loadScript(self, location) {
-        self._scriptCounter += 1;
-        self._scriptDeferreds[self._scriptCounter] = Divmod.Defer.Deferred();
-
-        var language = '"text/javascript"';
-        var onload = '"Divmod.Runtime.theRuntime._scriptLoaded(' + self._scriptCounter + ')"';
-        var src = '"' + location + '"';
-        var id = '"__athena_runtime_script_loader_' + self._scriptCounter + '__"';
-        var xmlns = '"http://www.w3.org/1999/xhtml"';
-        var script = (
-            '<span ' +
-            'style="display: none" ' +
-            'xmlns=' + xmlns + ' ' +
-            'id=' + id + '>' +
-            '<script ' +
-            'type=' + language + ' ' +
-            'onload=' + onload + ' ' +
-            'src=' + src + '>' +
-            '</script>' +
-            '</span>');
-
-        self.appendNodeContent(document.body, script);
-
-        return self._scriptDeferreds[self._scriptCounter];
-    },
-
-    function _scriptLoaded(self, which) {
-        var script = document.getElementById('__athena_runtime_script_loader_' + which + '__');
-        script.parentNode.removeChild(script);
-
-        var loaded = self._scriptDeferreds[which];
-        delete self._scriptDeferreds[which];
-        loaded.callback(null);
+        // <script> tricks produce spectacularly bizarre behaviour in IE and
+        // Safari doesn't support onerror, so we just use getPage/eval here.
+        var req = Divmod.Runtime.theRuntime.getPage(location);
+        var d = req[1];
+        d.addCallback(
+            function (result) {
+                eval(result['response']);
+            });
+        return d;
     },
 
     /**
@@ -826,6 +797,8 @@ Divmod.Runtime.Firefox.methods(
     function __init__(self) {
         Divmod.Runtime.Firefox.upcall(self, '__init__', 'Firefox');
         self._xmlparser = Divmod.Runtime._XMLParser();
+        self._scriptCounter = 0;
+        self._scriptDeferreds = {};
     },
 
     function makeHTML(self, element) {
@@ -888,7 +861,65 @@ Divmod.Runtime.Firefox.methods(
 
     function makeHTTPRequest(self) {
         return new XMLHttpRequest();
+    },
+
+    /**
+     * Load the JavaScript module at the given URL.
+     *
+     * The manner in which the JavaScript is evaluated is implementation
+     * dependent.
+     *
+     * @return: A Deferred which fires when the contents of the module have
+     * been evaluated.
+     */
+    function loadScript(self, location) {
+        self._scriptCounter += 1;
+        var scriptID = '__athena_runtime_script_loader_' + self._scriptCounter + '__';
+        self._scriptDeferreds[scriptID] = Divmod.Defer.Deferred();
+
+        var language = '"text/javascript"';
+        var singleQuotedID = "'" + scriptID + "'";
+        var doubleQuotedID = '"' + scriptID + '"';
+        var onload = '"Divmod.Runtime.theRuntime._scriptLoaded(' + singleQuotedID + ')"';
+        var onerror = '"Divmod.Runtime.theRuntime._scriptError(' + singleQuotedID + ', arguments[0])"';
+        var src = '"' + location + '"';
+        var xmlns = '"http://www.w3.org/1999/xhtml"';
+        var script = (
+            '<span ' +
+            'style="display: none" ' +
+            'xmlns=' + xmlns + ' ' +
+            'id=' + doubleQuotedID + '>' +
+            '<script ' +
+            'type=' + language + ' ' +
+            'onload=' + onload + ' ' +
+            'onerror=' + onerror + ' ' +
+            'src=' + src + '>' +
+            '</script>' +
+            '</span>');
+
+        self.appendNodeContent(document.body, script);
+
+        return self._scriptDeferreds[scriptID];
+    },
+
+    function _scriptLoaded(self, scriptID) {
+        var script = document.getElementById(scriptID);
+        script.parentNode.removeChild(script);
+
+        var loaded = self._scriptDeferreds[scriptID];
+        delete self._scriptDeferreds[scriptID];
+        loaded.callback(null);
+    },
+
+    function _scriptError(self, scriptID, error) {
+        var script = document.getElementById(scriptID);
+        script.parentNode.removeChild(script);
+
+        var loaded = self._scriptDeferreds[scriptID];
+        delete self._scriptDeferreds[scriptID];
+        loaded.errback(Divmod.Runtime.ScriptLoadingError(error));
     });
+
 
 Divmod.Runtime.WebKit = Divmod.Runtime.Platform.subclass(
     'Divmod.Runtime.WebKit');
@@ -1066,20 +1097,6 @@ Divmod.Runtime.InternetExplorer.methods(
         } else {
             return new ActiveXObject(self._xmlhttpname);
         }
-    },
-
-    function loadScript(self, location) {
-        // The <script> tricks the base implementation uses produce
-        // spectacularly bizarre behaviour in IE, so we just use getPage/eval
-        // here.
-
-        var req = Divmod.Runtime.theRuntime.getPage(location);
-        var d = req[1];
-        d.addCallback(
-            function (result) {
-                eval(result['response']);
-            });
-        return d;
     },
 
     /**

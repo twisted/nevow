@@ -83,3 +83,11 @@ class ElementPosition(testcase.TestCase):
     Tests for the element position-getting methods
     """
     jsClass = u'Divmod.Runtime.Tests.ElementPosition'
+
+
+
+class LoadScript(testcase.TestCase):
+    """
+    Tests for C{Divmod.Runtime.Platform.loadScript}.
+    """
+    jsClass = u'Divmod.Runtime.Tests.LoadScript'
