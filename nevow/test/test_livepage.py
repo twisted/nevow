@@ -1,3 +1,9 @@
+# Copyright (c) 2008 Divmod.
+# See LICENSE for details.
+
+"""
+Tests for L{nevow.livepage}.
+"""
 
 from twisted.trial import unittest
 
@@ -79,7 +85,12 @@ class TestQuoting(unittest.TestCase):
         self.assertEquals(self.sendThrough(lambda c, d: livepage.js('hello')), 'hello')
         self.assertEquals(self.sendThrough(lambda c, d: [1,2, livepage.js('hi'), "it's a string"]), "12hi'it\\'s a string'")
 
-        def rend_table(self,ctx,data):            return tags.table[                tags.tr[                    tags.th["hea'der1"], tags.th["hea'der2"]],                tags.tr(id="ro'w1")[                    tags.td["va'l1"],tags.td["va'l2"]]]
+        def rend_table(self,ctx,data):
+            return tags.table[
+                tags.tr[
+                    tags.th["hea'der1"], tags.th["hea'der2"]],
+                tags.tr(id="ro'w1")[
+                    tags.td["va'l1"],tags.td["va'l2"]]]
 
         self.assertEquals(
             self.sendThrough(livepage.append('mynode', rend_table)),
