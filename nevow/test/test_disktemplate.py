@@ -1,7 +1,9 @@
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2008 Divmod.
 # See LICENSE for details.
 
-from __future__ import generators
+"""
+Tests for parts of L{nevow.loaders}.
+"""
 
 from twisted.internet import defer
 
@@ -21,6 +23,19 @@ def deferredRender(res):
     return d.addCallback(accumulated, defres)
 
 
+def setContent(name, content):
+    """
+    Write C{content} to the file named C{name}.
+    """
+    # If an exception is raised, the file will eventually be garbage
+    # collected.  It doesn't really matter how long that takes, since if an
+    # exception is raised, no code is going to try to use the contents of
+    # the file.  So, don't bother making extra sure it gets closed.
+    fObj = file(name, 'w')
+    fObj.write(content)
+    fObj.close()
+
+
 class TestHTMLRenderer(testutil.TestCase):
     
     '''Test basic rendering behaviour'''
@@ -34,7 +49,7 @@ class TestHTMLRenderer(testutil.TestCase):
 
     def test_diskTemplate(self):
         temp = self.mktemp()
-        open(temp, 'w').write(self.xhtml)
+        setContent(temp, self.xhtml)
         r = rend.Page(docFactory=loaders.htmlfile(temp))
         return deferredRender(r).addCallback(
             lambda result: self.assertEquals(result, self.xhtml))
@@ -44,7 +59,7 @@ class TestStandardRenderers(testutil.TestCase):
 
     def test_diskTemplate(self):
         temp = self.mktemp()
-        open(temp, 'w').write("""<html>
+        setContent(temp, """<html>
     <head>
         <title nevow:data="theTitle" nevow:render="string">This is some template data!</title>
     </head>
@@ -94,7 +109,7 @@ class TestStandardRenderers(testutil.TestCase):
         """Test case provided by mg
         """
         temp = self.mktemp()
-        open(temp, 'w').write("""<ol nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item" nevow:render="string"></li></ol>""")
+        setContent(temp, """<ol nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item" nevow:render="string"></li></ol>""")
 
         class TemplateRenderer(rend.Page):
             def data_aList(self,context,data):
@@ -113,7 +128,7 @@ class TestStandardRenderers(testutil.TestCase):
         """Test case provided by radix
         """
         temp = self.mktemp()
-        open(temp, 'w').write("""<ol nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item"><span nevow:render="string" /></li></ol>""")
+        setContent(temp, """<ol nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item"><span nevow:render="string" /></li></ol>""")
 
         class TemplateRenderer(rend.Page):
             def data_aList(self,context,data):
@@ -133,7 +148,7 @@ class TestStandardRenderers(testutil.TestCase):
         """test case provided by mg! thanks
         """
         temp = self.mktemp()
-        open(temp,'w').write("""
+        setContent(temp, """
         <table nevow:data="aDict" nevow:render="slots">
         <tr><td><nevow:slot name="1" /></td><td><nevow:slot name="2" /></td></tr>
         <tr><td><nevow:slot name="3" /></td><td><nevow:slot name="4" /></td></tr>
@@ -156,7 +171,7 @@ class TestStandardRenderers(testutil.TestCase):
 
     def test_patterns(self):
         temp = self.mktemp()
-        open(temp,'w').write("""<span nevow:render="foo">
+        setContent(temp, """<span nevow:render="foo">
 			<span nevow:pattern="one">ONE</span>
 			<span nevow:pattern="two">TWO</span>
 			<span nevow:pattern="three">THREE</span>
