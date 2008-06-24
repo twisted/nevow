@@ -276,10 +276,10 @@ class URL(object):
         self.netloc = _unicodify(netloc)
         if pathsegs is None:
             pathsegs = [u'']
-        self._qpathlist = map(_unicodify, pathsegs)
+        self.pathsegs = map(_unicodify, pathsegs)
         if querysegs is None:
             querysegs = []
-        self._querylist = [(_unicodify(k), _unicodify(v))
+        self.querysegs = [(_unicodify(k), _unicodify(v))
                            for (k, v) in querysegs]
         if fragment is None:
             fragment = u''
@@ -292,13 +292,13 @@ class URL(object):
 
         @rtype: str
         """
-        return '/'.join(map(iriencodePath, self._qpathlist))
+        return '/'.join(map(iriencodePath, self.pathsegs))
     path = property(path)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
-        for attr in ['scheme', 'netloc', '_qpathlist', '_querylist', 'fragment']:
+        for attr in ['scheme', 'netloc', 'pathsegs', 'querysegs', 'fragment']:
             if getattr(self, attr) != getattr(other, attr):
                 return False
         return True
@@ -310,7 +310,7 @@ class URL(object):
 
     query = property(
         lambda self: [y is None and x or '='.join((x,y))
-            for (x,y) in self._querylist]
+            for (x,y) in self.querysegs]
         )
 
     def _pathMod(self, newpathsegs, newqueryparts):
@@ -373,7 +373,7 @@ class URL(object):
     ## path manipulations ##
 
     def pathList(self, unquote=False, copy=True):
-        result = self._qpathlist
+        result = self.pathsegs
         if unquote:
             result = map(urllib.unquote, result)
         if copy:
@@ -479,13 +479,13 @@ class URL(object):
             # Merge the paths.
             if len(leading):
                 # Relative path:  replace the existing path's last segment.
-                path = self._qpathlist[:-1] + [leading] + path
+                path = self.pathsegs[:-1] + [leading] + path
             elif not len(path):
                 # No path:  keep the existing path (and if possible, the
                 # existing query / fragment).
-                path = self._qpathlist
+                path = self.pathsegs
                 if not query:
-                    query = self._querylist
+                    query = self.querysegs
                     if not fragment:
                         fragment = self.fragment
             # (Otherwise, the path is absolute, replacing the existing path.)
@@ -502,8 +502,8 @@ class URL(object):
     def queryList(self, copy=True):
         """Return current query as a list of tuples."""
         if copy:
-            return self._querylist[:]
-        return self._querylist
+            return self.querysegs[:]
+        return self.querysegs
 
     # FIXME: here we call str() on query arg values: is this right?
 
@@ -571,7 +571,7 @@ class URL(object):
             netloc = '%s:%d' % (netloc, port)
 
         return self.cloneURL(
-            scheme, netloc, self._qpathlist, self._querylist, self.fragment)
+            scheme, netloc, self.pathsegs, self.querysegs, self.fragment)
 
     ## fragment/anchor manipulation
 
@@ -582,15 +582,15 @@ class URL(object):
         current anchor.
         """
         return self.cloneURL(
-            self.scheme, self.netloc, self._qpathlist, self._querylist, anchor)
+            self.scheme, self.netloc, self.pathsegs, self.querysegs, anchor)
 
     ## object protocol override ##
 
     def __str__(self):
         # Note:  we store our path with an implied leading u'' segment, so add
         # it back in before passing to unparseIRI.
-        return unparseIRI((self.scheme, self.netloc, [u'']+self._qpathlist,
-                           self._querylist, self.fragment))
+        return unparseIRI((self.scheme, self.netloc, [u'']+self.pathsegs,
+                           self.querysegs, self.fragment))
 
     def __repr__(self):
         return (
@@ -598,8 +598,8 @@ class URL(object):
             % (type(self).__name__,
                self.scheme,
                self.netloc,
-               self._qpathlist,
-               self._querylist,
+               self.pathsegs,
+               self.querysegs,
                self.fragment))
 
 
@@ -740,10 +740,10 @@ def URLSerializer(original, context):
         yield serialize(original.scheme, urlContext)
         yield '://'
         yield serialize(original.netloc, pathContext)
-    for pathsegment in original._qpathlist:
+    for pathsegment in original.pathsegs:
         yield '/'
         yield serialize(pathsegment, pathContext)
-    query = original._querylist
+    query = original.querysegs
     if query:
         queryContext = WovenContext(parent=urlContext,
                                     precompile=context.precompile,

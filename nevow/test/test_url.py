@@ -697,8 +697,8 @@ class TestURL(TestCase):
         self.assertEqual(
             urlpath.cloneURL(urlpath.scheme,
                              urlpath.netloc,
-                             urlpath._qpathlist,
-                             urlpath._querylist,
+                             urlpath.pathsegs,
+                             urlpath.querysegs,
                              urlpath.fragment),
             urlpath)
 
