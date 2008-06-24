@@ -15,7 +15,6 @@ from zope.interface import implements
 from twisted.web.util import redirectTo
 
 from nevow import inevow, flat
-from nevow.stan import raw
 from nevow.flat import serialize
 from nevow.context import WovenContext
 
@@ -81,7 +80,7 @@ _queryfield_safe = ((sub_delims + ':@/?')
 def iriencodeQuery(s):
     """
     L{iriencode} convenience wrapper for x-www-form-urlencoded query fields.
-    
+
     This is like L{iriencodeFragment}, but without C{'&=+'}.
     """
     return iriencode(s, unencoded=_queryfield_safe)
