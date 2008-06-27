@@ -475,6 +475,9 @@ class TestURL(TestCase):
         self.assertEquals(theurl, str(urlpath))
 
     def test_roundtrip(self):
+        """
+        L{URL.__str__} should invert L{URL.fromString}.
+        """
         tests = (
             "http://localhost",
             "http://localhost/",

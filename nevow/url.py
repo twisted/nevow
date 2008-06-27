@@ -4,6 +4,9 @@
 
 """
 URL parsing, construction and rendering.
+
+@see: RFC 3986, Uniform Resource Identifier (URI): Generic Syntax
+@see: RFC 3987, Internationalized Resource Identifiers
 """
 
 import weakref
@@ -70,6 +73,7 @@ def iriencodePath(s):
     @see: RFC 3986 section 3.3, Path
     """
     return iriencode(s, unencoded=sub_delims + ':@')
+
 
 
 _queryfield_safe = ((sub_delims + ':@/?')
@@ -250,20 +254,23 @@ class URL(object):
     copies do so correctly.  Additionally, the L{fromString}, L{fromContext}
     and L{fromRequest} class methods need overriding.
 
-    @type scheme: C{unicode}
+    The following attributes are always stored and passed to __init__ in decoded
+    form (that is, without any percent-encoding).
+
     @ivar scheme: the URI scheme
+    @type scheme: C{unicode}
 
-    @type netloc: C{unicode}
     @ivar netloc: the host (and possibly port)
+    @type netloc: C{unicode}
 
+    @ivar pathsegs: the path segments
     @type pathsegs: list of C{unicode}
-    @ivar pathsegs: the path
 
-    @type querysegs: list of pairs of C{unicode} (or C{None}, for values)
     @ivar querysegs: the query parameters, as name-value pairs
+    @type querysegs: list of pairs of C{unicode} (or C{None}, for values)
 
-    @type fragment: C{unicode}
     @ivar fragment: the fragment identifier
+    @type fragment: C{unicode}
     """
 
     def __init__(self, scheme=u'http', netloc=u'', pathsegs=None,
@@ -288,9 +295,9 @@ class URL(object):
 
     def path(self):
         """
-        The percent-encoded path portion of the URL.
+        The percent-encoded path component of this URL.
 
-        @rtype: str
+        @type: L{str}
         """
         return '/'.join(map(iriencodePath, self.pathsegs))
     path = property(path)
@@ -302,6 +309,7 @@ class URL(object):
             if getattr(self, attr) != getattr(other, attr):
                 return False
         return True
+
 
     def __ne__(self, other):
         if not isinstance(other, self.__class__):
@@ -338,7 +346,7 @@ class URL(object):
         Relative path references are not supported.
 
         @param s: a valid URI or IRI
-        @type s: L{unicode} or L{str}
+        @type s: L{unicode} or ASCII L{str}
         """
         (scheme, netloc, pathsegs, querysegs, fragment) = parseIRI(s)
         # We don't store the leading u'' segment.
@@ -373,6 +381,12 @@ class URL(object):
     ## path manipulations ##
 
     def pathList(self, unquote=None, copy=True):
+        """
+        Return C{self.pathsegs}.
+
+        @param copy:  if true, return a copy
+        @type copy: bool
+        """
         result = self.pathsegs
         if unquote is not None:
             import warnings
@@ -456,10 +470,18 @@ class URL(object):
         return self._pathMod(l, self.queryList(0))
 
     def click(self, href):
-        """Build a path by merging 'href' and this path.
+        """
+        Resolve the given URI reference relative to this (base) URI.
 
-        Return a path which is the URL where a browser would presumably
-        take you if you clicked on a link with an 'href' as given.
+        The resulting URI should match what a web browser would generate if you
+        click on C{href} in the context of this URI.
+
+        @param href: a URI reference
+        @type href: L{unicode} or ASCII L{str}
+
+        @return: a new absolute L{URL}
+
+        @see: RFC 3986 section 5, Reference Resolution
         """
         if not len(href):
             return self
@@ -504,7 +526,12 @@ class URL(object):
     ## query manipulation ##
 
     def queryList(self, copy=True):
-        """Return current query as a list of tuples."""
+        """
+        Return C{self.querysegs}.
+
+        @param copy:  if true, return a copy
+        @type copy: bool
+        """
         if copy:
             return self.querysegs[:]
         return self.querysegs
@@ -591,8 +618,8 @@ class URL(object):
     ## object protocol override ##
 
     def __str__(self):
-        # Note:  we store our path with an implied leading u'' segment, so add
-        # it back in before passing to unparseIRI.
+        # Note:  self.pathsegs is stored with an implied leading u'' segment;
+        # add it back in before passing to unparseIRI.
         return unparseIRI((self.scheme, self.netloc, [u'']+self.pathsegs,
                            self.querysegs, self.fragment))
 
@@ -612,6 +639,8 @@ def normURLPath(pathSegs):
     Normalise the URL path by resolving segments of '.' and '..'.
 
     @param pathSegs: list of path segments
+
+    @see: RFC 3986 section 5.2.4, Remove Dot Segments
     """
     segs = []
 
@@ -732,9 +761,6 @@ root = URLOverlay(rootaccessor,
 def URLSerializer(original, context):
     """
     Serialize the given L{URL}.
-
-    Unicode path, query and fragment components are handled according to the
-    IRI standard (RFC 3987).
     """
     urlContext = WovenContext(parent=context, precompile=context.precompile,
                               inURL=True)
