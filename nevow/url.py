@@ -372,10 +372,14 @@ class URL(object):
 
     ## path manipulations ##
 
-    def pathList(self, unquote=False, copy=True):
+    def pathList(self, unquote=None, copy=True):
         result = self.pathsegs
-        if unquote:
-            result = map(urllib.unquote, result)
+        if unquote is not None:
+            import warnings
+            warnings.warn(
+                '[0.9] URL.pathList() is always unquoted now',
+                DeprecationWarning,
+                stacklevel=1)
         if copy:
             result = result[:]
         return result

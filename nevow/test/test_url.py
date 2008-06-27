@@ -561,6 +561,20 @@ class TestURL(TestCase):
         self.assertIdentical(u.pathList(copy=False), u.pathsegs)
 
 
+    def test_pathListUnquote(self):
+        """
+        Specifying C{unquote} to L{URL.pathList} should raise a deprecation warning.
+        """
+        u = URL(pathsegs=[u'52%25'])
+        for flag in [True, False]:
+            r = self.assertWarns(
+                DeprecationWarning,
+                '[0.9] URL.pathList() is always unquoted now',
+                url.__file__,
+                u.pathList, unquote=flag)
+            self.assertEquals(r, u.pathsegs)
+
+
     def test_parentdir(self):
         urlpath = URL.fromString(theurl)
         self.assertEquals("http://www.foo.com:80/a/nice/?zot=23&zut",
