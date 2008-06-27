@@ -550,6 +550,17 @@ class TestURL(TestCase):
         self.assertEqual(urlpath.path, "-_.!*'()")
 
 
+    def test_pathList(self):
+        """
+        L{URL.pathList} should return C{self.pathsegs}, copied or not.
+        """
+        u = URL(pathsegs=[u'foo'])
+        for segs in [u.pathList(), u.pathList(copy=True)]:
+            self.assertEquals(segs, u.pathsegs)
+            self.assertNotIdentical(segs, u.pathsegs)
+        self.assertIdentical(u.pathList(copy=False), u.pathsegs)
+
+
     def test_parentdir(self):
         urlpath = URL.fromString(theurl)
         self.assertEquals("http://www.foo.com:80/a/nice/?zot=23&zut",
