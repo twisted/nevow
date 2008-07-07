@@ -47,3 +47,7 @@ class JSUnitTests(JavaScriptTestCase):
 
     def test_rdm(self):
         return 'Nevow.Test.TestMessageDelivery'
+
+
+    def test_tabbedPane(self):
+        return 'Nevow.Test.TestTabbedPane'

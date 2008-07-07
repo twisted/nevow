@@ -64,25 +64,26 @@ class TabbedPane(object):
 tabbedPane = TabbedPane().tabbedPane
 
 class TabbedPaneFragment(athena.LiveFragment):
-    jsClass = u'Nevow.TagLibrary.TabbedPane'
+    jsClass = u'Nevow.TagLibrary.TabbedPane.TabbedPane'
 
     docFactory = loaders.xmlstr("""
 <div class="nevow-tabbedpane"
   xmlns:nevow="http://nevow.com/ns/nevow/0.1"
+  xmlns:athena="http://divmod.org/ns/athena/0.7"
   nevow:render="liveFragment"
   style="opacity: .3">
-    <ul class="nevow-tabbedpane-tabs">
+    <ul class="nevow-tabbedpane-tabs" id="tab-container">
         <nevow:invisible nevow:render="tabs" />
     </ul>
     <li nevow:pattern="tab"
-     onclick="Nevow.TagLibrary.TabbedPane.get(this).tabClicked(this); return false"
-     ><nevow:attr name="class"><nevow:slot
+      ><athena:handler event="onclick"
+      handler="dom_tabClicked" /><nevow:attr name="class"><nevow:slot
      name="class" /></nevow:attr><nevow:slot name="tab-name" /></li>
     <div nevow:pattern="page">
         <nevow:attr name="class"><nevow:slot name="class" /></nevow:attr>
         <nevow:slot name="page-content" />
     </div>
-    <nevow:invisible nevow:render="pages" />
+    <div id="pane-container"><nevow:invisible nevow:render="pages" /></div>
 </div>""".replace('\n', ''))
 
     def __init__(self, pages, selected=0, name='default'):

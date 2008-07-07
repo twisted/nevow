@@ -1,61 +1,164 @@
 // import Nevow.TagLibrary
 
-Nevow.TagLibrary.TabbedPane = Nevow.Athena.Widget.subclass("Nevow.TabbedPane");
+Nevow.TagLibrary.TabbedPane.TabbedPaneView = Divmod.Class.subclass('Nevow.TagLibrary.TabbedPaneView');
+/**
+ * L{Nevow.TagLibrary.TabbedPane.TabbedPane}'s view abstraction.
+ *
+ * @ivar nodeById: Callable which takes a node ID and returns a node.
+ * @type nodeById: C{Function}
+ *
+ * @ivar selectedTabName: The name of the currently selected tab.
+ * @type selectedTabName: C{String}
+ */
+Nevow.TagLibrary.TabbedPane.TabbedPaneView.methods(
+    function __init__(self, nodeById, selectedTabName) {
+        self.nodeById = nodeById;
+        self.selectedTabName = selectedTabName;
+    },
 
-Nevow.TagLibrary.TabbedPane.methods(
+    /**
+     * Figure out the name of the tab represented by the given DOM node.
+     *
+     * @param tabNode: A tab DOM node.
+     * @type tabNode: DOM node
+     *
+     * @rtype: C{String}
+     */
+    function tabNameFromTabNode(self, tabNode) {
+        return tabNode.childNodes[0].nodeValue;
+    },
+
+    /**
+     * Get the pane node for the named tab.
+     *
+     * @param tabName: A tab name.
+     * @type tabName: C{String}
+     */
+    function getNamedPaneNode(self, tabName) {
+        if(self._elements === undefined) {
+            self._elements = self._collectTabElements();
+        }
+        return self._elements[tabName].paneNode;
+    },
+
+    /**
+     * Remove all children from the named pane and append C{replacementNode}.
+     *
+     * @param tabName: A tab name.
+     * @type tabName: C{String}
+     *
+     * @type replacementNode: DOM node
+     */
+    function replaceNamedPaneContent(self, tabName, replacementNode) {
+        var paneNode = self.getNamedPaneNode(tabName);
+        while(0 < paneNode.childNodes.length) {
+            paneNode.removeChild(paneNode.childNodes[0]);
+        }
+        paneNode.appendChild(replacementNode);
+    },
+
+    /**
+     * Map tab names to tab and pane nodes.
+     */
+    function _collectTabElements(self) {
+        var tabContainer = self.nodeById('tab-container');
+        var tabNodes = tabContainer.getElementsByTagName('li');
+        var paneContainer = self.nodeById('pane-container');
+        var elems = {};
+        for(var i = 0; i < tabNodes.length; i++) {
+            elems[self.tabNameFromTabNode(tabNodes[i])] = {
+                tabNode: tabNodes[i],
+                paneNode: paneContainer.childNodes[i]};
+        }
+        return elems;
+    },
+
+    /**
+     * Switch to the named tab.
+     *
+     * @param tabName: The name of the tab we're switching to.
+     * @type tabName: C{String}
+     */
+    function selectNamedTab(self, tabName) {
+        if(self._elements === undefined) {
+            self._elements = self._collectTabElements();
+        }
+        var lastSelected = self._elements[self.selectedTabName];
+
+        lastSelected.tabNode.setAttribute('class', 'nevow-tabbedpane-tab');
+        lastSelected.paneNode.setAttribute('class', 'nevow-tabbedpane-pane');
+
+        var newlySelected = self._elements[tabName];
+        newlySelected.tabNode.setAttribute(
+            'class', 'nevow-tabbedpane-selected-tab');
+        newlySelected.paneNode.setAttribute(
+            'class', 'nevow-tabbedpane-selected-pane');
+
+        self.selectedTabName = tabName;
+    });
+
+Nevow.TagLibrary.TabbedPane.TabbedPane = Nevow.Athena.Widget.subclass(
+    'Nevow.TagLibrary.TabbedPane.TabbedPane');
+
+Nevow.TagLibrary.TabbedPane.TabbedPane.methods(
     function __init__(self, node, selectedTabName) {
         self._loaded = false;
         self._pendingTabSwitch = null;
-
-        var name = node.getAttribute("name");
-        var getElementsByTagNameShallow = function(root, tagName) {
-            return Divmod.Runtime.theRuntime.getElementsByTagNameShallow(root, tagName);
-        }
-        var tabContainer = getElementsByTagNameShallow(node, "ul")[0];
-        var tabs = getElementsByTagNameShallow(tabContainer, "li");
-        var panes = getElementsByTagNameShallow(node, "div");
-        var elems = {};
-        for(var i = 0; i < tabs.length; i++) {
-            elems[tabs[i].firstChild.nodeValue] = [tabs[i], panes[i]];
-        }
-        /* this is a mapping of tab offsets to [tab-element, pane-element] */
-        self._elements = elems;
-        self._lastSelectedTabName = selectedTabName;
-
-        Nevow.TagLibrary.TabbedPane.upcall(self, "__init__", node);
+        self.view = Nevow.TagLibrary.TabbedPane.TabbedPaneView(
+            function nodeById(nodeID) {
+                return self.nodeById(nodeID);
+            }, selectedTabName);
+        Nevow.TagLibrary.TabbedPane.TabbedPane.upcall(self, '__init__', node);
     },
 
     function loaded(self) {
         self.node.style.opacity = "";
         self._loaded = true;
-        if(self._pendingTabSwitch) {
+        if(self._pendingTabSwitch !== null) {
             /* switch to the tab that was most recently clicked
                while we were busy loading */
-            self.tabClicked(self._pendingTabSwitch);
+            self.view.selectNamedTab(self._pendingTabSwitch);
         }
     },
 
-    function tabClicked(self, tab) {
-        if(!self._loaded) {
-            self._pendingTabSwitch = tab;
-            return;
+    /**
+     * Call C{selectNamedTab} on our view.
+     *
+     * @param tabNode: The tab node which was clicked.
+     * @type tabNode: DOM node
+     */
+    function tabClicked(self, tabNode) {
+        var tabName = self.view.tabNameFromTabNode(tabNode);
+        if(self._loaded) {
+            self.view.selectNamedTab(tabName);
+            self.namedTabSelected(tabName);
+        } else {
+            self._pendingTabSwitch = tabName;
         }
+    },
 
-        var lastSelected = self._elements[self._lastSelectedTabName],
-            lastSelectedTab = lastSelected[0],
-            lastSelectedPane = lastSelected[1];
-
-        lastSelectedTab.className = "nevow-tabbedpane-tab";
-        lastSelectedPane.className = "nevow-tabbedpane-pane";
-
-        tab.className = "nevow-tabbedpane-selected-tab";
-        var tabName = tab.firstChild.nodeValue, pane = self._elements[tabName][1];
-        pane.className = "nevow-tabbedpane-selected-pane";
-
-        self._lastSelectedTabName = tabName;
+    /**
+     * DOM event handler which calls C{tabClicked}.
+     *
+     * @param tabNode: The tab node which was clicked.
+     * @type tabNode: DOM node
+     */
+    function dom_tabClicked(self, tabNode) {
+        self.tabClicked(tabNode);
+        return false;
+    },
+    
+    /**
+     * Called after the tab has changed, with the name of the newly-selected
+     * tab.
+     *
+     * @param tabName: The name of the newly-selected tab.
+     * @type tabName: C{String}
+     */
+    function namedTabSelected(self, tabName) {
     });
 
-// backward compatability
+// backward compatibility
 
 function setupTabbedPane(data, selectedTab) {
     for(i=0; i<data.length; i++) {
