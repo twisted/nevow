@@ -3,38 +3,9 @@ from nevow.livepage import js, flt
 
 
 class tabbedPaneGlue:
-    """
-    Record which holds information about the Javascript & CSS requirements of
-    L{TabbedPane} and L{TabbedPaneFragment}.
 
-    @type stylesheetPath: C{str}
-    @ivar stylesheetPath: Filesystem path of the tabbed pane stylesheet.
-
-    @type javascriptPath: C{str}
-    @ivar javascriptPath: Filesystem path of the tabbed pane Javascript
-    module.
-
-    @type fileCSS: L{static.File}
-    @ivar fileCSS: Resource which serves L{stylesheetPath}.
-
-    @type fileJS: L{static.File}
-    @ivar fileJS: Resource which serves L{javascriptPath}.
-
-    @type fileGlue: Stan
-    @ivar fileGlue: Stan which, when placed in the <head> of an HTML document,
-    will include the required CSS & Javascript.
-
-    @type inlineCSS: L{t.style}
-    @ivar inlineCSS: <style> tag containing the tabbedpane CSS inline.
-
-    @type inlineJS: L{t.script}
-    @ivar inlineJS: <script> tag containing the tabbedpane Javascript inline.
-
-    @type inlineGlue: Stan
-    @ivar inlineGlue: A tuple of L{inlineCSS} and L{inlineJS}.
-    """
-    stylesheetPath = util.resource_filename('nevow.taglibrary', 'tabbedPane.css')
-    javascriptPath = util.resource_filename('nevow', 'js/Nevow/TagLibrary/TabbedPane.js')
+    _css = util.resource_filename('nevow.taglibrary', "tabbedPane.css")
+    _js = util.resource_filename('nevow', "js/Nevow/TagLibrary/TabbedPane.js")
 
     fileCSS = static.File(_css, 'text/css')
     fileJS = static.File(_js, 'text/javascript')
