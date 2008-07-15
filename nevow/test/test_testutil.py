@@ -190,3 +190,14 @@ class JavaScriptTests(TestCase):
         result = TestResult()
         self.case.run(result)
         self.assertEqual(len(result.errors), 1)
+
+
+    def test_missingJavaScriptClass(self):
+        """
+        If a JavaScript class required by the test code is unavailable, an
+        error is added to the result object by L{JavaScriptTestCase.run}.
+        """
+        result = TestResult()
+        self.case.testMethod = lambda: "Nevow.Test.NoSuchModule"
+        self.case.run(result)
+        self.assertEqual(len(result.errors), 1)

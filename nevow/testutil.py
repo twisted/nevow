@@ -489,7 +489,12 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
             result.stopTest(self)
             return
         js = self.findJavascriptInterpreter()
-        script = self.makeScript(self.testMethod())
+        try:
+            script = self.makeScript(self.testMethod())
+        except KeyError:
+            result.addError(self, sys.exc_info())
+            return
+
         server = subunit.TestProtocolServer(result)
         protocol = TestProtocolLineReceiverServer(server)
 
