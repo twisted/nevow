@@ -1,14 +1,15 @@
-
 """
 Tests for L{nevow.page.Element}
 """
 
+from zope.interface import implements
 from zope.interface.verify import verifyObject
 
 from twisted.trial.unittest import TestCase
+from twisted.python.deprecate import getWarningMethod, setWarningMethod
 
 from nevow.rend import Page
-from nevow.inevow import IRequest, IRenderable
+from nevow.inevow import IRequest, IRenderable, ITemplateFactory
 from nevow.testutil import FakeRequest
 from nevow.context import WovenContext
 from nevow.loaders import stan, xmlstr
@@ -92,23 +93,69 @@ class ElementTests(TestCase):
         self.assertEqual(foo(None, None), "bar")
 
 
-    def test_render(self):
+    def test_renderIDocFactory(self):
         """
-        L{Element.render} loads a document from the C{docFactory} attribute and
-        returns it.
+        L{Element.render} loads a document from the C{docFactory} attribute by
+        calling its C{load} method with a context of C{None} and preprocessor
+        sequence and returns the result, as well as emitting a deprecation
+        warning indicating that objects providing L{ITemplateFactory} are
+        preferred.
         """
         args = []
         preproc = object()
+        request = object()
+
         class DocFactory(object):
             def load(self, ctx, preprocessors, precompile=None):
-                args.append(preprocessors)
+                args.extend((ctx, preprocessors, precompile))
+                return "result"
+
+        warnings = []
+        def collectWarnings(message, category, stacklevel):
+            warnings.append((message, category, stacklevel))
+        self.addCleanup(setWarningMethod, getWarningMethod())
+        setWarningMethod(collectWarnings)
+
+        class TrivialSubclass(Element):
+            preprocessors = (preproc,)
+            docFactory = DocFactory()
+
+        element = TrivialSubclass()
+        self.assertEqual(element.render(request), "result")
+        self.assertEqual(args, [None, [preproc], None])
+
+        # Stack level of 0 doesn't make any sense, but neither does any other
+        # stack level.  I'd like a warning API which wasn't stack-frame
+        # based. -exarkun
+        self.assertEqual(
+            warnings,
+            [("nevow.test.test_element.TrivialSubclass.docFactory should "
+              "provide nevow.inevow.ITemplateFactory.", DeprecationWarning,
+              0)])
+
+
+    def test_renderITemplateFactory(self):
+        """
+        If the C{docFactory} attribute of an L{Element} is bound to an
+        L{ITemplateFactory} provider, L{Element.render} loads a document from
+        it by calling its C{load} method with the request and a sequence of
+        preprocessors and returns the result.
+        """
+        args = []
+        preproc = object()
+        request = object()
+
+        class TemplateFactory(object):
+            implements(ITemplateFactory)
+            def load(self, request, preprocessors, precompile=None):
+                args.extend((request, preprocessors, precompile))
                 return "result"
 
         element = Element()
         element.preprocessors = (preproc,)
-        element.docFactory = DocFactory()
-        self.assertEqual(element.render(None), "result")
-        self.assertEqual(args, [(preproc,)])
+        element.docFactory = TemplateFactory()
+        self.assertEqual(element.render(request), "result")
+        self.assertEqual(args, [request, (preproc,), None])
 
 
     def test_overriddenRend(self):

@@ -8,7 +8,11 @@ API Stability: Completely unstable.
 
 from zope.interface import implements
 
+from twisted.python.reflect import qual
+from twisted.python.deprecate import getWarningMethod
+
 from nevow.inevow import IRequest, IRenderable, IRendererFactory
+from nevow.inevow import ITemplateFactory
 from nevow.errors import MissingRenderMethod, MissingDocumentFactory
 
 from nevow.util import Expose
@@ -68,7 +72,7 @@ class Element(object):
     Element implements L{IRenderable.render} to load C{docFactory} and return
     the result.
 
-    @type docFactory: L{IDocFactory} provider
+    @type docFactory: L{ITemplateFactory} provider
     @ivar docFactory: The factory which will be used to load documents to
         return from C{render}.
     """
@@ -92,6 +96,24 @@ class Element(object):
         return method
 
 
+    def _loadDocument(self, request):
+        """
+        Load a document from C{self.docFactory} and return it.
+        """
+        docFactory = self.docFactory
+        if docFactory is None:
+            raise MissingDocumentFactory(self)
+
+        templateFactory = ITemplateFactory(docFactory, None)
+        if templateFactory is not None:
+            return docFactory.load(request, _getPreprocessors(self))
+        name = qual(self.__class__)
+        getWarningMethod()(
+            name + ".docFactory should provide nevow.inevow.ITemplateFactory.",
+            DeprecationWarning, 0)
+        return docFactory.load(None, _getPreprocessors(self))
+
+
     def render(self, request):
         """
         Load and return C{self.docFactory}.
@@ -101,10 +123,7 @@ class Element(object):
             context = _ctxForRequest(request, [], self, False)
             return rend(context, None)
 
-        docFactory = self.docFactory
-        if docFactory is None:
-            raise MissingDocumentFactory(self)
-        return docFactory.load(None, _getPreprocessors(self))
+        return self._loadDocument(request)
 
 
     def rend(self, context, data):
@@ -114,10 +133,7 @@ class Element(object):
         process.
         """
         context.remember(_OldRendererFactory(self), IRendererFactory)
-        docFactory = self.docFactory
-        if docFactory is None:
-            raise MissingDocumentFactory(self)
-        return docFactory.load(None, _getPreprocessors(self))
+        return self._loadDocument(IRequest(context))
 
 
 

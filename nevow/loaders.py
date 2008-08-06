@@ -36,7 +36,7 @@ from nevow.util import CachedFile
 class stan(object):
     """A stan tags document factory"""
 
-    implements(inevow.IDocFactory)
+    implements(inevow.ITemplateFactory, inevow.IDocFactory)
 
     stan = None
     pattern = None
@@ -133,7 +133,7 @@ class htmlfile(object):
 
 class xmlstr(object):
 
-    implements(inevow.IDocFactory)
+    implements(inevow.ITemplateFactory, inevow.IDocFactory)
 
     template = None
     pattern = None
@@ -168,7 +168,7 @@ class xmlstr(object):
 
 class xmlfile(object):
 
-    implements(inevow.IDocFactory)
+    implements(inevow.ITemplateFactory, inevow.IDocFactory)
 
     template = None
     templateDir = None

@@ -3,8 +3,12 @@
 
 import os
 
-from twisted.trial import unittest, util
+from zope.interface.verify import verifyObject
 
+from twisted.trial import unittest, util
+from twisted.python.filepath import FilePath
+
+from nevow.inevow import IDocFactory, ITemplateFactory
 from nevow import context
 from nevow import flat
 from nevow.flat.flatstan import _PrecompiledSlot
@@ -12,6 +16,23 @@ from nevow import loaders
 from nevow import tags as t
 
 class TestDocFactories(unittest.TestCase):
+
+    def test_interfaces(self):
+        """
+        L{loaders.stan}, L{loaders.xmlstr}, and L{loaders.xmlfile} provide
+        L{IDocFactory} and L{ITemplateFactory}.
+        """
+        fName = self.mktemp()
+        FilePath(fName).setContent('<span />')
+
+        someLoaders = [loaders.stan(()),
+                       loaders.xmlstr('<span />'),
+                       loaders.xmlfile(fName)]
+
+        for loader in someLoaders:
+            self.assertTrue(verifyObject(IDocFactory, loader))
+            self.assertTrue(verifyObject(ITemplateFactory, loader))
+
 
     def _preprocessorTest(self, docFactory):
         def preprocessor(uncompiled):

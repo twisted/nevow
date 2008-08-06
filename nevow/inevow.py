@@ -528,6 +528,8 @@ class IDocFactory(Interface):
     """Interface for objects that load and parse templates for Nevow's
     renderers.
 
+    Deprecated in favor of ITemplateFactory.
+
     The load method's context arg is optional. Loaders should be written to cope
     with no context arg and either create a new context (if necessary) or raise
     a ValueError if the context of the caller is important.
@@ -539,9 +541,25 @@ class IDocFactory(Interface):
     actually rendered.
     """
 
-    def load(ctx=None, preprocessors=(), precompile=None):
+    def load(ctx=None, preprocessors=()):
         """
         Load a template and return a stan document tree.
+
+        @param preprocessors: An iterable of one-argument callables which will
+            be given the stan document tree to transform before it is compiled.
+        """
+
+
+class ITemplateFactory(Interface):
+    """Interface for objects that load and parse templates for Nevow's
+    renderers.
+    """
+
+    def load(request=None, preprocessors=()):
+        """
+        Load a template and return a stan document tree.
+
+        @param request: object implementing IRequest, optional.
 
         @param preprocessors: An iterable of one-argument callables which will
             be given the stan document tree to transform before it is compiled.
