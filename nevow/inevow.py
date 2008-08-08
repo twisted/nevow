@@ -525,7 +525,8 @@ class IEventMaster(Interface):
 
 
 class IDocFactory(Interface):
-    """Interface for objects that load and parse templates for Nevow's
+    """
+    Interface for objects that load and parse templates for Nevow's
     renderers.
 
     Deprecated in favor of ITemplateFactory.
@@ -551,7 +552,8 @@ class IDocFactory(Interface):
 
 
 class ITemplateFactory(Interface):
-    """Interface for objects that load and parse templates for Nevow's
+    """
+    Interface for objects that load and parse templates for Nevow's
     renderers.
     """
 
@@ -559,10 +561,13 @@ class ITemplateFactory(Interface):
         """
         Load a template and return a stan document tree.
 
-        @param request: object implementing IRequest, optional.
+        @param request: If the caller is processing a request, this should
+            be the L{IRequest} object.  Otherwise, C{None}.
 
         @param preprocessors: An iterable of one-argument callables which will
             be given the stan document tree to transform before it is compiled.
+
+        @return: A flattenable object; the template.
         """
 
 
