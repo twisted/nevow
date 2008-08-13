@@ -1,16 +1,29 @@
+0.9.32 (2008-08-12):
+  - A resource wrapper for on-the-fly gzip compression has been added.
+  - A twistd plugin, 'athena-widget', is now available for serving
+    single Athena widgets.
+  - Basic Athena support for Safari added.
+  - Added file name, line number, and column number information to
+    slots and tags parsed from XML files in order to make debugging
+    template/renderer interactions simpler.
+  - A context-free flattener has been added. Fragment and its
+    subclasses are now deprecated in favor of Element.
+  - Javascript classes derived from the tabbedpane class can now
+    override how tab selection is handled.
+
 0.9.31 (2008-02-06):
-   - Fixed Guard's request parameter save/restore feature to not
-     clobber request state after login succeeds when a session has
-     already been negotiated.
-   - Added a hook to nevow.guard.SessionWrapper which allows the
-     domain parameter of the session cookie to be specified.
+  - Fixed Guard's request parameter save/restore feature to not
+    clobber request state after login succeeds when a session has
+    already been negotiated.
+  - Added a hook to nevow.guard.SessionWrapper which allows the
+    domain parameter of the session cookie to be specified.
 
 0.9.30 (2008-01-16):
-   - Change DeferredSerializer so that it passes failures from the
-     Deferred being serialized on to the Deferred returned by the
-     flattening function.  Without this behavior, the Deferred
-     returned by the flattening function is never fired when a
-     Deferred which fails is serialized.
+  - Change DeferredSerializer so that it passes failures from the
+    Deferred being serialized on to the Deferred returned by the
+    flattening function.  Without this behavior, the Deferred
+    returned by the flattening function is never fired when a
+    Deferred which fails is serialized.
 
 0.9.29 (2008-01-02):
   - Prevent NevowSite.handleSegment from raising IndexError in certain
