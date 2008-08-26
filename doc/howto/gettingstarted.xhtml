@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>
+      Getting Started
+    </title>
+  </head>
+  <body>
+    <h1>Getting Started</h1>
+
+    <p>
+      Warning: This document has only just been started. It's not going to get
+      you very far right now.
+    </p>
+
+    <p>
+      Nevow is a reasonably large library and can be quite daunting at
+      first. This document's aim is to guide the first time user in building a
+      Nevow application.
+    </p>
+
+    <h2>Our First Application</h2>
+
+    <p>
+      Let's dive straight in, here's the code for our first (very, very simple)
+      application. Create the following module, helloworld.py:
+    </p>
+
+    <a href="listings/gettingstarted/helloworld.py" class="py-listing">
+      helloworld.py
+    </a>
+
+    <p>
+      It looks quite simple but let's walk through it anyway.
+    </p>
+
+    <p>
+      First, we import two Nevow modules. <code
+      class="API">nevow.loaders</code> contains template loaders of which the
+      two most useful are <code class="API" base="nevow.loaders">xmlfile</code>
+      and <code class="API" base="nevow.loaders">stan</code>.
+      <code>xmlfile</code> can load any well-formed XML (i.e. XHTML) file;
+      <code>stan</code> loads a stan tree (more on these later). The other
+      module, <code class="API">nevow.rend</code>, contains all Nevow's
+      standard renders, many of which we'll meet in this document.
+    </p>
+
+    <p>
+      We then define the <code>HelloWorld</code> class that subclasses <code
+      class="API" base="nevow">rend.Page</code>, Nevow's main resource
+      class. <code>HelloWorld</code> has two class
+      attributes. <code>addSlash</code> tells <code>rend.Page</code> to
+      redirect to a version of the request URL that ends in a <code>/</code> if
+      necessary. You generally want to set this to <code>True</code> for the
+      root resource.  <code>docFactory</code> tells the page instance where to
+      get the template from. In this case we're providing a loader that parses
+      an HTML file (not shown) from disk.
+    </p>
+
+    <p>
+      Hmm, ok I hear you say but how do I see it. Well, Twisted provides a good
+      web server which we can use. Twisted also includes a clever little
+      application for starting Twisted applications. Here's the helloworld.tac
+      file, a Twisted Application Configuration:
+    </p>
+
+    <a href="listings/gettingstarted/helloworld.tac" class="py-listing">
+      helloworld.tac
+    </a>
+
+    <p>
+      Give it a go, run the following and connect to <a
+      href="http://localhost:8080/">http://localhost:8080/</a> to see your
+      application:
+    </p>
+
+    <pre>twistd -ny helloworld.tac</pre>
+
+    <p>
+      You'll probably notice that you get log output on the console. This is
+      just one of the good things that twistd does. It can also daemonize the
+      application, shed privileges if run as root, etc.
+    </p>
+
+    <p>
+      TAC files are covered in more detail in the Twisted documentation but
+      let's quickly explain what all this does anyway.
+    </p>
+
+    <p>
+      When <code class="shell">twistd</code> starts up it loads the
+      <code>.tac</code> file (it's just Python) and looks for the attribute
+      called <code>application</code>. When <code class="shell">twistd</code>
+      is all ready to go it starts the <code>application</code>.
+    </p>
+
+    <p>
+      The application is not much use unless it actually does something so the
+      next thing we do is create a <code class="API"
+      base="nevow.appserver">NevowSite</code> instance, <code>site</code>, and
+      pass it a root resource, a <code>HelloWorld</code> instance. Finally, we
+      create a TCP server that makes the site available on port 8080 and bind
+      the server to the application to ensure the server is started when the
+      application is started.
+    </p>
+  </body>
+</html>

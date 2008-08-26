@@ -1,0 +1,407 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>
+      XML Templates
+    </title>
+  </head>
+  <body>
+    <h1>Nevow XML Templates</h1>
+
+    <p>
+      Stan syntax is cool, but eventually you are going to want to integrate
+      your Python code with a template designed by an HTML monkey. Nevow
+      accomplishes this by providing an xmlfile loader which uses the built-in
+      Python SAX libraries to generate a tree of stan behind the scenes. The
+      general rule is anything that is possible in stan should be possible in a
+      pure XML template; of course, the XML syntax is generally going to be
+      much more verbose.
+    </p>
+
+    <h2>loaders.xmlfile</h2>
+
+    <p>
+      Wherever you have seen a loaders.stan being created in any of the example
+      code, a <code class="API" base="nevow">loaders.xmlfile</code> can be
+      substituted instead. At the most basic, <code>xmlfile</code> merely
+      requires the name of an xml template:
+    </p>
+
+    <pre class="python">
+class HelloXML(rend.Page):
+    docFactory = loaders.xmlfile('hello.xml')
+    </pre>
+
+    <p>
+      Placing the following xml in the <code>hello.xml</code> file will cause
+      <code>HelloXML</code> to display a static page when it is rendered:
+    </p>
+
+    <pre>&lt;html&gt;Hello, world!&lt;/html&gt;</pre>
+
+    <p>
+      The following additional keyword arguments may be given to
+      <code>xmlfile</code> to configure it:
+    </p>
+
+    <ul>
+      <li>
+        <code>templateDirectory</code>:
+        The path to the directory which contains the template file. Defaults to ''.
+      </li>
+      <li>
+        <code>ignoreDocType</code>:
+        If True, discard any DOCTYPE declaration when building the DOM from
+        this template. When false, preserve the DOCTYPE, causing it to show up
+        in the final output. Useful for when you are inserting an XML fragment
+        into a larger page and do not wish to generate invalid XML as
+        output. Defaults to False.
+      </li>
+      <li>
+        <code>ignoreComment</code>:
+        If True, discard XML comments, causing them to disappear from the
+        output. If False, preserve comments and render them in the final output
+        unchanged.  Defaults to False.
+      </li>
+      <li>
+        <code>pattern</code>:
+        If present, the given pattern name will be looked up and used as the
+        root of the template. If not present, the entire document will be used
+        as the template. Useful for embedding fragments of an XML document in a
+        larger page.  Defaults to None.
+      </li>
+    </ul>
+
+    <h2>Nevow's xmlns declaration</h2>
+
+    <p>
+      In order for Nevow to notice and process any XML directives in the
+      template file, you must declare the Nevow xmlns at the top of your XML
+      document. Nevow's xmlns is:
+    </p>
+
+    <pre>http://nevow.com/ns/nevow/0.1</pre>
+
+    <p>
+      The syntax for declaring that your xml document uses this namespace is:
+    </p>
+
+    <pre>&lt;html xmlns:nevow="http://nevow.com/ns/nevow/0.1"&gt;&lt;/html&gt;</pre>
+
+    <p>
+      You may replace the text "nevow" in the above example with any name you
+      choose.  For example, many people use "n" because it is shorter to
+      type. If you do so, be sure to replace all occurrences of the nevow
+      namespace in the examples with the namespace name you choose.
+    </p>
+
+    <h2>Nevow's Tag Attribute Language</h2>
+
+    <p>
+      The markup you will add to your XHTML file in order to invoke Nevow code
+      consists mostly of namespaced tag attributes. This approach was
+      influenced heavily by the Zope Page Templates (ZPT) Tag Attribute
+      Language (TAL). However, I felt that TAL did not go far enough in
+      removing control flow and branching possibilities from the XML
+      template. Nevow's main philosophy is that it should be as easy as
+      possible to move from the XML document into Python code, and that the
+      Python code should have ultimate control over manipulating the structure
+      of the XML template.
+    </p>
+
+    <p>
+      The key is that it is easy to expose Python methods that you write to
+      your XML template, and it is easy for the XML templates to mark nodes
+      which it wishes the Python method to manipulate. In this way, if either
+      the Python implementation changes or the location or content of the
+      marked nodes change in the XML template, the other side will be isolated
+      from these changes.
+    </p>
+
+    <p>
+      Nevow's XML templating has two attributes which invoke Python code:
+    </p>
+
+    <ul>
+      <li>
+        <code>nevow:render</code> --
+        Invokes a Python method and replaces the template node with the result
+      </li>
+      <li>
+        <code>nevow:data</code> --
+        Invokes a Python method and sets the data special for the node to the
+        result
+      </li>
+    </ul>
+
+    <p>
+      It has one attribute which marks nodes as manipulatable by Python code:
+    </p>
+
+    <ul>
+      <li>
+        <code>nevow:pattern</code> --
+        Gives a node a name so that Python code may clone and mutate copies of
+        this node
+      </li>
+    </ul>
+
+    <p>
+      It also has two namespaced tags:
+    </p>
+
+    <ul>
+      <li>
+        <code>nevow:slot</code> --
+        Works in the same way as the slot attribute
+      </li>
+      <li>
+        <code>nevow:attr</code> --
+        Indicates that an attribute of the parent tag should be manipulated by
+        Python code in some way
+      </li>
+    </ul>
+
+    <h2>nevow:render</h2>
+
+    <p>
+      When the <code>nevow:render</code> attribute is encountered, the xmlfile
+      loader sets the render special to a directive constructed with the
+      attribute value. When the template is rendered, this means that the
+      appropriate render_* method will be looked up on the
+      <code>IRendererFactory</code> (generally the Page instance):
+    </p>
+
+    <pre>&lt;html&gt;&lt;div nevow:render="foo" /&gt;&lt;/html&gt;</pre>
+
+    <p>
+      With the <code>render_foo</code> method::
+    </p>
+
+    <pre class="python">
+def render_foo(self, ctx, data):
+    return "Hello"
+    </pre>
+
+    <p>
+      Will result in the document:
+    </p>
+
+    <pre>&lt;html&gt;Hello&lt;/html&gt;</pre>
+
+    <p>
+      Note that the return value of the render method replaces the template
+      node in the DOM, so if you want the template node to remain, you should
+      use <code>ctx.tag</code>.
+    </p>
+
+    <h2>Built-in renderers</h2>
+
+    <p>
+      Nevow comes with various built in renderers on the Page class.
+    </p>
+
+    <ul>
+      <li>
+        <code>data</code>:
+        Renders the current data as-is inside the current node.
+      </li>
+      <li>
+        <code>string</code>:
+        Renders the current data as a string inside the current node.
+      </li>
+      <li>
+        <code>sequence</code>:
+        Iterates the current data, copying the "item" pattern for each
+        item. Sets the the data special of the new node to the item, and
+        inserts the result in the current node. See the nevow.rend.sequence
+        docstring for information about other used patterns, including
+        "header", "divider", "footer" and "empty".
+      </li>
+      <li>
+        <code>mapping</code>:
+        Calls .items() on the current data, and calls ctx.fillSlots(key, value)
+        for every key, value pair in the result. Returns the template tag.
+      </li>
+      <li>
+        <code>xml</code>:
+        Inserts the current data into the template after wrapping it in an xml
+        instance. Not very useful in practice.
+      </li>
+    </ul>
+
+    <h2>nevow:data</h2>
+
+    <p>
+      When the <code>nevow:data</code> attribute is encountered, the xmlfile
+      loader sets the data special of the current node to a directive
+      constructed with the attribute value.  When the template is rendered,
+      this means that the appropriate data_* method will be looked up on the
+      current <code>IContainer</code> (generally the Page instance). The data_*
+      method will be called, and the result will be set as the data special of
+      the current Tag:
+    </p>
+
+    <pre>&lt;html&gt;&lt;div nevow:data="name" nevow:render="data" /&gt;&lt;/html&gt;</pre>
+
+    <p>
+      With the <code>data_name</code> method:
+    </p>
+
+    <pre class="python">
+def data_name(self, ctx, data):
+    return "Hello!"
+    </pre>
+
+    <p>
+      Will result in the document:
+    </p>
+
+    <pre>&lt;html&gt;&lt;div&gt;Hello!&lt;/div&gt;&lt;/html&gt;</pre>
+
+    <p>
+      Note that with a data attribute on a node but no renderer, the result of
+      the data method will be set as the data special for that tag, and child
+      render methods will be passed this data.
+    </p>
+
+    <h2>nevow:pattern</h2>
+
+    <p>
+      When the <code>nevow:pattern</code> attribute is encountered, the xmlfile
+      loader sets the pattern special of the current node to the attribute
+      value as a string.  Renderers which are above this node may then make
+      copies of it using the <code class="API">nevow.inevow.IQ</code> of the
+      current context. With the template:
+    </p>
+
+    <pre>&lt;html nevow:render="stuff"&gt;&lt;div nevow:pattern="somePattern" nevow:render="data" /&gt;&lt;/html&gt;</pre>
+
+    <p>
+      And the renderer:
+    </p>
+
+    <pre class="python">
+def render_stuff(self, ctx, data):
+    pat = inevow.IQ(ctx).patternGenerator('somePattern')
+    return [pat(data=1), pat(data=2)]
+    </pre>
+
+    <p>
+      Will result in the document:
+    </p>
+
+    <pre>&lt;html&gt;&lt;div&gt;1&lt;/div&gt;&lt;div&gt;2&lt;/div&gt;&lt;/html&gt;</pre>
+
+    <h2>nevow:slot</h2>
+
+    <p>
+      When the <code>nevow:slot</code> tag is encountered, the xmlfile loader
+      constructs a <code class="API">nevow.stan.slot</code> instance, passing
+      the name attribute value as the slot name. The children of the slot node
+      are added as children of the new slot instance. This is useful if you
+      wish to put patterns inside the slot. With the template:
+    </p>
+
+    <pre>&lt;html nevow:render="stuff"&gt;&lt;nevow:slot name="slotName" /&gt;&lt;/html&gt;</pre>
+
+    <p>
+      And the render method:
+    </p>
+
+    <pre class="python">
+def render_stuff(self, ctx, data):
+    ctx.fillSlots('slotName', "Hello.")
+    return ctx.tag
+    </pre>
+
+    <p>
+      This document will be produced:
+    </p>
+
+    <pre>&lt;html&gt;Hello.&lt;/html&gt;</pre>
+
+    <h2>nevow:attr</h2>
+
+    <p>
+      When the <code>nevow:attr</code> tag is encountered, the contents of the
+      nevow:attr node will be assigned to the attribute of the parent tag with
+      the name of the value of the name attribute. Perhaps an example will be a
+      little clearer:
+    </p>
+
+    <pre>&lt;html&gt;&lt;a&gt;&lt;nevow:attr name="href"&gt;HELLO!&lt;/nevow:attr&gt;Goodbye&lt;/a&gt;&lt;/html&gt;</pre>
+
+    <p>
+      This document will be produced:
+    </p>
+
+    <pre>&lt;html&gt;&lt;a href="HELLO!"&gt;Goodbye&lt;/a&gt;&lt;/html&gt;</pre>
+
+    <p>
+      While this syntax is somewhat awkward, every other type of nevow tag and
+      attribute may be used inside the <code>nevow:attr</code> node. This makes
+      setting attributes of tags uniform with every other method of
+      manipulating the XML template.
+    </p>
+
+    <h2>nevow:invisible</h2>
+
+    <p>
+      Sometimes you need to group some elements, because you need to use a
+      renderer for a group of children.
+    </p>
+
+    <p>
+      However, it may not be desirable to give these elements a parent/child
+      relationship in your XML structure.  For these cases, use
+      <code>nevow:invisible</code>.
+    </p>
+
+    <p>
+      As suggested by the name, a <code>nevow:invisible</code> tag is removed
+      in the rendered XML. Here is an example:
+    </p>
+
+    <pre>&lt;html&gt;&lt;nevow:invisible nevow:data="name" nevow:render="data" /&gt;&lt;/html&gt;</pre>
+
+    <p>
+      With the <code>data_name</code> method:
+    </p>
+
+    <pre class="python">
+def data_name(self, ctx, data):
+    return "Hello!"
+    </pre>
+
+    <p>
+      Will result in the document:
+    </p>
+
+    <pre>&lt;html&gt;Hello!&lt;/html&gt;</pre>
+
+    <h2>xmlstr, htmlfile, and htmlstr</h2>
+
+    <p>
+      xmlstr is a loader which is identical to xmlfile except it takes a string
+      of XML directly.
+    </p>
+
+    <p>
+      htmlfile and htmlstr should generally be avoided. They are similar to
+      xmlfile and xmlstr, except they use twisted.web.microdom in
+      beExtremelyLenient mode to attempt to parse badly-formed HTML (non-XHTML)
+      templates. See the nevow.loaders docstrings for more information.
+    </p>
+
+    <h2>Conclusions</h2>
+
+    <p>
+      Nevow's xmlfile tag attribute language allows you to integrate
+      externally-designed XHTML templates into the Nevow rendering process.
+    </p>
+  </body>
+</html>

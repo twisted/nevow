@@ -1,0 +1,448 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>
+      Object Traversal
+    </title>
+  </head>
+  <body>
+    <h1>Object Traversal</h1>
+
+    <p>
+      <strong>Object traversal</strong> is the process Nevow uses to determine
+      what object to use to render HTML for a particular URL. When an HTTP
+      request comes in to the web server, the object publisher splits the URL
+      into segments, and repeatedly calls methods which consume path segments
+      and return objects which represent that path, until all segments have
+      been consumed. At the core, the Nevow traversal API is very
+      simple. However, it provides some higher level functionality layered on
+      top of this to satisfy common use cases.
+    </p>
+
+    <h2>Object Traversal Basics</h2>
+
+    <p>
+      The <strong>root resource</strong> is the top-level object in the URL
+      space; it conceptually represents the URI <code>/</code>. The Nevow
+      <strong>object traversal</strong> and <strong>object publishing</strong>
+      machinery uses only two methods to locate an object suitable for
+      publishing and to generate the HTML from it; these methods are described
+      in the interface <code class="API">nevow.inevow.IResource</code>:
+    </p>
+
+    <pre class="python">
+class IResource(Interface):
+    def locateChild(self, ctx, segments):
+        """Locate another object which can be adapted to IResource
+        Return a tuple of resource, path segments
+        """
+
+    def renderHTTP(self, ctx):
+        """Render a request
+        """
+    </pre>
+
+    <p>
+      <code class="API" base="nevow.inevow.IResource">renderHTTP</code> can be
+      as simple as a method which simply returns a string of HTML.  Let's
+      examine what happens when object traversal occurs over a very simple root
+      resource:
+    </p>
+
+    <pre class="python">
+from zope.interface import implements
+
+class SimpleRoot(object):
+    implements(inevow.IResource)
+
+    def locateChild(self, ctx, segments):
+        return self, ()
+
+    def renderHTTP(self, ctx):
+        return "Hello, world!"
+    </pre>
+
+    <p>
+      This resource, when passed as the root resource to <code class="API"
+      base="nevow">appserver.NevowSite</code> or <code class="API"
+      base="nevow">wsgi.createWSGIApplication</code>, will immediately return
+      itself, consuming all path segments. This means that for every URI a user
+      visits on a web server which is serving this root resource, the text
+      <code>"Hello, world!"</code> will be rendered. Let's examine the value of
+      <code>segments</code> for various values of URI:
+    </p>
+
+    <ul>
+      <li><code>/</code> - <code>('',)</code></li>
+      <li><code>/foo/bar</code> - <code>('foo', 'bar')</code></li>
+      <li>
+        <code>/foo/bar/baz.html</code> -
+        <code>('foo', 'bar', 'baz.html')</code>
+      </li>
+      <li>
+        <code>/foo/bar/directory/</code> -
+        <code>('foo', 'bar', 'directory', '')</code>
+      </li>
+    </ul>
+
+    <p>
+      So we see that Nevow does nothing more than split the URI on the string
+      <code>/</code> and pass these path segments to our application for
+      consumption. Armed with these two methods alone, we already have enough
+      information to write applications which service any form of URL
+      imaginable in any way we wish. However, there are some common URL
+      handling patterns which Nevow provides higher level support for.
+    </p>
+
+    <h2><code>locateChild</code> In Depth</h2>
+
+    <p>
+      One common URL handling pattern involves parents which only know about
+      their direct children. For example, a ``Directory`` object may only know
+      about the contents of a single directory, but if it contains other
+      directories, it does not know about the contents of them. Let's examine a
+      simple ``Directory`` object which can provide directory listings and
+      serves up objects for child directories and files:
+    </p>
+
+    <pre class="python">
+from zope.interface import implements
+
+class Directory(object):
+    implements(inevow.IResource)
+
+    def __init__(self, directory):
+        self.directory = directory
+
+    def renderHTTP(self, ctx):
+        html = ['&lt;ul&gt;']
+        for child in os.listdir(self.directory):
+            fullpath = os.path.join(self.directory, child)
+            if os.path.isdir(fullpath):
+                child += '/'
+            html.extend(['&lt;li&gt;&lt;a href="', child, '"&gt;', child, '&lt;/a&gt;&lt;/li&gt;'])
+        html.append('&lt;/ul&gt;')
+        return ''.join(html)
+
+    def locateChild(self, ctx, segments):
+        name = segments[0]
+        fullpath = os.path.join(self.directory, name)
+        if not os.path.exists(fullpath):
+            return None, () # 404
+
+        if os.path.isdir(fullpath):
+            return Directory(fullpath), segments[1:]
+        if os.path.isfile(fullpath):
+            return static.File(fullpath), segments[1:]
+    </pre>
+
+    <p>
+      Because this implementation of <code>locateChild</code> only consumed one
+      segment and returned the rest of them (<code>segments[1:]</code>), the
+      object traversal process will continue by calling
+      <code>locateChild</code> on the returned resource and passing the
+      partially-consumed segments. In this way, a directory structure of any
+      depth can be traversed, and directory listings or file contents can be
+      rendered for any existing directories and files.
+    </p>
+
+    <p>
+      So, let us examine what happens when the URI
+      <code>"/foo/bar/baz.html"</code> is traversed, where <code>"foo"</code>
+      and <code>"bar"</code> are directories, and <code>"baz.html"</code> is a
+      file.
+    </p>
+
+    <ol>
+      <li>
+        <code>
+          Directory('/').locateChild(ctx, ('foo', 'bar', 'baz.html'))
+        </code>
+        returns
+        <code>Directory('/foo'), ('bar', 'baz.html')</code>
+      </li>
+      <li>
+        <code>
+          Directory('/foo').locateChild(ctx, ('bar', 'baz.html'))
+        </code>
+        returns
+        <code>Directory('/foo/bar'), ('baz.html, )</code>
+      </li>
+      <li>
+        <code>
+          Directory('/foo/bar').locateChild(ctx, ('baz.html'))
+        </code>
+        returns
+        <code>File('/foo/bar/baz.html'), ()</code>
+      </li>
+      <li>
+        No more segments to be consumed;
+        <code>File('/foo/bar/baz.html').renderHTTP(ctx)</code> is called, and
+        the result is sent to the browser.
+      </li>
+    </ol>
+
+
+    <h2><code>childFactory</code> Method</h2>
+
+    <p>
+      Consuming one URI segment at a time by checking to see if a requested
+      resource exists and returning a new object is a very common
+      pattern. Nevow's default implementation of <code class="API"
+      base="nevow.inevow">IResource</code>, <code
+      class="API">nevow.rend.Page</code>, contains an implementation of
+      <code>locateChild</code> which provides more convenient hooks for
+      implementing object traversal. One of these hooks is
+      <code>childFactory</code>. Let us imagine for the sake of example that we
+      wished to render a tree of dictionaries. Our data structure might look
+      something like this:
+    </p>
+
+    <pre class="python">
+tree = dict(
+    one=dict(
+        foo=None,
+        bar=None),
+    two=dict(
+        baz=dict(
+        quux=None)))
+    </pre>
+
+    <p>
+      Given this data structure, the valid URIs would be:
+    </p>
+
+    <ul>
+      <li>/</li>
+      <li>/one</li>
+      <li>/one/foo</li>
+      <li>/one/bar</li>
+      <li>/two</li>
+      <li>/two/baz</li>
+      <li>/two/baz/quux</li>
+    </ul>
+
+    <p>
+      Let us construct a <code class="API" base="nevow">rend.Page</code>
+      subclass which uses the default <code>locateChild</code> implementation
+      and overrides the <code>childFactory</code> hook instead:
+    </p>
+
+    <pre class="python">
+class DictTree(rend.Page):
+    def __init__(self, dataDict):
+        self.dataDict = dataDict
+
+    def renderHTTP(self, ctx):
+        if self.dataDict is None:
+            return "Leaf"
+        html = ['&lt;ul&gt;']
+        for key in self.dataDict.keys():
+            html.extend(['&lt;li&gt;&lt;a href="', key, '"&gt;', key, '&lt;/a&gt;&lt;/li&gt;'])
+        html.append('&lt;/ul&gt;')
+        return ''.join(html)
+
+    def childFactory(self, ctx, name):
+        if name not in self.dataDict:
+            return rend.NotFound # 404
+        return DictTree(self.dataDict[name])
+    </pre>
+
+    <p>
+      As you can see, the <code>childFactory</code> implementation is
+      considerably shorter than the equivalent <code>locateChild</code>
+      implementation would have been.
+    </p>
+
+    <h2><code>child_*</code> methods and attributes</h2>
+
+    <p>
+      Often we may wish to have some hardcoded URLs which are not dynamically
+      generated based on some data structure. For example, we might have an
+      application which uses an external CSS stylesheet, an external JavaScript
+      file, and a folder full of images. The <code class="API"
+      base="nevow">rend.Page.locateChild</code> implementation provides a
+      convenient way for us to express these relationships by using
+      child-prefixed methods:
+    </p>
+
+    <pre class="python">
+class Linker(rend.Page):
+    def renderHTTP(self, ctx):
+        return """&lt;html&gt;
+&lt;head&gt;
+    &lt;link href="css" rel="stylesheet" /&gt;
+    &lt;script type="text/javascript" src="scripts" /&gt;
+  &lt;body&gt;
+    &lt;img src="images/logo.png" /&gt;
+  &lt;/body&gt;
+&lt;/html&gt;"""
+
+    def child_css(self, ctx):
+        return static.File('styles.css')
+
+    def child_scripts(self, ctx):
+        return static.File('scripts.js')
+
+    def child_images(self, ctx):
+        return static.File('images/')
+    </pre>
+
+    <p>
+      One thing you may have noticed is that all of the examples so far have
+      returned new object instances whenever they were implementing a traversal
+      API. However, there is no reason these instances cannot be shared. One
+      could for example return a global resource instance, an instance which
+      was previously inserted in a dict, or lazily create and cache dynamic
+      resource instances on the fly. The <code>rend.Page.locateChild</code>
+      implementation also provides a convenient way to express that one global
+      resource instance should always be used for a particular URL, the
+      child-prefixed attribute:
+    </p>
+
+    <pre class="python">
+class FasterLinker(Linker):
+    child_css = static.File('styles.css')
+    child_scripts = static.File('scripts.js')
+    child_images = static.File('images/')
+    </pre>
+
+    <h2>Dots in child names</h2>
+
+    <p>
+      When a URL contains dots, which is quite common in normal URLs, it is
+      simple enough to handle these URL segments in <code>locateChild</code> or
+      <code>childFactory</code> -- one of the passed segments will simply be a
+      string containing a dot. However, it is not immediately obvious how one
+      would express a URL segment with a dot in it when using child-prefixed
+      methods. The solution is really quite simple:
+    </p>
+
+    <pre class="python">
+class DotChildren(rend.Page):
+    def renderHTTP(self, ctx):
+        return """
+        &lt;html&gt;
+          &lt;head&gt;
+            &lt;script type="text/javascript" src="scripts.js" /&gt;
+          &lt;/head&gt;
+        &lt;/html&gt;"""
+
+setattr(DotChildren, 'child_scripts.js', static.File('scripts.js'))
+    </pre>
+
+    <p>
+      The same technique could be used to install a child method with a dot in
+      the name.
+    </p>
+
+
+    <h2>children dictionary</h2>
+
+    <p>
+      The final hook supported by the default implementation of
+      <code>locateChild</code> is the <code>rend.Page.children</code>
+      dictionary:
+    </p>
+
+    <pre class="python">
+class Main(rend.Page):
+    children = {
+        'people': People(),
+        'jobs': Jobs(),
+        'events': Events()}
+
+    def renderHTTP(self, ctx):
+        return """
+        &lt;html&gt;
+          &lt;head&gt;
+            &lt;title&gt;Our Site&lt;/title&gt;
+          &lt;/head&gt;
+          &lt;body&gt;
+            &lt;p&gt;bla bla bla&lt;/p&gt;
+          &lt;/body&gt;
+        &lt;/html&gt;"""
+    </pre>
+
+    <p>
+      Hooks are checked in the following order:
+    </p>
+
+    <ol>
+      <li><code>self.dictionary</code></li>
+      <li><code>self.child_*</code></li>
+      <li><code>self.childFactory</code></li>
+    </ol>
+
+    <h2>The default trailing slash handler</h2>
+
+    <p>
+      When a URI which is being handled ends in a slash, such as when the
+      <code>/</code> URI is being rendered or when a directory-like URI is
+      being rendered, the string <code>''</code> appears in the path segments
+      which will be traversed. Again, handling this case is trivial inside
+      either <code>locateChild</code> or <code>childFactory</code>, but it may
+      not be immediately obvious what child-prefixed method or attribute will
+      be looked up.  The method or attribute name which will be used is simply
+      <code>child</code> with a single trailing underscore.
+    </p>
+
+    <p>
+      The <code>rend.Page</code> class provides an implementation of this
+      method which can work in two different ways. If the attribute
+      <code>addSlash</code> is <code>True</code>, the default trailing slash
+      handler will return <code>self</code>. In the case when
+      <code>addSlash</code> is <code>True</code>, the default
+      <code>rend.Page.renderHTTP</code> implementation will simply perform a
+      redirect which adds the missing slash to the URL.
+    </p>
+
+    <p>
+      The default trailing slash handler also returns self if
+      <code>addSlash</code> is <code>False</code>, but emits a warning as it
+      does so. This warning may become an exception at some point in the
+      future.
+    </p>
+
+    <h2><code>ICurrentSegments</code> and <code>IRemainingSegments</code></h2>
+
+    <p>
+      During the object traversal process, it may be useful to discover which
+      segments have already been handled and which segments are remaining to be
+      handled. This information may be obtained from the <code>context</code>
+      object which is passed to all the traversal APIs. The interfaces <code
+      class="API">nevow.inevow.ICurrentSegments</code> and <code
+      class="API">nevow.inevow.IRemainingSegments</code> are used to retrieve
+      this information. To retrieve a tuple of segments which have previously
+      been consumed during object traversal, use this syntax:
+    </p>
+
+    <pre class="python">
+segs = ICurrentSegments(ctx)
+    </pre>
+
+    <p>
+      The same is true of <code>IRemainingSegments</code>.
+      <code>IRemainingSegments</code> is the same value which is passed as
+      <code>segments</code> to <code>locateChild</code>, but may also be useful
+      in the implementations of <code>childFactory</code> or a child-prefixed
+      method, where this information would not otherwise be available.
+    </p>
+
+    <h2>Conclusion</h2>
+
+    <p>
+      Nevow makes it easy to handle complex URL hierarchies. The most basic
+      object traversal interface, <code
+      class="API">nevow.inevow.IResource.locateChild</code>, provides powerful
+      and flexible control over the entire object traversal process. Nevow's
+      canonical <code>IResource</code> implementation, <code>rend.Page</code>,
+      also includes the convenience hooks <code>childFactory</code> along with
+      child-prefixed method and attribute semantics to simplify common use
+      cases.
+    </p>
+  </body>
+</html>
