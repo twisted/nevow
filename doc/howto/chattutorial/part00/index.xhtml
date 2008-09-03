@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Nevow Athena from Scratch: Echo Application</title>
+  </head>
+<body>
+
+<h2>What is an "Echo Application?"</h2>
+
+<p>
+Our first foray into building an Athena application will be an easy venture:
+we want to type something in an input box and have it echoed back to us on
+the same page, without having to reload anything. Why? Well, our eventual
+goal is to have a working chat server, with all sorts of technical bells
+and whistles (persistent storage, authentication,
+etc.), but that's a bit heady for right now. Many of the same principles
+which we will eventually employ in our chat application exist for a simple
+case of sending textual messages between a web browser and a server. This
+is the essence of our "Echo" application.
+</p>
+
+<h2>Mental Preparation</h2>
+
+<p>In the
+<a href="../intro.html">Introduction</a> and the
+<a href="../concepts.html">Concepts</a> pages, we had a refresher on AJAX and
+COMET and we learned a little bit about what that looks like for Athena. But
+as we sit down to actually write an Athena application, what do we need to
+wrap our heads around?
+</p>
+
+<p>Given the introductory knowledge we have, we know that we will need to
+write some JavaScript, some Python, and if our past experience in developing
+web applications is any guide, some form of template. This indeed is the
+case, but here's something big: we're not working with pages and page
+templates; we're working with "elements", or parts of the DOM tree. We will
+not be creating page resources; we will be creating just the parts of a
+"traditional" page that will be dynamic and interactive.
+</p>
+
+<h2>Architecture</h2>
+
+<p>Now that we've pumped ourselves up and before we start clacking away at the
+keyboard, we need to get pointed in the right direction. We need a
+plan. Here's what we know:</p>
+
+<ol>
+<li>We will have a server that:
+    <ul>
+    <li>serves dynamic elements in a resource accessible via a URL;</li>
+    <li>communicates with a client.</li>
+    </ul>
+</li>
+<li>We will have a client that:
+    <ul>
+    <li>communicates with the server;</li>
+    <li>updates its DOM tree.</li>
+    </ul>
+</li>
+</ol>
+
+<p>The user experience of this application will be the following:</p>
+<ol>
+<li>they will type text in an input on a form; and</li>
+<li>the typed text will be rendered to a different part of the page upon
+hitting a submit button.</li>
+</ol>
+
+<p>We will not simply write user input to a <code>div</code> with JavaScript
+DOM manipulation, but will instead pass data like we expect will be necessary
+when we write our chat application. After all, it's probably best to build
+towards our goal. In order to accomplish this, the application will do
+something like the following:</p>
+
+<ol>
+<li>JavaScript client code will extract user input and send
+it to our server;</li>
+<li>Python code will receive messages from the client;</li>
+<li>Python code will send messages to the client; and</li>
+<li>a template file (or <code>stan</code> code) will be used for
+presentation.</li>
+</ol>
+
+<p></p>
+
+<h2>Let the Coding Begin</h2>
+
+<p>In a future installment, we will outline the development process from
+the perspective of test-driven development, in order to not only show how
+to write unit tests for Athena (Python and JavaScript), but to encourage
+good programming practices while working with Athena. For now, though, we will
+just dive right in.</p>
+
+<h3>Presentation</h3>
+
+<p>Let's start with the easy bit: what our app will look like. Here is the
+template for our echo application:</p>
+
+<a href="listings/echothing/template.html" class="html-listing" />
+
+<p>Things to note:</p>
+<ul>
+<li>This is not a complete HTML document, but is an XHTML template for an
+"element".</li>
+<li>The name space declarations in the top <code>div</code> tag are necessary
+for the operation of Athena.</li>
+<li>When we hit the "Send" button, our JavaScript class will call the
+<code>doSay()</code> method.</li>
+</ul>
+
+<h3>Writing the Client</h3>
+
+<p>Next up is the JavaScript. We need to send our data to the server. In a
+full chat application, it would be necessary to send the data to the server
+so that we could propagate the message to all connected clients. In this
+case, with the simple echo, we're not going to do anything with the data
+that gets sent to the server, except send it back, of course.</p>
+
+<p>Our JavaScript will need to do several things:</p>
+<ol>
+<li>import required modules;</li>
+<li>inherit <code>callRemote</code> functionality from the base
+<code>Widget</code> class;</li>
+<li>setup convenience attributes;</li>
+<li>implement the <code>doSay()</code> method we put in our template above;
+and</li>
+<li>implement a method for updating the DOM with data it receives from
+the server</li>
+</ol>
+
+<a href="listings/echothing/js/EchoThing.js" class="py-listing" />
+
+<p>Points to note:</p>
+<ul>
+<li>Those import statements aren't just pretty: they are necessary! In Athena,
+you need to treat those like you treat the import statements in Python.
+</li>
+<li>The attributes set in the <code>__init__()</code> method are for
+convenience when we reference them in other methods.</li>
+<li>Note the <code>callRemote()</code> method in <code>doSay()</code>,
+As mentioned in the <a href="../concepts.html">Concepts</a> section, this
+is how JavaScript is communicating with our Python server.</li>
+<li>Another thing about <code>doSay</code>: this is the submit handler. As
+such, it needs to return false so that the browser is prevented from doing a
+normal form submission.</li>
+<li><code>addText()</code> is the method that will be updating the browser
+DOM once the server sends the data back.</li>
+</ul>
+
+<p>There's not much to say about the next one. This is what sets up the
+relationship between our module name and the actual file itself (so that
+the JavaScript can be loaded):</p>
+
+<a href="listings/nevow/plugins/echothing_package.py" class="py-listing" />
+
+<h3>Writing the Server</h3>
+
+<p>Despite what one might think, writing the server may be the easiest
+part! If you've created  Nevow applications before, then this will look
+very familiar. The only method we need is one that will send data back to
+the client. Besides importing the necessary modules and creating a class
+with some boilerplate, that's about it.
+</p>
+
+<p>Let's take a look at the code:</p>
+
+<a href="listings/echothing/echobox.py" class="py-listing" />
+
+<p>As promised, simple as can be. We do make use of a Twisted utility that
+simplifies typing the path to our template. Some very important points:</p>
+<ul>
+<li>The <code>jsClass</code> assignment is what connects this code to your
+JavaScript code.</li>
+<li>As discussed in the <a href="../concepts.html">Concepts</a> section,
+the <code>expose</code> decorator is required if our JavaScript is going
+to be able to call the <code>say()</code> method.</li>
+</ul>
+
+<h3>Putting it All Together</h3>
+
+<p>Now that we've got all the code in front of us, we can trace out exactly
+what happens:</p>
+<ol>
+<li>the user loads the resource in their browser, and the template is
+rendered;</li>
+<li>after typing a message in the input box, the user hits submit;</li>
+<li>upon hitting submit, the client code <code>doSay()</code> method is
+called;</li>
+<li><code>doSay()</code> makes a remote call to the Python server method
+<code>say()</code>;</li>
+<li>the Python server receives the data when <code>say()</code> is called, and
+then it passes that data to the client code's <code>addText()</code> method;</li>
+<li>with control back in the client code and data fresh from the server,
+JavaScript can now update the page's DOM with the new data, and this is
+what the <code>addText()</code> method does;</li>
+<li>when <code>addText()</code> finishes, the cycle has completed and the
+browser now displays the latest data input by the user.</li>
+</ol>
+
+<h3>The Fruits of Our Labor</h3>
+
+<p>Now we get to run it! This is a little different than what you may be
+used to, if you have written Twisted applications in the past. We are using
+the plugin architecture of Twisted and Nevow such that <code>twistd</code>
+will publish our element in an HTTP service. To do this, we will use
+<code>twistd</code>'s <code>athena-widget</code> command:</p>
+
+<pre class="shell">
+cd Nevow/doc/howto/chattutorial/part00/listings
+twistd -n athena-widget --element=echothing.echobox.EchoElement
+</pre>
+
+<p>If you executed this against the tutorial code on your local machine,
+you can now visit <a href="http://localhost:8080">localhost:8080</a> and start
+echoing to your heart's content.</p>
+
+<h2>Summary</h2>
+
+<p>As you can see, our echo application is a toy app that doesn't do
+anything very useful. However, it has provided us with a basis for learning how
+to write working Athena code that lets a browser and server communicate
+with each other, both sending and receiving data. As such, we now have a
+solid foundation upon which we can build a functional, useful <i>and</i>
+instructional chat application.</p>
+
+</body>
+</html>
+

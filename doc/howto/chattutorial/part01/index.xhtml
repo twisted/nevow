@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Nevow Athena from Scratch: Chat Application</title>
+  </head>
+<body>
+
+<h2>Architecture</h2>
+
+<p>We'll assume that you've read all the preceding sections of this tutorial
+and have just finished the "Echo" application example. As such, we don't need
+to do any more "mental preparation" and can skip straight to a description of
+the architecture.</p>
+
+<p>Fundamentally, this is no different than our echo application: there is
+a little more chatter that takes place between the client and server;
+there's another object involved (a <code>ChatRoom</code>); and we'll have
+to run the server a little differently.
+</p>
+
+<p>Here are the new features we want to support:</p>
+<ul>
+<li>login form;</li>
+<li>in-memory user storage;</li>
+<li>the ability to send global alerts to all users; and</li>
+<li>the ability for all users to "hear" when another user speaks in the
+chat room;</li>
+</ul>
+
+<p>A general rule we can establish about our architecture is that if something
+has to happen for everyone, that code needs to appear on the server side,
+since it's the server that is keeping track of all users. If something is
+going to happen irrespective of other users or if browser DOM manipulation
+is required, then we know the client will be the recipient of the code.</p>
+
+<p>As such, in the features above, the login form will be client code. The
+user storage, global alerts, and "hearing" will be implemented in server
+code for the data; updating the DOM with that data will be implemented in
+client code.</p>
+
+<p>The user experience of this application will be the following:</p>
+<ol>
+<li>they will be presented with a login box (no password, only username);</li>
+<li>upon logging in, a message will be sent to all logged in users that
+this person has joined, they will see a message at the bottom of the
+chat that states their login name, and the login form will be replaced with
+a chat area and a text input field;</li>
+<li>they will type text in the input field; and</li>
+<li>the typed text will appear in the browser of every person who is
+logged in.</li>
+</ol>
+
+<p>Building upon our previous example, our application will do the
+following:</p>
+
+<ol>
+<li>JavaScript client code will extract user input and send
+it to our server;</li>
+<li>Python code will receive messages from the client;</li>
+<li>Python code will process these messages;</li>
+<li>Python code will send messages to the all clients; and</li>
+<li>a template file (or <code>stan</code> code) will be used for
+presentation.</li>
+</ol>
+
+<h2>More Coding</h2>
+
+<h3>Presentation</h3>
+
+<p>The template is very similar as it was in the previous example, with
+the differences being a new login box, a "logged in as"
+area, and some name changes:</p>
+
+<a href="listings/chatthing/template.html" class="html-listing" />
+
+<p>We've now got two JavaScript methods that need to be defined:
+<code>doSetUsername()</code> and <code>doSay()</code>. We can also infer
+from this template that elements will be hidden and shown after login
+(note the presence of <code>style="display:none"</code> in two places). With
+these observations in hand, let's proceed to the JavaScript code.</p>
+
+<h3>Writing the Client</h3>
+
+<p>Referring back to our thoughts in the "Architecture" section above, we
+can establish that the JavaScript code needs the following:</p>
+
+<ul>
+<li>have the same basic boilerplate as in the "echo" example (imports,
+inheritance, attribute-setting in the constructor);</li>
+<li>implement the <code>doSetUsername()</code> and <code>doSay()</code>
+methods;</li>
+<li>create a method that will send a message to all users; and</li>
+<li>create a method that will let everyone know when someone says
+something. Let's see how this is done.</li>
+</ul>
+
+<a href="listings/chatthing/js/ChatThing.js" class="py-listing" />
+
+<p>There is a little abstraction here:</p>
+<ul>
+<li>we need a general message-sending method (<code>displayMessage()</code>) for any
+message that gets sent to all users;</li>
+<li>for user chat messages, we need something that will prepend the username so
+that everyone knows who said what (<code>displayUserMessage()</code>), and once this method
+does its thing, it passes the adjusted message on to <code>displayMessage()</code>.</li>
+</ul>
+
+<p>Other than that, this is very straight-forward code; it's pretty much
+the same as the "Echo" tutorial. The <code>display*()</code> methods
+are only responsible for updating the UI, just as we would expect.</p>
+
+We also need the same glue that we demonstrated in the "Echo" example:
+
+<a href="listings/nevow/plugins/chatthing_package.py" class="py-listing" />
+
+<h3>Writing the Server</h3>
+
+<p>The server code is a bit more complicated. We
+anticipated this above in the "Architecture" section where we noted that
+the Python code needs to receive, process and send messages.</p>
+
+<a href="listings/chatthing/chatterbox.py" class="py-listing" />
+
+<p>There is something in our "Chat" code that is not at all present in the
+"Echo" application: the <code>ChatRoom</code> object. We need this object for the
+following functionality:</p>
+<ul>
+<li>a means of instantiating new <code>ChatterElement</code> clients;</li>
+<li>a "singleton" instance for keeping track of all <code>ChatterElement</code> clients;</li>
+<li>a means sending messages to all clients;</li>
+</ul>
+
+<p>Let's look at the second two reasons first. In our "Chat" application,
+a new <code>ChatterElement</code> is created whenever a user connects,
+so we will have potentially many of these instances. In order
+for our chat server to function as designed, it will need a way to
+communicate with each of these. If we create an object that can keep the
+<code>ChatterElement</code>es in a list, then it will be able to iterate that
+list and call methods that, in turn, make remote calls to the JavaScript.
+</p>
+
+<p>Because we need the chat room to be a singleton object, it
+can only be instantiated once. But we need many instantiations of
+<code>ChatterElement</code> -- one for each connection, in fact. So what do
+we do? Well, in this case, we make one of the methods
+of <code>ChatRoom</code> a factory for instantiating a
+<code>ChatterElement</code>. Before we return the instance, though, we
+append it to the list of instances that the <code>ChatRoom</code>
+is keeping track of.
+</p>
+
+<h3>Putting it All Together</h3>
+
+
+<p>Now that we've got all the code in front of us, we can trace out exactly what happens:</p>
+
+<ol>
+<li>the user loads the resource in their browser, and the template is rendered;</li>
+<li>after typing a message in the input box, the user hits submit;</li>
+<li>JavaScript client code calls to the server with the text the user submitted;</li>
+<li>the server gets the message and shares it with all the connected
+<code>ChatterElement</code>s;</li>
+<li>each <code>ChatterElement</code> hears this message and passes it back to the JavaScript client;</li>
+<li>the client prepends the username to the message and then updates the display with the complete message.</li>
+</ol>
+
+<p>
+Keep in mind that <code>ChatterElement</code> entails several duties: it
+establishes a relationship with a room object, it "registers" a user (there's a
+one-to-one mapping between users and <code>ChatterElement</code>), it sends
+messages to the browser, and it receives messages from the chat room. Being a
+<code>LiveElement</code> subclass, <code>ChatterElement</code> is also
+responsible for the view (via the document factory).
+</p>
+
+
+<h3>Running with <code>twistd</code></h3>
+
+<p>One last bit of code that may seem odd is the <code>chat</code>
+variable we define right after the <code>ChatRoom</code> class. What
+is this? This is how we make all this cleverness work as a twisted
+plugin. </p>
+
+<p>If you recall, in our "Echo" application, we ran the code with
+the following command:
+</p>
+
+<pre class="shell">
+twistd -n athena-widget --element=echothing.echobox.EchoElement
+</pre>
+
+<p>The value we pass as the <code>--element</code> argument is the dotted
+name of the <code>LiveElement</code> object of which our "web page"
+is primarily comprised: the <code>EchoElement</code> object. In
+our "Chat" application, we have more moving parts: not only
+do we have the <code>ChatterElement</code> object, but we have the
+<code>ChatRoom</code> object which is responsible for keeping track of
+many <code>ChatterElement</code>es. By defining the <code>chat</code>
+variable, we are accomplishing the following all at once:
+</p>
+
+<ul>
+<li>providing a variable that can be accessed as a dotted name and thus
+used when starting the server (<code>chatthing.chatterbox.chat</code>);</li>
+<li>creating a singleton of <code>ChatRoom</code> (via the "magic"
+of Python module-level instantiations);</li>
+<li>making use of a factory, that when called, will both return a
+new <code>ChatterElement</code> instance <i>and</i> add itself to the
+<code>ChatRoom</code>.</li>
+</ul>
+
+<p>Running this version of our code is a little bit different than the
+"Echo" version. This is because of the <code>ChatRoom</code> code we
+discussed above. As such, we pass a factory as our element, like so:</p>
+
+<pre class="shell">
+cd Nevow/doc/howto/chattutorial/part01/listings
+twistd -n athena-widget --element=chatthing.chatterbox.chat
+</pre>
+
+<p>If you executed this against the tutorial code on your local machine,
+you can now visit <a href="http://localhost:8080/">http://localhost:8080/</a>
+and start chatting to your heart's content.</p>
+
+<h2>Summary</h2>
+<p>
+Unlike our echo application, the chat application has some real functionality
+and does some useful stuff: supporting user chats via browser/server two-way
+communications. It should be evident now how the echo application provided a
+basic conceptual and (partially) functional foundation upon which our chat work
+could be based.
+</p>
+</body>
+</html>

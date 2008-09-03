@@ -1,0 +1,11 @@
+<div xmlns:nevow="http://nevow.com/ns/nevow/0.1"
+    xmlns:athena="http://divmod.org/ns/athena/0.7"
+    nevow:render="liveElement">
+    <h2>Echo Element</h2>
+    <form name="echoElement">
+        <athena:handler event="onsubmit" handler="doSay" />
+        <div name="scrollArea">
+        </div>
+        <input name="message" /><input type="submit" value="Send" />
+    </form>
+</div>

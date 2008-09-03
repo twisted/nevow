@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Concepts</title>
+  </head>
+<body>
+
+<h1>Concepts</h1>
+
+<h2>Servers and Clients</h2>
+
+<p>COMET applications can seem an almost impenetrable mess when one is first
+learning about them, much like when writing event-based desktop
+applications. However, there are some basic concepts that we can emphasize now
+to circumvent or alleviate most of the confusion.</p>
+
+<p>In principle, the problem is very simple:</p>
+<ul>
+<li>We want out users to interact with a <q>web page</q> with out having to refresh
+the page, and we want new data and/or views to be rendered in response to our
+users' actions;</li>
+<li>We want the ability to push updates to user pages from the server to the
+browser, when the server has new data or views that are ready.</li>
+</ul>
+
+<p>As usual, the implementation of the solution is much more complicated than
+the statement of the problem, but hopefully the way that we have designed
+Athena will hide those implementation details while providing powerful tools to
+build the applications you envision. So, let's take a look at what you need to
+know about servers and clients when building Athena web applications.</p>
+
+<p>It is crucial that one understands that when we write Athena applications,
+we are doing a few different things:</p>
+<ul>
+<li>Writing server code in Python that performs server actions</li>
+<li>Writing server code in Python that makes remote calls to the browser</li>
+<li>Writing browser code in JavaScript that performs browser actions</li>
+<li>Writing browser code in JavaScript that makes remote calls to the server</li>
+</ul>
+
+<p>Since server-on-server and client-on-client are rather common place and
+generally well understood, we will ignore those for now. As the other two
+are the focus of AJAX/COMET and thus also the primary domain of Athena, that is
+what we will discuss below.</p>
+
+<p>Browser-to-server calls are made by Athena via the now-famous
+ XMLHttpRequest. Server-to-browser calls are opened by the browser ahead of
+time, and when the server is ready, the data is sent to the browser via that
+connection.</p>
+
+<h2>JavaScript: Making Calls to the Server</h2>
+
+<p>When creating the JavaScript portion of our applications, we subclass
+an Athena JavaScript widget, which has a method named
+<code>callRemote()</code>. By utilizing this method, we can send messages from
+our JavaScript client to the server (as long as the method we call exists in
+the server code).</p>
+
+<p>For example, in the chat application we will be building in this series
+of tutorials, we will have a JavaScript class called <code>ChatterBox</code> with a
+<code>say()</code> method, like the following:</p>
+<pre>
+function say(self, msg) {
+    self.callRemote("say", msg);
+    // Now show the text to the user somehow...
+}
+</pre>
+<p>This will make a remote call to the Python server code, executing the
+<code>say()</code> method and passing the <code>msg</code> variable as a
+parameter.</p>
+
+<p>In Athena, the relationship between the browser code and the server code is
+established by declaring the JavaScript module in the Python server code, in
+the following manner:</p>
+<pre class="python">
+class ChatterBox(LiveElement):
+    jsClass = u'ChatThing.ChatterBox'
+</pre>
+<p>Additionally, in order for the JS to be able to make a call to remote Python
+code, the Python method has to be exposed.  This is a security feature,
+implemented to ensure the JavaScript code can only call Python methods that
+have been specifically marked as safe.  Appropriately enough, this is done in
+your Python class with the <code>expose</code> decorator:</p>
+
+<pre class="python">
+def say(self, text):
+    for chatter in chatRoom:
+        chatter.youHeardSomething(text)
+say = expose(say)
+</pre>
+
+<h2>Python: Making Calls to the Browser</h2>
+
+<p>Now what about the COMET side of the equation? If we want our server to
+update data in the browser, we need to be able to call JavaScript code from our
+Python server. We use a similar Python method as the JavaScript one (when
+making calls from the browser to the server), acquired when our Python class
+inherited from <code>nevow.athena.LiveElement</code>:</p>
+
+<pre class="python">
+def hear(self, sayer, text):
+    self.callRemote("hear", sayer, text)
+</pre>
+
+<p>In order for this call to work, we need to have the <code>hear()</code>
+method defined in our <code>ChatterBox</code> JavaScript class, and that will
+look like this:</p>
+<pre>
+function hear(self, avatarName, text) {
+    // Here, you'd show the user some text.
+}
+</pre>
+
+<p>Unlike on our Python classes, no special annotations need to be made on the
+JavaScript side: all JavaScript methods on browser-side Widget objects are
+allowed to be called by the server. If you've sent code to the browser, you've
+already forfeited the ability to control when it's called. There wouldn't be a
+point to limiting the server's rights to run its code when the user can freely
+run it herself.</p>
+
+<h2>Summary</h2>
+
+<p>With the samples above, you should have a growing sense of how Python and
+JavaScript interact as servers and clients in the world of Athena. In
+particular, you should be getting a sense of how JavaScript and Python will be
+interacting in your Athena applications.</p>
+
+<p>This has just been a taste of Athena with a few peeks into the code we
+will be writing. We will cover these topics in greater detail in the following
+pages, within the context of creating a functional Athena application,
+complete with step-by-step instructions and rationale.</p>
+
+</body>
+</html>
