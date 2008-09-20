@@ -10,7 +10,7 @@ body
 pre
 {
   padding: 1em;
-  font-family: Neep Alt, Courier New, Courier;
+  font-family: Monospace, Neep Alt, Courier New, Courier;
   font-size: 12pt;
   border: thin black solid;
 }
