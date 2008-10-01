@@ -5,6 +5,7 @@ Tests for L{nevow.page.Element}
 
 from zope.interface.verify import verifyObject
 
+from twisted.internet.defer import Deferred
 from twisted.trial.unittest import TestCase
 
 from nevow.rend import Page
@@ -289,6 +290,17 @@ class FlattenIntegrationTests(TestCase):
         self.assertEqual(synchronousFlatten(element), "hello, world")
 
 
+    def test_synchronousFlattenError(self):
+        """
+        If the old flattener encounters an exception while flattening an
+        L{IRenderable}, the exception is raised to the caller of the flattener
+        API.
+        """
+        element = Element()
+        element.docFactory = stan(invisible(render=directive('foo')))
+        self.assertRaises(FlattenerError, synchronousFlatten, element)
+
+
     def test_flattenable(self):
         """
         Flattening L{Element} instances with the new flatten function results in
@@ -364,4 +376,26 @@ class FlattenIntegrationTests(TestCase):
             self.assertEqual("".join(result), "<p>Hello, world</p>")
             self.assertEqual(renders, [(element, request)])
         finished.addCallback(cbFinished)
+        return finished
+
+
+    def test_oldFlattenableError(self):
+        """
+        If the old flattener encounters an asynchronous Failure while
+        flattening an L{IRenderable}, the returned L{Deferred} fires with the
+        failure.
+        """
+        result = Deferred()
+        element = Element()
+        element.docFactory = stan(result)
+
+        request = FakeRequest()
+        context = WovenContext()
+        context.remember(request)
+
+        accumulator = []
+        finished = oldFlatten(element, context, accumulator.append, lambda ign: ign)
+        result.addErrback(lambda err: err.trap(RuntimeError))
+        finished = self.assertFailure(finished, RuntimeError)
+        result.errback(RuntimeError("test error"))
         return finished

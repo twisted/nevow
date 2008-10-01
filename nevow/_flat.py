@@ -406,7 +406,7 @@ def _flattensome(state, write, schedule, result):
                 def cby(original):
                     schedule(_flattensome, state, write, schedule, result)
                     return original
-                element.addCallback(cby)
+                element.addCallbacks(cby, result.errback)
         break
 
 

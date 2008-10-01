@@ -134,11 +134,20 @@ def _flattenElement(element, ctx):
     request = IRequest(ctx, None) # XXX None case is DEPRECATED
     finished = deferflatten(request, element, ctx.isAttrib, True, accumulator.append)
     def cbFinished(ignored):
-        synchronous.append(None)
+        if synchronous is not None:
+            synchronous.append(None)
         return accumulator
-    finished.addCallback(cbFinished)
+    def ebFinished(err):
+        if synchronous is not None:
+            synchronous.append(err)
+        else:
+            return err
+    finished.addCallbacks(cbFinished, ebFinished)
     if synchronous:
-        return accumulator
+        if synchronous[0] is None:
+            return accumulator
+        synchronous[0].raiseException()
+    synchronous = None
     return finished
 
 registerFlattener(_flattenElement, Element)
