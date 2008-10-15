@@ -671,6 +671,16 @@ Divmod.Runtime.Platform.methods(
         Divmod.Base.addLoadEvent(function() {
                 setTimeout(callable, self._loadEventDelay);
             });
+    },
+
+    /**
+     * Add a beforeunload event handler.
+     *
+     * @param aWindow: The window object.
+     * @param handler: The handler.
+     */
+    function addBeforeUnloadHandler(self, aWindow, handler) {
+        Divmod.Base.addToCallStack(aWindow, 'onbeforeunload', handler);
     });
 
 
@@ -1141,6 +1151,13 @@ Divmod.Runtime.InternetExplorer.methods(
         }
 
         return foundNode;
+    },
+
+    /**
+     * Add the handler to the <body> element instead.
+     */
+    function addBeforeUnloadHandler(self, aWindow, handler) {
+        Divmod.Base.addToCallStack(aWindow.document.body, 'onbeforeunload', handler);
     });
 
 

@@ -55,24 +55,14 @@ Nevow.Athena.PageWidget.methods(
     },
 
     /**
-     * Bind this page's global event handlers to a window object.
+     * Construct an event handler function that dispatches to a method on
+     * self.
      */
-    function bindEvents(self, aWindow) {
-        var evts = ['onbeforeunload', 'onkeypress'];
-        for (var i = 0; i < evts.length; i++) {
-            Divmod.Base.addToCallStack(
-                aWindow, evts[i],
-                // This mess of nested functions is the easiest way to capture
-                // evts[i] and still get 'self' right in the inner function.
-                // Honest!
-                (function (evtName) {
-                    var thunk = function (evtObj) {
-                        return self[evtName](evtObj);
-                    };
-                    return thunk;
-                })(evts[i]),
-                false);
-        }
+    function makeHandler(self, evtName) {
+        var thunk = function (evtObj) {
+            return self[evtName](evtObj);
+        };
+        return thunk;
     },
 
     /**
@@ -1464,9 +1454,13 @@ Nevow.Athena.bootstrap = function (pageClassName, clientID) {
     var self = this;
     var pageClass = Divmod.namedAny(pageClassName);
     self.page = pageClass(clientID, Nevow.Athena._createMessageDelivery);
-    self.page.bindEvents(window);
+    Divmod.Base.addToCallStack(
+        window, 'onkeypress', self.page.makeHandler('onkeypress'));
+
 
     Divmod.Runtime.theRuntime.addLoadEvent(function transportStartup() {
+            Divmod.Runtime.theRuntime.addBeforeUnloadHandler(
+                window, self.page.makeHandler('onbeforeunload'));
             Divmod.debug("transport", "starting up");
             self.page.deliveryChannel.start();
             Divmod.debug("transport", "started up");
