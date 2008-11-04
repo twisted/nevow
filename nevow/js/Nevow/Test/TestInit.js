@@ -37,17 +37,29 @@ Nevow.Test.TestInit.InitTests.methods(
         // fake handlers for simple testing of just bootstrap behavior, not
         // the full pile of stuff that they do
         var keyPressed = 0;
-        var beforeUnloaded = false;
         notAthena.page.onkeypress = function () {
             keyPressed++;
-        };
-        notAthena.page.onbeforeunload = function () {
-            beforeUnloaded = true;
         };
         myWind.onkeypress();
         self.assertIdentical(keyPressed, 1);
         myWind.onkeypress();
         self.assertIdentical(keyPressed, 2);
-        myWind.onbeforeunload();
+
+        var channelStarted = false;
+        var beforeUnloaded = false;
+
+        var notDeliveryChannel = {
+            'start': function start() {
+                channelStarted = true;
+            }};
+
+        notAthena.page.deliveryChannel = notDeliveryChannel;
+        notAthena.page.onbeforeunload = function () {
+            beforeUnloaded = true;
+        };
+
+        myWind.onload();
+        self.assert(channelStarted);
+        notAthena.page.onbeforeunload();
         self.assert(beforeUnloaded);
     });

@@ -352,14 +352,12 @@ Nevow.Test.TestWidget.SetupTests.methods(
      * attribute and invoke the delivery channel's fast-path instant teardown.
      */
     function test_onbeforeunload(self) {
-        var notAWindow = {};
-        self.page.bindEvents(notAWindow);
         self.assertIdentical(self.page.pageUnloaded, false);
         var disconnectDialogShown = false;
         self.page.showDisconnectDialog = function () {
             disconnectDialogShown = true;
         };
-        notAWindow.onbeforeunload();
+        self.page.onbeforeunload();
         self.assertIdentical(self.page.pageUnloaded, true);
         self.assertIdentical(self.closeMessageSent, true);
         // This should not show the disconnect dialog; onbeforeunload is a
@@ -449,7 +447,8 @@ Nevow.Test.TestWidget.SetupTests.methods(
         self.page.onkeypress = function () {
             self.called = true;
         };
-        self.page.bindEvents(self.window);
+        Divmod.Base.addToCallStack(
+            self.window, 'onkeypress', self.page.makeHandler('onkeypress'));
         self.window.onkeypress(fakeEvt);
         self.assert(self.called, "Key not bound.")
     });
