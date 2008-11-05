@@ -671,32 +671,11 @@ Divmod.Runtime.Platform.methods(
         Divmod.Base.addLoadEvent(function() {
                 setTimeout(callable, self._loadEventDelay);
             });
-    },
-
-    /**
-     * Add a beforeunload event handler.
-     *
-     * @param aWindow: The window object.
-     * @param handler: The handler.
-     */
-    function addBeforeUnloadHandler(self, aWindow, handler) {
-        Divmod.Base.addToCallStack(aWindow, 'onbeforeunload', handler);
     });
 
 
 Divmod.Runtime.Spidermonkey = Divmod.Runtime.Platform.subclass(
     'Divmod.Runtime.Spidermonkey');
-Divmod.Runtime.Spidermonkey.methods(
-    /**
-     * Arrange for the given function to be called when the page is fully
-     * loaded.  The callable is invoked directly for ease of testing, as
-     * Spidermonkey does not have the "throbber" issues that the generic
-     * implementation works around.
-     */
-    function addLoadEvent(self, callable) {
-        Divmod.Base.addLoadEvent(callable);
-    });
-
 Divmod.Runtime.Spidermonkey.isThisTheOne = function isSpidermonkeyTheOne() {
     try {
         window;
@@ -1162,13 +1141,6 @@ Divmod.Runtime.InternetExplorer.methods(
         }
 
         return foundNode;
-    },
-
-    /**
-     * Add the handler to the <body> element instead.
-     */
-    function addBeforeUnloadHandler(self, aWindow, handler) {
-        Divmod.Base.addToCallStack(aWindow.document.body, 'onbeforeunload', handler);
     });
 
 
