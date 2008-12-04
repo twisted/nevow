@@ -85,14 +85,16 @@ Nevow.TagLibrary.TabbedPane.TabbedPaneView.methods(
         }
         var lastSelected = self._elements[self.selectedTabName];
 
-        lastSelected.tabNode.setAttribute('class', 'nevow-tabbedpane-tab');
-        lastSelected.paneNode.setAttribute('class', 'nevow-tabbedpane-pane');
+        Divmod.Runtime.theRuntime.setAttribute(
+            lastSelected.tabNode, 'class', 'nevow-tabbedpane-tab');
+        Divmod.Runtime.theRuntime.setAttribute(
+            lastSelected.paneNode, 'class', 'nevow-tabbedpane-pane');
 
         var newlySelected = self._elements[tabName];
-        newlySelected.tabNode.setAttribute(
-            'class', 'nevow-tabbedpane-selected-tab');
-        newlySelected.paneNode.setAttribute(
-            'class', 'nevow-tabbedpane-selected-pane');
+        Divmod.Runtime.theRuntime.setAttribute(
+            newlySelected.tabNode, 'class', 'nevow-tabbedpane-selected-tab');
+        Divmod.Runtime.theRuntime.setAttribute(
+            newlySelected.paneNode, 'class', 'nevow-tabbedpane-selected-pane');
 
         self.selectedTabName = tabName;
     });

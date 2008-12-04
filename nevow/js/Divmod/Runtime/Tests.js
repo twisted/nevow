@@ -124,20 +124,25 @@ Divmod.Runtime.Tests.Standalone = Nevow.Athena.Test.TestCase.subclass('Divmod.Ru
 Divmod.Runtime.Tests.Standalone.methods(
     /**
      * Ensure that explicitly namespaced attributes and attributes whose
-     * names get rewritten by IE can be correctly retrieved, and that they
-     * don't interfere with each other if the local names are the same
-     * (e.g. "class" and "athena:class" on a single node)
+     * names get rewritten by IE can be correctly retrieved and written,
+     * and that they don't interfere with each other if the local names
+     * are the same (e.g. "class" and "athena:class" on a single node)
      */
-    function test_getAttribute(self) {
+    function test_getSetAttribute(self) {
         var node = document.createElement("div");
-        node.className = "the class";
-        self.node.appendChild(node);
+
+        Divmod.Runtime.theRuntime.setAttribute(
+            node,
+            'class', 'the class');
 
         self.assertEquals(
             Divmod.Runtime.theRuntime.getAttribute(node, "class"),
             "the class");
 
-        node.setAttribute("athena:class", "the athena class");
+        Divmod.Runtime.theRuntime.setAttribute(
+            node,
+            'class', 'the athena class',
+            Nevow.Athena.XMLNS_URI, 'athena');
 
         self.assertEquals(
             Divmod.Runtime.theRuntime.getAttribute(node, "class"),
