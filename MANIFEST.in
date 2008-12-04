@@ -1,6 +1,3 @@
-include setup_egg.py
-include setupcommon.py
-include test.py
 include ChangeLog
 include LICENSE
 include zomne.c
@@ -10,7 +7,7 @@ include nevow/athena_private/*.png
 include debian/*
 recursive-include nevow *.css *.js
 include bin/nevow-xmlgettext 
-recursive-include doc *.as *.css *.doc *.fla *.gif *.html *.jpg *.js *.png *.txt *.py *.ics *.pdf *.tac
+recursive-include doc *.css *.doc *.html *.js *.py *.tac
 include doc/README
 include doc/man/*
 recursive-include examples *.css *.gif *.html *.jpg *.js *.py *.png *.tac *.mo *.po *.pot *.xml *.sql *.xul
