@@ -362,7 +362,7 @@ class OldResourceAdapter(object):
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
         if self.real_prepath_len is not None:
-            path = request.postpath = request.prepath[self.real_prepath_len:]
+            request.postpath = request.prepath[self.real_prepath_len:]
             del request.prepath[self.real_prepath_len:]
         result = defer.maybeDeferred(self.original.render, request).addCallback(
             self._handle_NOT_DONE_YET, request)

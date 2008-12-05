@@ -1,7 +1,6 @@
 from twisted.python import filepath
 
 from nevow import athena, loaders, tags, rend, url, static, util
-from nevow.livetrial import testcase
 
 staticData = filepath.FilePath(__file__).parent().child('static')
 

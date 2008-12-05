@@ -1,7 +1,6 @@
 # -*- test-case-name: nevow.test.test_athena -*-
 
 import itertools, os, re, warnings
-from sys import maxint
 
 from zope.interface import implements
 

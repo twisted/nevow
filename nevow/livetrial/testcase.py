@@ -1,7 +1,6 @@
 import inspect, types, warnings
 
 from twisted.trial import runner, unittest
-from twisted.python import log
 
 from nevow import athena, loaders, tags, page
 
