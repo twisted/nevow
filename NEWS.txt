@@ -1,3 +1,20 @@
+0.9.33 (2008-12-09):
+  - Add error handling to the integration between the old flattener
+    and the new flattener so that if the new flattener fails with an
+    exception or a Failure the error is propagated properly to the old
+    flattener which invoked it.
+  - Changed nit so that it doesn't use private `twistd` APIs and
+    instead just sets up a server and runs the reactor.  This makes
+    nit work with all versions of Twisted supported by Nevow.
+  - Changed Nevow's setup.py to use setuptools if setuptools is
+    available.  This has the user-facing consequence of installing
+    Nevow as an egg if setuptools is available at installation time
+    and of making Nevow installable using the `easy_install´ tool.
+  - TabbedPane naively set DOM attributes, making it unusable in
+    Internet Explorer 6 and 7.  Introduced a reliable method for
+    setting DOM node attributes, with name mangling, to address the
+    issue.
+
 0.9.32 (2008-08-12):
   - A resource wrapper for on-the-fly gzip compression has been added.
   - A twistd plugin, 'athena-widget', is now available for serving
