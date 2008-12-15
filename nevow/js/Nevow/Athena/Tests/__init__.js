@@ -531,7 +531,7 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
                  * to work right.
                  */
                 return self._addChildWidgetFromComponents(
-                    [], widgetID, widgetClass, [], [],
+                    [], [], widgetID, widgetClass, [], [],
                     '<span xmlns="http://www.w3.org/1999/xhtml" id="athena:' +
                     widgetID + '" class="' + widgetClass + '" />');
             });
@@ -981,4 +981,42 @@ Nevow.Athena.Tests.DelayedCallTests.methods(
                 self.assertEqual(calls[2], "third");
             });
         return result;
+    });
+
+
+Nevow.Athena.Tests.DynamicStylesheetFetching = Nevow.Athena.Test.TestCase.subclass('Nevow.Athena.Tests.DynamicStylesheetFetching');
+/**
+ * Tests for CSS module fetching when dynamic widget instantiation is
+ * involved.
+ */
+Nevow.Athena.Tests.DynamicStylesheetFetching.methods(
+    /**
+     * C{<link>} tags should appear in the document's C{<head>} when a widget
+     * with CSS dependencies is dynamically instantiated.
+     */
+    function test_dynamicInstantiation(self) {
+        var D = self.callRemote('getWidgetWithCSSDependencies');
+        var cssURLs;
+        D.addCallback(
+            function(t) {
+                cssURLs = t[1];
+                return self.addChildWidgetFromWidgetInfo(t[0]);
+            });
+        D.addCallback(
+            function(widget) {
+                var head = document.getElementsByTagName('head')[0];
+                var links = head.getElementsByTagName('link');
+                var stylesheets = [];
+                for(var i = 0; i < links.length; i++) {
+                    if(links[i].getAttribute('rel') === 'stylesheet'
+                        && links[i].getAttribute('type') === 'text/css') {
+                        stylesheets.push(links[i].getAttribute('href'));
+                    }
+                }
+                self.assertEqual(stylesheets.length, cssURLs.length);
+                for(var i = 0; i < cssURLs.length; i++) {
+                    self.assertEqual(stylesheets[i], cssURLs[i]);
+                }
+            });
+        return D;
     });

@@ -85,13 +85,15 @@ def activeChannel(request):
 
 
 
-class JSModules(object):
+class MappingResource(object):
     """
-    Serve implementation files for a JavaScript module system.
+    L{inevow.IResource} which looks up segments in a mapping between symbolic
+    names and the files they correspond to. 
 
-    @ivar mapping: A C{dict} mapping JavaScript module names (eg,
-    'Nevow.Athena') to C{str} instances which name files containing
-    JavaScript source implementing those modules.
+    @type mapping: C{dict}
+    @ivar mapping: A map between symbolic, requestable names (eg,
+    'Nevow.Athena') and C{str} instances which name files containing data
+    which should be served in response.
     """
     implements(inevow.IResource)
 
@@ -138,7 +140,11 @@ def dependencyOrdered(coll):
 
 
 
-class JSModule(object):
+class AthenaModule(object):
+    """
+    A representation of a chunk of stuff in a file which can depend on other
+    chunks of stuff in other files.
+    """
     _modules = {}
 
     lastModified = 0
@@ -168,7 +174,7 @@ class JSModule(object):
 
 
     def __repr__(self):
-        return 'JSModule(%r)' % (self.name,)
+        return '%s(%r)' % (self.__class__.__name__, self.name,)
 
 
     _importExpression = re.compile('^// import (.+)$', re.MULTILINE)
@@ -195,69 +201,119 @@ class JSModule(object):
 
 
     def allDependencies(self):
-        if self.mapping[self.name] is None:
-            return []
-        else:
-            mods = [self]
-            return dependencyOrdered(mods)
+        return dependencyOrdered([self])
+
+
+
+class JSModule(AthenaModule):
+    """
+    L{AthenaModule} subclass for dealing with Javascript modules.
+    """
+    _modules= {}
+
+
+
+class CSSModule(AthenaModule):
+    """
+    L{AthenaModule} subclass for dealing with CSS modules.
+    """
+    _modules = {}
 
 
 
 class JSPackage(object):
+    """
+    A Javascript package.
+
+    @type mapping: C{dict}
+    @ivar mapping: Mapping between JS module names and C{str} representing
+    filesystem paths containing their implementations.
+    """
     implements(plugin.IPlugin, inevow.IJavascriptPackage)
 
     def __init__(self, mapping):
-        """
-        @param mapping: A C{dict} mapping JS module names to C{str}
-        representing filesystem paths containing their
-        implementations.
-        """
         self.mapping = mapping
+
+
+
+def _collectPackageBelow(baseDir, extension):
+    """
+    Assume a filesystem package hierarchy starting at C{baseDir}.  Collect all
+    files within it ending with C{extension} into a mapping between
+    dot-separated symbolic module names and their corresponding filesystem
+    paths.
+
+    Note that module/package names beginning with . are ignored.
+
+    @type baseDir: C{str}
+    @param baseDir: A path to the root of a package hierarchy on a filesystem.
+
+    @type extension: C{str}
+    @param extension: The filename extension we're interested in (e.g. 'css'
+    or 'js').
+
+    @rtype: C{dict}
+    @return: Mapping between C{unicode} module names and their corresponding
+    C{str} filesystem paths.
+    """
+    mapping = {}
+    EMPTY = sibpath(__file__, 'empty-module.' + extension)
+
+    _revMap = {baseDir: ''}
+    for (root, dirs, filenames) in os.walk(baseDir):
+        stem = _revMap[root]
+        dirs[:] = [d for d in dirs if not d.startswith('.')]
+
+        for dir in dirs:
+            name = stem + dir
+            path = os.path.join(root, dir, '__init__.' + extension)
+            if not os.path.exists(path):
+                path = EMPTY
+            mapping[unicode(name, 'ascii')] = path
+            _revMap[os.path.join(root, dir)] = name + '.'
+
+        for fn in filenames:
+            if fn.startswith('.'):
+                continue
+
+            if fn == '__init__.' + extension:
+                continue
+
+            if not fn.endswith('.' + extension):
+                continue
+
+            name = stem + fn[:-(len(extension) + 1)]
+            path = os.path.join(root, fn)
+            mapping[unicode(name, 'ascii')] = path
+    return mapping
+
 
 
 class AutoJSPackage(object):
     """
-    An IJavascriptPackage implementation that scans an on-disk hierarchy
-    locating modules and packages.
+    A L{inevow.IJavascriptPackage} implementation that scans an on-disk
+    hierarchy locating modules and packages.
 
-    Note that module/package names beginning with . are ignored.
+    @type baseDir: C{str}
+    @ivar baseDir: A path to the root of a JavaScript packages/modules
+    filesystem hierarchy.
     """
     implements(plugin.IPlugin, inevow.IJavascriptPackage)
 
     def __init__(self, baseDir):
-        """
-        @param baseDir: A path to the root of a JavaScript packages/modules
-        filesystem hierarchy.
-        """
-        self.mapping = {}
-        EMPTY = sibpath(__file__, 'empty.js')
+        self.mapping = _collectPackageBelow(baseDir, 'js')
 
-        _revMap = {baseDir: ''}
-        for root, dirs, filenames in os.walk(baseDir):
-            stem = _revMap[root]
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
 
-            for dir in dirs:
-                name = stem + dir
-                path = os.path.join(root, dir, '__init__.js')
-                if not os.path.exists(path):
-                    path = EMPTY
-                self.mapping[unicode(name, 'ascii')] = path
-                _revMap[os.path.join(root, dir)] = name + '.'
 
-            for fn in filenames:
-                if fn.startswith('.'):
-                    continue
+class AutoCSSPackage(object):
+    """
+    Like L{AutoJSPackage}, but for CSS packages.  Modules within this package
+    can be referenced by L{LivePage.cssModule} or L{LiveElement.cssModule}.
+    """
+    implements(plugin.IPlugin, inevow.ICSSPackage)
 
-                if fn == '__init__.js':
-                    continue
-
-                if fn[-3:] != '.js':
-                    continue
-
-                name = stem + fn[:-3]
-                path = os.path.join(root, fn)
-                self.mapping[unicode(name, 'ascii')] = path
+    def __init__(self, baseDir):
+        self.mapping = _collectPackageBelow(baseDir, 'css')
 
 
 
@@ -275,13 +331,23 @@ def allJavascriptPackages():
 
 
 
+def allCSSPackages():
+    """
+    Like L{allJavascriptPackages}, but for CSS packages.
+    """
+    d = {}
+    for p in plugin.getPlugIns(inevow.ICSSPackage, plugins):
+        d.update(p.mapping)
+    return d
+
+
+
 class JSDependencies(object):
     """
     Keeps track of which JavaScript files depend on which other
     JavaScript files (because JavaScript is a very poor language and
     cannot do this itself).
     """
-
     _loadPlugins = False
 
     def __init__(self, mapping=None):
@@ -318,6 +384,41 @@ jsDeps = JSDependencies()
 
 
 
+class CSSRegistry(object):
+    """
+    Keeps track of a set of CSS modules.
+    """
+    def __init__(self, mapping=None):
+        if mapping is None:
+            mapping = {}
+            loadPlugins = True
+        else:
+            loadPlugins = False
+        self.mapping = mapping
+        self._loadPlugins = loadPlugins
+
+
+    def getModuleForName(self, moduleName):
+        """
+        Turn a CSS module name into an L{AthenaModule}.
+
+        @type moduleName: C{unicode}
+
+        @rtype: L{CSSModule}
+        """
+        if self._loadPlugins:
+            self.mapping.update(allCSSPackages())
+            self._loadPlugins = False
+        try:
+            self.mapping[moduleName]
+        except KeyError:
+            raise RuntimeError('Unknown CSS module: %r' % (moduleName,))
+        return CSSModule.getOrCreate(moduleName, self.mapping)
+
+_theCSSRegistry = CSSRegistry()
+
+
+
 class JSException(Exception):
     """
     Exception class to wrap remote exceptions from JavaScript.
@@ -329,7 +430,6 @@ class JSCode(object):
     """
     Class for mock code objects in mock JS frames.
     """
-
     def __init__(self, name, filename):
         self.co_name = name
         self.co_filename = filename
@@ -340,7 +440,6 @@ class JSFrame(object):
     """
     Class for mock frame objects in JS client-side traceback wrappers.
     """
-
     def __init__(self, func, fname, ln):
         self.f_back = None
         self.f_locals = {}
@@ -355,7 +454,6 @@ class JSTraceback(object):
     Class for mock traceback objects representing client-side JavaScript
     tracebacks.
     """
-
     def __init__(self, frame, ln):
         self.tb_frame = frame
         self.tb_lineno = ln
@@ -385,6 +483,8 @@ def parseStack(stack):
         frames.insert(0, (func, fname, ln))
     return frames
 
+
+
 def buildTraceback(frames, modules):
     """
     Build a chain of mock traceback objects from a serialized Error (or other
@@ -402,6 +502,7 @@ def buildTraceback(frames, modules):
             first = tb
         last = tb
     return first
+
 
 
 def getJSFailure(exc, modules):
@@ -756,7 +857,45 @@ class _HasJSClass(object):
 
 
 
-class LivePage(rend.Page, _HasJSClass):
+class _HasCSSModule(object):
+    """
+    C{cssModule}-handling code common to L{LivePage}, L{LiveElement} and
+    L{LiveFragment}.
+
+    @ivar cssModule: A CSS module name.
+    @type cssModule: C{unicode} or C{NoneType}
+    """
+    def _getRequiredCSSModules(self):
+        """
+        Return a list of CSS module URLs.
+
+        @rtype: C{list} of L{url.URL}
+        """
+        if self.cssModule is None:
+            return []
+        module = self.page.cssModules.getModuleForName(self.cssModule)
+        return [
+            self.page.getCSSModuleURL(dep.name)
+            for dep in module.allDependencies()
+            if self.page._shouldIncludeCSSModule(dep.name)]
+
+
+    def getStylesheetStan(self, modules):
+        """
+        Get some stan which will include the given modules.
+
+        @type modules: C{list} or L{url.URL}
+
+        @rtype: Stan
+        """
+        return [
+            tags.link(
+                rel='stylesheet', type='text/css', href=url)
+            for url in modules]
+
+
+
+class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
     """
     A resource which can receive messages from and send messages to the client
     after the initial page load has completed and which can send messages.
@@ -769,8 +908,8 @@ class LivePage(rend.Page, _HasJSClass):
     @ivar unsupportedBrowserLoader: A document loader which will be used to
         generate the content shown to unsupported browsers.
     """
-
     jsClass = u'Nevow.Athena.PageWidget'
+    cssModule = None
 
     factory = LivePageFactory()
     _rendered = False
@@ -814,7 +953,8 @@ class LivePage(rend.Page, _HasJSClass):
 
 
     def __init__(self, iface=None, rootObject=None, jsModules=None,
-                 jsModuleRoot=None, transportRoot=None, *a, **kw):
+                 jsModuleRoot=None, transportRoot=None, cssModules=None,
+                 cssModuleRoot=None, *a, **kw):
         super(LivePage, self).__init__(*a, **kw)
 
         self.iface = iface
@@ -826,14 +966,33 @@ class LivePage(rend.Page, _HasJSClass):
         if transportRoot is None:
             transportRoot = url.here
         self.transportRoot = transportRoot
+        self.cssModuleRoot = cssModuleRoot
+        if cssModules is None:
+            cssModules = _theCSSRegistry
+        self.cssModules = cssModules
         self.liveFragmentChildren = []
         self._includedModules = []
+        self._includedCSSModules = []
         self._disconnectNotifications = []
 
 
     def _shouldInclude(self, moduleName):
         if moduleName not in self._includedModules:
             self._includedModules.append(moduleName)
+            return True
+        return False
+
+
+    def _shouldIncludeCSSModule(self, moduleName):
+        """
+        Figure out whether the named CSS module has already been included.
+
+        @type moduleName: C{unicode}
+
+        @rtype: C{bool}
+        """
+        if moduleName not in self._includedCSSModules:
+            self._includedCSSModules.append(moduleName)
             return True
         return False
 
@@ -876,6 +1035,8 @@ class LivePage(rend.Page, _HasJSClass):
 
         if self.jsModuleRoot is None:
             self.jsModuleRoot = location.child(self.clientID).child('jsmodule')
+        if self.cssModuleRoot is None:
+            self.cssModuleRoot = location.child(self.clientID).child('cssmodule')
 
         self._requestIDCounter = itertools.count().next
 
@@ -1042,6 +1203,18 @@ class LivePage(rend.Page, _HasJSClass):
         return self.jsModuleRoot.child(moduleName)
 
 
+    def getCSSModuleURL(self, moduleName):
+        """
+        Return a URL rooted a L{cssModuleRoot} from which the CSS module named
+        C{moduleName} can be fetched.
+
+        @type moduleName: C{unicode}
+
+        @rtype: C{str}
+        """
+        return self.cssModuleRoot.child(moduleName)
+
+
     def getImportStan(self, moduleName):
         var = ''
         if '.' not in moduleName:
@@ -1056,6 +1229,8 @@ class LivePage(rend.Page, _HasJSClass):
             [self._bootstrapCall(method, args) for
              method, args in self._bootstraps(ctx)])
         return ctx.tag[
+            self.getStylesheetStan(self._getRequiredCSSModules()),
+
             # Hit jsDeps.getModuleForName to force it to load some plugins :/
             # This really needs to be redesigned.
             [self.getImportStan(jsDeps.getModuleForName(name).name)
@@ -1098,7 +1273,14 @@ class LivePage(rend.Page, _HasJSClass):
 
 
     def child_jsmodule(self, ctx):
-        return JSModules(self.jsModules.mapping)
+        return MappingResource(self.jsModules.mapping)
+
+
+    def child_cssmodule(self, ctx):
+        """
+        Return a L{MappingResource} wrapped around L{cssModules}.
+        """
+        return MappingResource(self.cssModules.mapping)
 
 
     _transportResource = None
@@ -1256,8 +1438,9 @@ def rewriteAthenaIds(root):
     return root
 
 
-class _LiveMixin(_HasJSClass):
+class _LiveMixin(_HasJSClass, _HasCSSModule):
     jsClass = u'Nevow.Athena.Widget'
+    cssModule = None
 
     preprocessors = [rewriteEventHandlerNodes, rewriteAthenaIds]
 
@@ -1369,6 +1552,7 @@ class _LiveMixin(_HasJSClass):
 
         children = []
         requiredModules = []
+        requiredCSSModules = []
 
         # Using the context here is terrible but basically necessary given the
         # /current/ architecture of Athena and flattening.  A better
@@ -1376,7 +1560,8 @@ class _LiveMixin(_HasJSClass):
         # this.
         markup = context.call(
             {'children': children,
-             'requiredModules': requiredModules},
+             'requiredModules': requiredModules,
+             'requiredCSSModules': requiredCSSModules},
             self._flatten, tags.div(xmlns="http://www.w3.org/1999/xhtml")[self]).decode('utf-8')
 
         del children[0]
@@ -1384,6 +1569,8 @@ class _LiveMixin(_HasJSClass):
         self._structuredCache = {
             u'requiredModules': [(name, flat.flatten(url).decode('utf-8'))
                                  for (name, url) in requiredModules],
+            u'requiredCSSModules': [flat.flatten(url).decode('utf-8')
+                                    for url in requiredCSSModules],
             u'class': self.jsClass,
             u'id': self._athenaID,
             u'initArguments': tuple(self.getInitialArguments()),
@@ -1398,6 +1585,7 @@ class _LiveMixin(_HasJSClass):
         Element is created and added to the page properly.
         """
         requiredModules = self._getRequiredModules()
+        requiredCSSModules = self._getRequiredCSSModules()
 
         # Add required attributes to the top widget node
         tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
@@ -1411,9 +1599,12 @@ class _LiveMixin(_HasJSClass):
                     u'id': self._athenaID,
                     u'initArguments': self.getInitialArguments()})
             context.get('requiredModules').extend(requiredModules)
+            context.get('requiredCSSModules').extend(requiredCSSModules)
             return tag
 
         return (
+            self.getStylesheetStan(requiredCSSModules),
+
             # Import stuff
             [self.getImportStan(name) for (name, url) in requiredModules],
 
@@ -1607,6 +1798,18 @@ class LiveElement(_LiveMixin, Element):
 
     On most platforms, this API will be much faster than similar techniques
     using C{Nevow.Athena.Widget.nodeByAttribute} etc.
+
+    Similarly to how Javascript classes are specified, L{LiveElement}
+    instances may also identify a CSS module which provides appropriate styles
+    with the C{cssModule} attribute (a unicode string naming a module within a
+    L{inevow.ICSSPackage}).
+
+    The referenced CSS modules are treated as regular CSS, with the exception
+    of support for the same
+
+        // import CSSModule.Name
+
+    syntax as is provided for Javascript modules.
     """
     def render(self, request):
         """
@@ -1644,8 +1847,12 @@ __all__ = [
     'LivePageError', 'OrphanedFragment', 'ConnectFailed', 'ConnectionLost'
 
     # JS support
-    'JSModules', 'JSModule', 'JSPackage', 'AutoJSPackage', 'allJavascriptPackages',
-    'JSDependencies', 'JSException', 'JSCode', 'JSFrame', 'JSTraceback',
+    'MappingResource', 'JSModule', 'JSPackage', 'AutoJSPackage',
+    'allJavascriptPackages', 'JSDependencies', 'JSException', 'JSCode',
+    'JSFrame', 'JSTraceback',
+
+    # CSS support
+    'CSSRegistry', 'CSSModule',
 
     # Core objects
     'LivePage', 'LiveFragment', 'LiveElement', 'IntrospectionFragment',

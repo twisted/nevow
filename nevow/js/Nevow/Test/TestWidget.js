@@ -45,6 +45,7 @@ Nevow.Test.TestWidget.WidgetTests.methods(
              '/test_addChildWidgetFromWidgetInfoError1']];
         var widgetInfo = {
             requiredModules: requiredModules,
+            requiredCSSModules: [],
             id: 'test_addChildWidgetFromWidgetInfoError',
             'class': 'test_addChildWidgetFromWidgetInfoError',
             children: [],
@@ -70,7 +71,38 @@ Nevow.Test.TestWidget.WidgetTests.methods(
             });
         var firstError = theFailure.check(Divmod.Defer.FirstError);
         self.assertIdentical(firstError.err.error, loadScriptError);
-    }, 
+    },
+
+    /**
+     * L{Nevow.Athena.Widget.addChildWidgetFromWidgetInfo} should call
+     * L{Divmod.Runtime.Platform.loadStylesheet} with each required
+     * stylesheet.
+     */
+    function test_addChildWidgetStylesheets(self) {
+        var requiredCSSModules = [
+            '/test_addChildWidgetStylesheets1',
+            '/test_addChildWidgetStylesheets2'];
+        var widgetInfo = {
+            requiredModules: [],
+            requiredCSSModules: requiredCSSModules,
+            id: 'test_addChildWidgetStylesheets',
+            'class': 'test_addChildWidgetStylesheets',
+            children: [],
+            initArguments: [],
+            markup: ''};
+        var loadedStylesheets = [];
+        var origLoadStylesheet = Divmod.Runtime.theRuntime.loadStylesheet;
+        var loadStylesheet = function loadStylesheet(location) {
+            loadedStylesheets.push(location);
+        }
+        Divmod.Runtime.theRuntime.loadStylesheet = loadStylesheet;
+        try {
+            var result = self.widget.addChildWidgetFromWidgetInfo(widgetInfo);
+        } finally {
+            Divmod.Runtime.theRuntime.loadStylesheet = loadStylesheet;
+        }
+        self.assertArraysEqual(loadedStylesheets, requiredCSSModules);
+    },
 
     /**
      * Verify that translateNodeId returns a correctly translated id.

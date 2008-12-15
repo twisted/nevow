@@ -908,6 +908,7 @@ Nevow.Athena.Widget.methods(
     function addChildWidgetFromWidgetInfo(self, info) {
         return self._addChildWidgetFromComponents(
             info.requiredModules,
+            info.requiredCSSModules,
             info.id,
             info['class'],
             info.children,
@@ -920,7 +921,8 @@ Nevow.Athena.Widget.methods(
      * Actual implementation of dynamic widget instantiation.
      */
     function _addChildWidgetFromComponents(self,
-                                           requiredModules, widgetID,
+                                           requiredModules,
+                                           requiredCSSModules, widgetID,
                                            widgetClassName, children,
                                            initArguments, markup) {
 
@@ -946,6 +948,12 @@ Nevow.Athena.Widget.methods(
 
         if (widgetID in Nevow.Athena.Widget._athenaWidgets) {
             throw new Error("You blew it.");
+        }
+
+        for (var i = 0; i < requiredCSSModules.length; i++) {
+            /* we're doing this blindly; we don't know when this will
+             * complete, but it doesn't matter hugely */
+            Divmod.Runtime.theRuntime.loadStylesheet(requiredCSSModules[i]);
         }
 
         importDeferreds = [];

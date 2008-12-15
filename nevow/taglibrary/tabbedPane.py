@@ -3,19 +3,48 @@ from nevow.livepage import js, flt
 
 
 class tabbedPaneGlue:
+    """
+    Record which holds information about the Javascript & CSS requirements of
+    L{TabbedPane} and L{TabbedPaneFragment}.
 
-    _css = util.resource_filename('nevow.taglibrary', "tabbedPane.css")
-    _js = util.resource_filename('nevow', "js/Nevow/TagLibrary/TabbedPane.js")
+    @type stylesheetPath: C{str}
+    @ivar stylesheetPath: Filesystem path of the tabbed pane stylesheet.
 
-    fileCSS = static.File(_css, 'text/css')
-    fileJS = static.File(_js, 'text/javascript')
+    @type javascriptPath: C{str}
+    @ivar javascriptPath: Filesystem path of the tabbed pane Javascript
+    module.
+
+    @type fileCSS: L{static.File}
+    @ivar fileCSS: Resource which serves L{stylesheetPath}.
+
+    @type fileJS: L{static.File}
+    @ivar fileJS: Resource which serves L{javascriptPath}.
+
+    @type fileGlue: Stan
+    @ivar fileGlue: Stan which, when placed in the <head> of an HTML document,
+    will include the required CSS & Javascript.
+
+    @type inlineCSS: L{t.style}
+    @ivar inlineCSS: <style> tag containing the tabbedpane CSS inline.
+
+    @type inlineJS: L{t.script}
+    @ivar inlineJS: <script> tag containing the tabbedpane Javascript inline.
+
+    @type inlineGlue: Stan
+    @ivar inlineGlue: A tuple of L{inlineCSS} and L{inlineJS}.
+    """
+    stylesheetPath = util.resource_filename('nevow', 'css/Nevow/TagLibrary/TabbedPane.css')
+    javascriptPath = util.resource_filename('nevow', 'js/Nevow/TagLibrary/TabbedPane.js')
+
+    fileCSS = static.File(stylesheetPath, 'text/css')
+    fileJS = static.File(javascriptPath, 'text/javascript')
     fileGlue = (
         t.link(rel='stylesheet', type='text/css', href='/tabbedPane.css'),
         t.script(type='text/javascript', src='/tabbedPane.js')
         )
 
-    inlineCSS = t.style(type_='text/css')[ t.xml(file(_css).read()) ]
-    inlineJS = t.inlineJS(file(_js).read())
+    inlineCSS = t.style(type_='text/css')[ t.xml(file(stylesheetPath).read()) ]
+    inlineJS = t.inlineJS(file(javascriptPath).read())
     inlineGlue = inlineJS, inlineCSS
 
 
@@ -65,6 +94,7 @@ tabbedPane = TabbedPane().tabbedPane
 
 class TabbedPaneFragment(athena.LiveFragment):
     jsClass = u'Nevow.TagLibrary.TabbedPane.TabbedPane'
+    cssModule = u'Nevow.TagLibrary.TabbedPane'
 
     docFactory = loaders.xmlstr("""
 <div class="nevow-tabbedpane"

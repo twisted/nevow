@@ -6,7 +6,7 @@ from twisted.python.procutils import which
 from twisted.python.util import sibpath
 
 import nevow
-from nevow.athena import LivePage, allJavascriptPackages, JSModule
+from nevow.athena import LivePage, allJavascriptPackages, AthenaModule
 
 _TEST_BOOTSTRAP = LivePage.BOOTSTRAP_MODULES[:]
 _TEST_BOOTSTRAP.insert(_TEST_BOOTSTRAP.index('Divmod.Runtime'),
@@ -37,17 +37,17 @@ def getDependencies(fname, ignore=[],
     @type packages: C{dict}
 
     @return: modules included by javascript in file named C{fname}
-    @rtype: dependency-ordered list of L{JSModule} instances
+    @rtype: dependency-ordered list of L{AthenaModule} instances
     """
     if packages is None:
         packages = allJavascriptPackages()
 
     # TODO if a module is ignored, we should ignore its dependencies
-    bootstrapModules = [JSModule.getOrCreate(m, packages)
+    bootstrapModules = [AthenaModule.getOrCreate(m, packages)
                         for m in bootstrap if m not in ignore]
 
     packages[_DUMMY_MODULE_NAME] = fname
-    module = JSModule(_DUMMY_MODULE_NAME, packages)
+    module = AthenaModule(_DUMMY_MODULE_NAME, packages)
 
     return (bootstrapModules +
             [dep for dep in module.allDependencies()
@@ -88,8 +88,7 @@ def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent =
 
     @param dependencies: the modules the script depends on.  Defaults to the
     result of L{getDependencies}
-    @type dependencies: dependency-ordered list of L{JSModule}
-    instances
+    @type dependencies: dependency-ordered list of L{AthenaModule} instances
 
     @return: converted javascript source text
     @rtype: C{str}

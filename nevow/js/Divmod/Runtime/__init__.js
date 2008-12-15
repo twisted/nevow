@@ -645,6 +645,23 @@ Divmod.Runtime.Platform.methods(
     },
 
     /**
+     * Load the stylesheet at the given URL by appending a C{link} tag to the
+     * document's head.
+     *
+     * @type stylesheetURL: C{String}
+     *
+     * @rtype: C{undefined}
+     */
+    function loadStylesheet(self, location) {
+        var linkNode = document.createElement('link');
+        linkNode.setAttribute('rel', 'stylesheet');
+        linkNode.setAttribute('type', 'text/css');
+        linkNode.setAttribute('href', location);
+        var headNode = document.getElementsByTagName('head')[0];
+        headNode.appendChild(linkNode);
+    },
+
+    /**
      * Simulate the functionality of the DOM Level 2 Document.importNode
      * method, used on the browser document.
      *

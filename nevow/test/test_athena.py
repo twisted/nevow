@@ -18,24 +18,137 @@ from nevow.athena import LiveElement
 from nevow.appserver import NevowSite
 from nevow.inevow import IRequest
 from nevow.context import WovenContext
-from nevow.testutil import FakeRequest, renderPage, renderLivePage
+from nevow.testutil import FakeRequest, renderPage, renderLivePage, CSSModuleTestMixin
 from nevow._widget_plugin import WidgetPluginRoot
 from nevow._widget_plugin import ElementRenderingLivePage
 
 from twisted.plugins.nevow_widget import widgetServiceMaker
 
 
-class _TestJSModule(athena.JSModule):
-    extractCounter = 0
+class MappingResourceTests(unittest.TestCase):
+    """
+    Tests for L{athena.MappingResource}.
+    """
+    def test_renderMapping(self):
+        """
+        L{athena.MappingResource} isn't directly renderable.
+        """
+        m = athena.MappingResource({})
+        self.failUnless(isinstance(m.renderHTTP(None), rend.FourOhFour))
 
-    def _extractImports(self, *a, **kw):
-        self.extractCounter += 1
-        return super(_TestJSModule, self)._extractImports(*a, **kw)
+
+    def test_lookupNonExistentKey(self):
+        """
+        L{athena.MappingResource} should return L{rend.NotFound} when asked
+        for a non-existent key.
+        """
+        m = athena.MappingResource({'name': 'value'})
+        self.assertEquals(m.locateChild(None, ('key',)), rend.NotFound)
 
 
-class Utilities(unittest.TestCase):
+    def test_lookupKey(self):
+        """
+        L{athena.MappingResource} should return whatever the
+        C{resourceFactory} method products when supplied a valid key.
+        """
+        m = athena.MappingResource({'name': 'value'})
+        m.resourceFactory = sets.Set
+        resource, segments = m.locateChild(None, ('name',))
+        self.assertEquals(segments, [])
+        self.assertEquals(resource, sets.Set('value'))
 
-    testModuleImpl = '''\
+
+
+class ModuleRegistryTestMixin:
+    """
+    Mixin for testing module registry objects.
+    """
+    def test_getModuleForName(self):
+        """
+        C{getModuleForName} should return the right kind of module.
+        """
+        moduleName = u'test_getModuleForName'
+        mapping = {moduleName: self.mktemp()}
+        reg = self.registryClass(mapping)
+        mod = reg.getModuleForName(moduleName)
+        self.assertTrue(isinstance(mod, self.moduleClass))
+        self.assertEqual(mod.name, moduleName)
+        self.assertIdentical(mod.mapping, mapping)
+
+
+    def test_getModuleForNameUnknown(self):
+        """
+        C{getModuleForName} should get angry if we ask for a module which
+        doesn't exist.
+        """
+        moduleName = u'test_getModuleForName'
+        reg = self.registryClass({})
+        self.assertRaises(
+            RuntimeError,
+            reg.getModuleForName,
+            moduleName)
+
+
+
+class CSSRegistryTests(unittest.TestCase, ModuleRegistryTestMixin):
+    """
+    Tests for L{athena.CSSRegistry}.
+    """
+    registryClass = athena.CSSRegistry
+    moduleClass = athena.CSSModule
+
+
+    def test_getModuleForNameLoad(self):
+        """
+        L{athena.CSSRegistry} should initialize its mapping from
+        L{athena.allCSSPackages} as needed.
+        """
+        moduleName = u'test_getModuleForNameLoad'
+        origAllCSSPackages = athena.allCSSPackages
+        theCSSPackages = {moduleName: self.mktemp()}
+        athena.allCSSPackages = lambda: theCSSPackages
+        reg = athena.CSSRegistry()
+        try:
+            mod = reg.getModuleForName(moduleName)
+        finally:
+            athena.allCSSPackages = origAllCSSPackages
+        self.assertEqual(mod.name, moduleName)
+        self.assertEqual(mod.mapping, theCSSPackages)
+
+
+
+class JSDependenciesTests(unittest.TestCase, ModuleRegistryTestMixin):
+    """
+    Tests for L{athena.JSDependencies}.
+    """
+    registryClass = athena.JSDependencies
+    moduleClass = athena.JSModule
+
+
+    def test_getModuleForNameLoad(self):
+        """
+        L{athena.JSDependencies} should initialize its mapping from
+        L{athena.allCSSPackages} as needed.
+        """
+        moduleName = u'test_getModuleForNameLoad'
+        origAllJavascriptPackages = athena.allJavascriptPackages
+        theJavascriptPackages = {moduleName: self.mktemp()}
+        athena.allJavascriptPackages = lambda: theJavascriptPackages
+        reg = athena.JSDependencies()
+        try:
+            mod = reg.getModuleForName(moduleName)
+        finally:
+            athena.allJavascriptPackages = origAllJavascriptPackages
+        self.assertEqual(mod.name, moduleName)
+        self.assertEqual(mod.mapping, theJavascriptPackages)
+
+
+
+class AthenaModuleTestMixin:
+    """
+    Mixin for testing L{athena.AthenaModule} and derived classes.
+    """
+    testModuleImpl = """\
 lalal this is javascript honest
 // uh oh!  a comment!  gee I wish javascript had an import system
 // import ExampleModule
@@ -43,44 +156,76 @@ here is some more javascript code
 // import Another
 // import Module
 the end
-'''
+"""
+    moduleClass = athena.AthenaModule
 
-
-    def testJavaScriptModule(self):
-        testModuleFilename = self.mktemp()
-        testModule = file(testModuleFilename, 'w')
+    def setUp(self):
+        """
+        Write L{testModuleImpl} to a file.
+        """
+        self.testModuleFilename = self.mktemp()
+        testModule = file(self.testModuleFilename, 'w')
         testModule.write(self.testModuleImpl)
         testModule.close()
 
-        modules = {'testmodule': testModuleFilename}
-        m1 = athena.JSModule.getOrCreate('testmodule', modules)
-        m2 = athena.JSModule.getOrCreate('testmodule', modules)
+
+    def test_getOrCreate(self):
+        """
+        L{athena.AthenaModule.getOrCreate} shouldn't make two instances of the
+        same module.
+        """
+        modules = {'testmodule': self.testModuleFilename}
+        m1 = self.moduleClass.getOrCreate('testmodule', modules)
+        m2 = self.moduleClass.getOrCreate('testmodule', modules)
+
+        self.assertTrue(isinstance(m1, self.moduleClass))
         self.assertEquals(m1.name, 'testmodule')
 
         self.assertIdentical(m1, m2)
 
-        modules['Another'] = self.mktemp()
+
+    def _doDependencySetup(self):
+        """
+        Create a complicated network of module dependencies.
+        """
+        emptyModulePath = self.mktemp()
+        file(emptyModulePath, 'w').close()
+        modules = {
+            'testmodule': self.testModuleFilename,
+            'Another': self.mktemp(),
+            'ExampleModule': self.mktemp(),
+            'Module': emptyModulePath,
+            'SecondaryDependency': emptyModulePath,
+            'ExampleDependency': emptyModulePath}
+
         anotherModule = file(modules['Another'], 'w')
         anotherModule.write('// import SecondaryDependency\n')
         anotherModule.close()
 
-        modules['ExampleModule'] = self.mktemp()
         exampleModule = file(modules['ExampleModule'], 'w')
         exampleModule.write('// import ExampleDependency\n')
         exampleModule.close()
 
-        modules['Module'] = self.mktemp()
-        moduleModule = file(modules['Module'], 'w')
-        moduleModule.close()
+        return modules
 
-        # Stub these out with an empty file
-        modules['SecondaryDependency'] = modules['Module']
-        modules['ExampleDependency'] = modules['Module']
 
-        deps = [d.name for d in m1.dependencies()]
+    def test_dependencies(self):
+        """
+        L{athena.AthenaModule.dependencies} should return the direct
+        dependencies of the module.
+        """
+        modules = self._doDependencySetup()
+        m = self.moduleClass.getOrCreate('testmodule', modules)
+        deps = [d.name for d in m.dependencies()]
         deps.sort()
         self.assertEquals(deps, ['Another', 'ExampleModule', 'Module'])
 
+
+    def test_allDependencies(self):
+        """
+        L{athena.AthenaModule.allDependencies} should return all dependencies
+        of the module.
+        """
         depgraph = {
             'Another': ['SecondaryDependency'],
             'ExampleModule': ['ExampleDependency'],
@@ -89,21 +234,24 @@ the end
             'SecondaryDependency': [],
             'ExampleDependency': []}
 
-        allDeps = [d.name for d in m1.allDependencies()]
-        for m in allDeps:
-            modDeps = depgraph[m]
+        modules = self._doDependencySetup()
+        m = self.moduleClass.getOrCreate('testmodule', modules)
+
+        allDeps = [d.name for d in m.allDependencies()]
+        for depMod in allDeps:
+            modDeps = depgraph[depMod]
             for d in modDeps:
                 # All dependencies should be loaded before the module
                 # that depends upon them.
                 self.assertIn(d, allDeps)
-                self.assertIn(m, allDeps)
-                self.failUnless(allDeps.index(d) < allDeps.index(m))
+                self.assertIn(depMod, allDeps)
+                self.failUnless(allDeps.index(d) < allDeps.index(depMod))
 
 
     def test_crlfNewlines(self):
         """
-        The import system should correctly ignore the CR after a module name
-        when CR LF newlines are used in a JavaScript source file.
+        L{athena.AthenaModule}  should correctly ignore the CR after a module
+        name when CR LF newlines are used in a JavaScript source file.
         """
         fooModuleFilename = self.mktemp()
         fooModule = file(fooModuleFilename, 'wb')
@@ -116,7 +264,7 @@ the end
         modules = {
             'Foo': fooModuleFilename,
             'Bar': barModuleFilename}
-        module = athena.JSModule('Foo', modules)
+        module = self.moduleClass('Foo', modules)
         fooDependencies = list(module.dependencies())
         self.assertEqual(len(fooDependencies), 1)
         self.assertEqual(fooDependencies[0].name, u'Bar')
@@ -124,7 +272,7 @@ the end
 
     def test_dependencyCaching(self):
         """
-        Test that dependency caching works as expected.
+        L{athena.AthenaModule} should cache module dependencies.
         """
         testModuleFilename = self.mktemp()
         testModule = file(testModuleFilename, 'w')
@@ -132,7 +280,13 @@ the end
         testModule.close()
 
         modules = {'testmodule': testModuleFilename}
-        m = _TestJSModule('testmodule', modules)
+        m = self.moduleClass('testmodule', modules)
+        m.extractCounter = 0
+        origExtractImports = m._extractImports
+        def _extractImports(x):
+            m.extractCounter += 1
+            return origExtractImports(x)
+        m._extractImports = _extractImports
 
         deps = list(m.dependencies())
         self.assertEquals(m.extractCounter, 1)
@@ -145,64 +299,140 @@ the end
         deps3 = list(m.dependencies())
         self.assertEquals(m.extractCounter, 2)
 
-    def test_renderJavascriptModules(self):
+
+    def test_packageDependencies(self):
         """
-        The parent of the javascript modules is not renderable itself.  Make
-        sure it's a 404.
+        L{athena.AthenaModule} should include a module's package in its
+        dependencies.
         """
-        m = athena.JSModules({})
-        self.failUnless(isinstance(m.renderHTTP(None), rend.FourOhFour))
+        modules = {u'Foo': self.mktemp(), u'Foo.Bar': self.mktemp()}
+        file(modules[u'Foo'], 'wb').close()
+        file(modules[u'Foo.Bar'], 'wb').close()
+        foo = self.moduleClass.getOrCreate(u'Foo', modules)
+        bar = self.moduleClass.getOrCreate(u'Foo.Bar', modules)
+        self.assertIn(foo, bar.allDependencies())
 
 
-    def test_lookupNonExistentJavascriptModule(self):
+    def test_repr(self):
         """
-        Test that the parent resource for all JavaScript modules returns the
-        correct thing when asked for a module.
+        L{athena.AthenaModule} should C{repr} to something helpful.
         """
-        m = athena.JSModules({'name': 'value'})
-        self.assertEquals(m.locateChild(None, ('key',)), rend.NotFound)
+        moduleName = u'Foo.Bar'
+        module = self.moduleClass(
+            moduleName, {moduleName: self.mktemp()})
+        self.assertEqual(
+            repr(module), 
+           '%s(%r)' % (self.moduleClass.__name__, moduleName))
 
 
-    def test_lookupJavascriptModule(self):
+
+class AthenaModuleTests(AthenaModuleTestMixin, unittest.TestCase):
+    """
+    Tests for L{athena.AthenaModule}.
+    """
+    moduleClass = athena.AthenaModule
+
+
+
+class JSModuleTests(AthenaModuleTestMixin, unittest.TestCase):
+    """
+    Tests for L{athena.JSModule}.
+    """
+    moduleClass = athena.JSModule
+
+
+
+class CSSModuleTests(AthenaModuleTestMixin, unittest.TestCase):
+    """
+    Tests for L{athena.CSSModule}.
+    """
+    moduleClass = athena.CSSModule
+
+
+
+class ModuleInteractionTests(unittest.TestCase):
+    """
+    Tests for JS/CSS module interactions.
+    """
+    def test_separateModuleNamespace(self):
         """
-        Test that retrieving a JavaScript module which actually exists returns
-        whatever the resourceFactory method produces.
+        L{athena.CSSModule} and L{athena.JSModule} should use separate module
+        namespaces.
         """
-        m = athena.JSModules({'name': 'value'})
-        m.resourceFactory = sets.Set
-        resource, segments = m.locateChild(None, ('name',))
-        self.assertEquals(segments, [])
-        self.assertEquals(resource, sets.Set('value'))
+        cssModule = athena.CSSModule.getOrCreate(
+            u'test_separateModuleNamespace',
+            {u'test_separateModuleNamespace': self.mktemp()})
+        jsModule = athena.JSModule.getOrCreate(
+            u'test_separateModuleNamespace',
+            {u'test_separateModuleNamespace': self.mktemp()})
+        self.assertNotIdentical(cssModule, jsModule)
+        self.assertTrue(isinstance(cssModule, athena.CSSModule))
+        self.assertTrue(isinstance(jsModule, athena.JSModule))
 
 
-    def testPackage(self):
-        baseDir = util.sibpath(__file__, 'test_package')
-        package = athena.AutoJSPackage(baseDir)
 
-        def _f(*sib):
-            return os.path.join(baseDir, *sib)
+class _AutoPackageTestMixin:
+    """
+    Mixin for testing L{athena.AutoJSPackage} and L{athena.AutoCSSPackage}.
+    """
+    packageFactory = None
+    moduleExtension = None
 
-        expected = {u'Foo': _f('Foo', '__init__.js'),
-                    u'Foo.Bar': _f('Foo', 'Bar.js'),
-                    u'Foo.Baz': util.sibpath(athena.__file__, 'empty.js'),
-                    u'Foo.Baz.Quux': _f('Foo', 'Baz', 'Quux.js')}
+    def test_package(self):
+        """
+        L{packageFactory} should correctly construct its mapping from a
+        filesystem package layout.
+        """
+        packageDir = self.mktemp()
+        os.makedirs(os.path.join(packageDir, 'Foo', 'Baz'))
 
+        def childPath(*a):
+            path = os.path.join(packageDir, *a)
+            file(path, 'w').close()
+            return path
+
+        expected = {
+            u'Foo': childPath('Foo', '__init__.' + self.moduleExtension),
+            u'Foo.Bar': childPath('Foo', 'Bar.' + self.moduleExtension),
+            u'Foo.Baz': util.sibpath(athena.__file__, 'empty-module.' + self.moduleExtension),
+            u'Foo.Baz.Quux': childPath('Foo', 'Baz', 'Quux.' + self.moduleExtension)}
+
+        childPath('Foo', '.foo.' + self.moduleExtension)
+        os.mkdir(os.path.join(packageDir, 'Foo', '.test'))
+        childPath('Foo', '.test', 'Foo.' + self.moduleExtension)
+        childPath('Foo', 'Bar.other')
+        childPath('Foo', 'Zot.other')
+
+        package = self.packageFactory(packageDir)
         for module, path in expected.iteritems():
             m = package.mapping.pop(module)
             self.assertEquals(m, path)
         self.assertEquals(package.mapping, {})
 
 
-    def testPackageDeps(self):
-        modules = {u'Foo': self.mktemp(), u'Foo.Bar': self.mktemp()}
-        file(modules[u'Foo'], 'wb').close()
-        file(modules[u'Foo.Bar'], 'wb').close()
-        foo = athena.JSModule.getOrCreate(u'Foo', modules)
-        bar = athena.JSModule.getOrCreate(u'Foo.Bar', modules)
-        self.assertIn(foo, bar.allDependencies())
+
+class AutoJSPackageTests(unittest.TestCase, _AutoPackageTestMixin):
+    """
+    Tests for L{athena.AutoJSPackage}.
+    """
+    packageFactory = athena.AutoJSPackage
+    moduleExtension = 'js'
 
 
 
+class AutoCSSPackageTests(unittest.TestCase, _AutoPackageTestMixin):
+    """
+    Tests for L{athena.AutoCSSPackage}.
+    """
+    packageFactory = athena.AutoCSSPackage
+    moduleExtension = 'css'
+
+
+
+class UtilitiesTests(unittest.TestCase):
+    """
+    Tests for misc. Athena utilities.
+    """
     def test_preprocessorCollection(self):
         """
         Test that preprocessors from all the base classes of an instance are
@@ -927,13 +1157,19 @@ class Transport(unittest.TestCase):
 
 
 
-class LiveMixinTestsMixin:
+class LiveMixinTestsMixin(CSSModuleTestMixin):
     """
-    Test-method defining mixin class for L{LiveElement} and L{LiveFragment} testing.
+    Test-method defining mixin class for L{LiveElement} and L{LiveFragment}
+    testing.
 
     @ivar elementFactory: No-argument callable which returns an object against
     which tests will be run.
+
+    @ivar liveGlueRenderer: The name of the live glue renderer on objects
+    returned from L{elementFactory}.
     """
+    liveGlueRenderer = None
+
     def elementFactory(self):
         raise NotImplementedError("%s did not implement elementFactory" % (self,))
 
@@ -1086,12 +1322,63 @@ class LiveMixinTestsMixin:
         self.assertEqual(detachCall, [(None, None)])
 
 
+    def test_glueIncludesStylesheets(self):
+        """
+        Our element's glue should include inline stylesheet references.
+        """
+        element = self.elementFactory()
+        element.cssModule = u'TestCSSModuleDependencies.Dependor'
+        element.docFactory = loaders.stan(
+            tags.div(render=tags.directive(self.liveGlueRenderer)))
+
+        page = ElementRenderingLivePage(element)
+        page.cssModules = self._makeCSSRegistry()
+
+        D = renderLivePage(page)
+        def cbRendered(result):
+            expected = flat.flatten(
+                page.getStylesheetStan(
+                    [page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependee'),
+                     page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependor')]))
+            self.assertIn(expected, result)
+        D.addCallback(cbRendered)
+        return D
+
+
+    def test_glueIncludesStylesheetsOnce(self):
+        """
+        Our element's glue shouldn't include redundant stylesheet references.
+        """
+        element = self.elementFactory()
+        element.cssModule = u'TestCSSModuleDependencies.Dependor'
+        element.docFactory = loaders.stan(
+            tags.div(render=tags.directive(self.liveGlueRenderer)))
+
+        page = ElementRenderingLivePage(element)
+        page.docFactory = loaders.stan(tags.invisible[
+            tags.invisible(render=tags.directive('liveglue')),
+            tags.invisible(render=tags.directive('element')),
+            tags.invisible(render=tags.directive('element'))])
+        page.cssModules = self._makeCSSRegistry()
+
+        D = renderLivePage(page)
+        def cbRendered(result):
+            expected = flat.flatten(
+                page.getStylesheetStan(
+                    [page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependee'),
+                     page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependor')]))
+            self.assertIn(expected, result)
+        D.addCallback(cbRendered)
+        return D
+
+
 
 class LiveElementTests(LiveMixinTestsMixin, unittest.TestCase):
     """
     Tests for L{nevow.athena.LiveElement}.
     """
     elementFactory = athena.LiveElement
+    liveGlueRenderer = 'liveElement'
 
 
 
@@ -1100,6 +1387,7 @@ class LiveFragmentTests(LiveMixinTestsMixin, unittest.TestCase):
     Tests for L{nevow.athena.LiveFragment}.
     """
     elementFactory = athena.LiveFragment
+    liveGlueRenderer = 'liveFragment'
 
 
 
@@ -1120,7 +1408,8 @@ class DummyLiveElement(LiveElement):
         self.counter = DummyLiveElement.classCounter
 
 
-class LivePageTests(unittest.TestCase):
+
+class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
     """
     Tests for L{nevow.athena.LivePage}
     """
@@ -1169,6 +1458,25 @@ class LivePageTests(unittest.TestCase):
         self.assertIn(expectDependee, result)
 
 
+    def test_pageCSSModuleDependencies(self):
+        """
+        L{athena.LivePage.render_liveglue} should include CSS modules that
+        the top-level C{cssModule} depends on.
+        """
+        self.page.cssModule = u'TestCSSModuleDependencies.Dependor'
+        self.page.cssModules = self._makeCSSRegistry()
+
+        self.page._becomeLive(url.URL())
+        ctx = WovenContext(tag=tags.div())
+        ctx.remember(FakeRequest(), IRequest)
+        self.assertEqual(self.page.render_liveglue(ctx, None), ctx.tag)
+        expected = flat.flatten(
+            self.page.getStylesheetStan(
+                [self.page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependee'),
+                 self.page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependor')]))
+        self.assertIn(expected, flat.flatten(ctx.tag, ctx))
+
+
     def test_bootstraps(self):
         """
         L{LivePage._bootstraps} should return a list of 2-tuples of
@@ -1207,6 +1515,43 @@ class LivePageTests(unittest.TestCase):
         string = self.page.renderHTTP(ctx)
         jsonifiedID = '"%s"' % (self.page.clientID,)
         self.assertEqual(string, jsonifiedID)
+
+
+    def test_cssModules(self):
+        """
+        L{athena.LivePage.cssModules} should default to
+        L{athena._theCSSRegistry}.
+        """
+        self.assertIdentical(
+            athena.LivePage().cssModules, athena._theCSSRegistry)
+
+
+    def test_cssmoduleChild(self):
+        """
+        L{athena.LivePage}'s C{cssmodule} child should return a correctly
+        initialized L{athena.MappingResource}.
+        """
+        theCSSMapping = {}
+        class MyCSSModules:
+            mapping = theCSSMapping
+        page = athena.LivePage()
+        page.cssModules = MyCSSModules()
+        (res, segments) = page.locateChild(None, ('cssmodule',))
+        self.assertTrue(isinstance(res, athena.MappingResource))
+        self.assertIdentical(res.mapping, theCSSMapping)
+
+
+    def test_cssModuleRoot(self):
+        """
+        L{athena.LivePage}'s C{cssModuleRoot} argument should be observed by
+        L{athena.LivePage.getCSSModuleURL}.
+        """
+        theCSSModuleRoot = url.URL.fromString('/test_cssModuleRoot')
+        page = athena.LivePage(
+            cssModuleRoot=theCSSModuleRoot)
+        self.assertEqual(
+            page.getCSSModuleURL(u'X.Y'),
+            theCSSModuleRoot.child('X.Y'))
 
 
 
@@ -1373,4 +1718,3 @@ class WidgetSubcommandTests(unittest.TestCase):
         renderDeferred = renderLivePage(page1)
         renderDeferred.addCallback(cbCheckPageByClientID)
         return renderDeferred
-

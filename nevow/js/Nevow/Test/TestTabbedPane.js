@@ -246,3 +246,27 @@ Nevow.Test.TestTabbedPane.TabbedPaneTests.methods(
         controller.loaded();
         self.assertIdentical(view.selectedTabName, tabName);
     });
+
+
+Nevow.Test.TestTabbedPane.TabbedPaneFetcher = Nevow.Athena.Widget.subclass(
+    'Nevow.Test.TestTabbedPane.TabbedPaneFetcher');
+/**
+ * Trivial L{Nevow.Athena.Widget} subclass which fetches a tabbed pane widget
+ * remotely.
+ */
+Nevow.Test.TestTabbedPane.TabbedPaneFetcher.methods(
+    /**
+     * Fetch a tabbed pane widget and add it as a child.
+     */
+    function dom_getTabbedPane(self) {
+        var result = self.callRemote('getTabbedPane');
+        result.addCallback(
+            function(widgetInfo) {
+                return self.addChildWidgetFromWidgetInfo(widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                self.node.appendChild(widget.node);
+            });
+        return false;
+    });

@@ -624,17 +624,34 @@ class ILogger(Interface):
         """Write a log entry for this request."""
 
 
-class IJavascriptPackage(Interface):
-    """
-    Represents information about the filesystem layout of a set of
-    JavaScript modules.
 
-    @ivar mapping: A C{dict} mapping C{str} to C{str}.  The keys in
-    this dictionary are JavaScript module names which can be imported by
-    JavaScript files server by C{nevow.athena.LivePage}.  The values give
-    locations in the filesystem where the implementation of each module can
-    be found.
+class IFilesystemPackage(Interface):
     """
+    Represents information about the filesystem layout of a set of modules.
+    """
+    mapping = Attribute("""
+    A C{dict} mapping C{unicode} to C{str}.  The keys in this dictionary are
+    CSS or Javascript module names which can be imported by
+    L{nevow.athena.LivePage}.  The values give locations in the filesystem
+    where the implementation of each module can be found.
+    """)
+
+
+
+class IJavascriptPackage(IFilesystemPackage):
+    """
+    Represents information about the filesystem layout of a set of JavaScript
+    modules.
+    """
+
+
+
+class ICSSPackage(IFilesystemPackage):
+    """
+    Represents information about the filesystem layout of a set of CSS
+    modules.
+    """
+
 
 
 class IAthenaTransportable(Interface):

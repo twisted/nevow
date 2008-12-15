@@ -15,6 +15,7 @@ from nevow.page import Element, renderer
 from nevow.athena import expose, LiveElement
 from nevow.livetrial import testcase
 from nevow.test import test_json
+from nevow.testutil import CSSModuleTestMixin
 
 class WidgetInitializerArguments(testcase.TestCase):
     """
@@ -75,6 +76,8 @@ class ClientToServerResultSerialization(testcase.TestCase):
     def test(self, i, f, s, l, d):
         return (i, f, s, l, d)
     expose(test)
+
+
 
 class JSONRoundtrip(testcase.TestCase):
     """
@@ -562,3 +565,34 @@ class DelayedCallTests(testcase.TestCase):
     Tests for the behavior of scheduling timed calls in the client.
     """
     jsClass = u'Nevow.Athena.Tests.DelayedCallTests'
+
+
+
+class DynamicStylesheetFetching(testcase.TestCase, CSSModuleTestMixin):
+    """
+    Tests for stylesheet fetching when dynamic widget instantiation is
+    involved.
+    """
+    jsClass = u'Nevow.Athena.Tests.DynamicStylesheetFetching'
+    # lala we want to use TestCase.mktemp
+    _testMethodName = 'DynamicStylesheetFetching'
+
+    def getWidgetWithCSSDependencies(self):
+        """
+        Return a widget which depends on some CSS.
+        """
+        self.page.cssModules = self._makeCSSRegistry()
+
+        element = athena.LiveElement()
+        element.cssModule = u'TestCSSModuleDependencies.Dependor'
+        element.setFragmentParent(self)
+        element.docFactory = loaders.stan(
+            tags.div(render=tags.directive('liveElement')))
+
+        return (
+            element,
+            [unicode(self.page.getCSSModuleURL(n))
+                for n in ('TestCSSModuleDependencies',
+                          'TestCSSModuleDependencies.Dependee',
+                          'TestCSSModuleDependencies.Dependor')])
+    expose(getWidgetWithCSSDependencies)

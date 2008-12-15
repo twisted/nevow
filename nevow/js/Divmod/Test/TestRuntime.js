@@ -693,6 +693,23 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
         nodes = Divmod.Runtime.theRuntime.nodesByAttribute(
             root, 'baz', 'quux');
         self.assertIdentical(nodes.length, 0);
+    },
+
+    /**
+     * L{Divmod.Runtime.Platform.loadStylesheet} should create an appropriate
+     * C{<link>} element.
+     */
+    function test_loadStylesheet(self) {
+        var location = 'http://test_loadStylesheet';
+        var headNode = document.createElement('head');
+        document.body.appendChild(headNode); // eh, whatever
+        Divmod.Runtime.theRuntime.loadStylesheet(location);
+        self.assertIdentical(headNode.childNodes.length, 1);
+        var child = headNode.childNodes[0];
+        self.assertIdentical(child.tagName, 'LINK');
+        self.assertIdentical(child.getAttribute('rel'), 'stylesheet');
+        self.assertIdentical(child.getAttribute('type'), 'text/css');
+        self.assertIdentical(child.getAttribute('href'), location);
     });
 
 

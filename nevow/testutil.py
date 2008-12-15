@@ -543,3 +543,28 @@ def setJavascriptInterpreterOrSkip(testCase):
         testCase.skip = "No JavaScript interpreter available."
     else:
         testCase.javascriptInterpreter = script
+
+
+
+class CSSModuleTestMixin:
+    """
+    Mixin for L{unittest.TestCase} subclasses which are testing the Athena's
+    CSS module functionality.
+    """
+    def _makeCSSRegistry(self):
+        """
+        Make a CSS registry with some modules in it.
+        """
+        def makeModule(contents=None):
+            fname = self.mktemp()
+            f = file(fname, 'w')
+            if contents is not None:
+                f.write(contents)
+            f.close()
+            return fname
+
+        return athena.CSSRegistry(
+            {u'TestCSSModuleDependencies': makeModule(),
+             u'TestCSSModuleDependencies.Dependor': makeModule(
+                '// import TestCSSModuleDependencies.Dependee\n'),
+             u'TestCSSModuleDependencies.Dependee': makeModule()})
