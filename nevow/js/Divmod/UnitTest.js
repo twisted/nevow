@@ -458,6 +458,12 @@ Divmod.UnitTest.TestCase.methods(
     function run(self, result) {
         var success = true;
         result.startTest(self);
+
+        // XXX: This probably isn't the best place to put this, but it's the
+        // only place for the time being; see #2806 for the proper way to deal
+        // with this.
+        Divmod.Runtime.initRuntime();
+
         try {
             self.setUp();
         } catch (e) {

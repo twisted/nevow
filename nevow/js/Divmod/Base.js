@@ -233,14 +233,16 @@ Divmod.Base.addToCallStack = function(target, path, func, once) {
 };
 
 Divmod.Base.addLoadEvent = function(func) {
-    /***
+    /**
+     * This function is deprecated; use
+     * Divmod.Runtime.theRuntime.addLoadEvent() instead.
+     */
 
-        This will stack load functions on top of each other.
-        Each function added will be called after onload in the
-        order that they were added.
-
-    ***/
-    Divmod.Base.addToCallStack(window, "onload", func, true);
+    // Even though we don't import Divmod.Runtime, it's almost guaranteed to be
+    // imported anyway. We can't actually import it, because that would create
+    // circular imports which Athena can't handle, and this function is now
+    // deprecated anyway.
+    Divmod.Runtime.theRuntime.addLoadEvent(func);
 };
 
 Divmod.Base.jsonRegistry = Divmod.Base.AdapterRegistry();

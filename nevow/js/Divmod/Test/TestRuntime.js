@@ -713,6 +713,31 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
     });
 
 
+Divmod.Test.TestRuntime.SpidermonkeyRuntimeTests = Divmod.UnitTest.TestCase.subclass(
+    'Divmod.Test.TestRuntime.SpidermonkeyRuntimeTests');
+/**
+ * Tests for the Spidermonkey runtime.
+ */
+Divmod.Test.TestRuntime.SpidermonkeyRuntimeTests.methods(
+    /**
+     * I{addLoadEvent} should add the handler to the list of load events.
+     */
+    function test_addLoadEvent(self) {
+        var marker = false;
+        var handler = function handler() {
+            marker = true;
+        };
+
+        self.assertIdentical(marker, false);
+        Divmod.Runtime.theRuntime.addLoadEvent(handler);
+        self.assertIdentical(marker, false);
+        self.assertIdentical(Divmod.Runtime.theRuntime.loadEvents.length, 1);
+        Divmod.Runtime.theRuntime.loadEvents[0]();
+        self.assertIdentical(marker, true);
+    });
+
+
+
 Divmod.Test.TestRuntime.ConnectSingleDOMEventTestCase = Divmod.UnitTest.TestCase.subclass(
     'Divmod.Test.TestRuntime.ConnectSingleDOMEventTestCase');
 /**

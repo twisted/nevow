@@ -697,14 +697,42 @@ Divmod.Runtime.Platform.methods(
      * event, but in a delayed call scheduled from that event.
      */
     function addLoadEvent(self, callable) {
-        Divmod.Base.addLoadEvent(function() {
-                setTimeout(callable, self._loadEventDelay);
-            });
+        var func = function() { setTimeout(callable, self._loadEventDelay); };
+        Divmod.Base.addToCallStack(window, "onload", func, true);
+    },
+
+    /**
+     * Add a beforeunload event handler.
+     *
+     * @param aWindow: The window object.
+     * @param handler: The handler.
+     */
+    function addBeforeUnloadHandler(self, aWindow, handler) {
+        Divmod.Base.addToCallStack(aWindow, 'onbeforeunload', handler);
     });
 
 
+/**
+ * Spidermonkey runtime for unit testing.
+ *
+ * @type loadEvents: Array
+ * @ivar loadEvents: A list of load events that have been added.
+ */
 Divmod.Runtime.Spidermonkey = Divmod.Runtime.Platform.subclass(
     'Divmod.Runtime.Spidermonkey');
+Divmod.Runtime.Spidermonkey.methods(
+    function __init__(self, name) {
+        Divmod.Runtime.Spidermonkey.upcall(self, '__init__', name);
+        self.loadEvents = [];
+    },
+
+    /**
+     * Add the given function to loadEvents.
+     */
+    function addLoadEvent(self, callable) {
+        self.loadEvents.push(callable);
+    });
+
 Divmod.Runtime.Spidermonkey.isThisTheOne = function isSpidermonkeyTheOne() {
     try {
         window;
@@ -1170,6 +1198,13 @@ Divmod.Runtime.InternetExplorer.methods(
         }
 
         return foundNode;
+    },
+
+    /**
+     * Add the handler to the <body> element instead.
+     */
+    function addBeforeUnloadHandler(self, aWindow, handler) {
+        Divmod.Base.addToCallStack(aWindow.document.body, 'onbeforeunload', handler);
     });
 
 
@@ -1251,5 +1286,19 @@ Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
     throw new Error("Unsupported platform");
 };
 
-Divmod.Runtime.theRuntimeType = Divmod.Runtime.Platform.determinePlatform();
-Divmod.Runtime.theRuntime = new Divmod.Runtime.theRuntimeType;
+/**
+ * Initialise the Divmod runtime.
+ */
+Divmod.Runtime.initRuntime = function initRuntime(runtimeType) {
+    // If the runtime type has already been determined, then we do not attempt
+    // detection again. The platform type shouldn't be changing at runtime, and
+    // the detection heuristics can be broken by code that executes later.
+
+    if (Divmod.Runtime.theRuntimeType === undefined) {
+        Divmod.Runtime.theRuntimeType = Divmod.Runtime.Platform.determinePlatform();
+    }
+
+    Divmod.Runtime.theRuntime = new Divmod.Runtime.theRuntimeType;
+}
+
+Divmod.Runtime.initRuntime();

@@ -70,8 +70,7 @@ def findJavascriptInterpreter():
 
 
 
-def generateTestScript(fname, after={'Divmod.Base': ('Divmod.Base.addLoadEvent = function() {};',)},
-                              dependencies=None):
+def generateTestScript(fname, after={}, dependencies=None):
     """
     Turn the contents of the Athena-style javascript test module in the file
     named C{fname} into a plain javascript script.  Recursively includes any

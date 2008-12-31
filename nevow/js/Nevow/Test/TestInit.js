@@ -34,20 +34,31 @@ Nevow.Test.TestInit.InitTests.methods(
         notAthena.bootstrap('Nevow.Athena.PageWidget', SOME_ID);
         self.assert(notAthena.page instanceof Nevow.Athena.PageWidget);
         self.assertIdentical(notAthena.page.livepageID, SOME_ID);
-        // fake handlers for simple testing of just bootstrap behavior, not
-        // the full pile of stuff that they do
+
         var keyPressed = 0;
-        var beforeUnloaded = false;
         notAthena.page.onkeypress = function () {
             keyPressed++;
-        };
-        notAthena.page.onbeforeunload = function () {
-            beforeUnloaded = true;
         };
         myWind.onkeypress();
         self.assertIdentical(keyPressed, 1);
         myWind.onkeypress();
         self.assertIdentical(keyPressed, 2);
+
+        var channelStarted = false;
+        var beforeUnloaded = false;
+
+        var notDeliveryChannel = {
+            'start': function start() {
+                channelStarted = true;
+            }};
+
+        notAthena.page.deliveryChannel = notDeliveryChannel;
+        notAthena.page.onbeforeunload = function () {
+            beforeUnloaded = true;
+        };
+
+        Divmod.Runtime.theRuntime.loadEvents[0]();
+        self.assert(channelStarted);
         myWind.onbeforeunload();
         self.assert(beforeUnloaded);
     });
