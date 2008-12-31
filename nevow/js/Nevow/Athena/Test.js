@@ -492,11 +492,11 @@ Nevow.Athena.Test.TestResult.methods(
     },
 
     function startTest(self) {
-        self.node.setAttribute('class', 'test-running');
+        Divmod.Runtime.theRuntime.setAttribute(self.node, 'class', 'test-running');
     },
 
     function testSucceeded(self) {
-        self.node.setAttribute('class', 'test-success');
+        Divmod.Runtime.theRuntime.setAttribute(self.node, 'class', 'test-success');
     },
 
     function testFailed(self, failure) {
@@ -515,7 +515,7 @@ Nevow.Athena.Test.TestResult.methods(
             }
             stack = frames.join('\n');
         }
-        self.node.setAttribute('class', 'test-failure');
+        Divmod.Runtime.theRuntime.setAttribute(self.node, 'class', 'test-failure');
         self.node.appendChild(
             self._createTraceback(
                 message + '\n' + stack + '\n'));
