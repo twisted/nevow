@@ -55,6 +55,30 @@ Divmod.Test.TestObject.TestObject.methods(
 
 
     /**
+     * Using the 2-parameter subclass method creates a subclass and adds the
+     * subclass name to the global namespace.
+     */
+    function test_twoParamSubclass(self) {
+        var cls = Divmod.Class.subclass(Divmod.Test.TestObject, 'InheritTest');
+        try {
+            self.assertIdentical(Divmod.Test.TestObject.InheritTest, cls);
+            self.assertIdentical(cls.__name__, 'Divmod.Test.TestObject.InheritTest');
+        } finally {
+            delete Divmod.Test.TestObject.InheritTest;
+        }
+    },
+
+
+    /**
+     * Modules have a __name__ attribute which gives their name.
+     */
+    function test_moduleName(self) {
+        var mod = Divmod.Test.TestObject;
+        self.assertIdentical(mod.__name__, 'Divmod.Test.TestObject');
+    },
+
+
+    /**
      * Test that Divmod.Class subclasses have a __name__ attribute which gives
      * their name.
      */
@@ -218,9 +242,7 @@ Divmod.Test.TestObject.TestObject.methods(
     },
 
 
-    function test_util(self) {
-        /* Divmod.namedAny
-         */
+    function test_namedAny(self) {
         self.assert(Divmod.namedAny('not.a.real.package.or.name') == undefined);
         self.assert(Divmod.namedAny('Divmod') == Divmod);
         self.assert(Divmod.namedAny('Divmod.namedAny') == Divmod.namedAny);

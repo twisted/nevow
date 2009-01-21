@@ -955,10 +955,12 @@ Nevow.Athena.Widget.methods(
             moduleObj = Divmod._global;
 
             for (var i = 0; i < moduleParts.length; ++i) {
-                if (moduleObj[moduleParts[i]] === undefined) {
-                    moduleObj[moduleParts[i]] = {};
+                var partName = moduleParts[i];
+                if (moduleObj[partName] === undefined) {
+                    moduleObj[partName] = {
+                        '__name__': moduleObj.__name__ + '.' + partName};
                 }
-                moduleObj = moduleObj[moduleParts[i]];
+                moduleObj = moduleObj[partName];
             }
 
             importDeferreds.push(

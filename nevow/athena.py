@@ -857,6 +857,17 @@ class _HasJSClass(object):
 
 
 
+def jsModuleDeclaration(name):
+    """
+    Generate Javascript for a module declaration.
+    """
+    var = ''
+    if '.' not in name:
+        var = 'var '
+    return '%s%s = {"__name__": "%s"};' % (var, name, name)
+
+
+
 class _HasCSSModule(object):
     """
     C{cssModule}-handling code common to L{LivePage}, L{LiveElement} and
@@ -1216,10 +1227,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
 
     def getImportStan(self, moduleName):
-        var = ''
-        if '.' not in moduleName:
-            var = 'var '
-        moduleDef = '%s%s = {};' % (var, moduleName)
+        moduleDef = jsModuleDeclaration(moduleName);
         return [tags.script(type='text/javascript')[tags.raw(moduleDef)],
                 tags.script(type='text/javascript', src=self.getJSModuleURL(moduleName))]
 

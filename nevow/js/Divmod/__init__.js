@@ -130,7 +130,24 @@ Divmod._CONSTRUCTOR = {};
 
 Divmod.Class = function() {};
 
-Divmod.Class.subclass = function(/* optional */ className) {
+/**
+ * Create a new subclass.
+ *
+ * Passing a module object for C{classNameOrModule} and C{subclassName} will
+ * result in the subclass being added to the global variables, allowing for a
+ * more concise method of defining a subclass.
+ *
+ * @type classNameOrModule: C{String} or a module object
+ * @param classNameOrModule: Name of the new subclass or the module object
+ *     C{subclassName} should be created in
+ *
+ * @type subclassName: C{String} or C{undefined}
+ * @param subclassName: Name of the new subclass if C{classNameOrModule} is a
+ *     module object
+ *
+ * @rtype: C{Divmod.Class}
+ */
+Divmod.Class.subclass = function(classNameOrModule, /* optional */ subclassName) {
     Divmod.__classDebugCounter__ += 1;
 
     /*
@@ -199,11 +216,6 @@ Divmod.Class.subclass = function(/* optional */ className) {
     subClass.subclass = Divmod.Class.subclass;
 
     /*
-     * Make the subclass identifiable somehow.
-     */
-    subClass.__name__ = className;
-
-    /*
      * Copy class methods and attributes, so that you can do
      * polymorphism on class methods (useful for things like
      * Nevow.Athena.Widget.get in widgets.js).
@@ -266,12 +278,24 @@ Divmod.Class.subclass = function(/* optional */ className) {
                 || subClass == superClass);
     };
 
+    if (subclassName !== undefined) {
+        className = classNameOrModule.__name__ + '.' + subclassName;
+        classNameOrModule[subclassName] = subClass;
+    } else {
+        className = classNameOrModule;
+    }
+
     var classIdentifier;
     if(className === undefined) {
         classIdentifier = '#' + Divmod.__classDebugCounter__;
     } else {
         classIdentifier = className;
     }
+
+    /*
+     * Make the subclass identifiable somehow.
+     */
+    subClass.__name__ = className;
 
     subClass.toString = function() {
         return '<Class ' + classIdentifier + '>';

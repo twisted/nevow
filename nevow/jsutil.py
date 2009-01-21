@@ -6,7 +6,8 @@ from twisted.python.procutils import which
 from twisted.python.util import sibpath
 
 import nevow
-from nevow.athena import LivePage, allJavascriptPackages, AthenaModule
+from nevow.athena import (LivePage, allJavascriptPackages, AthenaModule,
+    jsModuleDeclaration)
 
 _TEST_BOOTSTRAP = LivePage.BOOTSTRAP_MODULES[:]
 _TEST_BOOTSTRAP.insert(_TEST_BOOTSTRAP.index('Divmod.Runtime'),
@@ -105,11 +106,7 @@ def generateTestScript(fname, after={}, dependencies=None):
         initname = '.'.join(segments)
         if initname not in initialized:
             initialized[initname] = 1
-            if '.' in initname:
-                prefix = ''
-            else:
-                prefix = 'var '
-            js.append('%s%s = {};' % (prefix, initname))
+            js.append(jsModuleDeclaration(initname))
         js.append(load(m.mapping[m.name]))
         if m.name in after:
             js.extend(after[m.name])

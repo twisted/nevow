@@ -1,8 +1,6 @@
 // import Nevow.Athena
 
-ChatThing.ChatterWidget = Nevow.Athena.Widget.subclass('ChatThing.ChatterWidget');
-
-ChatThing.ChatterWidget.methods(
+Nevow.Athena.Widget.subclass(ChatThing, 'ChatterWidget').methods(
     function __init__(self, node) {
         ChatThing.ChatterWidget.upcall(self, "__init__", node);
         self.chooseBox = self.nodeByAttribute('name', 'chooseBox');

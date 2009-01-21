@@ -1,8 +1,6 @@
 // import Nevow.Athena
 
-EchoThing.EchoWidget = Nevow.Athena.Widget.subclass('EchoThing.EchoWidget');
-
-EchoThing.EchoWidget.methods(
+Nevow.Athena.Widget.subclass(EchoThing, 'EchoWidget').methods(
     function __init__(self, node) {
         EchoThing.EchoWidget.upcall(self, "__init__", node);
         self.echoWidget = self.nodeByAttribute('name', 'echoElement');
