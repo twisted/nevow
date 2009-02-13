@@ -1,4 +1,4 @@
-# -*- test-case-name: twisted.test.test_web -*-
+# -*- test-case-name: nevow.test.test_static -*-
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
@@ -15,7 +15,7 @@ del cStringIO
 from zope.interface import implements
 
 # Sibling Imports
-from twisted.web import error
+from twisted.web import resource
 from twisted.web.util import redirectTo
 
 # Twisted Imports
@@ -32,7 +32,7 @@ from twisted.python.runtime import platformType
 from nevow import appserver, dirlist, inevow, rend
 
 
-dangerousPathError = error.NoResource("Invalid request URL.")
+dangerousPathError = resource.NoResource("Invalid request URL.")
 
 def isDangerous(path):
     return path == '..' or '/' in path or os.sep in path
@@ -302,7 +302,7 @@ class File:
         except IOError, e:
             import errno
             if e[0] == errno.EACCES:
-                return error.ForbiddenResource().render(request)
+                return resource.ForbiddenResource().render(request)
             else:
                 raise
 

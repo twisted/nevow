@@ -6,12 +6,12 @@ How to access the session from guard's logout function.
 from zope.interface import implements
 
 from nevow import guard
-from nevow import rend
+from nevow import page
 from nevow import loaders
 from nevow import tags as T
 from nevow import url
 
-class MyRootResource(rend.Page):
+class MyRootResource(page.Page):
     addSlash = True
     docFactory = loaders.stan(
         T.html[
@@ -34,16 +34,16 @@ class Mind:
 
 class MyRealm:
     implements(IRealm)
-    
+
     def requestAvatar(self, avatar_id, mind, *interfaces):
         if IResource in interfaces:
             return (
-                IResource, 
+                IResource,
                 MyRootResource(),
                 self.createLogout(avatar_id, mind)
                 )
         raise NotImplementedError
-            
+
     def createLogout(self, avatar_id, mind):
         def logout():
             # This will be a nevow.guard.GuardSession instance

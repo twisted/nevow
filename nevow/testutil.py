@@ -82,27 +82,34 @@ class FakeRequest(Componentized):
 
     def __init__(self, headers=None, args=None, avatar=None,
                  uri='/', currentSegments=None, cookies=None,
-                 user="", password="", isSecure=False):
-        """Create a FakeRequest instance.
+                 user="", password="", secure=False):
+        """
+        Create a FakeRequest instance.
 
-        headers:
-            dict of request headers
-        args:
-            dict of args
-        avatar:
-            avatar to pass to the FakeSession instance
-        uri:
-            request URI
-        currentSegments:
-            list of segments that have "already been located"
+        @type headers: C{dict}
+        @param headers: request headers
+        
+        @type args: C{dict}
+        @param args: dict of args.
+        
+        @type avatar: any avatar object
+        @param avatar: avatar to pass to the FakeSession instance.
+        
+        @type uri: C{str}
+        @param uri: request URI.
+        
+        @type currentSegments: C{list}
+        @param currentSegments: list of segments that have "already been located".
+        
+        @type secure: C{bool}
+        @param secure: The request is secure (running on ssl).
+
         cookies:
             dict of cookies
         user:
             username (like in http auth)
         password:
             password (like in http auth)
-        isSecure:
-            whether this request represents an HTTPS url
         """
         Componentized.__init__(self)
         self.uri = uri
@@ -133,7 +140,7 @@ class FakeRequest(Componentized):
             self.cookies = {}
         self.user = user
         self.password = password
-        self.secure = isSecure
+        self.secure = secure
         self.deferred = defer.Deferred()
 
     def URLPath(self):
@@ -206,12 +213,25 @@ class FakeRequest(Componentized):
 
     def getClientIP(self):
         return '127.0.0.1'
+    
+    def getHost(self):
+        class addr(object): pass
+        a = addr()
+        a.port = 80
+        a.addr = 'localhost'
+        return a
+    
+
+    def getRequestHostname(self):
+        return 'localhost'
+
 
     def addCookie(self, k, v, expires=None, domain=None, path=None, max_age=None, comment=None, secure=None):
         """
         Set a cookie for use in subsequent requests.
         """
         self.cookies[k] = v
+
 
     def getCookie(self, k):
         """

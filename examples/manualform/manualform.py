@@ -2,27 +2,27 @@
 # "pretend" segment, _submit, for the form to post to (the action attribute).
 
 
-from nevow import loaders, rend, tags as T, url
+from nevow import loaders, page, tags as T, url
 
 
 SUBMIT = '_submit'
 
 
-class Page(rend.Page):
-    
+class Page(page.Page):
+
     addSlash = True
-    
-    def locateChild(self, ctx, segments):
+
+    def locateChild(self, req, segments):
 
         # Handle the form post
         if segments[0] == SUBMIT:
             # Just print out the name
-            print '*** name:', ctx.arg('name')
+            print '*** name:', req.args.get('name')
             # Redirect away from the POST
-            return url.URL.fromContext(ctx), ()
-        
-        return rend.Page.locateChild(self, ctx, segments)
-    
+            return url.URL.fromContext(req), ()
+
+        return page.Page.locateChild(self, req, segments)
+
     docFactory = loaders.stan(
         T.html[
             T.body[

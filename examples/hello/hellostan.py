@@ -2,12 +2,13 @@ from twisted.application import internet, service
 
 from nevow import appserver
 from nevow import loaders
-from nevow import rend
+from nevow import page
 from nevow import tags as T
 
 
-class Page(rend.Page):
-    """Example of using stan to render a page.
+class Page(page.Page):
+    """
+    Example of using stan to render a page.
     """
     addSlash = True
     docFactory = loaders.stan(

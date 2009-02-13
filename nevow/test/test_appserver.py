@@ -16,6 +16,8 @@ from nevow import appserver
 from nevow import context
 from nevow import testutil
 from nevow import util
+from nevow import rend
+from nevow import page
 
 from nevow.appserver import NevowSite
 from nevow.context import RequestContext
@@ -60,6 +62,36 @@ class TestLookup(testutil.TestCase):
 
         return self.getResourceFor(FirstTwo(), 'foo/bar/baz').addCallback(
             lambda result: self.assertIdentical(result.tag.__class__, Render))
+
+
+    def test_childrenRend(self):
+        """
+        Test that context is updated during traversing the resource tree,
+        mainly to get accurate current segments.
+        """
+        class BasicTest(rend.Page):
+            def child_foo(self, segments):
+                return Second()
+        class Second(rend.Page):
+            addSlash = True
+        return self.getResourceFor(BasicTest(), 'foo/').addCallback(
+            lambda result: self.assertIdentical(result.tag.__class__, Second))
+
+
+    def test_childrenPage(self):
+        """
+        Test that request is changed during traversing the resource tree, in
+        particular the prepath and postpath fields.
+        """
+        class BasicTest(page.Page):
+            def foo(self, segments):
+                return Second()
+            page.child(foo)
+        class Second(page.Page):
+            addSlash = True
+        return self.getResourceFor(BasicTest(), 'foo/').addCallback(
+            lambda result: self.assertIdentical(result.tag.__class__, Second))
+
 
     def test_oldresource(self):
         from twisted.web import resource

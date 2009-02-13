@@ -3,21 +3,22 @@ Simple example of how child resources are located.
 """
 
 from nevow import loaders
-from nevow import rend
+from nevow import page, page
 from nevow import tags as T
 from nevow import url
 
 
-class ChildPage(rend.Page):
+class ChildPage(page.Page):
 
     def __init__(self, name):
-        rend.Page.__init__(self)
+        page.Page.__init__(self)
         self.name = name
 
-    def child_childOfChild(self, context):
+    def childOfChild(self, req):
         return ChildOfChildPage(self.name)
+    page.child(childOfChild)
 
-    def render_name(self, context, data):
+    def render_name(self, req, data):
         return self.name
 
     docFactory = loaders.stan(
@@ -34,13 +35,13 @@ class ChildPage(rend.Page):
         )
 
 
-class ChildOfChildPage(rend.Page):
+class ChildOfChildPage(page.Page):
 
     def __init__(self, parentName):
-        rend.Page.__init__(self)
+        page.Page.__init__(self)
         self.parentName = parentName
 
-    def render_parentName(self, context, data):
+    def render_parentName(self, req, data):
         return self.parentName
 
     docFactory = loaders.stan(
@@ -53,46 +54,50 @@ class ChildOfChildPage(rend.Page):
         )
 
 
-class RootPage(rend.Page):
+class RootPage(page.Page):
 
     addSlash = True
 
     # A resource that is always called 'foo' and only needs to be created once
-    child_foo = ChildPage('foo')
+    children = {'foo': ChildPage('foo')}
 
-    def child_bar(self, context):
-        """A resource that is always called 'bar' but is created per-request
+    def bar(self, req):
+        """
+        A resource that is always called 'bar' but is created per-request
         """
         return ChildPage('bar')
+    page.child(bar)
 
-    def childFactory(self, ctx, name):
-        """Create and return a child resource where the name is dynamic
+    def childFactory(self, req, name):
+        """
+        Create and return a child resource where the name is dynamic
         """
         if name in ['1', '2', '3']:
             return ChildPage(name)
 
-    def locateChild(self, ctx, segments):
-        """Create and return a dynamically named child resource if child_ or
+    def locateChild(self, req, segments):
+        """
+        Create and return a dynamically named child resource if child_ or
         childFactory didn't help. However, this time we get the chance to
         consume multiple path segments (inluding the childOfChild link).
-        
+
         Note: locateChild is actually the main resource location API (see
-        inevow.IReource) and it is actually rend.Page's implementation of the
+        inevow.IReource) and it is actually page.Page's implementation of the
         method that provides the child_ and childFactory functionality.
         """
 
         # Let parent class have a go first
         # WARNING: This 3 lines work well until you use formless in this page
         # because formless will make locateChild return only one return value
-        # (a deferred) on which you should add a callback that accepts a resource and 
+        # (a deferred) on which you should add a callback that accepts a resource and
         # an empty tuple that represents no remaining segments.
-        child, remainingSegments = rend.Page.locateChild(self, ctx, segments)
+        child, remainingSegments = page.Page.locateChild(self, req, segments)
         if child:
             return child, remainingSegments
 
         # Consume all remaining path segments for the name
         return ChildPage('/'.join(segments)), []
-    
+
     docFactory = loaders.stan(
         T.html[
             T.body[
