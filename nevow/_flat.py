@@ -15,7 +15,9 @@ Immediate future plans:
 
 """
 
+from sys import exc_info
 from types import GeneratorType
+from traceback import extract_tb, format_list
 
 from twisted.internet.defer import Deferred
 
@@ -39,9 +41,73 @@ class FlattenerError(Exception):
         the unflattenable object was encountered.  The first element is least
         deeply nested object and the last element is the most deeply nested.
     """
-    def __init__(self, roots, exception):
+    def __init__(self, exception, roots, traceback):
+        self._exception = exception
         self._roots = roots
-        Exception.__init__(self, exception)
+        self._traceback = traceback
+        Exception.__init__(self, exception, roots, traceback)
+
+
+    def _formatRoot(self, obj):
+        """
+        Convert an object from C{self._roots} to a string suitable for
+        inclusion in a render-traceback (like a normal Python traceback, but
+        can include "frame" source locations which are not in Python source
+        files).
+
+        @param obj: Any object which can be a render step I{root}.
+            Typically, L{Tag}s, strings, and other simple Python types.
+
+        @return: A string representation of C{obj}.
+        @rtype: L{str}
+        """
+        if isinstance(obj, (str, unicode)):
+            # It's somewhat unlikely that there will ever be a str in the roots
+            # list.  However, something like a MemoryError during a str.replace
+            # call (eg, replacing " with &quot;) could possibly cause this.
+            # Likewise, UTF-8 encoding a unicode string to a byte string might
+            # fail like this.
+            if len(obj) > 40:
+                if isinstance(obj, str):
+                    prefix = 1
+                else:
+                    prefix = 2
+                return repr(obj[:20])[:-1] + '<...>' + repr(obj[-20:])[prefix:]
+            else:
+                return repr(obj)
+        elif isinstance(obj, Tag):
+            if obj.filename is None:
+                return 'Tag <' + obj.tagName + '>'
+            else:
+                return "File \"%s\", line %d, column %d, in \"%s\"" % (
+                    obj.filename, obj.lineNumber,
+                    obj.columnNumber, obj.tagName)
+        else:
+            return repr(obj)
+
+
+    def __repr__(self):
+        if self._roots:
+            roots = '  ' + '\n  '.join([
+                    self._formatRoot(r) for r in self._roots]) + '\n'
+        else:
+            roots = ''
+        if self._traceback:
+            traceback = '\n'.join([
+                    line
+                    for entry in format_list(self._traceback)
+                    for line in entry.splitlines()]) + '\n'
+        else:
+            traceback = ''
+        return (
+            'Exception while flattening:\n' +
+            roots + traceback +
+            self._exception.__class__.__name__ + ': ' +
+            str(self._exception) + '\n')
+
+
+    def __str__(self):
+        return repr(self)
 
 
 
@@ -355,7 +421,7 @@ def flatten(request, root, inAttribute, inXML):
             for generator in stack:
                 roots.append(generator.gi_frame.f_locals['root'])
             roots.append(frame.f_locals['root'])
-            raise FlattenerError(roots, e)
+            raise FlattenerError(e, roots, extract_tb(exc_info()[2]))
         else:
             if type(element) is str:
                 yield element

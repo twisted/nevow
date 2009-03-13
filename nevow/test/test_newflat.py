@@ -5,7 +5,7 @@
 Tests for L{nevow._flat}.
 """
 
-import sys
+import sys, traceback
 
 from zope.interface import implements
 
@@ -901,6 +901,165 @@ class FlattenTests(TestCase, FlattenMixin):
         self.assertEqual(self.flatten(tag, request), '<div foo="bar"></div>')
 
 
+    def test_flattenExceptionStack(self):
+        """
+        If an exception is raised by a render method, L{FlattenerError} is
+        raised with information about the stack between the flattener and the
+        frame which raised the exception.
+        """
+        def broken():
+            raise RuntimeError("foo")
+
+        class BrokenRenderable(object):
+            implements(IRenderable)
+
+            def render(self, request):
+                # insert another stack frame before the exception
+                broken()
+
+
+        request = object()
+        renderable = BrokenRenderable()
+        exc = self.assertRaises(
+            FlattenerError, self.flatten, renderable, request)
+        self.assertEqual(
+            # There are probably some frames above this, but I don't care what
+            # they are.
+            exc._traceback[-2:],
+            [(__file__.rstrip('c'), 918, 'render', 'broken()'),
+             (__file__.rstrip('c'), 911, 'broken',
+              'raise RuntimeError("foo")')])
+
+
+
+class FlattenerErrorTests(TestCase):
+    """
+    Tests for L{FlattenerError}.
+    """
+    def test_string(self):
+        """
+        If a L{FlattenerError} is created with a string root, up to around 40
+        bytes from that string are included in the string representation of the
+        exception.
+        """
+        self.assertEqual(
+            str(FlattenerError(RuntimeError("reason"), ['abc123xyz'], [])),
+            "Exception while flattening:\n"
+            "  'abc123xyz'\n"
+            "RuntimeError: reason\n")
+        self.assertEqual(
+            str(FlattenerError(
+                    RuntimeError("reason"), ['0123456789' * 10], [])),
+            "Exception while flattening:\n"
+            "  '01234567890123456789<...>01234567890123456789'\n"
+            "RuntimeError: reason\n")
+
+
+    def test_unicode(self):
+        """
+        If a L{FlattenerError} is created with a unicode root, up to around 40
+        characters from that string are included in the string representation
+        of the exception.
+        """
+        self.assertEqual(
+            str(FlattenerError(
+                    RuntimeError("reason"), [u'abc\N{SNOWMAN}xyz'], [])),
+            "Exception while flattening:\n"
+            "  u'abc\\u2603xyz'\n" # Codepoint for SNOWMAN
+            "RuntimeError: reason\n")
+        self.assertEqual(
+            str(FlattenerError(
+                    RuntimeError("reason"), [u'01234567\N{SNOWMAN}9' * 10],
+                    [])),
+            "Exception while flattening:\n"
+            "  u'01234567\\u2603901234567\\u26039<...>01234567\\u2603901234567"
+            "\\u26039'\n"
+            "RuntimeError: reason\n")
+
+
+    def test_renderable(self):
+        """
+        If a L{FlattenerError} is created with an L{IRenderable} provider root,
+        the repr of that object is included in the string representation of the
+        exception.
+        """
+        class Renderable(object):
+            implements(IRenderable)
+
+            def __repr__(self):
+                return "renderable repr"
+
+        self.assertEqual(
+            str(FlattenerError(
+                    RuntimeError("reason"), [Renderable()], [])),
+            "Exception while flattening:\n"
+            "  renderable repr\n"
+            "RuntimeError: reason\n")
+
+
+    def test_tag(self):
+        """
+        If a L{FlattenerError} is created with a L{Tag} instance with source
+        location information, the source location is included in the string
+        representation of the exception.
+        """
+        tag = Tag(
+            'div', filename='/foo/filename.xhtml', lineNumber=17, columnNumber=12)
+
+        self.assertEqual(
+            str(FlattenerError(RuntimeError("reason"), [tag], [])),
+            "Exception while flattening:\n"
+            "  File \"/foo/filename.xhtml\", line 17, column 12, in \"div\"\n"
+            "RuntimeError: reason\n")
+
+
+    def test_tagWithoutLocation(self):
+        """
+        If a L{FlattenerError} is created with a L{Tag} instance without source
+        location information, only the tagName is included in the string
+        representation of the exception.
+        """
+        self.assertEqual(
+            str(FlattenerError(RuntimeError("reason"), [Tag('span')], [])),
+            "Exception while flattening:\n"
+            "  Tag <span>\n"
+            "RuntimeError: reason\n")
+
+
+    def test_traceback(self):
+        """
+        If a L{FlattenerError} is created with traceback frames, they are
+        included in the string representation of the exception.
+        """
+        # Try to be realistic in creating the data passed in for the traceback
+        # frames.
+        def f():
+            g()
+        def g():
+            raise RuntimeError("reason")
+
+        try:
+            f()
+        except RuntimeError, exc:
+            # Get the traceback, minus the info for *this* frame
+            tbinfo = traceback.extract_tb(sys.exc_info()[2])[1:]
+        else:
+            self.fail("f() must raise RuntimeError")
+
+        here = __file__.rstrip('c')
+        self.assertEqual(
+            str(FlattenerError(exc, [], tbinfo)),
+            "Exception while flattening:\n"
+            "  File \"%s\", line %d, in f\n"
+            "    g()\n"
+            "  File \"%s\", line %d, in g\n"
+            "    raise RuntimeError(\"reason\")\n"
+            "RuntimeError: reason\n" % (
+                here, f.func_code.co_firstlineno + 1,
+                here, g.func_code.co_firstlineno + 1))
+
+
+
 class LegacySerializable(object):
     """
     An object for which a legacy flattener is registered and which can only be
@@ -990,8 +1149,7 @@ class DeferflattenTests(TestCase, FlattenMixin):
             def render(self, request):
                 raise TestException()
         flattened = self.deferflatten(BrokenRenderable())
-        self.assertFailure(flattened, FlattenerError)
-        return flattened
+        return self.assertFailure(flattened, FlattenerError)
 
 
     def test_deferredRenderAttribute(self):
