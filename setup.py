@@ -119,6 +119,10 @@ else:
         'nevow.scripts', 'nevow.test', 'nevow.taglibrary',
         'nevow.plugins', 'nevow.livetrial', 'twisted.plugins']
 
+if setuptools is not None:
+    from distutils.command.sdist import sdist
+    setupdict['cmdclass'] = {'sdist': sdist}
+
 
 setup(**setupdict)
 
