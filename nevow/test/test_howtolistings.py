@@ -6,7 +6,7 @@ This module tests the code listings used in the documentation.
 import sys
 
 from twisted.python.filepath import FilePath
-from twisted.trial.unittest import TestCase
+from twisted.trial.unittest import SkipTest, TestCase
 
 from nevow._widget_plugin import ElementRenderingLivePage
 from nevow.testutil import renderLivePage, JavaScriptTestCase
@@ -43,6 +43,8 @@ class ExampleTestBase(object):
         here = FilePath(__file__).parent().parent().parent()
         for childName in self.examplePath:
             here = here.child(childName)
+        if not here.exists():
+            raise SkipTest("Examples (%s) not found - cannot test" % (here.path,))
         sys.path.append(here.path)
         # This stuff is pretty horrible; we need to turn off JS caching for the
         # duration of this test (this flag will be set back to True by the
@@ -72,19 +74,24 @@ class ExampleJavaScriptTestCase(JavaScriptTestCase):
     simple inheritance to invoke the functionality in ExampleTestBase; so,
     instead, this class composes JavaScriptTestCase with a ExampleTestBase.
     """
-
-    def run(self, *a, **k):
+    def run(self, result):
         """
         Wrap L{JavaScriptTestCase.run} to change and restore the plugin environment
         on each test run.
         """
         base = ExampleTestBase()
         base.examplePath = self.examplePath
-        base.setUp()
         try:
-            return JavaScriptTestCase.run(self, *a, **k)
-        finally:
-            base.tearDown()
+            base.setUp()
+        except SkipTest, e:
+            result.startTest(self)
+            result.addSkip(self, str(e))
+            result.stopTest(self)
+        else:
+            try:
+                return JavaScriptTestCase.run(self, result)
+            finally:
+                base.tearDown()
 
 
 def chatListing(partname):
