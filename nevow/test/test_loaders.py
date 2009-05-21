@@ -1,4 +1,4 @@
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2009 Divmod.
 # See LICENSE for details.
 
 import os
@@ -267,6 +267,25 @@ class TestDocFactoriesCache(unittest.TestCase):
         l1 = loaders.xmlstr(self.nsdoc, pattern='1')
         l2 = loaders.xmlstr(self.nsdoc, pattern='2')
         self.assertNotEqual( id(l1.load()), id(l2.load()) )
+
+
+    def test_xmlSlotDefault(self):
+        """
+        An I{nevow:slot} tag in an XML template may have a I{default}
+        attribute specifying a value for the slot if it is not otherwise
+        given one.
+        """
+        slotsdoc = '''
+        <div xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+        <nevow:slot name="1" />
+        <nevow:slot name="2" default="3" />
+        </div>
+        '''
+        loader = loaders.xmlstr(slotsdoc)
+        loaded = loader.load()
+        self.assertEquals(loaded[1].default, None)
+        self.assertEquals(loaded[3].default, "3")
+
 
     def test_xmlfile(self):
 

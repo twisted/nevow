@@ -1,4 +1,4 @@
-# Copyright (c) 2004 Divmod.
+# Copyright (c) 2004-2009 Divmod.
 # See LICENSE for details.
 
 from xml.sax import make_parser, handler
@@ -112,8 +112,15 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
             if name == 'invisible':
                 name = ''
             elif name == 'slot':
+                try:
+                    # Try to get the default value for the slot
+                    default = attrs[(None, 'default')]
+                except KeyError:
+                    # If there wasn't one, then use None to indicate no
+                    # default.
+                    default = None
                 el = slot(
-                    attrs[(None,'name')],
+                    attrs[(None, 'name')], default=default,
                     filename=filename, lineNumber=lineNumber,
                     columnNumber=columnNumber)
                 self.stack.append(el)
