@@ -26,6 +26,15 @@ from nevow.flat.ten import registerFlattener
 from nevow.testutil import FakeRequest
 from nevow.context import WovenContext
 
+# Use the co_filename mechanism (instead of the __file__ mechanism) because
+# it is the mechanism traceback formatting uses.  The two do not necessarily
+# agree with each other.  This requires a code object compiled in this file.
+# The easiest way to get a code object is with a new function.  I'll use a
+# lambda to avoid adding anything else to this namespace.  The result will
+# be a string which agrees with the one the traceback module will put into a
+# traceback for frames associated with functions defined in this file.
+HERE = (lambda: None).func_code.co_filename
+
 
 class TrivialRenderable(object):
     """
@@ -926,9 +935,8 @@ class FlattenTests(TestCase, FlattenMixin):
             # There are probably some frames above this, but I don't care what
             # they are.
             exc._traceback[-2:],
-            [(__file__.rstrip('c'), 918, 'render', 'broken()'),
-             (__file__.rstrip('c'), 911, 'broken',
-              'raise RuntimeError("foo")')])
+            [(HERE, 927, 'render', 'broken()'),
+             (HERE, 920, 'broken', 'raise RuntimeError("foo")')])
 
 
 
@@ -1046,7 +1054,6 @@ class FlattenerErrorTests(TestCase):
         else:
             self.fail("f() must raise RuntimeError")
 
-        here = __file__.rstrip('c')
         self.assertEqual(
             str(FlattenerError(exc, [], tbinfo)),
             "Exception while flattening:\n"
@@ -1055,8 +1062,8 @@ class FlattenerErrorTests(TestCase):
             "  File \"%s\", line %d, in g\n"
             "    raise RuntimeError(\"reason\")\n"
             "RuntimeError: reason\n" % (
-                here, f.func_code.co_firstlineno + 1,
-                here, g.func_code.co_firstlineno + 1))
+                HERE, f.func_code.co_firstlineno + 1,
+                HERE, g.func_code.co_firstlineno + 1))
 
 
 
