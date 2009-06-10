@@ -14,11 +14,12 @@ StringIO = cStringIO
 del cStringIO
 from zope.interface import implements
 
-# Sibling Imports
-from twisted.web import error
+try:
+    from twisted.web.resource import NoResource, ForbiddenResource
+except ImportError:
+    from twisted.web.error import NoResource, ForbiddenResource
 from twisted.web.util import redirectTo
 
-# Twisted Imports
 try:
     from twisted.web import http
 except ImportError:
@@ -32,7 +33,7 @@ from twisted.python.runtime import platformType
 from nevow import appserver, dirlist, inevow, rend
 
 
-dangerousPathError = error.NoResource("Invalid request URL.")
+dangerousPathError = NoResource("Invalid request URL.")
 
 def isDangerous(path):
     return path == '..' or '/' in path or os.sep in path
@@ -302,7 +303,7 @@ class File:
         except IOError, e:
             import errno
             if e[0] == errno.EACCES:
-                return error.ForbiddenResource().render(request)
+                return ForbiddenResource().render(request)
             else:
                 raise
 
