@@ -8,14 +8,16 @@ except ImportError:
     setuptools = None
 
 import os
-docs=[]
+data_files=[]
 for (dirpath, dirnames, filenames) in os.walk("doc"):
     if ".svn" in dirnames:
         del dirnames[dirnames.index(".svn")]
     thesedocs = []
     for fname in filenames:
         thesedocs.append(os.path.join(dirpath, fname))
-    docs.append((dirpath, thesedocs))
+    data_files.append((dirpath, thesedocs))
+
+data_files.append((os.path.join('twisted', 'plugins'), [os.path.join('twisted', 'plugins', 'nevow_widget.py')]))
 
 setupdict = {
     'name': 'Nevow', 
@@ -32,7 +34,7 @@ setupdict = {
         "Development Status :: 4 - Beta",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content"],
     'scripts': ['bin/nevow-xmlgettext', 'bin/nit'],
-    'data_files': docs,
+    'data_files': data_files,
     'package_data': {
             'formless': [
                 'freeform-default.css'
@@ -82,7 +84,6 @@ if setuptools:
     from setuptools import setup, find_packages
 
     setupdict['packages'] = find_packages()
-    setupdict['packages'].append("twisted.plugins")
     setupdict['include_package_data'] = True
 else:
     # No setuptools -- decide where the data files should go and explicitly list
