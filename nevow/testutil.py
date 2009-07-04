@@ -83,26 +83,18 @@ class FakeRequest(Componentized):
     def __init__(self, headers=None, args=None, avatar=None,
                  uri='/', currentSegments=None, cookies=None,
                  user="", password="", isSecure=False):
-        """Create a FakeRequest instance.
+        """
+        Create a FakeRequest instance.
 
-        headers:
-            dict of request headers
-        args:
-            dict of args
-        avatar:
-            avatar to pass to the FakeSession instance
-        uri:
-            request URI
-        currentSegments:
-            list of segments that have "already been located"
-        cookies:
-            dict of cookies
-        user:
-            username (like in http auth)
-        password:
-            password (like in http auth)
-        isSecure:
-            whether this request represents an HTTPS url
+        @param headers: dict of request headers
+        @param args: dict of args
+        @param avatar: avatar to pass to the FakeSession instance
+        @param uri: request URI
+        @param currentSegments: list of segments that have "already been located"
+        @param cookies: dict of cookies
+        @param user: username (like in http auth)
+        @param password: password (like in http auth)
+        @param isSecure: whether this request represents an HTTPS url
         """
         Componentized.__init__(self)
         self.uri = uri
@@ -399,7 +391,7 @@ class JavaScriptTestCase(TrialTestCase):
 
     def findJavascriptInterpreter(self):
         """
-        @see L{nevow.jsutil.findJavascriptInterpreter}
+        @see: L{nevow.jsutil.findJavascriptInterpreter}
         """
         return findJavascriptInterpreter()
 

@@ -1,7 +1,7 @@
 """
 Acceptance tests for L{nevow.taglibrary.tabbedPane}.
 
-Run as:
+Run as::
 
     twistd -n athena-widget --element nevow.test.acceptance.tabbedpane.{tabbedPaneFragment,fetchedTabbedPaneFragment}
 """

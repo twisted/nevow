@@ -225,20 +225,17 @@ class SessionWrapper:
     The following class attributes can be modified on an instance
     of the class.
 
-    @ivar secureCookies: Whether to use secure (TLS only) cookies or not.
-      True (default): make cookies secure when session is initiated
-      in a secure (TLS) connection.
+    @ivar secureCookies: Whether to use secure (TLS only) cookies or not. If
+      C{True} (the default), make cookies secure when session is initiated
+      in a secure (TLS) connection.  If C{False}, cookies will not be given
+      the secure attribute.
 
-      False: cookies do not get the secure attribute.
-
-    @ivar: persistentCookies: Whether to use persistent (saved to disk) cookies or not.
-      True: make cookies persistent, so they are valid for the
-        length of the sessionLifetime even if the browser window
-        is closed.
-
-      False (default): cookies do not get saved to disk, and thus last
-        only as long as the session does.  If the browser is
-        closed before the session timeout, both the session
+    @ivar: persistentCookies: Whether to use persistent (saved to disk)
+        cookies or not.  If C{True}, make cookies persistent, so they are
+        valid for the length of the C{sessionLifetime} even if the browser
+        window is closed.  If C{False} (the default), cookies do not get
+        saved to disk, and thus last only as long as the session does.  If
+        the browser is closed before the session timeout, both the session
         and the cookie go away.
     """
     implements(inevow.IResource)
@@ -481,7 +478,8 @@ class SessionWrapper:
                     self.incorrectLoginError, ctx, segments, 'Anonymous access not allowed.')
 
     def explicitLogout(self, session):
-        """Hook to be overridden if you care about user-requested logout.
+        """
+        Hook to be overridden if you care about user-requested logout.
 
         Note: there is no return value from this method; it is purely a way to
         provide customized behavior that distinguishes between session-expiry
@@ -492,11 +490,11 @@ class SessionWrapper:
         automated logout.  (c.f. Quotient's persistent sessions.)
 
         If you want the user to see a customized logout page, just generate a
-        logout link that looks like
+        logout link that looks like::
 
             http://your-site.example.com/__logout__/my/custom/logout/stuff
 
-        and the user will see
+        and the user will see::
 
             http://your-site.example.com/my/custom/logout/stuff
 

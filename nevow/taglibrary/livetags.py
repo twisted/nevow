@@ -14,7 +14,7 @@ Component-specific glue (usually object definitions) must also
 be added as needed.
 
 "component" is a special object used to create javascript literals for
-dealing with client components:
+dealing with client components::
 
    component.<name>.init(<initializer>)
    

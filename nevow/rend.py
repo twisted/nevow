@@ -178,19 +178,20 @@ class FreeformChildMixin:
 
 
 class ConfigurableMixin(object):
-    """A sane IConfigurable implementation for Fragment and Page.
-    Methods starting with bind_ automatically expose corresponding
-    method names. bind_* should return an IBinding (PropertyBinding
-    or MethodBinding), or, as a shortcut for MethodBinding, a list of
-    twoples like this:
+    """
+    A sane L{IConfigurable} implementation for L{Fragment} and L{Page}. 
 
-    def bind_foo(self, ctx):
-        return [('argName', String()), ('anotherArg', Integer())]
+    Methods starting with C{bind_} automatically expose corresponding method
+    names.  C{bind_*} should return an L{IBinding} (L{PropertyBinding} or
+    L{MethodBinding}), or, as a shortcut for L{MethodBinding}, a C{list} of
+    two-C{tuples} like this::
 
-    def foo(self, argName, anotherArg):
-        assert isinstance(argName, str)
-        assert isinstance(anotherArg, int)
+        def bind_foo(self, ctx):
+            return [('argName', String()), ('anotherArg', Integer())]
 
+        def foo(self, argName, anotherArg):
+            assert isinstance(argName, str)
+            assert isinstance(anotherArg, int)
     """
     implements(iformless.IConfigurable)
 

@@ -1,12 +1,13 @@
 # -*- test-case-name: nevow.test.test_livepage -*-
-
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-"""Provides a bidirectional channel for sending out-of-band
-events between client and server without refreshing the whole
-page.
 """
+Previous generation Nevow Comet support.  Do not use this module.
+
+@see: L{nevow.athena}
+"""
+
 import itertools, types
 import warnings
 
@@ -70,7 +71,8 @@ flat.registerFlattener(flattenSingleQuote, SingleQuote)
 
 
 class _js(object):
-    """Stan for Javascript. There is a convenience instance of this
+    """
+    Stan for Javascript. There is a convenience instance of this
     class named "js" in the livepage module which you should use
     instead of the _js class directly.
 
@@ -87,7 +89,7 @@ class _js(object):
 
     The simplest usage is to simply pass a python string to js.
     When the js object is rendered, the python string will be
-    rendered as if it were literal javascript. For example:
+    rendered as if it were literal javascript. For example::
 
         client.send(js(\"alert('hello')\"))
 
@@ -96,7 +98,7 @@ class _js(object):
     of __getattr__, __call__, and __getitem__. See the following
     examples to get an idea of how to use it. The Python code
     is to the left of the -> and the Javascript which results is
-    to the right.
+    to the right::
 
         js(\"alert('any javascript you like')\") -> alert('any javascript you like')
 
@@ -113,19 +115,19 @@ class _js(object):
         js[1, 2] -> [1, 2]
 
     XXX TODO support javascript object literals somehow? (They look like dicts)
-    perhaps like this:
+    perhaps like this::
 
         js[\"one\": 1, \"two\": 2] -> {\"one\": 1, \"two\": 2}
 
     The livepage module includes many convenient instances of the js object.
-    It includes the literals:
+    It includes the literals::
 
         document
         window
         this
         self
 
-    It includes shorthand for commonly called javascript functions:
+    It includes shorthand for commonly called javascript functions::
 
         alert -> alert
         get -> document.getElementById
@@ -134,28 +136,28 @@ class _js(object):
         prepend -> nevow.prependNode
         insert -> nevow.insertNode
 
-    It includes convenience calls against the client-side server object:
+    It includes convenience calls against the client-side server object::
 
         server.handle('callMe') -> server.handle('callMe')
 
-    It includes commonly-used fragments of javascript:
+    It includes commonly-used fragments of javascript::
 
         stop -> ; return false;
         eol -> \\n
 
     Stop is used to prevent the browser from executing it's default
-    event handler. For example:
+    event handler. For example::
 
         button(onclick=[server.handle('click'), stop]) -> <button onclick=\"server.handle('click'); return false;\" />
 
     EOL is currently required to separate statements (this requirement
-    may go away in the future). For example:
+    may go away in the future). For example::
 
         client.send([
             alert('hello'), eol,
             alert('goodbye')])
 
-    XXX TODO: investigate whether rendering a \n between list elements
+    XXX TODO: investigate whether rendering a \\n between list elements
     in a JavascriptContext has any ill effects.
     """
 
@@ -250,12 +252,13 @@ def var(where, what):
 
 
 def anonymous(block):
-    """Turn block (any stan) into an anonymous JavaScript function
-    which takes no arguments. Equivalent to
+    """
+    Turn block (any stan) into an anonymous JavaScript function
+    which takes no arguments. Equivalent to::
 
-    function () {
-        block
-    }
+        function () {
+            block
+        }
     """
     return _js([stan.raw("function() {\n"), block, stan.raw("\n}")])
 
@@ -597,21 +600,22 @@ class DefaultClientHandlesResource(object):
 theDefaultClientHandlesResource = DefaultClientHandlesResource()
 
 class attempt(defer.Deferred):
-    """Attempt to do 'stuff' in the browser. callback on the server
+    """
+    Attempt to do 'stuff' in the browser. callback on the server
     if 'stuff' executes without raising an exception. errback on the
     server if 'stuff' raises a JavaScript exception in the client.
 
-    Used like this:
+    Used like this::
 
-    def printIt(what):
-        print "Woo!", what
+        def printIt(what):
+            print "Woo!", what
 
-    C = IClientHandle(ctx)
-    C.send(
-        attempt(js("1+1")).addCallback(printIt))
+        C = IClientHandle(ctx)
+        C.send(
+            attempt(js("1+1")).addCallback(printIt))
 
-    C.send(
-        attempt(js("thisWillFail")).addErrback(printIt))
+        C.send(
+            attempt(js("thisWillFail")).addErrback(printIt))
     """
     def __init__(self, stuff):
         self.stuff = stuff
@@ -680,7 +684,8 @@ def activeChannel(request):
     request.write('')
 
 class LivePage(rend.Page):
-    """A Page which is Live provides asynchronous, bidirectional RPC between
+    """
+    A Page which is Live provides asynchronous, bidirectional RPC between
     Python on the server and JavaScript in the client browser. A LivePage must
     include the "liveglue" JavaScript which includes a unique identifier which
     is assigned to every page render of a LivePage and the JavaScript required
@@ -690,10 +695,10 @@ class LivePage(rend.Page):
     Python methods using a small amount of JavaScript code. There are two
     types of Python handler methods, persistent handlers and transient handlers.
 
-    1) To grant the client the capability to call a persistent handler over and over
+      - To grant the client the capability to call a persistent handler over and over
         as many times as it wishes, subclass LivePage and provide handle_foo
         methods. The client can then call handle_foo by executing the following
-        JavaScript:
+        JavaScript::
 
           server.handle('foo')
 
@@ -701,32 +706,32 @@ class LivePage(rend.Page):
         locateHandler looks for a method prefixed handle_*. To change this,
         override locateHandler to do what you wish.
 
-    2) To grant the client the capability of calling a handler once and
+      - To grant the client the capability of calling a handler once and
         exactly once, use ClientHandle.transient to register a callable and
         embed the return result in a page to render JavaScript which will
-        invoke the transient handler when executed. For example:
+        invoke the transient handler when executed. For example::
 
-        def render_clickable(self, ctx, data):
-            def hello(ctx):
-                return livepage.alert(\"Hello, world. You can only click me once.\")
+            def render_clickable(self, ctx, data):
+                def hello(ctx):
+                    return livepage.alert(\"Hello, world. You can only click me once.\")
 
-            return ctx.tag(onclick=IClientHandle(ctx).transient(hello))
+                return ctx.tag(onclick=IClientHandle(ctx).transient(hello))
 
         The return result of transient can also be called to pass additional
-        arguments to the transient handler. For example:
+        arguments to the transient handler. For example::
 
-        def render_choice(self, ctx, data):
-            def chosen(ctx, choseWhat):
-                return livepage.set(
-                    \"choosable\",
-                    [\"Thanks for choosing \", choseWhat])
+            def render_choice(self, ctx, data):
+                def chosen(ctx, choseWhat):
+                    return livepage.set(
+                        \"choosable\",
+                        [\"Thanks for choosing \", choseWhat])
 
-            chooser = IClientHandle(ctx).transient(chosen)
+                chooser = IClientHandle(ctx).transient(chosen)
 
-            return span(id=\"choosable\")[
-                \"Choose one:\",
-                p(onclick=chooser(\"one\"))[\"One\"],
-                p(onclick=chooser(\"two\"))[\"Two\"]]
+                return span(id=\"choosable\")[
+                    \"Choose one:\",
+                    p(onclick=chooser(\"one\"))[\"One\"],
+                    p(onclick=chooser(\"two\"))[\"Two\"]]
 
         Note that the above situation displays temporary UI to the
         user. When the user invokes the chosen handler, the UI which

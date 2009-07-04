@@ -22,19 +22,18 @@ class progressBarGlue:
 class ProgressBarComponent(object):
     """
     Data
-    ----
+    ====
     
-    name    : name for this component (default 'theProgressBar')
-    percent : progress status as integer between 0 and 100 (default 0)
+      name    : name for this component (default 'theProgressBar')
+      percent : progress status as integer between 0 and 100 (default 0)
 
-    
     Live component interface
-    ------------------------
+    ========================
     
-    component.setPercent(percent):
-    
-      Update the progress status to 'percent' (between 0 and 100).
-    
+      component.setPercent(percent)
+      -----------------------------
+
+        Update the progress status to 'percent' (between 0 and 100).
     """
     
     def progressBar(self, ctx, data):

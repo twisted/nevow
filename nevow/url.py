@@ -29,7 +29,8 @@ unquerify = lambda query: list(_uqf(query))
 
 
 class URL(object):
-    """Represents a URL and provides a convenient API for modifying its parts.
+    """
+    Represents a URL and provides a convenient API for modifying its parts.
 
     A URL is split into a number of distinct parts: scheme, netloc (domain
     name), path segments, query parameters and fragment identifier.
@@ -39,9 +40,9 @@ class URL(object):
     encoding and escaping is handled automatically.
 
     There are a number of ways to create a URL:
-        * Standard Python creation, i.e. __init__.
-        * fromString, a class method that parses a string.
-        * fromContext, a class method that creates a URL to represent the
+        - Standard Python creation, i.e. __init__.
+        - fromString, a class method that parses a string.
+        - fromContext, a class method that creates a URL to represent the
           current URL in the path traversal process.
 
     URL instances can be used in a stan tree or to fill template slots. They can
@@ -587,7 +588,8 @@ class URLGenerator:
 
 
 class URLRedirectAdapter:
-    """Adapter for URL and URLOverlay instances that results in an HTTP
+    """
+    Adapter for URL and URLOverlay instances that results in an HTTP
     redirect.
 
     Whenever a URL or URLOverlay instance is returned from locateChild or
@@ -598,6 +600,8 @@ class URLRedirectAdapter:
     Note that URLOverlay instances are lazy so their use might not be entirely
     obvious when returned from locateChild, i.e. url.here means the request's
     URL and not the URL of the resource that is self.
+
+    Here are some examples::
 
         def renderHTTP(self, ctx):
             # Redirect to my immediate parent

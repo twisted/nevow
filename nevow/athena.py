@@ -1130,9 +1130,9 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         programmatically reconnect without re-rendering and re-loading the
         entire page.
 
-        @see L{LivePage.renderUnsupported}
+        @see: L{LivePage.renderUnsupported}
 
-        @see L{Page.renderHTTP}
+        @see: L{Page.renderHTTP}
 
         @param ctx: a L{WovenContext} with L{IRequest} remembered.
 
@@ -1744,12 +1744,12 @@ class LiveElement(_LiveMixin, Element):
 
     JavaScript handlers for elements inside this node can use
     C{Nevow.Athena.Widget.get} to retrieve the widget associated with this
-    LiveElement.  For example:
+    LiveElement.  For example::
 
         <form onsubmit="Nevow.Athena.Widget.get(this).callRemote('foo', bar); return false;">
 
     Methods of the JavaScript widget class can also be bound as event handlers
-    using the handler tag type in the Athena namespace:
+    using the handler tag type in the Athena namespace::
 
         <form xmlns:athena="http://divmod.org/ns/athena/0.7">
             <athena:handler event="onsubmit" handler="doFoo" />
@@ -1768,7 +1768,7 @@ class LiveElement(_LiveMixin, Element):
     as the 'athena:class' attribute.
 
     JavaScript modules may import other JavaScript modules by using a special
-    comment which Athena recognizes:
+    comment which Athena recognizes::
 
         // import Module.Name
 
@@ -1796,11 +1796,11 @@ class LiveElement(_LiveMixin, Element):
     XML elements with id attributes will be rewritten so that the id is unique
     to that particular instance. The client-side
     C{Nevow.Athena.Widget.nodeById} API is provided to locate these later
-    on. For example:
+    on. For example::
 
         <div id="foo" />
 
-    and then:
+    and then::
 
         var node = self.nodyById('foo');
 
@@ -1813,7 +1813,7 @@ class LiveElement(_LiveMixin, Element):
     L{inevow.ICSSPackage}).
 
     The referenced CSS modules are treated as regular CSS, with the exception
-    of support for the same
+    of support for the same::
 
         // import CSSModule.Name
 

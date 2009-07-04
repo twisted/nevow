@@ -6,7 +6,7 @@ re-connect a widget to a newly-created server-side counterpart.  In order to
 see the demonstration, click 'show ID', 'disconnect', then 'show ID' again.
 You will see that you have received a new ReconnectableElement.
 
-Run as:
+Run as::
 
     twistd -n athena-widget --element nevow.test.acceptance.reconnect.reconnect
 

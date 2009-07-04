@@ -4,8 +4,8 @@ from nevow.livepage import js, flt
 
 class tabbedPaneGlue:
     """
-    Record which holds information about the Javascript & CSS requirements of
-    L{TabbedPane} and L{TabbedPaneFragment}.
+    Record which holds information about the Javascript & CSS requirements
+    of L{TabbedPane} and L{TabbedPaneFragment}.
 
     @type stylesheetPath: C{str}
     @ivar stylesheetPath: Filesystem path of the tabbed pane stylesheet.
@@ -51,18 +51,16 @@ class tabbedPaneGlue:
 class TabbedPane(object):
     """
     Data
-    ----
+    ====
 
-    name     : name for this component (default 'theTabbedPane')
-    pages    : sequence of (tab, page) (mandatory)
-    selected : index of the selected tab (default 0)
-
+      name     : name for this component (default 'theTabbedPane')
+      pages    : sequence of (tab, page) (mandatory)
+      selected : index of the selected tab (default 0)
 
     Live component interface
-    ------------------------
+    ========================
 
-    None currently.
-
+      None currently.
     """
 
     def tabbedPane(self, ctx, data):
