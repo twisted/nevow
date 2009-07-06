@@ -54,7 +54,6 @@ try:
     from nestedsequence import nestedsequence
     from fragments import fragments
     from macros import macros
-    from chatola import chatola
     from i18n import i18n, xmli18n
     from cal import cal
     from tabbed import tabbed
@@ -152,7 +151,6 @@ class Examples(rend.Page):
         xul_nevow=xul_nevow.createResource(),
         advanced_manualform=advanced_manualform.Page(),
         liveanimal=liveanimal.createResource(),
-        chatola=chatola.createResource(),
         http_auth=http_auth.AuthorizationRequired(),
         most_basic=most_basic.root,
         logout_guard=logout_guard.createResource(),
