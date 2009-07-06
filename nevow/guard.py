@@ -230,7 +230,7 @@ class SessionWrapper:
       in a secure (TLS) connection.  If C{False}, cookies will not be given
       the secure attribute.
 
-    @ivar: persistentCookies: Whether to use persistent (saved to disk)
+    @ivar persistentCookies: Whether to use persistent (saved to disk)
         cookies or not.  If C{True}, make cookies persistent, so they are
         valid for the length of the C{sessionLifetime} even if the browser
         window is closed.  If C{False} (the default), cookies do not get
