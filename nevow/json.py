@@ -220,15 +220,20 @@ def parseObject(tokens):
     return o, tokens
 
 
+
 def parse(s):
     """
     Return the object represented by the JSON-encoded string C{s}.
     """
+    if not s:
+        raise ValueError('Empty JSON request')
     tokens = tokenise(s)
     value, tokens = parseValue(tokens)
     if tokens:
-        raise ParseError, "Unexpected %r" % tokens[0]
+        raise ParseError('Unexpected %r' % tokens[0])
     return value
+
+
 
 class CycleError(Exception):
     pass

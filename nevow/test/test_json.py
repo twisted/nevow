@@ -262,3 +262,7 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         self.assertEqual(
             json.serialize(Transportable(u"Quux", (u"Foo",))),
             '(new Quux("Foo"))')
+
+
+    def test_emptyRequest(self):
+        self.assertRaises(ValueError, json.parse, '')
