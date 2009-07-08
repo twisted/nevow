@@ -350,6 +350,90 @@ class CSSModuleTests(AthenaModuleTestMixin, unittest.TestCase):
 
 
 
+class _CountingAthenaModule(athena.AthenaModule):
+    """
+    Instrumented version of L{athena.AthenaModule} for testing.
+    """
+    count = 0
+
+    def dependencies(self):
+        self.count += 1
+        return super(_CountingAthenaModule, self).dependencies()
+
+
+
+class MemoizationTests(unittest.TestCase):
+    """
+    Tests for dependency memoization.
+    """
+    def _outputToTempFile(self, s):
+        """
+        Write the contents of string C{s} to a tempfile and return the
+        filename that was used
+
+        @param s: file contents
+        @type s: C{str}
+
+        @return: filename
+        @rtype: C{str}
+        """
+        fname = self.mktemp()
+        fObj = file(fname, 'w')
+        fObj.write(s)
+        fObj.close()
+        return fname
+
+
+    def setUp(self):
+        # AthenaModule keeps a global mapping of module names to module objects
+        # in a class attribute; we overwrite this here (on
+        # _CountingAthenaModule) to sure that all modules will be loaded for
+        # every test run.
+        _CountingAthenaModule._modules = {}
+
+        empty = self._outputToTempFile('')
+        quux = self._outputToTempFile('// import Foo')
+        top = self._outputToTempFile('// import Quux\n'
+                                     '// import Quux2')
+        self.modules = {'Top': top,
+                        'Quux': quux,
+                        'Quux2': quux,
+                        'Foo': empty}
+
+
+    def test_noGlobalMemo(self):
+        """
+        L{AthenaModule.allDependencies} with no memo argument will retrieve its
+        own dependencies (via L{AthenaModule.dependencies}) exactly once per
+        invocation.
+        """
+        foo = _CountingAthenaModule.getOrCreate('Foo', self.modules)
+        top = _CountingAthenaModule.getOrCreate('Top', self.modules)
+
+        self.assertEqual(top.count, 0)
+        deps = list(top.allDependencies())
+        self.assertEqual(top.count, 1)
+        deps = list(top.allDependencies())
+        self.assertEqual(top.count, 2)
+
+
+    def test_withGlobalMemo(self):
+        """
+        Direct dependencies for a particular module should only be retrieved
+        once across multiple C{allDependencies()} calls if a memo is reused.
+        """
+        foo = _CountingAthenaModule.getOrCreate('Foo', self.modules)
+        top = _CountingAthenaModule.getOrCreate('Top', self.modules)
+
+        memo = {}
+        self.assertEqual(top.count, 0)
+        deps = list(top.allDependencies(memo))
+        self.assertEqual(top.count, 1)
+        deps = list(top.allDependencies(memo))
+        self.assertEqual(top.count, 1)
+
+
+
 class ModuleInteractionTests(unittest.TestCase):
     """
     Tests for JS/CSS module interactions.

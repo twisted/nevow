@@ -60,6 +60,8 @@ class DummyLivePage(object):
     def __init__(self):
         self.page = self
         self.liveFragmentChildren = []
+        self._jsDepsMemo = {}
+        self._cssDepsMemo = {}
 
 
     def addLocalObject(self, obj):

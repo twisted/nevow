@@ -123,20 +123,15 @@ class MappingResource(object):
 
 
 
-# XXX Next two functions copied out of Mantissa/xmantissa/signup.py
-def _insertDep(dependent, ordered):
-    for dependency in dependent.dependencies():
-        _insertDep(dependency, ordered)
-    if dependent not in ordered:
-        ordered.append(dependent)
+def _dependencyOrdered(coll, memo):
+    """
+    @type coll: iterable of modules
+    @param coll: The initial sequence of modules.
 
-
-
-def dependencyOrdered(coll):
-    ordered = []
-    for dependent in coll:
-        _insertDep(dependent, ordered)
-    return ordered
+    @type memo: C{dict}
+    @param memo: A dictionary mapping module names to their dependencies that
+                 will be used as a mutable cache.
+    """
 
 
 
@@ -200,8 +195,43 @@ class AthenaModule(object):
         return self._cache.load()
 
 
-    def allDependencies(self):
-        return dependencyOrdered([self])
+    def allDependencies(self, memo=None):
+        """
+        Return the transitive closure of dependencies, including this module.
+
+        The transitive dependencies for this module will be ordered such that
+        any particular module is located after all of its dependencies, with no
+        module occurring more than once.
+
+        The dictionary passed in for C{memo} will be modified in-place; if it
+        is reused across multiple calls, dependencies calculated during a
+        previous invocation will not be recalculated again.
+
+        @type memo: C{dict} of C{str: list of AthenaModule}
+        @param memo: A dictionary mapping module names to the modules they
+                     depend on that will be used as a mutable cache.
+
+        @rtype: C{list} of C{AthenaModule}
+        """
+        if memo is None:
+            memo = {}
+        ordered = []
+
+        def _getDeps(dependent):
+            if dependent.name in memo:
+                deps = memo[dependent.name]
+            else:
+                memo[dependent.name] = deps = dependent.dependencies()
+            return deps
+
+        def _insertDep(dependent):
+            if dependent not in ordered:
+                for dependency in _getDeps(dependent):
+                    _insertDep(dependency)
+                ordered.append(dependent)
+
+        _insertDep(self)
+        return ordered
 
 
 
@@ -842,7 +872,7 @@ class _HasJSClass(object):
         return jsDeps.getModuleForClass(self.jsClass)
 
 
-    def _getRequiredModules(self):
+    def _getRequiredModules(self, memo):
         """
         Return a list of two-tuples containing module names and URLs at which
         those modules are accessible.  All of these modules must be loaded into
@@ -852,7 +882,7 @@ class _HasJSClass(object):
         return [
             (dep.name, self.page.getJSModuleURL(dep.name))
             for dep
-            in self._getModuleForClass().allDependencies()
+            in self._getModuleForClass().allDependencies(memo)
             if self.page._shouldInclude(dep.name)]
 
 
@@ -876,7 +906,7 @@ class _HasCSSModule(object):
     @ivar cssModule: A CSS module name.
     @type cssModule: C{unicode} or C{NoneType}
     """
-    def _getRequiredCSSModules(self):
+    def _getRequiredCSSModules(self, memo):
         """
         Return a list of CSS module URLs.
 
@@ -887,7 +917,7 @@ class _HasCSSModule(object):
         module = self.page.cssModules.getModuleForName(self.cssModule)
         return [
             self.page.getCSSModuleURL(dep.name)
-            for dep in module.allDependencies()
+            for dep in module.allDependencies(memo)
             if self.page._shouldIncludeCSSModule(dep.name)]
 
 
@@ -918,6 +948,14 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
     @ivar unsupportedBrowserLoader: A document loader which will be used to
         generate the content shown to unsupported browsers.
+
+    @type _cssDepsMemo: C{dict}
+    @ivar _cssDepsMemo: A cache for CSS module dependencies; by default, this
+                        will only be shared within a single page instance.
+
+    @type _jsDepsMemo: C{dict}
+    @ivar _jsDepsMemo: A cache for JS module dependencies; by default, this
+                       will only be shared within a single page instance.
     """
     jsClass = u'Nevow.Athena.PageWidget'
     cssModule = None
@@ -985,6 +1023,8 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         self._includedModules = []
         self._includedCSSModules = []
         self._disconnectNotifications = []
+        self._jsDepsMemo = {}
+        self._cssDepsMemo = {}
 
 
     def _shouldInclude(self, moduleName):
@@ -1237,13 +1277,13 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             [self._bootstrapCall(method, args) for
              method, args in self._bootstraps(ctx)])
         return ctx.tag[
-            self.getStylesheetStan(self._getRequiredCSSModules()),
+            self.getStylesheetStan(self._getRequiredCSSModules(self._cssDepsMemo)),
 
             # Hit jsDeps.getModuleForName to force it to load some plugins :/
             # This really needs to be redesigned.
             [self.getImportStan(jsDeps.getModuleForName(name).name)
              for (name, url)
-             in self._getRequiredModules()],
+             in self._getRequiredModules(self._jsDepsMemo)],
             tags.script(type='text/javascript',
                         id=BOOTSTRAP_NODE_ID,
                         payload=bootstrapString)[
@@ -1592,8 +1632,8 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         Render framework-level boilerplate for making sure the Widget for this
         Element is created and added to the page properly.
         """
-        requiredModules = self._getRequiredModules()
-        requiredCSSModules = self._getRequiredCSSModules()
+        requiredModules = self._getRequiredModules(self.page._jsDepsMemo)
+        requiredCSSModules = self._getRequiredCSSModules(self.page._cssDepsMemo)
 
         # Add required attributes to the top widget node
         tag(**{'xmlns:athena': ATHENA_XMLNS_URI,
