@@ -1,5 +1,5 @@
 # -*- test-case-name: nevow -*-
-# Copyright (c) 2004-2008 Divmod.
+# Copyright (c) 2004-2009 Divmod.
 # See LICENSE for details.
 
 """
@@ -241,20 +241,24 @@ class IComponentized(Interface):
         @return: a list of the interfaces that were removed.
         """
 
+
+
 class ISession(IComponentized):
-    """A web session
+    """
+    A web session
 
     You can locate a Session object to represent a unique web session using
     ISession(ctx). This default session implementation uses cookies to
     store a session identifier in the user's browser.
 
-    uid: Session uid
-
     TODO: Need better docs; what's a session and why and how do you use it
     """
 
+    uid = Attribute("The unique identifier for this session.")
+
     def setLifetime(lifetime):
-        """Set the approximate lifetime of this session, in seconds.
+        """
+        Set the approximate lifetime of this session, in seconds.
 
         This is highly imprecise, but it allows you to set some general
         parameters about when this session will expire.  A callback will be
@@ -265,17 +269,25 @@ class ISession(IComponentized):
         attribute in class guard.SessionWrapper
         """
 
+
     def notifyOnExpire(callback):
-        """Call this callback when the session expires or logs out.
         """
+        Call this callback when the session expires or logs out.
+        """
+
 
     def expire():
-        """Expire/logout of the session.
+        """
+        Expire/logout of the session.
         """
 
+
     def touch():
-        """Refresh the session
         """
+        Refresh the session
+        """
+
+
 
 class IGuardSession(ISession):
     """ A web session base interface
@@ -546,17 +558,6 @@ class IDocFactory(Interface):
         @param preprocessors: An iterable of one-argument callables which will
             be given the stan document tree to transform before it is compiled.
         """
-
-
-class ISession(Interface):
-    """A web session
-
-    You can locate a Session object to represent a unique web session using
-    ctx.locate(ISession). This default session implementation uses cookies to
-    store a session identifier in the user's browser.
-
-    TODO: Need better docs; what's a session and why and how do you use it
-    """
 
 
 class IRemainingSegments(Interface):
