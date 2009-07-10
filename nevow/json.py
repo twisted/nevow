@@ -223,10 +223,17 @@ def parseObject(tokens):
 
 def parse(s):
     """
-    Return the object represented by the JSON-encoded string C{s}.
+    Parse a JSON-encoded string.
+
+    @type s: C{str}
+    @param s: JSON-encoded string
+
+    @raise ParseError: if C{s} is empty or contains unexpected tokens
+
+    @return: The object represented by the JSON-encoded string
     """
     if not s:
-        raise ValueError('Empty JSON request')
+        raise ParseError('Empty JSON request')
     tokens = tokenise(s)
     value, tokens = parseValue(tokens)
     if tokens:
