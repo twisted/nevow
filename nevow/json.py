@@ -14,8 +14,14 @@ import re, types
 from nevow.inevow import IAthenaTransportable
 from nevow import rend, page, _flat, tags
 
+
+
 class ParseError(ValueError):
-    pass
+    """
+    Parsing a JSON request failed.
+    """
+
+
 
 whitespace = re.compile(
             r'('
@@ -121,10 +127,14 @@ def tokenise(s):
 
     return tokens
 
+
+
 def accept(want, tokens):
     t = tokens.pop(0)
     if want != t:
-        raise ParseError, "Unexpected %r, %s expected" % (t , want)
+        raise ParseError('Unexpected %r, %s expected' % (t , want))
+
+
 
 def parseValue(tokens):
     if tokens[0] == '{':
@@ -142,7 +152,8 @@ def parseValue(tokens):
     if type(tokens[0]) in (int, float, long):
         return tokens.pop(0), tokens
 
-    raise ParseError, "Unexpected %r" % tokens[0]
+    raise ParseError('Unexpected %r' % (tokens[0],))
+
 
 
 _stringExpr = re.compile(
@@ -173,17 +184,20 @@ def _stringSub(m):
     return _controlMap[c]
 
 
+
 def parseString(tokens):
     if type(tokens[0]) is not StringToken:
-        raise ParseError, "Unexpected %r" % tokens[0]
+        raise ParseError('Unexpected %r' % (tokens[0],))
     s = _stringExpr.sub(_stringSub, tokens.pop(0)[1:-1].decode('utf-8'))
     return s, tokens
 
 
+
 def parseIdentifier(tokens):
     if type(tokens[0]) is not IdentifierToken:
-        raise ParseError("Unexpected %r" % (tokens[0],))
+        raise ParseError('Unexpected %r' % (tokens[0],))
     return tokens.pop(0), tokens
+
 
 
 def parseList(tokens):
@@ -237,7 +251,7 @@ def parse(s):
     tokens = tokenise(s)
     value, tokens = parseValue(tokens)
     if tokens:
-        raise ParseError('Unexpected %r' % tokens[0])
+        raise ParseError('Unexpected %r' % (tokens[0],))
     return value
 
 

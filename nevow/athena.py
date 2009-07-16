@@ -8,6 +8,7 @@ from twisted.internet import defer, error, reactor
 from twisted.python import log, failure, context
 from twisted.python.util import sibpath
 from twisted import plugin
+from twisted.web import http
 
 from nevow import inevow, plugins, flat, _flat
 from nevow import rend, loaders, url, static
@@ -534,11 +535,18 @@ class LivePageTransport(object):
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
         neverEverCache(req)
+
+        try:
+            requestContent = req.content.read()
+            messageData = json.parse(requestContent)
+        except json.ParseError, e:
+            req.setResponseCode(http.INTERNAL_SERVER_ERROR)
+            log.msg('Error parsing transport JSON request:')
+            log.err()
+            return ''
+
         if self.useActiveChannels:
             activeChannel(req)
-
-        requestContent = req.content.read()
-        messageData = json.parse(requestContent)
 
         response = self.messageDeliverer.basketCaseReceived(ctx, messageData)
         response.addCallback(json.serialize)
