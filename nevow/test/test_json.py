@@ -266,6 +266,6 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
 
     def test_emptyRequest(self):
         """
-        Parsing an empty JSON request raises L{ParseError}.
+        Parsing an empty request raises an exception.
         """
-        self.assertRaises(json.ParseError, json.parse, '')
+        self.assertRaises(ValueError, json.parse, '')
