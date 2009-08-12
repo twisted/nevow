@@ -538,8 +538,8 @@ class LivePageTransport(object):
         req = inevow.IRequest(ctx)
         neverEverCache(req)
 
+        requestContent = req.content.read()
         try:
-            requestContent = req.content.read()
             messageData = json.parse(requestContent)
         except json.ParseError, e:
             req.setResponseCode(http.INTERNAL_SERVER_ERROR)
@@ -1862,7 +1862,7 @@ __all__ = [
     'ATHENA_XMLNS_URI',
 
     # Errors
-    'LivePageError', 'OrphanedFragment', 'ConnectFailed', 'ConnectionLost'
+    'LivePageError', 'OrphanedFragment', 'ConnectFailed', 'ConnectionLost',
 
     # JS support
     'MappingResource', 'JSModule', 'JSPackage', 'AutoJSPackage',
