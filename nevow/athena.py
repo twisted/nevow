@@ -1,4 +1,6 @@
 # -*- test-case-name: nevow.test.test_athena -*-
+# Copyright (c) 2004-2009 Divmod.
+# See LICENSE for details.
 
 import itertools, os, re, warnings
 
