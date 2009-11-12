@@ -229,6 +229,11 @@ class FakeRequest(Componentized):
         """
         return self._appRootURL
 
+    def getRequestHostname(self):
+        """
+        Get the hostname that the user passed in to the request.
+        """
+        return (self.getHeader('host'))
 
     def rememberRootURL(self, url=None):
         """
