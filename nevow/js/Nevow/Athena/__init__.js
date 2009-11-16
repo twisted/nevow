@@ -845,6 +845,22 @@ Nevow.Athena._recursivelyLoad = function _recursivelyLoad(widget) {
 };
 
 
+
+/**
+ * Call a widget's (and all child widgets') C{nodeInserted} method.
+ */
+Nevow.Athena.nodeInserted = function nodeInserted(widget) {
+    if (widget.nodeInserted !== undefined) {
+        widget.nodeInserted();
+    }
+
+    for (var i = 0; i < widget.childWidgets.length; ++i) {
+        Nevow.Athena.nodeInserted(widget.childWidgets[i]);
+    }
+};
+
+
+
 /**
  * Athena Widgets
  *
@@ -1021,6 +1037,52 @@ Nevow.Athena.Widget.methods(
 
         return allImportsDone;
     },
+
+
+    /**
+     * Create a widget from Athena widget information and insert it into the
+     * DOM.
+     *
+     * The C{nodeInserted} method of the new widget and all of its children
+     * will be invoked if defined.
+     *
+     * @type widgetParent: C{Nevow.Athena.Widget}
+     *
+     * @param widgetInfo: Widget information for the new widget.
+     *
+     * @rtype: C{Deferred} -> C{Nevow.Athena.Widget}
+     */
+    function fromWidgetInfo(widgetParent, widgetInfo) {
+        var d = widgetParent.addChildWidgetFromWidgetInfo(widgetInfo);
+        return d.addCallback(function (widget) {
+            widgetParent.node.appendChild(widget.node);
+            Nevow.Athena.nodeInserted(widget);
+            return widget;
+        });
+    },
+
+
+    /**
+     * Create a widget from Athena widget information to replace the current
+     * widget both in the widget tracking system and in the DOM.
+     *
+     * The C{nodeInserted} method of the new widget and all of its children
+     * will be invoked if defined.
+     *
+     * @param widgetInfo: Widget information for the new widget.
+     *
+     * @rtype: C{Deferred} -> C{Nevow.Athena.Widget}
+     */
+    function replaceFromWidgetInfo(self, widgetInfo) {
+        var d = self.widgetParent.addChildWidgetFromWidgetInfo(widgetInfo);
+        return d.addCallback(function (widget) {
+            self.node.parentNode.replaceChild(widget.node, self.node);
+            Nevow.Athena.nodeInserted(widget);
+            self.detach();
+            return widget;
+        });
+    },
+
 
     function setWidgetParent(self, widgetParent) {
         self.widgetParent = widgetParent;

@@ -424,6 +424,49 @@ Nevow.Athena.Tests.NodeLocation.methods(
                 self.assertNotEqual(widget.inserted, true);
             });
         return d;
+    },
+    
+   
+    /**
+     * Test that L{Nevow.Athena.nodeInserted} calls C{nodeInserted} for the
+     * given widget and all of its children.
+     */ 
+    function test_invokeNodeInserted(self) {
+        var child = self.childWidgets[1];
+        var d = self.addDynamicWidget(child, 'getNodeInsertedHelper');
+        d.addCallback(
+            function(widget) {
+                child.node.appendChild(widget.node);
+                return self.addDynamicWidget(widget, 'getChild');
+            });
+        d.addCallback(
+            function(widget) {
+                child.childWidgets[0].node.appendChild(widget.node);
+                self.assertNotEqual(widget.widgetParent.inserted, true);
+                self.assertNotEqual(widget.inserted, true);
+                Nevow.Athena.nodeInserted(widget.widgetParent);
+                self.assertEqual(widget.widgetParent.inserted, true);
+                self.assertEqual(widget.inserted, true);
+            });
+        return d;
+    },
+    
+   
+    /**
+     * Test that L{Nevow.Athena.nodeInserted} does not throw an exception
+     * when passed a widget with no C{nodeInserted} method defined.
+     */
+    function test_nodeInsertedNotDefined(self) {
+        var child = self.childWidgets[1];
+        var d = self.addDynamicWidget(child, 'getDynamicWidget');
+        d.addCallback(
+            function(widget) {
+                child.node.appendChild(widget.node);
+                // Sanity check
+                self.assertEqual(undefined, widget.nodeInserted);
+                Nevow.Athena.nodeInserted(widget);
+            });
+        return d;
     });
 
 
@@ -572,6 +615,7 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
             });
         return result;
     },
+
 
     /**
      * Verify that removeChildWidget sets the specified widget's parent to null

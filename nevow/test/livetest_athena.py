@@ -376,6 +376,13 @@ class NodeInsertedHelper(LiveElement):
     docFactory = loaders.stan(
         tags.div(render=tags.directive('liveElement')))
 
+    
+    def getChild(self):
+        c = NodeInsertedHelper()
+        c.setFragmentParent(self)
+        return c
+    expose(getChild)
+
 
 
 class NodeLocation(testcase.TestCase):
