@@ -1052,7 +1052,7 @@ Nevow.Athena.Widget.methods(
      *
      * @rtype: C{Deferred} -> C{Nevow.Athena.Widget}
      */
-    function fromWidgetInfo(widgetParent, widgetInfo) {
+    function fromWidgetInfo(self, widgetParent, widgetInfo) {
         var d = widgetParent.addChildWidgetFromWidgetInfo(widgetInfo);
         return d.addCallback(function (widget) {
             widgetParent.node.appendChild(widget.node);

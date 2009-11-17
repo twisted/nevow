@@ -422,6 +422,12 @@ class DynamicWidgetInstantiation(testcase.TestCase):
             docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment')))
             jsClass = u'Nevow.Athena.Tests.DynamicWidgetClass'
 
+            def getChild(self):
+                c = DynamicFragment()
+                c.setFragmentParent(self)
+                return c
+            expose(getChild)
+
             def someMethod(self):
                 return u'foo'
             expose(someMethod)

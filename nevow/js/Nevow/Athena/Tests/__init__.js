@@ -618,6 +618,56 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
 
 
     /**
+     * Test the convenience wrapper for L{addChildWidgetFromWidgetInfo} that
+     * inserts the created widget into the DOM as a child of the specified
+     * widget.
+     */
+    function test_fromWidgetInfo(self) {
+        var result = self.callRemote('getDynamicWidget');
+        result.addCallback(
+            function(widgetInfo) {
+                return self.fromWidgetInfo(self, widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                self.assertEqual(self.node.childNodes[0], widget.node);
+            });
+        return result;
+    },
+
+
+    /** Test the convenience wrapper for L{addChildWidgetFromWidgetInfo} that
+     * replaces the current widget in the DOM with the specified widget info.
+     */
+    function test_replaceFromWidgetInfo(self) {
+        var result = self.callRemote('getDynamicWidget');
+        result.addCallback(
+            function(widgetInfo) {
+                return self.fromWidgetInfo(self, widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                widget.node.appendChild(document.createTextNode('one'));
+                return widget.callRemote('getChild');
+            });
+        result.addCallback(
+            function(widgetInfo) {
+                self.assertEqual(self.node.childNodes[1].childNodes[0].data,
+                    'one');
+                return Nevow.Athena.Widget.get(
+                    self.node.childNodes[1]).replaceFromWidgetInfo(widgetInfo);
+            });
+        result.addCallback(
+            function(widget) {
+                widget.node.appendChild(document.createTextNode('two'));
+                self.assertEqual(self.node.childNodes[1].childNodes[0].data,
+                    'two');
+            });
+        return result;
+    },
+
+
+    /**
      * Verify that removeChildWidget sets the specified widget's parent to null
      * and removes it from the parent's children array.
      */
