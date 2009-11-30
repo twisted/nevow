@@ -1,3 +1,22 @@
+0.10.0 (2009-11-25):
+  - Added a system for CSS dependency declarations similar to the one in
+    Athena for JavaScript.
+  - Fix Athena's transport cleanup on page unload in Internet Explorer.
+  - Fix nit's results coloring in Internet Explorer.
+  - Added an API for declaring JavaScript classes which involves less
+    repetition than the existing Divmod.Class.subclass API.
+  - Added human-readable formatting for the new flattener's error reporting;
+    rendering error stacks will now display lines from Python code as well
+    as stan and XML templates.
+  - Override the setuptools sdist command with the original distutils sdist
+    command to avoid setuptools' version number transformation.
+  - Added support for default values for slots in XML templates.
+  - Fixed a problem with setup.py which led to css files not being
+    installed.
+  - Removed the old Chatola example and replaced it with a link to the new
+    chat example.
+  - Sped up some of the JavaScript dependency calculations.
+
 0.9.33 (2008-12-09):
   - Add error handling to the integration between the old flattener
     and the new flattener so that if the new flattener fails with an

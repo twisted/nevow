@@ -29,10 +29,14 @@ setupdict = {
     'license': 'MIT', 
     'platforms': ["any"], 
     'classifiers': [
+        "Development Status :: 5 - Production/Stable",
+        "Framework :: Twisted",
         "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
-        "Development Status :: 4 - Beta",
-        "Topic :: Internet :: WWW/HTTP :: Dynamic Content"],
+        "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+        "Topic :: Software Development :: Libraries",
+        ],
     'scripts': ['bin/nevow-xmlgettext', 'bin/nit'],
     'data_files': data_files,
     'package_data': {
