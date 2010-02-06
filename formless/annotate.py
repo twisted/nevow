@@ -727,7 +727,7 @@ class MetaTypedInterface(InterfaceClass):
     complexType = property(lambda self: _typedInterfaceMetadata.get((self, 'complexType'), True))
 
     def __new__(cls, name, bases, dct):
-        rv = cls = InterfaceClass.__new__(cls, name, bases, dct)
+        rv = cls = InterfaceClass.__new__(cls)
         _typedInterfaceMetadata[cls, '__id__'] = nextId()
         _typedInterfaceMetadata[cls, '__methods__'] = methods = []
         _typedInterfaceMetadata[cls, '__properties__'] = properties = []

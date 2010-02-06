@@ -3,6 +3,8 @@ Tests for L{nevow.testutil} -- a module of utilities for testing Nevow
 applications.
 """
 
+import sys
+
 from unittest import TestResult
 
 from twisted.python.filepath import FilePath
@@ -176,6 +178,9 @@ class JavaScriptTests(TestCase):
         self.case.createSource = lambda testMethod: "throw new TypeError();"
         self.case.run(result)
         self.assertEqual(len(result.errors), 1)
+        self.assertTrue(
+            result.errors[0][1].startswith(
+                'Exception: JavaScript interpreter had error exit: '))
 
 
     def test_signalledExit(self):
@@ -183,13 +188,20 @@ class JavaScriptTests(TestCase):
         An error should be reported if the JavaScript interpreter exits because
         it received a signal.
         """
+        segfault = FilePath(__file__).sibling('segfault.py')
+
         def stubFinder():
-            return FilePath(__file__).sibling('segfault.py').path
+            return sys.executable
+        def stubScript(testModule):
+            return segfault.path
         self.case.findJavascriptInterpreter = stubFinder
-        self.case.createSource = lambda testMethod: ""
+        self.case.makeScript = stubScript
         result = TestResult()
         self.case.run(result)
         self.assertEqual(len(result.errors), 1)
+        self.assertEquals(
+            result.errors[0][1],
+            'Exception: JavaScript interpreter exited due to signal 11\n')
 
 
     def test_missingJavaScriptClass(self):

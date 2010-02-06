@@ -1,12 +1,10 @@
-# Copyright (c) 2004 Divmod.
+# -*- test-case-name: nevow.test.test_testutil -*-
+# Copyright (c) 2004-2010 Divmod.
 # See LICENSE for details.
 
 import os, sys, signal
 
-try:
-    from popen2 import Popen3
-except ImportError:
-    Popen3 = None
+from subprocess import PIPE, Popen
 
 from zope.interface import implements
 
@@ -15,6 +13,7 @@ try:
 except ImportError:
     subunit = None
 
+from twisted.python.log import msg
 from twisted.trial.unittest import TestCase as TrialTestCase
 from twisted.python.components import Componentized
 from twisted.internet import defer
@@ -407,8 +406,6 @@ class JavaScriptTestCase(TrialTestCase):
             raise NotSupported("Could not find JavaScript interpreter")
         if subunit is None:
             raise NotSupported("Could not import 'subunit'")
-        if Popen3 is None:
-            raise NotSupported("Could not import 'popen2.Popen3'")
         for name in ['WEXITSTATUS', 'WIFSIGNALED' ,'WTERMSIG']:
             if getattr(os, name, None) is None:
                 raise NotSupported("os.%s unavailable" % (name,))
@@ -497,28 +494,28 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
         # However, *run cannot return a Deferred profanity profanity profanity
         # profanity*, so instead it is *profanity* this:
         def run():
-            child = Popen3([js, script])
+            argv = [js, script]
+            msg("Running JavaScript interpreter, argv = %r" % (argv,))
+            child = Popen(argv, stdout=PIPE)
             while True:
-                bytes = child.fromchild.read(4096)
+                bytes = child.stdout.read(4096)
                 if bytes:
                     protocol.dataReceived(bytes)
                 else:
                     break
-            exitCode = child.wait()
-            if os.WIFSIGNALED(exitCode):
+            returnCode = child.wait()
+            if returnCode < 0:
                 result.addError(
                     self,
                     (Exception,
-                     "JavaScript interpreter exited due to signal %d" % (os.WTERMSIG(exitCode),),
+                     "JavaScript interpreter exited due to signal %d" % (-returnCode,),
                      None))
-            else:
-                exitStatus = os.WEXITSTATUS(exitCode)
-                if exitStatus:
-                    result.addError(
-                        self,
-                        (Exception,
-                         "JavaScript interpreter had error exit: %d" % (exitStatus,),
-                         None))
+            elif returnCode:
+                result.addError(
+                    self,
+                    (Exception,
+                     "JavaScript interpreter had error exit: %d" % (returnCode,),
+                     None))
         self._runWithSigchild(run)
 
 

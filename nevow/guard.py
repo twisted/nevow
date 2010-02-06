@@ -12,7 +12,10 @@ __metaclass__ = type
 
 import random
 import time
-import md5
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
 import StringIO
 
 from zope.interface import implements
@@ -34,7 +37,7 @@ from nevow import inevow, url, stan
 
 
 def _sessionCookie():
-    return md5.new("%s_%s" % (str(random.random()) , str(time.time()))).hexdigest()
+    return md5("%s_%s" % (str(random.random()) , str(time.time()))).hexdigest()
 
 
 class GuardSession(components.Componentized):
