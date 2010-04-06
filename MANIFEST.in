@@ -8,9 +8,7 @@ include debian/*
 recursive-include twisted *.py
 recursive-include nevow *.css *.js
 include bin/nevow-xmlgettext 
-recursive-include doc *.css *.doc *.html *.js *.py *.tac
-include doc/README
-include doc/man/*
+graft doc
 recursive-include examples *.css *.gif *.html *.jpg *.js *.py *.png *.tac *.mo *.po *.pot *.xml *.sql *.xul
 include examples/i18n/update-l10n
 include examples/files/words
