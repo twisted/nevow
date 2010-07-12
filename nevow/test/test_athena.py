@@ -14,13 +14,14 @@ from twisted.plugin import IPlugin
 
 from nevow import athena, rend, tags, flat, loaders, url
 from nevow.loaders import stan
-from nevow.athena import LiveElement
+from nevow.athena import LiveElement, ConnectionLost
 from nevow.appserver import NevowSite
 from nevow.inevow import IRequest
 from nevow.context import WovenContext
 from nevow.testutil import FakeRequest, renderPage, renderLivePage, CSSModuleTestMixin
 from nevow._widget_plugin import WidgetPluginRoot
 from nevow._widget_plugin import ElementRenderingLivePage
+from nevow.json import serialize
 
 from twisted.plugins.nevow_widget import widgetServiceMaker
 
@@ -288,15 +289,15 @@ the end
             return origExtractImports(x)
         m._extractImports = _extractImports
 
-        deps = list(m.dependencies())
+        list(m.dependencies())
         self.assertEquals(m.extractCounter, 1)
 
-        deps2 = list(m.dependencies())
+        list(m.dependencies())
         self.assertEquals(m.extractCounter, 1)
 
         newTime = m.lastModified
         os.utime(testModuleFilename, (newTime + 1, newTime + 1))
-        deps3 = list(m.dependencies())
+        list(m.dependencies())
         self.assertEquals(m.extractCounter, 2)
 
 
@@ -407,13 +408,13 @@ class MemoizationTests(unittest.TestCase):
         own dependencies (via L{AthenaModule.dependencies}) exactly once per
         invocation.
         """
-        foo = _CountingAthenaModule.getOrCreate('Foo', self.modules)
+        _CountingAthenaModule.getOrCreate('Foo', self.modules)
         top = _CountingAthenaModule.getOrCreate('Top', self.modules)
 
         self.assertEqual(top.count, 0)
-        deps = list(top.allDependencies())
+        list(top.allDependencies())
         self.assertEqual(top.count, 1)
-        deps = list(top.allDependencies())
+        list(top.allDependencies())
         self.assertEqual(top.count, 2)
 
 
@@ -422,14 +423,14 @@ class MemoizationTests(unittest.TestCase):
         Direct dependencies for a particular module should only be retrieved
         once across multiple C{allDependencies()} calls if a memo is reused.
         """
-        foo = _CountingAthenaModule.getOrCreate('Foo', self.modules)
+        _CountingAthenaModule.getOrCreate('Foo', self.modules)
         top = _CountingAthenaModule.getOrCreate('Top', self.modules)
 
         memo = {}
         self.assertEqual(top.count, 0)
-        deps = list(top.allDependencies(memo))
+        list(top.allDependencies(memo))
         self.assertEqual(top.count, 1)
-        deps = list(top.allDependencies(memo))
+        list(top.allDependencies(memo))
         self.assertEqual(top.count, 1)
 
 
@@ -868,11 +869,15 @@ class Transport(unittest.TestCase):
         self.scheduled = []
         self.events = []
         self.outgoingMessages = []
+        self.connectionsMade = 0
+        def _cm():
+            self.connectionsMade += 1
         self.rdm = athena.ReliableMessageDelivery(
             self,
             connectTimeout=self.connectTimeout,
             transportlessTimeout=self.transportlessTimeout,
             idleTimeout=self.idleTimeout,
+            connectionMade=_cm,
             connectionLost=lambda reason: self.events.append(reason),
             scheduler=self._schedule)
 
@@ -984,6 +989,18 @@ class Transport(unittest.TestCase):
         self.assertEquals(n, self.idleTimeout)
         self.failIf(self.scheduled, "Output channel added but there is still a task pending.")
         self.assertEquals(self.transport, [], "Received unexpected output.")
+
+
+    def test_connectionMade(self):
+        """
+        The connectionMade callback is invoked the first time an output channel
+        is added.
+        """
+        self.assertEqual(self.connectionsMade, 0)
+        self.rdm.addOutput(mappend(self.transport))
+        self.assertEqual(self.connectionsMade, 1)
+        self.rdm.addOutput(mappend(self.transport))
+        self.assertEqual(self.connectionsMade, 1)
 
 
     def testOutputConsumedMessageTimeout(self):
@@ -1175,7 +1192,7 @@ class Transport(unittest.TestCase):
 
     def testClosing(self):
         """
-        Test that closing a reliable message deliverer causes all of outs
+        Test that closing a reliable message deliverer causes all of its
         remaining outputs to be used up with a close message and that any
         future outputs added to it are immediately used in a similar
         manner.
@@ -1258,16 +1275,34 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         raise NotImplementedError("%s did not implement elementFactory" % (self,))
 
 
+    def makePage(self):
+        """
+        Make a "live" L{LivePage} for testing.
+        """
+        page = athena.LivePage()
+        req = FakeRequest()
+        page._becomeLive(url.URL.fromRequest(req))
+
+        def _cleanup():
+            if hasattr(page, '_messageDeliverer'):
+                page._messageDeliverer.close()
+        self.addCleanup(_cleanup)
+
+        return page
+
+
     def test_localDetach(self):
         """
         Verify that L{_athenaDetachServer} removes the element from its parent
         and disassociates it from the page locally.
         """
-        page = athena.LivePage()
+        page = self.makePage()
         element = self.elementFactory()
         element.setFragmentParent(page)
+        element._athenaID = page.addLocalObject(element)
         element._athenaDetachServer()
         self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertNotIn(element._athenaID, page._localObjects)
         self.assertIdentical(element.fragmentParent, None)
         self.assertIdentical(element.page, None)
 
@@ -1278,16 +1313,20 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         element has a child of its own and verify that that child is also
         detached.
         """
-        page = athena.LivePage()
+        page = self.makePage()
         element = self.elementFactory()
         element.setFragmentParent(page)
+        element._athenaID = page.addLocalObject(element)
         child = self.elementFactory()
         child.setFragmentParent(element)
+        child._athenaID = page.addLocalObject(child)
         element._athenaDetachServer()
         self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertNotIn(element._athenaID, page._localObjects)
         self.assertIdentical(element.fragmentParent, None)
         self.assertIdentical(element.page, None)
         self.assertNotIn(child, element.liveFragmentChildren)
+        self.assertNotIn(child._athenaID, page._localObjects)
         self.assertIdentical(child.fragmentParent, None)
         self.assertIdentical(child.page, None)
 
@@ -1299,8 +1338,9 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         """
         element = self.elementFactory()
         self.assertRaises(athena.OrphanedFragment, element._athenaDetachServer)
-        page = athena.LivePage()
+        page = self.makePage()
         element.setFragmentParent(page)
+        element._athenaID = page.addLocalObject(element)
         element._athenaDetachServer()
         self.assertRaises(athena.OrphanedFragment, element._athenaDetachServer)
 
@@ -1310,9 +1350,10 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         Verify that L{detach} informs the client of the event and returns a
         Deferred which fires when the client acknowledges this.
         """
-        page = athena.LivePage()
+        page = self.makePage()
         element = self.elementFactory()
         element.setFragmentParent(page)
+        element._athenaID = page.addLocalObject(element)
 
         calls = []
         def callRemote(methodName):
@@ -1321,11 +1362,12 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
             return d
         element.callRemote = callRemote
 
-        d = element.detach()
+        element.detach()
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][0], '_athenaDetachClient')
         calls[0][1].callback(None)
         self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertNotIn(element._athenaID, page._localObjects)
         self.assertIdentical(element.fragmentParent, None)
         self.assertIdentical(element.page, None)
 
@@ -1335,11 +1377,13 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         Similar to L{test_detach}, but cover the case where the removed element
         has a child of its own and verify that that child is also detached.
         """
-        page = athena.LivePage()
+        page = self.makePage()
         element = self.elementFactory()
         element.setFragmentParent(page)
+        element._athenaID = page.addLocalObject(element)
         child = self.elementFactory()
         child.setFragmentParent(element)
+        child._athenaID = page.addLocalObject(child)
 
         calls = []
         def callRemote(methodName):
@@ -1349,14 +1393,16 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         element.callRemote = callRemote
         child.callRemote = callRemote
 
-        d = element.detach()
+        element.detach()
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][0], '_athenaDetachClient')
         calls[0][1].callback(None)
         self.assertNotIn(element, page.liveFragmentChildren)
+        self.assertNotIn(element._athenaID, page._localObjects)
         self.assertIdentical(element.fragmentParent, None)
         self.assertIdentical(element.page, None)
         self.assertNotIn(child, element.liveFragmentChildren)
+        self.assertNotIn(child._athenaID, page._localObjects)
         self.assertIdentical(child.fragmentParent, None)
         self.assertIdentical(child.page, None)
 
@@ -1366,9 +1412,10 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         Verify that C{detached} is called when C{_athenaDetachServer} is
         called.
         """
-        page = athena.LivePage()
+        page = self.makePage()
         element = self.elementFactory()
         element.setFragmentParent(page)
+        element._athenaID = page.addLocalObject(element)
 
         detachCall = []
         def detached():
@@ -1383,9 +1430,10 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         """
         Verify that C{detached} is called C{detach} is called locally.
         """
-        page = athena.LivePage()
+        page = self.makePage()
         element = self.elementFactory()
         element.setFragmentParent(page)
+        element._athenaID = page.addLocalObject(element)
 
         detachCall = []
         def detached():
@@ -1399,7 +1447,7 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
             return d
         element.callRemote = callRemote
 
-        d = element.detach()
+        element.detach()
 
         self.assertEqual(detachCall, [])
         calls[0].callback(None)
@@ -1571,7 +1619,6 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         class to instantiate and the URL to instantiate it with.
         """
         SEG = "'" + '"'
-        URI = "http://localhost/" + SEG
         req = FakeRequest(uri='/' + SEG, currentSegments=[SEG])
         ctx = WovenContext()
         ctx.remember(req, IRequest)
@@ -1636,6 +1683,139 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         self.assertEqual(
             page.getCSSModuleURL(u'X.Y'),
             theCSSModuleRoot.child('X.Y'))
+
+
+    def test_notifyOnDisconnect(self):
+        """
+        Deferreds returned by L{athena.LivePage.notifyOnDisconnect} are
+        errbacked with the disconnection reason if a LivePage is disconnected.
+        """
+        self.fired = False
+        def _eb(f):
+            self.fired = True
+            self.assertEqual(f.type, ConnectionLost)
+            self.assertEqual(f.value.args[0], 'test')
+
+        d = self.page.notifyOnDisconnect()
+        d.addErrback(_eb)
+
+        req = FakeRequest()
+        self.page._becomeLive(url.URL.fromRequest(req))
+        self.page._disconnected(ConnectionLost('test'))
+
+        self.assertTrue(self.fired)
+        return d
+
+
+
+class ConnectionTestElement(LiveElement):
+    """
+    Element for testing connectionMade and connectionLost callbacks.
+
+    @type events: C{list} of C{str}
+    @ivar events: A record of callback events that have occurred for this
+        element.
+    """
+    def __init__(self):
+        super(ConnectionTestElement, self).__init__()
+        self.events = []
+
+
+    def connectionMade(self):
+        """
+        Record a connection made event.
+        """
+        self.events.append('made')
+
+
+    def connectionLost(self, reason):
+        """
+        Record a connection lost event.
+        """
+        self.events.append('lost')
+
+
+
+class ConnectionCallbackTests(unittest.TestCase):
+    """
+    Tests for the behaviour of the connectionMade / connectionLost widget
+    callbacks.
+    """
+    def setUp(self):
+        """
+        Create and remember a L{LivePage} instance, and an element for testing.
+        """
+        self.page = athena.LivePage()
+        self.element = ConnectionTestElement()
+        self.element.docFactory = stan(tags.div())
+        self.element.setFragmentParent(self.page)
+
+        req = FakeRequest()
+        self.page._becomeLive(url.URL.fromRequest(req))
+        ctx = WovenContext(tag=tags.div()[self.element])
+        ctx.remember(req, IRequest)
+        flat.flatten(ctx.tag, ctx)
+
+
+    def tearDown(self):
+        """
+        Shut this test's L{LivePage} timers down, if the test started them up.
+        """
+        if hasattr(self.page, '_messageDeliverer'):
+            self.page._messageDeliverer.close()
+
+
+    def test_connectionMadeLost(self):
+        """
+        A widget's connectionMade method will be called when the transport is
+        initially connected, and connectionLost called once the transport is
+        disconnected.
+        """
+        self.assertEqual(self.element.events, [])
+        self.page._connectionMade()
+        self.assertEqual(self.element.events, ['made'])
+        self.page._disconnected(ConnectionLost('test'))
+        self.assertEqual(self.element.events, ['made', 'lost'])
+
+
+    def test_connectionStillborn(self):
+        """
+        If the transport is never connected, neither connectionMade nor
+        connectionLost will ever be called.
+        """
+        self.assertEqual(self.element.events, [])
+        self.page._disconnected(ConnectionLost('test'))
+        self.assertEqual(self.element.events, [])
+
+
+    def test_dynamicWidget(self):
+        """
+        When a widget is dynamically instantiated, connectionMade will be
+        invoked as soon as the widget is attached to the page.
+        """
+        self.page._connectionMade()
+
+        element2 = ConnectionTestElement()
+        element2.docFactory = stan(tags.div(render='liveElement'))
+        element2.setFragmentParent(self.page)
+        self.assertEqual(element2.events, [])
+
+        serialize(element2)
+        self.assertEqual(element2.events, ['made'])
+
+
+    def test_detachWidget(self):
+        """
+        When a widget is detached, connectionLost will be invoked. When the
+        page subsequently disconnects, connectionLost will not be invoked
+        again.
+        """
+        self.page._connectionMade()
+        self.assertEqual(self.element.events, ['made'])
+        self.element._athenaDetachServer()
+        self.assertEqual(self.element.events, ['made', 'lost'])
+        self.page._disconnected(ConnectionLost('test'))
+        self.assertEqual(self.element.events, ['made', 'lost'])
 
 
 

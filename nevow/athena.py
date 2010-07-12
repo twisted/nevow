@@ -10,10 +10,11 @@ from twisted.python.util import sibpath
 from twisted import plugin
 
 from nevow import inevow, plugins, flat, _flat
-from nevow import rend, loaders, url, static
+from nevow import rend, loaders, static
 from nevow import json, util, tags, guard, stan
 from nevow.util import CachedFile
 from nevow.useragent import UserAgent, browsers
+from nevow.url import here, URL
 
 from nevow.page import Element, renderer
 
@@ -399,7 +400,7 @@ class JSDependencies(object):
         jsMod = className
         while jsMod:
             try:
-                jsFile = self.mapping[jsMod]
+                self.mapping[jsMod]
             except KeyError:
                 if '.' not in jsMod:
                     break
@@ -621,8 +622,39 @@ CLOSE = u'close'
 UNLOAD = u'unload'
 
 class ReliableMessageDelivery(object):
+    """
+    A reliable message delivery abstraction over a possibly unreliable transport.
+
+    @type livePage: L{LivePage}
+    @ivar livePage: The page this delivery is associated with.
+
+    @type connectTimeout: C{int}
+    @ivar connectTimeout: The amount of time (in seconds) to wait for the
+        initial connection, before timing out.
+
+    @type transportlessTimeout: C{int}
+    @ivar transportlessTimeout: The amount of time (in seconds) to wait for
+        another transport to connect if none are currently connected, before
+        timing out.
+
+    @type idleTimeout: C{int}
+    @ivar idleTimeout: The maximum amount of time (in seconds) to leave a
+        connected transport, before sending a noop response.
+
+    @type connectionLost: callable or C{None}
+    @ivar connectionLost: A callback invoked with a L{failure.Failure} if the
+        connection with the client is lost (due to a timeout, for example).
+
+    @type scheduler: callable or C{None}
+    @ivar scheduler: If passed, this is used in place of C{reactor.callLater}.
+
+    @type connectionMade: callable or C{None}
+    @ivar connectionMade: A callback invoked with no arguments when it first
+        becomes possible to to send a message to the client.
+    """
     _paused = 0
     _stopped = False
+    _connected = False
 
     outgoingAck = -1            # sequence number which has been acknowledged
                                 # by this end of the connection.
@@ -634,7 +666,8 @@ class ReliableMessageDelivery(object):
                  livePage,
                  connectTimeout=60, transportlessTimeout=30, idleTimeout=300,
                  connectionLost=None,
-                 scheduler=None):
+                 scheduler=None,
+                 connectionMade=None):
         self.livePage = livePage
         self.messages = []
         self.outputs = []
@@ -645,6 +678,7 @@ class ReliableMessageDelivery(object):
             scheduler = reactor.callLater
         self.scheduler = scheduler
         self._transportlessTimeoutCall = self.scheduler(self.connectTimeout, self._connectTimedOut)
+        self.connectionMade = connectionMade
         self.connectionLost = connectionLost
 
 
@@ -713,6 +747,9 @@ class ReliableMessageDelivery(object):
 
 
     def addOutput(self, output):
+        if not self._connected:
+            self._connected = True
+            self.connectionMade()
         if self._transportlessTimeoutCall is not None:
             self._transportlessTimeoutCall.cancel()
             self._transportlessTimeoutCall = None
@@ -956,12 +993,29 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
     @type _jsDepsMemo: C{dict}
     @ivar _jsDepsMemo: A cache for JS module dependencies; by default, this
                        will only be shared within a single page instance.
+
+    @type _didConnect: C{bool}
+    @ivar _didConnect: Initially C{False}, set to C{True} if connectionMade has
+        been invoked.
+
+    @type _didDisconnect: C{bool}
+    @ivar _didDisconnect: Initially C{False}, set to C{True} if _disconnected
+        has been invoked.
+
+    @type _localObjects: C{dict} of C{int} : widget
+    @ivar _localObjects: Mapping from an object ID to a Python object that will
+        accept messages from the client.
+
+    @type _localObjectIDCounter: C{callable} returning C{int}
+    @ivar _localObjectIDCounter: A callable that will return a new
+        locally-unique object ID each time it is called.
     """
     jsClass = u'Nevow.Athena.PageWidget'
     cssModule = None
 
     factory = LivePageFactory()
     _rendered = False
+    _didConnect = False
     _didDisconnect = False
 
     useActiveChannels = True
@@ -1013,7 +1067,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         self.jsModules = jsModules
         self.jsModuleRoot = jsModuleRoot
         if transportRoot is None:
-            transportRoot = url.here
+            transportRoot = here
         self.transportRoot = transportRoot
         self.cssModuleRoot = cssModuleRoot
         if cssModules is None:
@@ -1096,14 +1150,10 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             self.TRANSPORTLESS_DISCONNECT_TIMEOUT * 2,
             self.TRANSPORTLESS_DISCONNECT_TIMEOUT,
             self.TRANSPORT_IDLE_TIMEOUT,
-            self._disconnected)
+            self._disconnected,
+            connectionMade=self._connectionMade)
         self._remoteCalls = {}
-
-        # Mapping of Object-ID to a Python object that will accept messages
-        # from the client.
         self._localObjects = {}
-
-        # Counter for assigning local object IDs
         self._localObjectIDCounter = itertools.count().next
 
         self.addLocalObject(self)
@@ -1193,7 +1243,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             request.write(self.renderUnsupported(ctx))
             return ''
 
-        self._becomeLive(url.URL.fromString(flat.flatten(url.here, ctx)))
+        self._becomeLive(URL.fromString(flat.flatten(here, ctx)))
 
         neverEverCache(request)
         if request.args.get(ATHENA_RECONNECT):
@@ -1201,7 +1251,23 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         return rend.Page.renderHTTP(self, ctx)
 
 
+    def _connectionMade(self):
+        """
+        Invoke connectionMade on all attached widgets.
+        """
+        for widget in self._localObjects.values():
+            widget.connectionMade()
+        self._didConnect = True
+
+
     def _disconnected(self, reason):
+        """
+        Callback invoked when the L{ReliableMessageDelivery} is disconnected.
+
+        If the page has not already disconnected, fire any deferreds created
+        with L{notifyOnDisconnect}; if the page was already connected, fire
+        C{connectionLost} methods on attached widgets.
+        """
         if not self._didDisconnect:
             self._didDisconnect = True
 
@@ -1213,13 +1279,43 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             self._remoteCalls = {}
             for (reqID, resD) in calls.iteritems():
                 resD.errback(reason)
+            if self._didConnect:
+                for widget in self._localObjects.values():
+                    widget.connectionLost(reason)
             self.factory.removeClient(self.clientID)
+
+
+    def connectionMade(self):
+        """
+        Callback invoked when the transport is first connected.
+        """
+
+
+    def connectionLost(self, reason):
+        """
+        Callback invoked when the transport is disconnected.
+
+        This method will only be called if connectionMade was called.
+
+        Override this.
+        """
 
 
     def addLocalObject(self, obj):
         objID = self._localObjectIDCounter()
         self._localObjects[objID] = obj
         return objID
+
+
+    def removeLocalObject(self, objID):
+        """
+        Remove an object from the page's mapping of IDs that can receive
+        messages.
+
+        @type  objID: C{int}
+        @param objID: The ID returned by L{LivePage.addLocalObject}.
+        """
+        del self._localObjects[objID]
 
 
     def callRemote(self, methodName, *args):
@@ -1545,6 +1641,8 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         if self.page is None:
             raise OrphanedFragment(self)
         self._athenaID = self.page.addLocalObject(self)
+        if self.page._didConnect:
+            self.connectionMade()
         tag.fillSlots('athena:id', str(self._athenaID))
 
 
@@ -1710,7 +1808,11 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
             ch._athenaDetachServer()
         self.fragmentParent.liveFragmentChildren.remove(self)
         self.fragmentParent = None
+        page = self.page
         self.page = None
+        page.removeLocalObject(self._athenaID)
+        if page._didConnect:
+            self.connectionLost(ConnectionLost('Detached'))
         self.detached()
     expose(_athenaDetachServer)
 
@@ -1738,6 +1840,25 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
 
         This is invoked after this fragment has been disassociated from its
         parent and from the page.
+
+        Override this.
+        """
+
+
+    def connectionMade(self):
+        """
+        Callback invoked when the transport is first available to this widget.
+
+        Override this.
+        """
+
+
+    def connectionLost(self, reason):
+        """
+        Callback invoked once the transport is no longer available to this
+        widget.
+
+        This method will only be called if connectionMade was called.
 
         Override this.
         """
@@ -1892,7 +2013,7 @@ __all__ = [
     'ATHENA_XMLNS_URI',
 
     # Errors
-    'LivePageError', 'OrphanedFragment', 'ConnectFailed', 'ConnectionLost'
+    'LivePageError', 'OrphanedFragment', 'ConnectFailed', 'ConnectionLost',
 
     # JS support
     'MappingResource', 'JSModule', 'JSPackage', 'AutoJSPackage',
