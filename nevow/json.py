@@ -243,6 +243,8 @@ _translation.update({
     ord(u'\n'): ur'\n',
     ord(u'\t'): ur'\t',
     ord(u'\r'): ur'\r',
+    ord(u'\u2028'): u'\\u2028',
+    ord(u'\u2029'): u'\\u2029',
     })
 
 def stringEncode(s):

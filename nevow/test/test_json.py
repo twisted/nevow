@@ -107,6 +107,24 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
             self.assertEquals(unstruct, struct, failMsg)
             self.assert_(isinstance(unstruct, unicode), failMsg)
 
+
+    def test_lineTerminators(self):
+        """
+        When passed a unicode string containing a line terminator,
+        L{json.serialize} emits an escape sequence representing that character
+        (not a UTF-8 sequence directly representing that the line terminator
+        code point).
+
+        Literal line terminators are allowed in JSON, but some parsers do not
+        handle them properly.
+        """
+        # These are the four line terminators currently in Unicode.
+        self.assertEqual('"\\r"', json.serialize(u"\r"))
+        self.assertEqual('"\\n"', json.serialize(u"\n"))
+        self.assertEqual('"\\u2028"', json.serialize(u"\u2028"))
+        self.assertEqual('"\\u2029"', json.serialize(u"\u2029"))
+
+
     def testScientificNotation(self):
         self.assertEquals(json.parse('1e10'), 10**10)
         self.assertEquals(json.parse('1e0'), 1)
