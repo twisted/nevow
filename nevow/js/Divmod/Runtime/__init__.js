@@ -709,6 +709,25 @@ Divmod.Runtime.Platform.methods(
      */
     function addBeforeUnloadHandler(self, aWindow, handler) {
         Divmod.Base.addToCallStack(aWindow, 'onbeforeunload', handler);
+    },
+
+
+    /**
+     * Determine which mouse buttons were pressed from a browser event object.
+     *
+     * The default implementation matches the W3C DOM Level 2 Events
+     * specifications.
+     *
+     * @return: A mapping of C{'left'}, C{'middle'}, C{'right'} to C{Boolean}
+     *     values indicating the state of the named mouse buttons.
+     *
+     * @see: <http://www.w3.org/TR/DOM-Level-2-Events/events.html#Events-MouseEvent>
+     */
+    function getMouseButtonsFromEvent(self, event) {
+        return {
+            'left': event.button == 0,
+            'middle': event.button == 1,
+            'right': event.button == 2};
     });
 
 
@@ -1205,6 +1224,20 @@ Divmod.Runtime.InternetExplorer.methods(
      */
     function addBeforeUnloadHandler(self, aWindow, handler) {
         Divmod.Base.addToCallStack(aWindow.document.body, 'onbeforeunload', handler);
+    },
+
+
+    /**
+     * Internet Explorer specific handling of the C{event.button} property.
+     *
+     * @see: L{Divmod.Runtime.Platform.getMouseButtonsFromEvent}
+     * @see: <http://msdn.microsoft.com/en-us/library/ms533544%28v=vs.85%29.aspx>
+     */
+    function getMouseButtonsFromEvent(self, event) {
+        return {
+            'left': (event.button & 1) != 0,
+            'middle': (event.button & 4) != 0,
+            'right': (event.button & 2) != 0};
     });
 
 

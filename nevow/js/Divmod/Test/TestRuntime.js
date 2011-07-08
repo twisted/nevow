@@ -713,6 +713,100 @@ Divmod.Test.TestRuntime.RuntimeTests.methods(
     });
 
 
+
+/**
+ * Tests for L{Divmod.Runtime.Platform}.
+ */
+Divmod.UnitTest.TestCase.subclass(Divmod.Test.TestRuntime,
+                                  'PlatformTests').methods(
+    function setUp(self) {
+        self.runtime = Divmod.Runtime.Platform('name');
+    },
+
+
+    /**
+     * Assert that C{evt.button} when processed with
+     * C{getMouseButtonsFromEvent} yields the same values for its C{'left'},
+     * C{'middle'} and C{'right'} attributes as the parameters with these same
+     * names.
+     */
+    function assertMouseButtons(self, evt, left, middle, right) {
+        var buttons = self.runtime.getMouseButtonsFromEvent(evt);
+        self.assertIdentical(buttons.left, left)
+        self.assertIdentical(buttons.middle, middle)
+        self.assertIdentical(buttons.right, right)
+    },
+
+
+    /**
+     * Most platforms follow the W3C definitions for C{event.button} values.
+     *
+     * These values cannot be combined to indicate multiple buttons being
+     * pushed.
+     */
+    function test_getMouseButtonsFromEvent(self) {
+        var evt = {};
+        // Unknown value.
+        evt.button = 99;
+        self.assertMouseButtons(evt, false, false, false);
+        // Left mouse button.
+        evt.button = 0;
+        self.assertMouseButtons(evt, true, false, false);
+        // Middle mouse button.
+        evt.button = 1;
+        self.assertMouseButtons(evt, false, true, false);
+        // Right mouse button.
+        evt.button = 2;
+        self.assertMouseButtons(evt, false, false, true);
+    });
+
+
+
+/**
+ * Tests for L{Divmod.Runtime.InternetExplorer}.
+ */
+Divmod.Test.TestRuntime.PlatformTests.subclass(
+        Divmod.Test.TestRuntime,
+        'InternetExplorerPlatformTests').methods(
+    function setUp(self) {
+        self.runtime = Divmod.Runtime.InternetExplorer();
+    },
+
+
+    /**
+     * Internet Explorer uses different values for L{event.button} and can
+     * combine these values to indicate multiple buttons being pressed.
+     */
+    function test_getMouseButtonsFromEvent(self) {
+        var evt = {};
+        // No buttons.
+        evt.button = 0;
+        self.assertMouseButtons(evt, false, false, false);
+        // Left mouse button.
+        evt.button = 1;
+        self.assertMouseButtons(evt, true, false, false);
+        // Right mouse button.
+        evt.button = 2;
+        self.assertMouseButtons(evt, false, false, true);
+        // Middle mouse button.
+        evt.button = 4;
+        self.assertMouseButtons(evt, false, true, false);
+        // Left and right mouse buttons.
+        evt.button = 3;
+        self.assertMouseButtons(evt, true, false, true);
+        // Left and middle mouse buttons.
+        evt.button = 5;
+        self.assertMouseButtons(evt, true, true, false);
+        // Right and middle mouse buttons.
+        evt.button = 6;
+        self.assertMouseButtons(evt, false, true, true);
+        // Left, middle and right mouse buttons.
+        evt.button = 7;
+        self.assertMouseButtons(evt, true, true, true);
+    });
+
+
+
 Divmod.Test.TestRuntime.SpidermonkeyRuntimeTests = Divmod.UnitTest.TestCase.subclass(
     'Divmod.Test.TestRuntime.SpidermonkeyRuntimeTests');
 /**
