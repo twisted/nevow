@@ -1176,7 +1176,8 @@ Nevow.Athena.Widget.methods(
  */
 Nevow.Athena.Widget._makeEventHandler = function (domEventName, methodName) {
     return function () {
-        return Nevow.Athena.Widget.handleEvent(this, domEventName, methodName);
+        return Nevow.Athena.Widget.handleEvent(
+            this, domEventName, methodName, event);
     };
 };
 
@@ -1206,14 +1207,15 @@ Nevow.Athena.Widget.dispatchEvent = function (widget, eventName, handlerName, ca
 };
 
 /**
- * Given a node and a method name in an event handling context, dispatch the
- * event to the named method on the widget which owns the given node.  This
- * also sets up error handling and does return value translation as
- * appropriate for an event handler.  It also pauses the outgoing message
- * queue to allow multiple messages from the event handler to be batched up
- * into a single request.
+ * Given a node, a method name in an event handling context and an event
+ * object, dispatch the event to the named method on the widget which owns the
+ * given node.  This also sets up error handling and does return value
+ * translation as appropriate for an event handler.  It also pauses the
+ * outgoing message queue to allow multiple messages from the event handler to
+ * be batched up into a single request.
  */
-Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerName) {
+Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName,
+                                                       handlerName, event) {
     var widget = Nevow.Athena.Widget.get(node);
     var method = widget[handlerName];
     var result = false;
@@ -1223,7 +1225,7 @@ Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerN
         result = Nevow.Athena.Widget.dispatchEvent(
             widget, eventName, handlerName,
             function() {
-                return method.call(widget, node);
+                return method.call(widget, node, event);
             });
     }
     return result;
