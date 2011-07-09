@@ -1206,6 +1206,223 @@ Nevow.Athena.Widget.dispatchEvent = function (widget, eventName, handlerName, ca
     return Nevow.Athena.page.dispatchEvent(widget, eventName, handlerName, callable);
 };
 
+
+
+/**
+ * Lowest-common denominator DOM event wrapper.
+ *
+ * DOM event objects should wrapped by calling
+ * L{Nevow.Athena.Event.fromDOMEvent}.
+ *
+ * @type knownEventTypes: C{Array} of C{String}
+ * @cvar knownEventTypes: Array of event types that this event wrapper can wrap.
+ *
+ * @ivar event: Original DOM event object.
+ *
+ * @ivar type: C{String}
+ * @ivar type: Event type.
+ *
+ * @ivar target: Element to which the DOM event was originally dispatched.
+ *
+ * @see: <http://www.w3.org/TR/DOM-Level-2-Events/events.html>
+ * @see: <http://www.quirksmode.org/js/introevents.html>
+ */
+Divmod.Class.subclass(Nevow.Athena, 'Event').methods(
+    function __init__(self, event) {
+        self.event = event;
+        self.type = self.event.type;
+        self.target = self.event.target;
+        if (self.target === undefined) {
+            self.target = self.event.srcElement;
+        }
+    },
+
+
+    /**
+     * Cancels the event if it is cancelable, without stopping further
+     * propagation of the event.
+     */
+    function preventDefault(self) {
+        if (self.event.preventDefault) {
+            self.event.preventDefault();
+        } else {
+            self.event.returnValue = false;
+        }
+    },
+
+
+    /**
+     * Stops the propagation of events further along in the DOM.
+     */
+    function stopPropagation(self) {
+        if (self.event.stopPropagation) {
+            self.event.stopPropagation();
+        } else {
+            self.event.cancelBubble = true;
+        }
+    });
+
+
+
+/**
+ * Specific subclass of L{Nevow.Athena.Event} relating to key events.
+ *
+ * @ivar altKey: Was the I{alt} key pressed when the event fired?
+ *
+ * @ivar ctrlKey: Was the I{ctrl} key pressed when the event fired?
+ *
+ * @ivar shiftKey: Was the I{shift} key pressed when the event fired?
+ *
+ * @ivar metaKey: Was the I{meta} key pressed when the event fire?
+ */
+Nevow.Athena.Event.subclass(Nevow.Athena, 'KeyEvent').methods(
+    function __init__(self, event) {
+        Nevow.Athena.KeyEvent.upcall(self, '__init__', event);
+        self.altKey = !!self.event.altKey;
+        self.ctrlKey = !!self.event.ctrlKey;
+        self.shiftKey = !!self.event.shiftKey;
+        self.metaKey = !!self.event.metaKey; // Not in IE < 9.
+    },
+
+
+    /**
+     * Get the Unicode value of key press.
+     *
+     * For the I{keydown} or I{keyup} events this is the virtual key code of the
+     * physical button pushed. For I{keypress} event this is the character code
+     * for an alphanumeric key.
+     *
+     * @see: <https://developer.mozilla.org/en/DOM/event.keyCode>
+     * @see: <http://msdn.microsoft.com/en-us/library/ms533927%28v=VS.85%29.aspx>
+     */
+    function getKeyCode(self) {
+        return self.event.keyCode || self.event.which;
+    },
+
+
+    /**
+     * Set the Unicode value of key press.
+     */
+    function setKeyCode(self, value) {
+        self.event.keyCode = value;
+    });
+
+Nevow.Athena.KeyEvent.knownEventTypes = ['keydown', 'keypress', 'keyup'];
+
+
+
+/**
+ * Specific subclass of L{Nevow.Athena.Event} relating to mouse events.
+ *
+ * @ivar altKey: Was the I{alt} key pressed when the event fired?
+ *
+ * @ivar ctrlKey: Was the I{ctrl} key pressed when the event fired?
+ *
+ * @ivar shiftKey: Was the I{shift} key pressed when the event fired?
+ *
+ * @ivar metaKey: Was the I{meta} key pressed when the event fire?
+ */
+Nevow.Athena.Event.subclass(Nevow.Athena, 'MouseEvent').methods(
+    function __init__(self, event) {
+        Nevow.Athena.MouseEvent.upcall(self, '__init__', event);
+        self.altKey = self.event.altKey;
+        self.ctrlKey = self.event.ctrlKey;
+        self.shiftKey = self.event.shiftKey;
+        self.metaKey = self.event.metaKey; // Not in IE < 9.
+    },
+
+
+    /**
+     * Determine which mouse buttons were pressed in this event.
+     *
+     * @see: L{Divmod.Runtime.Platform.getMouseButtonsFromEvent}
+     */
+    function getMouseButtons(self) {
+        return Divmod.Runtime.theRuntime.getMouseButtonsFromEvent(self.event);
+    },
+
+
+    /**
+     * Get the coordinates of the event relative to the whole document.
+     *
+     * @return: Mapping of C{'x'} and C{'y'} to the horizontal and vertical
+     *     coordinates respectively.
+     */
+    function getPagePosition(self) {
+        return Divmod.Runtime.theRuntime.getEventCoords(self.event);
+    },
+
+
+    /**
+     * Get the coordinates within the browser's client area at which the event
+     * occurred (as opposed to the coordinates within the page).
+     *
+     * For example, clicking in the top-left corner of the client area will
+     * always result in a mouse event with a clientX value of 0, regardless of
+     * whether the page is scrolled horizontally.
+     *
+     * @return: Mapping of C{'x'} and C{'y'} to the horizontal and vertical
+     *     coordinates respectively.
+     */
+    function getClientPosition(self) {
+        return {
+            'x': self.event.clientX,
+            'y': self.event.clientY};
+    },
+
+
+    /**
+     * Get the coordinates of the event within the screen as a whole.
+     *
+     * @return: Mapping of C{'x'} and C{'y'} to the horizontal and vertical
+     *     coordinates respectively.
+     */
+    function getScreenPosition(self) {
+        return {
+            'x': self.event.screenX,
+            'y': self.event.screenY};
+    });
+
+Nevow.Athena.MouseEvent.knownEventTypes = [
+    'mousedown', 'mousemove', 'mouseout', 'mouseover', 'mouseup',
+    'mousewheel'];
+
+
+
+/**
+ * Mapping of event types to known event handlers.
+ */
+Nevow.Athena.Event._eventHandlerMapping = (function() {
+    var handlers = [
+        Nevow.Athena.KeyEvent,
+        Nevow.Athena.MouseEvent];
+    var mapping = {}
+    for (var i = 0; i < handlers.length; ++i) {
+        var handler = handlers[i];
+        var knownEventTypes = handler.knownEventTypes;
+        for (var j = 0; j < knownEventTypes.length; ++j) {
+            mapping[knownEventTypes[j]] = handler;
+        }
+    }
+    return mapping;
+})();
+
+
+
+/**
+ * Wrap a DOM event object with an appropriate L{Nevow.Athena.Event} subclass
+ * or L{Nevow.Athena.Event} if there is no specific handler for the event type.
+ */
+Nevow.Athena.Event.fromDOMEvent = function fromDOMEvent(event) {
+    var handler = Nevow.Athena.Event._eventHandlerMapping[event.type];
+    if (handler === undefined) {
+        handler = Nevow.Athena.Event;
+    }
+    return handler(event);
+};
+
+
+
 /**
  * Given a node, a method name in an event handling context and an event
  * object, dispatch the event to the named method on the widget which owns the
@@ -1225,7 +1442,8 @@ Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName,
         result = Nevow.Athena.Widget.dispatchEvent(
             widget, eventName, handlerName,
             function() {
-                return method.call(widget, node, event);
+                return method.call(
+                    widget, node, Nevow.Athena.Event.fromDOMEvent(event));
             });
     }
     return result;

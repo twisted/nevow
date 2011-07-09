@@ -51,3 +51,7 @@ class JSUnitTests(JavaScriptTestCase):
 
     def test_tabbedPane(self):
         return 'Nevow.Test.TestTabbedPane'
+
+
+    def test_event(self):
+        return 'Nevow.Test.TestEvent'
