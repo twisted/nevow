@@ -128,6 +128,7 @@ Nevow.Test.TestWidget.WidgetTests.methods(
      * the browser, and the explicitly selected handler will be invoked.
      */
     function test_connectDOMEventCustomMethod(self) {
+        event = {};
         self.widget.connectDOMEvent("onclick", "explicitClick");
         self.node.onclick();
         self.assertIdentical(self.widget.clicked, "explicitly");
@@ -138,6 +139,7 @@ Nevow.Test.TestWidget.WidgetTests.methods(
      * the browser, and the explicitly selected node will be used.
      */
     function test_connectDOMEventCustomNode(self) {
+        event = {};
         self.widget.connectDOMEvent("onclick", "explicitClick", self.otherNode);
         self.otherNode.onclick();
         self.assertIdentical(self.widget.clicked, "explicitly");
