@@ -554,7 +554,7 @@ class UtilitiesTests(unittest.TestCase):
         """
         expectedOutput = (
             'return Nevow.Athena.Widget.handleEvent('
-            'this, &quot;onclick&quot;, &quot;bar&quot;);')
+            'this, &quot;onclick&quot;, &quot;bar&quot;, event);')
         tag = tags.span[athena.handler(event='onclick', handler='bar')]
         mutated = athena._rewriteEventHandlerToAttribute(tag)
         output = flat.flatten(mutated)
