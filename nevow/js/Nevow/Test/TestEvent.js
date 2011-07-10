@@ -82,7 +82,7 @@ Divmod.UnitTest.TestCase.subclass(Nevow.Test.TestEvent, 'TestEventW3C').methods(
     function test_fromDOMEvent(self) {
         function assertInstanceOf(inst, type, msg) {
             self.assertIdentical(
-                evt instanceof type,
+                inst instanceof type,
                 true,
                 'Expected ' + inst.toString() +
                 ' to be an instance of ' + type.toString());
