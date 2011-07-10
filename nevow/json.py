@@ -235,6 +235,7 @@ class CycleError(Exception):
 
 _translation = dict([(o, u'\\x%02x' % (o,)) for o in range(0x20)])
 
+# Characters which cannot appear as literals in the output
 _translation.update({
     ord(u'\\'): u'\\\\',
     ord(u'"'): ur'\"',
@@ -243,6 +244,8 @@ _translation.update({
     ord(u'\n'): ur'\n',
     ord(u'\t'): ur'\t',
     ord(u'\r'): ur'\r',
+    # The next two are sneaky, see
+    # http://timelessrepo.com/json-isnt-a-javascript-subset
     ord(u'\u2028'): u'\\u2028',
     ord(u'\u2029'): u'\\u2029',
     })
