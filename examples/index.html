@@ -69,16 +69,10 @@
     <ol>
       <li><a href="/tests/">Run basic tests</a></li>
 
-      <li><a href="/formless_tests/">Run formless tests</a></li>
-
       <li><a href="/livetests/">Run livepage example tests</a></li>
 
       <li><a href="/testtests/tests/">Test test harness</a></li>
     </ol>
-
-    <p>Athena also has <a href="/athenatest/">some tests</a>, although
-    there is not yet a fancy test runner like the one demonstrated
-    above.</p>
 
     <h1 id="examples">Examples Listing</h1>
 
@@ -427,122 +421,6 @@
       </li>
 
       <li>
-        <span>Advanced manual form example</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0" width=
-          "100%">
-            <tbody>
-              <tr>
-                <td>Stan Source</td>
-
-                <td width="100%"><a href=
-                "sources/advanced_manualform/advanced_manualform.py">
-                advanced_manualform.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live example: <a href=
-          "advanced_manualform/">form</a>
-        </div>
-      </li>
-
-      <li>
-        <span>Formless example</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0" width=
-          "100%">
-            <tbody>
-              <tr>
-                <td>Stan Source</td>
-
-                <td width="100%"><a href=
-                "sources/formpost/formpost.py">formpost.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live example: <a href="formpost/">formpost</a>
-        </div>
-      </li>
-
-      <li>
-        <span>Another formless example, but a little bit more
-        complex</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0" width=
-          "100%">
-            <tbody>
-              <tr>
-                <td>Stan Source</td>
-
-                <td width="100%"><a href=
-                "sources/formpost/formpost2.py">formpost2.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live example: <a href="formpost2/">formpost2</a>
-        </div>
-      </li>
-
-      <li>
-        <span><b>[0.5]</b>Using formless to create multi-step
-        wizards by returning Page instances from
-        autocallables</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0" width=
-          "100%">
-            <tbody>
-              <tr>
-                <td>Stan Source</td>
-
-                <td width="100%"><a href=
-                "sources/tests/testformless.py">tests/testformless.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live example: <a href=
-          "testformless">testformless</a>
-        </div>
-      </li>
-
-      <li>
-        <span><b>[0.5]</b>Using formless, return a URL instance
-        from an autocallable to redirect to it</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0" width=
-          "100%">
-            <tbody>
-              <tr>
-                <td>Stan Source</td>
-
-                <td width="100%"><a href=
-                "sources/tests/testformless.py">tests/testformless.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live example: <a href=
-          "formless_redirector">formless_redirector</a>
-        </div>
-      </li>
-
-      <li>
-        <span>Example of interacting with a database</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0" width=
-          "100%">
-            <tbody>
-              <tr>
-                <td>Stan Source:</td>
-
-                <td width="100%"><a href=
-                "sources/db/db.py">db.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live examples: <a href="db/">db</a>
-        </div>
-      </li>
-
-      <li>
         <span>An example of using HTTP Basic Auth for simple
         authentication</span>
 
@@ -637,25 +515,6 @@
       </li>
 
       <li>
-        <span>Dynamically build your forms</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0" width=
-          "100%">
-            <tbody>
-              <tr>
-                <td>Stan Source</td>
-
-                <td width="100%"><a href=
-                "sources/formbuilder/formbuilder.py">formbuilder.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live example: <a href=
-          "formbuilder/">formbuilder</a>
-        </div>
-      </li>
-
-      <li>
         <span>Adapting an object to the IRenderer interface in
         order to make it render itself</span>
 
@@ -691,24 +550,6 @@
               </tr>
             </tbody>
           </table>Live example: <a href="irenderer/">IRenderer</a>
-        </div>
-      </li>
-
-      <li>
-        <span>Handling and building a Tree structure dynamically on
-        yor site</span>
-
-        <div class="source">
-          <table border="0" cellpadding="0" cellspacing="0">
-            <tbody>
-              <tr>
-                <td>Stan Source</td>
-
-                <td width="100%"><a href=
-                "sources/tree/tree.py">tree.py</a></td>
-              </tr>
-            </tbody>
-          </table>Live example: <a href="tree/">tree</a>
         </div>
       </li>
 
@@ -961,44 +802,11 @@
       </li>
 
       <li>
-        <span>Pastebin example with nevow</span>
-
-        <div class="source">
-          Source: <a href="sources/pastebin">pastebin</a>
-        </div>
-      </li>
-
-      <li>
-        <span>Blog engine</span>
-
-        <div class="source">
-          Source: <a href="sources/blogengine">blogengine</a>
-        </div>
-      </li>
-
-      <li>
         <span>Link storage webservice (uses Twisted's
         XML-RPC)</span>
 
         <div class="source">
           Source: <a href="sources/postit">postit</a>
-        </div>
-      </li>
-
-      <li>
-        <span>Todo list with rails like file structure (requires
-        pgasync 1.3b and postgres)</span>
-
-        <div class="source">
-          Source: <a href="sources/todo">todo</a>
-        </div>
-      </li>
-
-      <li>
-        <span>Image uploader that uses axiom</span>
-
-        <div class="source">
-          Source: <a href="sources/image_uploader">imagination</a>
         </div>
       </li>
     </ul>

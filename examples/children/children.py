@@ -82,10 +82,6 @@ class RootPage(rend.Page):
         """
 
         # Let parent class have a go first
-        # WARNING: This 3 lines work well until you use formless in this page
-        # because formless will make locateChild return only one return value
-        # (a deferred) on which you should add a callback that accepts a resource and 
-        # an empty tuple that represents no remaining segments.
         child, remainingSegments = rend.Page.locateChild(self, ctx, segments)
         if child:
             return child, remainingSegments

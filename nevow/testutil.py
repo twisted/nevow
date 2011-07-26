@@ -20,8 +20,6 @@ from twisted.internet import defer
 from twisted.web import http
 from twisted.protocols.basic import LineReceiver
 
-from formless import iformless
-
 from nevow import inevow, context, athena, loaders, tags, appserver
 from nevow.jsutil import findJavascriptInterpreter, generateTestScript
 
@@ -294,8 +292,6 @@ class AccumulatingFakeRequest(FakeRequest):
     This class is named I{accumulating} for historical reasons only.  You
     probably want to ignore this and use L{FakeRequest} instead.
     """
-    implements(iformless.IFormDefaults)
-
     def __init__(self, *a, **kw):
         FakeRequest.__init__(self, *a, **kw)
         self.d = defer.Deferred()

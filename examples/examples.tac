@@ -22,22 +22,15 @@ from nevow import inevow, rend, loaders, url, tags, appserver, static, guard, at
 import sys
 
 try:
-    from advanced_manualform import advanced_manualform
-    from customform import customform
     from disktemplates import disktemplates
     from disktemplates import disktemplates_stan
     from simple import simple
     from simple import simplehtml
-    from tree import tree
-    from formpost import formpost2
-    from formpost import formpost
     from children import children
     from children import childrenhtml
     from table import tablehtml
     from irenderer import irenderer
     from irenderer import simple_irenderer
-    from formbuilder import formbuilder
-    from db import db
     from hello import hellohtml
     from hello import hellostan
     from canvas import canvas
@@ -58,13 +51,8 @@ try:
     from cal import cal
     from tabbed import tabbed
     from progress import progress
-    from tests import testformless, testexamples
+    from tests import testexamples
     from nevow import livetest
-
-    from athenademo import calculator
-    from athenademo import typeahead
-    from athenademo import widgets
-    from athenademo import benchmark
 except ImportError, e:
     if str(e).find('No module named') != -1:
         msg = """
@@ -127,21 +115,15 @@ class Examples(rend.Page):
     child_sources.contentTypes = {}
     child_cssfile = static.File('index.css')
     children = dict(
-        customform=customform.Root(),
         disktemplates=disktemplates.Mine(),
         disktemplates_stan=disktemplates_stan.Mine(),
         simple=simple.Simple(),
         simplehtml=simplehtml.Simple(),
-        tree=tree.Tree('base', 'base'),
-        formpost2=formpost2.FormPage(formpost2.Implementation()),
-        formpost=formpost.FormPage(),
         children=children.RootPage(),
         childrenhtml=childrenhtml.RootPage(),
         tablehtml=tablehtml.Table(),
         irenderer=irenderer.Page(),
         simple_irenderer=simple_irenderer.Page(),
-        formbuilder=formbuilder.FormBuilder(),
-        db=db.DBBrowser(),
         hellohtml=hellohtml.Page(),
         hellostan=hellostan.Page(),
         canvas=canvas.createResource(),
@@ -149,7 +131,6 @@ class Examples(rend.Page):
         guarded=guarded.createResource(),
         guarded2=guarded2.createResource(),
         xul_nevow=xul_nevow.createResource(),
-        advanced_manualform=advanced_manualform.Page(),
         liveanimal=liveanimal.createResource(),
         http_auth=http_auth.AuthorizationRequired(),
         most_basic=most_basic.root,
@@ -165,12 +146,8 @@ class Examples(rend.Page):
         tests=testexamples.createResource(),
         livetests=testexamples.createLiveSuite(),
         testtests=livetest.createResource(),
-        testformless=testformless.NameWizard(),
-        formless_redirector=testformless.Redirector(),
-        formless_tests=testformless.formless_tests,
         fragments=fragments.Root(),
         macros=macros.Root(),
-        typeahead=typeahead.DataEntry(),
         )
 
     def child_calculator(self, ctx):

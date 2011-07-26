@@ -44,8 +44,6 @@ namespace = "http://nevow.com/ns/nevow/0.1"
 
 
 basic_adapters = """
-formless.annotate.Group                   formless.annotate.MetaTypedInterface        formless.iformless.ITyped
-
 nevow.accessors.DictionaryContainer    __builtin__.dict                         nevow.inevow.IContainer
 nevow.accessors.ListContainer          __builtin__.list                         nevow.inevow.IContainer
 nevow.accessors.ListContainer          __builtin__.tuple                        nevow.inevow.IContainer
@@ -57,67 +55,15 @@ nevow.accessors.DirectiveAccessor      nevow.stan.directive                     
 nevow.accessors.SlotAccessor           nevow.stan.slot                          nevow.inevow.IGettable
 nevow.accessors.SlotAccessor           nevow.stan._PrecompiledSlot              nevow.inevow.IGettable
 
-    #
-
-formless.webform.PropertyBindingRenderer  formless.annotate.Property         formless.iformless.IBindingRenderer
-formless.webform.MethodBindingRenderer    formless.annotate.MethodBinding    formless.iformless.IBindingRenderer
-formless.webform.GroupBindingRenderer     formless.annotate.GroupBinding     formless.iformless.IBindingRenderer
-
-    #
-
-formless.webform.StringRenderer         formless.annotate.String         formless.iformless.ITypedRenderer
-formless.webform.StringRenderer         formless.annotate.Integer        formless.iformless.ITypedRenderer
-formless.webform.StringRenderer         formless.annotate.Directory      formless.iformless.ITypedRenderer
-formless.webform.PasswordRenderer       formless.annotate.Password       formless.iformless.ITypedRenderer
-formless.webform.PasswordEntryRenderer  formless.annotate.PasswordEntry  formless.iformless.ITypedRenderer
-formless.webform.TextRenderer           formless.annotate.Text           formless.iformless.ITypedRenderer
-formless.webform.BooleanRenderer        formless.annotate.Boolean        formless.iformless.ITypedRenderer
-formless.webform.ChoiceRenderer         formless.annotate.Choice         formless.iformless.ITypedRenderer
-formless.webform.RadioRenderer         formless.annotate.Radio         formless.iformless.ITypedRenderer
-formless.webform.ObjectRenderer         formless.annotate.Object         formless.iformless.ITypedRenderer
-formless.webform.NullRenderer           formless.annotate.Request        formless.iformless.ITypedRenderer
-formless.webform.NullRenderer           formless.annotate.Context        formless.iformless.ITypedRenderer
-formless.webform.FileUploadRenderer     formless.annotate.FileUpload     formless.iformless.ITypedRenderer
-formless.webform.ButtonRenderer         formless.annotate.Button         formless.iformless.ITypedRenderer
-
-    #
-
-formless.processors.ProcessGroupBinding    formless.annotate.GroupBinding     formless.iformless.IInputProcessor
-formless.processors.ProcessMethodBinding   formless.annotate.MethodBinding    formless.iformless.IInputProcessor
-formless.processors.ProcessPropertyBinding    formless.annotate.Property         formless.iformless.IInputProcessor
-formless.processors.ProcessTyped           formless.iformless.ITyped           formless.iformless.IInputProcessor
-formless.processors.ProcessPassword        formless.annotate.Password         formless.iformless.IInputProcessor
-formless.processors.ProcessRequest         formless.annotate.Request          formless.iformless.IInputProcessor
-formless.processors.ProcessContext         formless.annotate.Context          formless.iformless.IInputProcessor
-formless.processors.ProcessUpload          formless.annotate.FileUpload       formless.iformless.IInputProcessor
-
-    #
-
-formless.webform.FormDefaults     nevow.appserver.NevowRequest                formless.iformless.IFormDefaults
-formless.webform.FormDefaults     nevow.testutil.FakeRequest                  formless.iformless.IFormDefaults
-formless.webform.FormDefaults     nevow.testutil.FakeSession                  formless.iformless.IFormDefaults
-formless.webform.FormDefaults     twisted.web.server.Session                  formless.iformless.IFormDefaults
-formless.webform.FormDefaults     nevow.guard.GuardSession                    formless.iformless.IFormDefaults
-
-formless.webform.FormErrors       twisted.web.server.Session               formless.iformless.IFormErrors
-formless.webform.FormErrors       nevow.guard.GuardSession                 formless.iformless.IFormErrors
-formless.webform.FormErrors       nevow.testutil.FakeSession               formless.iformless.IFormErrors
-
 nevow.appserver.OldResourceAdapter                  twisted.web.resource.IResource      nevow.inevow.IResource
 nevow.static.staticHTML                 __builtin__.str                          nevow.inevow.IResource
 
 nevow.appserver.sessionFactory  nevow.context.RequestContext    nevow.inevow.ISession
-nevow.rend.handFactory   nevow.context.RequestContext    nevow.inevow.IHand
-nevow.rend.statusFactory   nevow.context.RequestContext    nevow.inevow.IStatusMessage
-nevow.rend.defaultsFactory   nevow.context.RequestContext    formless.iformless.IFormDefaults
-nevow.rend.errorsFactory   nevow.context.RequestContext    formless.iformless.IFormErrors
 nevow.rend.originalFactory  nevow.context.RequestContext   nevow.inevow.IRequest
 nevow.appserver.defaultExceptionHandlerFactory   nevow.context.SiteContext    nevow.inevow.ICanHandleException
 
 nevow.rend.originalFactory  nevow.context.PageContext   nevow.inevow.IRenderer
 nevow.rend.originalFactory  nevow.context.PageContext   nevow.inevow.IRendererFactory
-
-nevow.rend.originalFactory  nevow.context.PageContext   formless.iformless.IConfigurableFactory
 
 # URL IResource adapters
 nevow.url.URLRedirectAdapter    nevow.url.URL           nevow.inevow.IResource

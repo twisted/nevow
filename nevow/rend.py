@@ -31,9 +31,6 @@ from nevow.context import WovenContext, NodeNotFound, PageContext
 from nevow import inevow, tags, flat, util, url
 from nevow.util import log
 
-import formless
-from formless import iformless, annotate
-
 
 def _getPreprocessors(inst):
     """
@@ -146,224 +143,11 @@ class DataFactory(object):
         return callable
 
 
-class FreeformChildMixin:
-    """Mixin that handles locateChild for freeform segments."""
-    def locateChild(self, ctx, segments):
-        request = inevow.IRequest(ctx)
-        ## The method or property name we are going to validate against/affect
-        bindingName = None
-
-        name = segments[0]
-        if name.startswith('freeform_post!'):
-            configurableName, bindingName = name.split('!')[1:3]
-        elif name.startswith('freeform-action-post!'):
-            configurableName, request.args['freeform-actee'] = name.split('!')[1:3]
-            bindingName = request.args['freeform-action'][0]
-        if bindingName:
-            ctx.remember(self, inevow.IResource)
-            ctx.remember(request, inevow.IRequest)
-            cf = iformless.IConfigurableFactory(self)
-            def checkC(c):
-                if c is not None:
-                    return self.webFormPost(request, self, c, ctx, bindingName, request.args)
-            return util.maybeDeferred(cf.locateConfigurable, ctx, configurableName).addCallback(checkC)
-        return NotFound
-
-    def child_freeform_hand(self, ctx):
-        carryoverHand = inevow.IHand(ctx, None)
-        if carryoverHand is not None:
-            inevow.ISession(ctx).setComponent(inevow.IHand, carryoverHand)
-            return carryoverHand
-        return inevow.IHand(inevow.ISession(ctx), None)
-
-
-class ConfigurableMixin(object):
-    """
-    A sane L{IConfigurable} implementation for L{Fragment} and L{Page}. 
-
-    Methods starting with C{bind_} automatically expose corresponding method
-    names.  C{bind_*} should return an L{IBinding} (L{PropertyBinding} or
-    L{MethodBinding}), or, as a shortcut for L{MethodBinding}, a C{list} of
-    two-C{tuples} like this::
-
-        def bind_foo(self, ctx):
-            return [('argName', String()), ('anotherArg', Integer())]
-
-        def foo(self, argName, anotherArg):
-            assert isinstance(argName, str)
-            assert isinstance(anotherArg, int)
-    """
-    implements(iformless.IConfigurable)
-
-    def getBindingNames(self, ctx):
-        """Expose bind_* methods and attributes on this class.
-        """
-        for name in dir(self):
-            if name.startswith('bind_'):
-                yield name[len('bind_'):]
-
-    def getBinding(self, ctx, name):
-        """Massage bind_* methods and attributes into an
-        IBinding. The bind_* method or attribute can either
-        already implement IBinding or be a list of twoples
-        which will be massaged into a MethodBinding as
-        described in the ConfigurableMixin class docstring.
-        """
-        def _get_binding(binding):
-            if callable(binding):
-                binding = util.maybeDeferred(binding, ctx)
-            return binding
-
-        def _convert_list(binding):
-            if isinstance(binding, list):
-                binding = annotate.MethodBinding(
-                    name, annotate.Method(arguments=[
-                    annotate.Argument(n, v, v.id)
-                    for (n, v) in binding]))
-            return binding
-
-        binding = util.maybeDeferred(getattr, self, 'bind_%s' % name)
-        return binding.addCallback(_get_binding).addCallback(_convert_list)
-
-    def getDefault(self, forBinding):
-        """Get a default value for a given binding. If the
-        binding is a Property, get the current value of
-        that property off self. If not, simply return
-        forBinding.default.
-        """
-        ## If it is a Property, get the value off self
-        if not isinstance(forBinding, annotate.Argument):
-            if hasattr(self, forBinding.name):
-                return getattr(self, forBinding.name)
-        return forBinding.default
-
-    def postForm(self, ctx, bindingName, args):
-        """Accept a form post to the given bindingName.
-        The post arguments are given in args.
-
-        This will invoke the IInputProcessor for the
-        binding with the given name. If it succeeds, the
-        property will be modified or the method will have
-        been called. If it fails, a ValidateError exception
-        will be raised.
-        """
-        def _callback(binding):
-            ctx.remember(binding, iformless.IBinding)
-            ctx.remember(self, iformless.IConfigurable)
-            rv = iformless.IInputProcessor(binding).process(ctx, self, args)
-            ctx.remember(rv, inevow.IHand)
-            ctx.remember('%r success.' % bindingName, inevow.IStatusMessage)
-            return rv
-        return util.maybeDeferred(self.getBinding, ctx, 
-                                  bindingName).addCallback(_callback)
-
-
-class ConfigurableFactory:
-    """Locates configurables by looking for methods that start with
-    configurable_ and end with the name of the configurable. The method
-    should take a single arg (other than self) - the current context.
-    """
-    implements(iformless.IConfigurableFactory)
-
-    def locateConfigurable(self, context, name):
-        """formless.webform.renderForms calls locateConfigurable on the IConfigurableFactory
-        instance it retrieves from the context. It passes the "name" that was passed to it,
-        so if renderForms() was placed in the DOM, locateConfigurable will be called with
-        name = ''; if renderForms('foo') was placed in the DOM, locateConfigurable will
-        be called with name = 'foo'.
-
-        This default implementation of locateConfigurable looks for a configurable_* method
-        corresponding to the name which was passed.
-        """
-        return util.maybeDeferred(getattr(self, 'configurable_%s'%name),
-                                  context).addCallback(iformless.IConfigurable)
-
-    def configurable_(self, context):
-        """Configurable factory for use when self is a configurable;
-        aka it implements IConfigurable or one or more TypedInterface
-        subclasses. Usage:
-
-        >>> class IFoo(TypedInterface):
-        ...     def bar(): pass
-        ...     bar = autocallable(bar)
-        ...
-        >>> class Foo(Page):
-        ...     implements(IFoo)
-        ...
-        ...     def bar():
-        ...         print "bar called through the web!"
-        ...
-        ...     def render_forms(self, ctx, data):
-        ...         return renderForms() # or renderForms('')
-        ...
-        ...     docFactory = stan(render_forms).
-        """
-        if filter(lambda x: issubclass(x, annotate.TypedInterface), providedBy(self)):
-            warnings.warn("[0.5] Subclassing TypedInterface to declare annotations is deprecated. Please provide bind_* methods on your Page or Fragment subclass instead.", DeprecationWarning)
-            from formless import configurable
-            return configurable.TypedInterfaceConfigurable(self)
-        return self
-
-    def configurable_original(self, ctx):
-        """Configurable factory for use when self.original is a configurable;
-        aka it implements IConfigurable or one or more TypedInterface
-        subclasses. Usage:
-
-
-        >>> class Foo(Page):
-        ...     def __init__(self):
-        ...         self.original = SomeConfigurable()
-        ...     def render_forms(self, ctx, data):
-        ...         return renderForms('original')
-        ...     docFactory = stan(render_forms)
-        """
-        return self.original
-
-_CARRYOVER = {}
-
-
-def defaultsFactory(ctx):
-    co = _CARRYOVER.get(
-        ctx.tag.args.get('_nevow_carryover_', [None])[0], None)
-    from formless import webform
-    defaults = webform.FormDefaults()
-    if co is not None:
-        e = iformless.IFormErrors(co, {})
-        for k, v in e.items():
-            defaults.getAllDefaults(k).update(v.partialForm)
-    return defaults
-
-
-def errorsFactory(ctx):
-    co = _CARRYOVER.get(
-        ctx.tag.args.get('_nevow_carryover_', [None])[0], None)
-    from formless import webform
-    errs = webform.FormErrors()
-    if co is not None:
-        e = iformless.IFormErrors(co, {})
-        for k, v in e.items():
-            errs.updateErrors(k, v.errors)
-            errs.setError(k, v.formErrorMessage)
-    return errs
-
-
-def handFactory(ctx):
-    co = _CARRYOVER.get(
-        ctx.tag.args.get('_nevow_carryover_', [None])[0], None)
-    return inevow.IHand(co, None)
-
-
-def statusFactory(ctx):
-    co = _CARRYOVER.get(
-        ctx.tag.args.get('_nevow_carryover_', [None])[0], None)
-    return inevow.IStatusMessage(co, None)
-
-
 def originalFactory(ctx):
     return ctx.tag
 
 
-class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
+class Fragment(DataFactory, RenderFactory, MacroFactory):
     """
     This class is deprecated because it relies on context objects
     U{which are being removed from Nevow<http://divmod.org/trac/wiki/WitherContext>}.
@@ -447,7 +231,7 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
         ctx.remember(self, inevow.IData)
 
 
-class ChildLookupMixin(FreeformChildMixin):
+class ChildLookupMixin(object):
     ##
     # IResource methods
     ##
@@ -492,7 +276,7 @@ class ChildLookupMixin(FreeformChildMixin):
         if r is not None:
             return r, segments[1:]
 
-        return FreeformChildMixin.locateChild(self, ctx, segments)
+        return NotFound
 
     def childFactory(self, ctx, name):
         """Used by locateChild to return children which are generated
@@ -512,7 +296,7 @@ class ChildLookupMixin(FreeformChildMixin):
         self.children[name] = child
 
 
-class Page(Fragment, ConfigurableFactory, ChildLookupMixin):
+class Page(Fragment, ChildLookupMixin):
     """A page is the main Nevow resource and renders a document loaded
     via the document factory (docFactory).
     """
@@ -545,9 +329,6 @@ class Page(Fragment, ConfigurableFactory, ChildLookupMixin):
         self.rememberStuff(ctx)
 
         def finishRequest():
-            carryover = request.args.get('_nevow_carryover_', [None])[0]
-            if carryover is not None and _CARRYOVER.has_key(carryover):
-                del _CARRYOVER[carryover]
             if self.afterRender is not None:
                 return util.maybeDeferred(self.afterRender,ctx)
 
@@ -624,77 +405,6 @@ class Page(Fragment, ConfigurableFactory, ChildLookupMixin):
             return self
         return None
 
-    def webFormPost(self, request, res, configurable, ctx, bindingName, args):
-        """Accept a web form post, either redisplaying the original form (with
-        errors) if validation fails, or redirecting to the appropriate location after
-        the post succeeds. This hook exists specifically for formless.
-
-        New in 0.5, _nevow_carryover_ is only used if an autocallable method
-        returns a result that needs to be carried over.
-
-        New in 0.5, autocallables may return a nevow.url.URL or URLOverlay
-        instance rather than setting IRedirectAfterPost on the request.
-
-        New in 0.5, autocallables may return a Page instance to have that Page
-        instance rendered at the post target URL with no redirects at all. Useful
-        for multi-step wizards.
-        """
-        def redirectAfterPost(aspects):
-            hand = aspects.get(inevow.IHand)
-            refpath = None
-            if hand is not None:
-                if isinstance(hand, Page):
-                    refpath = url.here
-                    if 'freeform_hand' not in inevow.IRequest(ctx).prepath:
-                        refpath = refpath.child('freeform_hand')
-                if isinstance(hand, (url.URL, url.URLOverlay)):
-                    refpath, hand = hand, None
-
-            if refpath is None:
-                redirectAfterPost = request.getComponent(iformless.IRedirectAfterPost, None)
-                if redirectAfterPost is None:
-                    ref = request.getHeader('referer')
-                    if ref:
-                        refpath = url.URL.fromString(ref)
-                    else:
-                        refpath = url.here
-                else:
-                    warnings.warn("[0.5] IRedirectAfterPost is deprecated. Return a URL instance from your autocallable instead.", DeprecationWarning, 2)
-                    ## Use the redirectAfterPost url
-                    ref = str(redirectAfterPost)
-                    refpath = url.URL.fromString(ref)
-
-            if hand is not None or aspects.get(iformless.IFormErrors) is not None:
-                magicCookie = '%s%s%s' % (now(),request.getClientIP(),random.random())
-                refpath = refpath.replace('_nevow_carryover_', magicCookie)
-                _CARRYOVER[magicCookie] = C = tpc.Componentized()
-                for k, v in aspects.iteritems():
-                    C.setComponent(k, v)
-
-            destination = flat.flatten(refpath, ctx)
-            request.redirect(destination)
-            from nevow import static
-            return static.Data('You posted a form to %s' % bindingName, 'text/plain'), ()
-
-        return util.maybeDeferred(
-            configurable.postForm, ctx, bindingName, args
-        ).addCallback(
-            self.onPostSuccess, request, ctx, bindingName, redirectAfterPost
-        ).addErrback(
-            self.onPostFailure, request, ctx, bindingName, redirectAfterPost
-        )
-
-    def onPostSuccess(self, result, request, ctx, bindingName, redirectAfterPost):
-        if result is None:
-            message = "%s success." % formless.nameToLabel(bindingName)
-        else:
-            message = result
-
-        return redirectAfterPost({inevow.IHand: result, inevow.IStatusMessage: message})
-
-    def onPostFailure(self, reason, request, ctx, bindingName, redirectAfterPost):
-        reason.trap(formless.ValidateError)
-        return redirectAfterPost({iformless.IFormErrors: {bindingName: reason.value}})
 
 
 def sequence(context, data):
