@@ -53,6 +53,10 @@ try:
     from progress import progress
     from tests import testexamples
     from nevow import livetest
+
+    from athenademo import calculator
+    from athenademo import widgets
+    from athenademo import benchmark
 except ImportError, e:
     if str(e).find('No module named') != -1:
         msg = """

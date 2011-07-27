@@ -1,0 +1,62 @@
+<html xmlns:n="http://nevow.com/ns/nevow/0.1">
+    <head>
+        <n:invisible n:render="liveglue" />
+        <style type="text/css">
+            .calculator {
+                font-family: monospace;
+                margin-top: 5em;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            input {
+                width: 2em;
+                border: 1px solid #999;
+            }
+            .output {
+                border: 1px solid #999;
+                text-align: right;
+            }
+        </style>
+    </head>
+    <body>
+        <div n:render="calculator">Calculator Goes Here</div>
+
+        <table class="calculator" id="calculator" n:pattern="CalculatorPattern" n:render="liveElement"
+                xmlns:athena="http://divmod.org/ns/athena/0.7">
+            <tr>
+                <td colspan="4" class="output" id="output">0</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="button" value="C"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+            </tr>
+            <tr>
+                <td><input type="button" value="7"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="8"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="9"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="/"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+            </tr>
+            <tr>
+                <td><input type="button" value="4"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="5"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="6"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="*"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+            </tr>
+            <tr>
+                <td><input type="button" value="1"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="2"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="3"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="-"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+            </tr>
+            <tr>
+                <td><input type="button" value="0"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="."><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="="><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+                <td><input type="button" value="+"><athena:handler event="onclick" handler="buttonClicked" /></input></td>
+            </tr>
+        </table>
+    </body>
+</html>
+
