@@ -677,9 +677,6 @@ def labelAndDescriptionFromDocstring(docstring):
         return None, '\n'.join(docs)
 
 
-_typedInterfaceMetadata = {}
-
-
 class MetaTypedInterface(InterfaceClass):
     """The metaclass for TypedInterface. When TypedInterface is subclassed,
     this metaclass' __new__ method is invoked. The Typed Binding introspection
@@ -716,21 +713,14 @@ class MetaTypedInterface(InterfaceClass):
     Once the metaclass __new__ is done, the Foo class instance will have three
     properties, __methods__, __properties__, and __spec__,
     """
-    __methods__ = property(lambda self: _typedInterfaceMetadata[self, '__methods__'])
-    __id__ = property(lambda self: _typedInterfaceMetadata[self, '__id__'])
-    __properties__ = property(lambda self: _typedInterfaceMetadata[self, '__properties__'])
-    __spec__ = property(lambda self: _typedInterfaceMetadata[self, '__spec__'])
-    name = property(lambda self: _typedInterfaceMetadata[self, 'name'])
-    label = property(lambda self: _typedInterfaceMetadata[self, 'label'])
-    description = property(lambda self: _typedInterfaceMetadata[self, 'description'])
-    default = property(lambda self: _typedInterfaceMetadata.get((self, 'default'), 'DEFAULT'))
-    complexType = property(lambda self: _typedInterfaceMetadata.get((self, 'complexType'), True))
 
     def __new__(cls, name, bases, dct):
         rv = cls = InterfaceClass.__new__(cls)
-        _typedInterfaceMetadata[cls, '__id__'] = nextId()
-        _typedInterfaceMetadata[cls, '__methods__'] = methods = []
-        _typedInterfaceMetadata[cls, '__properties__'] = properties = []
+        cls.__id__ = nextId()
+        cls.__methods__ = methods = []
+        cls.__properties__ = properties = []
+        cls.default = 'DEFAULT'
+        cls.complexType = True
         possibleActions = []
         actionAttachers = []
         for key, value in dct.items():
@@ -825,21 +815,21 @@ class MetaTypedInterface(InterfaceClass):
             attacher.attachActionBindings(possibleActions)
         methods.sort(_sorter)
         properties.sort(_sorter)
-        _typedInterfaceMetadata[cls, '__spec__'] = spec = methods + properties
+        cls.__spec__ = spec = methods + properties
         spec.sort(_sorter)
-        _typedInterfaceMetadata[cls, 'name'] = name
+        cls.name = name
 
         # because attributes "label" and "description" would become Properties,
         # check for ones with an underscore prefix.
-        _typedInterfaceMetadata[cls, 'label'] = dct.get('_label', None)
-        _typedInterfaceMetadata[cls, 'description'] = dct.get('_description', None)
+        cls.label = dct.get('_label', None)
+        cls.description = dct.get('_description', None)
         defaultLabel, defaultDescription = labelAndDescriptionFromDocstring(dct.get('__doc__'))
         if defaultLabel is None:
             defaultLabel = nameToLabel(name)
-        if _typedInterfaceMetadata[cls, 'label'] is None:
-            _typedInterfaceMetadata[cls, 'label'] = defaultLabel
-        if _typedInterfaceMetadata[cls, 'description'] is None:
-            _typedInterfaceMetadata[cls, 'description'] = defaultDescription
+        if cls.label is None:
+            cls.label = defaultLabel
+        if cls.description is None:
+            cls.description = defaultDescription
 
         return rv
 
