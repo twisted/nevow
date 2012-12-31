@@ -171,13 +171,7 @@ class Logging(testutil.TestCase):
         return proto
 
     def test_oldStyle(self):
-        # need to try the new location first to make _logDateTime
-        # faking work
-        try:
-            from twisted.web import http
-        except ImportError:
-            from twisted.protocols import http
-        http._logDateTime = 'faketime' # ugly :(
+        self.site._logDateTime = 'faketime' # ugly :(
         proto = self.renderResource('/foo')
         logLines = proto.site.logFile.getvalue().splitlines()
         self.assertEquals(len(logLines), 1)
