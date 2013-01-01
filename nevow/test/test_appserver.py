@@ -170,14 +170,20 @@ class Logging(testutil.TestCase):
         assert proto.transport.disconnecting
         return proto
 
+
+    def setSiteTime(self, when):
+        """
+        Forcibly override the current time as known by C{self.site}.
+
+        This relies on knowledge of private details of
+        L{twisted.web.server.Site}.  It would be nice if there were an API on
+        that class for doing this more properly, to facilitate testing.
+        """
+        self.site._logDateTime = when
+
+
     def test_oldStyle(self):
-        # need to try the new location first to make _logDateTime
-        # faking work
-        try:
-            from twisted.web import http
-        except ImportError:
-            from twisted.protocols import http
-        http._logDateTime = 'faketime' # ugly :(
+        self.setSiteTime('faketime')
         proto = self.renderResource('/foo')
         logLines = proto.site.logFile.getvalue().splitlines()
         self.assertEquals(len(logLines), 1)

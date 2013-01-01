@@ -79,7 +79,7 @@ class Test404(testutil.TestCase):
         def later((code, html)):
             self.assertEquals(rend.FourOhFour.notFound, html)
             self.assertEquals(code, 404)
-            fe = log.flushErrors(BrokenException)
+            fe = self.flushLoggedErrors(BrokenException)
             self.assertEquals(len(fe), 1)
         return renderResource('/foo', notFoundHandler=BadNotFoundHandler()).addCallback(later)
 
