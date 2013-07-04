@@ -406,8 +406,9 @@ Divmod.UnitTest.TestCase.methods(
      * @param expectedError: The error type (class or prototype) which is
      * expected to be thrown.
      *
-     * @param callable: A no-argument callable which is expected to throw
-     * C{expectedError}.
+     * @param callable: A callable which is expected to throw C{expectedError}.
+     *
+     * @param ...: Optional positional arguments passed to C{callable}.
      *
      * @throw AssertionError: Thrown if the callable doesn't throw
      * C{expectedError}. This could be because it threw a different error or
@@ -415,10 +416,11 @@ Divmod.UnitTest.TestCase.methods(
      *
      * @return: The exception that was raised by callable.
      */
-    function assertThrows(self, expectedError, callable) {
+    function assertThrows(self, expectedError, callable /*... */) {
         var threw = null;
+        var args = Array.prototype.slice.call(arguments, 3);
         try {
-            callable();
+            callable.apply(null, args);
         } catch (e) {
             threw = e;
             self.assert(e instanceof expectedError,

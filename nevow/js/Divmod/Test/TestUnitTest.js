@@ -123,6 +123,33 @@ Divmod.Test.TestUnitTest.AssertionTests.methods(
 
 
     /**
+     * L{assertThrows} passes additional varargs to C{callable}.
+     */
+    function test_assertThrowsVarargs(self) {
+        var args = [];
+        function foo(a, b, c) {
+            args.push(a);
+            args.push(b);
+            args.push(c);
+            throw Divmod.UnitTest.AssertionError();
+        }
+
+        var expectedArgs = [1, 'two', [3, 3, 3]];
+        try {
+            self.assertThrows(
+                Divmod.UnitTest.AssertionError,
+                foo,
+                expectedArgs[0],
+                expectedArgs[1],
+                expectedArgs[2]);
+        } catch (e) {
+            self.fail("assertThrows should have passed: " + e.message);
+        }
+        self.assertArraysEqual(args, expectedArgs);
+    },
+
+
+    /**
      * Test that L{compare} does not raise an exception if its callable
      * returns C{true}.
      */
