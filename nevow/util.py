@@ -147,7 +147,7 @@ def getPOSTCharset(ctx):
     return 'utf-8'
 
 
-from twisted.python.reflect import qual, namedAny, allYourBase, accumulateBases
+from twisted.python.reflect import qual, namedAny
 from twisted.python.util import uniquify
 
 from twisted.internet.defer import Deferred, succeed, maybeDeferred, DeferredList
