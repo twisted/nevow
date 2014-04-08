@@ -1061,23 +1061,69 @@ Divmod.Runtime.WebKit.methods(
         return new XMLHttpRequest();
     });
 
-Divmod.Runtime.InternetExplorer = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorer");
 
-Divmod.Runtime.InternetExplorer.isThisTheOne = function isThisTheOne() {
+
+Divmod.Runtime._internetExplorerVersion = function _internetExplorerVersion() {
     try {
-        return navigator.appName == "Microsoft Internet Explorer";
+        // http://msdn.microsoft.com/en-us/library/ms537509%28v=vs.85%29.aspx
+        var userAgent = navigator.userAgent;
+        var result = userAgent.match(/MSIE ([0-9]+[\.0-9]*)/);
+        if (result === null && navigator.appName === 'Netscape') {
+            // We might be IE 11.
+            result = userAgent.match(/Trident\/.*rv:([0-9]+[\.0-9])/);
+        }
+        if (result === null) {
+            return null;
+        }
+        return parseFloat(result[1]);
     } catch (err) {
         if (err instanceof ReferenceError) {
-            return false;
+            return null;
         } else {
             throw err;
         }
     }
 };
 
-Divmod.Runtime.InternetExplorer.methods(
+
+
+Divmod.Runtime.InternetExplorerModern = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorerModern");
+
+Divmod.Runtime.InternetExplorerModern.isThisTheOne = function isThisTheOne() {
+    var version = Divmod.Runtime._internetExplorerVersion();
+    return version !== null && version >= 10;
+};
+
+Divmod.Runtime.InternetExplorerModern.methods(
     function __init__(self) {
-        Divmod.Runtime.InternetExplorer.upcall(self, '__init__', 'Internet Explorer');
+        Divmod.Runtime.InternetExplorerModern.upcall(
+            self, '__init__', 'Internet Explorer 10+');
+        self._xmlparser = Divmod.Runtime._XMLParser();
+    },
+
+
+    function parseXHTMLString(self, s) {
+        return self._xmlparser.parseXHTMLString(s);
+    },
+
+
+    function makeHTTPRequest(self) {
+        return new XMLHttpRequest();
+    });
+
+
+
+Divmod.Runtime.InternetExplorerSemiModern = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorerSemiModern");
+
+Divmod.Runtime.InternetExplorerSemiModern.isThisTheOne = function isThisTheOne() {
+    var version = Divmod.Runtime._internetExplorerVersion();
+    return version !== null && version >= 8 && version < 10;
+};
+
+Divmod.Runtime.InternetExplorerSemiModern.methods(
+    function __init__(self) {
+        Divmod.Runtime.InternetExplorerSemiModern.upcall(
+            self, '__init__', 'Internet Explorer 8/9');
         // IE has no equivalent to the stacktrace that FF provides, so this
         // JSON adapter will provide a dummy object to make Athena happy when
         // it tries to send exceptions from the client to the server
@@ -1094,15 +1140,6 @@ Divmod.Runtime.InternetExplorer.methods(
                 };
             }
         );
-
-        /* IE rewrites attributes with names matching these
-           keys to their corresponding values.
-           e.g. class -> className, etc
-         */
-        self.attrNameToMangled = {"class": "className",
-                                  "checked": "defaultChecked",
-                                  "usemap": "useMap",
-                                  "for": "htmlFor"};
     },
 
     function parseXHTMLString(self, s) {
@@ -1139,21 +1176,7 @@ Divmod.Runtime.InternetExplorer.methods(
     },
 
     function makeHTTPRequest(self) {
-        if (!self._xmlhttpname) {
-            var names = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
-            while (names.length) {
-                self._xmlhttpname = names.shift();
-                try {
-                    return self.makeHTTPRequest();
-                } catch (e) {
-                    // pass
-                }
-            }
-            self._xmlhttpname = null;
-            throw new Error("No support XML HTTP Request thingy on this platform");
-        } else {
-            return new ActiveXObject(self._xmlhttpname);
-        }
+        return new XMLHttpRequest();
     },
 
     /**
@@ -1205,6 +1228,47 @@ Divmod.Runtime.InternetExplorer.methods(
      */
     function addBeforeUnloadHandler(self, aWindow, handler) {
         Divmod.Base.addToCallStack(aWindow.document.body, 'onbeforeunload', handler);
+    });
+
+
+
+Divmod.Runtime.InternetExplorerLegacy = Divmod.Runtime.InternetExplorerSemiModern.subclass("Divmod.Runtime.InternetExplorerLegacy");
+
+Divmod.Runtime.InternetExplorerLegacy.isThisTheOne = function isThisTheOne() {
+    var version = Divmod.Runtime._internetExplorerVersion();
+    return version !== null && version < 8;
+};
+
+Divmod.Runtime.InternetExplorerLegacy.methods(
+    function __init__(self) {
+        Divmod.Runtime.InternetExplorerLegacy.upcall(
+            self, '__init__', 'Internet Explorer 6/7');
+        /* IE rewrites attributes with names matching these
+           keys to their corresponding values.
+           e.g. class -> className, etc
+         */
+        self.attrNameToMangled = {"class": "className",
+                                  "checked": "defaultChecked",
+                                  "usemap": "useMap",
+                                  "for": "htmlFor"};
+    },
+
+    function makeHTTPRequest(self) {
+        if (!self._xmlhttpname) {
+            var names = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
+            while (names.length) {
+                self._xmlhttpname = names.shift();
+                try {
+                    return self.makeHTTPRequest();
+                } catch (e) {
+                    // pass
+                }
+            }
+            self._xmlhttpname = null;
+            throw new Error("No support XML HTTP Request thingy on this platform");
+        } else {
+            return new ActiveXObject(self._xmlhttpname);
+        }
     });
 
 
@@ -1274,8 +1338,10 @@ Divmod.Runtime.Opera.methods(
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
     var platforms = [
         Divmod.Runtime.WebKit,
+        Divmod.Runtime.InternetExplorerModern,
         Divmod.Runtime.Firefox,
-        Divmod.Runtime.InternetExplorer,
+        Divmod.Runtime.InternetExplorerSemiModern,
+        Divmod.Runtime.InternetExplorerLegacy,
         Divmod.Runtime.Opera,
         Divmod.Runtime.Spidermonkey];
     for (var cls = 0; cls < platforms.length; ++cls) {
