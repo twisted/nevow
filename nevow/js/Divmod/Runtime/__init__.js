@@ -743,99 +743,8 @@ Divmod.Runtime.Spidermonkey.isThisTheOne = function isSpidermonkeyTheOne() {
 };
 
 
-Divmod.Runtime.XPathSupportingPlatform = Divmod.Runtime.Platform.subclass(
-    'Divmod.Runtime.XPathSupportingPlatform');
-Divmod.Runtime.XPathSupportingPlatform.methods(
-    function _nsResolver(self, prefix) {
-        var ns;
-        switch(prefix) {
-            case 'html':
-                ns = 'http://www.w3.org/1999/xhtml';
-                break;
-            case 'athena':
-                ns = 'http://divmod.org/ns/athena/0.7';
-                break;
-            default:
-                // this should never happen, but browsers still suck...
-                ns = null;
-        }
-        return ns;
-    },
 
-    function _xpathNodeByAttribute(self, attrName, attrValue) {
-        var upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        var lower = upper.toLowerCase();
-        return (
-            ".//*[@*[translate(name(),'" + upper + "', '" + lower + "')='" +
-            attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'" +
-            upper + "', '" + lower + "')='" + attrName + "']='" + attrValue +
-            "']");
-    },
-
-    function firstNodeByAttribute(self, root, attrName, attrValue) {
-        /* duplicate this here rather than adding an "onlyOne" arg to
-           nodesByAttribute so adding an extra arg accidentally doesn't change
-           it's behaviour if called directly
-        */
-        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
-        var node = document.evaluate(
-            xpath,
-            root,
-            null,
-            XPathResult.FIRST_ORDERED_NODE_TYPE,
-            null
-        ).singleNodeValue;
-        if (!node) {
-            throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
-        }
-        return node;
-    },
-
-    function nodeByAttribute(self, root, attrName, attrValue, /* optional */ defaultNode){
-        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
-        var nodes = document.evaluate(
-            xpath,
-            root,
-            null,
-            XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
-            null
-        );
-        if (nodes.snapshotLength > 1) {
-            throw new Error("Found too many " + attrName + " = " + attrValue);
-        }
-        else if (nodes.snapshotLength < 1) {
-            if (defaultNode === undefined) {
-                throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
-            }
-            else {
-                return defaultNode;
-            }
-        }
-        else {
-            var result = nodes.snapshotItem(0);
-            return result;
-        }
-    },
-
-    function nodesByAttribute(self, root, attrName, attrValue) {
-        var results = [];
-        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
-        var nodes = document.evaluate(
-            xpath,
-            root,
-            null,
-            XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-            null
-        );
-        var node = nodes.iterateNext();
-        while(node){
-            results.push(node);
-            node = nodes.iterateNext();
-        }
-        return results;
-    });
-
-Divmod.Runtime.Firefox = Divmod.Runtime.XPathSupportingPlatform.subclass(
+Divmod.Runtime.Firefox = Divmod.Runtime.Platform.subclass(
     'Divmod.Runtime.Firefox');
 
 Divmod.Runtime.Firefox.isThisTheOne = function isThisTheOne() {
@@ -1272,7 +1181,7 @@ Divmod.Runtime.InternetExplorerLegacy.methods(
     });
 
 
-Divmod.Runtime.Opera = Divmod.Runtime.XPathSupportingPlatform.subclass("Divmod.Runtime.Opera");
+Divmod.Runtime.Opera = Divmod.Runtime.Platform.subclass("Divmod.Runtime.Opera");
 
 Divmod.Runtime.Opera.isThisTheOne = function isThisTheOne() {
     try {
