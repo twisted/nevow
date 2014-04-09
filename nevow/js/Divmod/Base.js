@@ -174,10 +174,11 @@ Divmod.Base.AdapterRegistry.methods(
             If no suitable adapter is found, throws NotFound.
 
         ***/
+        var args = Array.prototype.slice.call(arguments, 1);
         for (var i = 0; i < self.pairs.length; i++) {
             var pair = self.pairs[i];
-            if (pair[1].apply(self, arguments)) {
-                return pair[2].apply(self, arguments);
+            if (pair[1].apply(self, args)) {
+                return pair[2].apply(self, args);
             }
         }
         throw Divmod.Base.NotFound;
