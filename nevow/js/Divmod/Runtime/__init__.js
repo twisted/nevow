@@ -1052,6 +1052,29 @@ Divmod.Runtime.InternetExplorerModern.methods(
     },
 
 
+    function appendNodeContent(self, node, innerHTML) {
+        var head = document.getElementsByTagName('head').item(0);
+        var doc = self.parseXHTMLString(innerHTML);
+        var scripts = doc.getElementsByTagName('script');
+
+        while (scripts.length > 0) {
+            var oldScript = scripts[0].parentNode.removeChild(scripts[0]);
+            var src = oldScript.getAttribute('src');
+            var text = oldScript.text;
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            if(src != '' && src != null){
+                script.src = src;
+            }
+            else if(text != '' && text != null){
+                script.text = text;
+            }
+            head.appendChild(script);
+        }
+        node.appendChild(document.importNode(doc.documentElement, true));
+    },
+
+
     function parseXHTMLString(self, s) {
         return self._xmlparser.parseXHTMLString(s);
     },
