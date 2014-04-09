@@ -71,6 +71,49 @@ Divmod.Runtime._getElementByIdWithDocument = function _getElementByIdWithDocumen
     return foundNode;
 };
 
+
+
+/**
+ * Get a document by ID, falling back to using L{_getElementByIdWithDocument}
+ * if it's not found in its owner document.
+ */
+Divmod.Runtime._getElementByIdWithNode = function _getElementByIdWithNode (node, doc, id) {
+    var foundNode = node.ownerDocument.getElementById(id);
+    if (foundNode === null) {
+        // We didn't find it, maybe we need a workaround.
+        // Let's insert ourselves into the document temporarily.
+        foundNode = Divmod.Runtime._getElementByIdWithDocument(node, doc, id);
+    }
+
+    if (foundNode === null) {
+        throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
+    }
+
+    return foundNode;
+};
+
+
+
+/**
+ * Register a standard L{Error} JSON serializer.
+ */
+Divmod.Runtime._registerStandardErrorSerializer = function _registerStandardErrorSerializer() {
+    Divmod.Base.registerJSON(
+        'Error',
+        function (obj) {
+            return obj instanceof Error;
+        },
+        function (obj) {
+            return {
+                'name': obj.name,
+                'message': obj.message,
+                'stack': obj.stack || "No stacktrace available\n"
+            };
+        });
+};
+
+
+
 /**
  * XML parser for platforms which have the builtin "DOMParser" object.
  */
@@ -487,6 +530,7 @@ Divmod.Runtime.Platform.methods(
         throw new Error("makeHTTPRequest is unimplemented on " + self);
     },
 
+
     /**
      * Asynchronously retrieve an HTTP resource.
      *
@@ -765,6 +809,7 @@ Divmod.Runtime.Firefox.methods(
         self._xmlparser = Divmod.Runtime._XMLParser();
         self._scriptCounter = 0;
         self._scriptDeferreds = {};
+        Divmod.Runtime._registerStandardErrorSerializer();
     },
 
     function makeHTML(self, element) {
@@ -868,6 +913,7 @@ Divmod.Runtime.Firefox.methods(
         return self._scriptDeferreds[scriptID];
     },
 
+
     function _scriptLoaded(self, scriptID) {
         var script = document.getElementById(scriptID);
         script.parentNode.removeChild(script);
@@ -877,6 +923,7 @@ Divmod.Runtime.Firefox.methods(
         loaded.callback(null);
     },
 
+
     function _scriptError(self, scriptID, error) {
         var script = document.getElementById(scriptID);
         script.parentNode.removeChild(script);
@@ -884,7 +931,13 @@ Divmod.Runtime.Firefox.methods(
         var loaded = self._scriptDeferreds[scriptID];
         delete self._scriptDeferreds[scriptID];
         loaded.errback(Divmod.Runtime.ScriptLoadingError(error));
+    },
+
+
+    function getElementByIdWithNode(self, node, id) {
+        return Divmod.Runtime._getElementByIdWithNode(node, document, id);
     });
+
 
 
 Divmod.Runtime.WebKit = Divmod.Runtime.Platform.subclass(
@@ -942,19 +995,7 @@ Divmod.Runtime.WebKit.methods(
     },
 
     function getElementByIdWithNode(self, node, id) {
-        var foundNode = node.ownerDocument.getElementById(id);
-        if (foundNode === null) {
-            // We didn't find it, maybe we need a workaround.
-            // Let's insert ourselves into the document temporarily.
-            foundNode = Divmod.Runtime._getElementByIdWithDocument(
-                node, document, id);
-        }
-
-        if (foundNode === null) {
-            throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
-        }
-
-        return foundNode;
+        return Divmod.Runtime._getElementByIdWithNode(node, document, id);
     },
 
     function parseXHTMLString(self, s) {
@@ -1016,8 +1057,8 @@ Divmod.Runtime.InternetExplorerModern.methods(
     },
 
 
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
+    function getElementByIdWithNode(self, node, id) {
+        return Divmod.Runtime._getElementByIdWithNode(node, document, id);
     });
 
 
@@ -1033,23 +1074,9 @@ Divmod.Runtime.InternetExplorerSemiModern.methods(
     function __init__(self) {
         Divmod.Runtime.InternetExplorerSemiModern.upcall(
             self, '__init__', 'Internet Explorer 8/9');
-        // IE has no equivalent to the stacktrace that FF provides, so this
-        // JSON adapter will provide a dummy object to make Athena happy when
-        // it tries to send exceptions from the client to the server
-        Divmod.Base.registerJSON(
-            'Error',
-            function(obj) {
-                return obj instanceof Error;
-            },
-            function(obj) {
-                return {
-                    'name': obj.name,
-                    'message': obj.message,
-                    'stack': 'No stacktrace available\n'
-                };
-            }
-        );
+        Divmod.Runtime._registerStandardErrorSerializer();
     },
+
 
     function parseXHTMLString(self, s) {
         var xmldoc = new ActiveXObject("MSXML.DOMDocument");
@@ -1060,6 +1087,7 @@ Divmod.Runtime.InternetExplorerSemiModern.methods(
         }
         return xmldoc;
     },
+
 
     function appendNodeContent(self, node, innerHTML) {
         var head = document.getElementsByTagName('head').item(0);
@@ -1105,6 +1133,7 @@ Divmod.Runtime.InternetExplorerSemiModern.methods(
         return tmpNode.firstChild.cloneNode(deep);
     },
 
+
     function getElementByIdWithNode(self, node, id) {
         var foundNode = node.ownerDocument.getElementById(id);
         if (foundNode == null) {
@@ -1131,6 +1160,7 @@ Divmod.Runtime.InternetExplorerSemiModern.methods(
 
         return foundNode;
     },
+
 
     /**
      * Add the handler to the <body> element instead.
@@ -1162,6 +1192,7 @@ Divmod.Runtime.InternetExplorerLegacy.methods(
                                   "for": "htmlFor"};
     },
 
+
     function makeHTTPRequest(self) {
         if (!self._xmlhttpname) {
             var names = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
@@ -1179,6 +1210,7 @@ Divmod.Runtime.InternetExplorerLegacy.methods(
             return new ActiveXObject(self._xmlhttpname);
         }
     });
+
 
 
 Divmod.Runtime.Opera = Divmod.Runtime.Platform.subclass("Divmod.Runtime.Opera");
