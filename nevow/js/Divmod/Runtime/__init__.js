@@ -526,8 +526,9 @@ Divmod.Runtime.Platform.methods(
         return null;
     },
 
+
     function makeHTTPRequest(self) {
-        throw new Error("makeHTTPRequest is unimplemented on " + self);
+        return new XMLHttpRequest();
     },
 
 
@@ -887,9 +888,6 @@ Divmod.Runtime.Firefox.methods(
         node.appendChild(document.importNode(doc.documentElement, true));
     },
 
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
-    },
 
     /**
      * Load the JavaScript module at the given URL.
@@ -1022,10 +1020,6 @@ Divmod.Runtime.WebKit.methods(
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
         node.appendChild(document.importNode(doc.documentElement, true));
-    },
-
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
     });
 
 
@@ -1152,9 +1146,6 @@ Divmod.Runtime.InternetExplorerSemiModern.methods(
         node.innerHTML += doc.xml;
     },
 
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
-    },
 
     /**
      * Simulate importNode by rebuilding the node contents in a node created in
@@ -1308,10 +1299,6 @@ Divmod.Runtime.Opera.methods(
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
         node.appendChild(document.importNode(doc.documentElement, true));
-    },
-
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
     });
 
 
