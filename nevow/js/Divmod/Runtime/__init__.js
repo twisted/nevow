@@ -836,6 +836,23 @@ Divmod.Runtime.Firefox.methods(
         return HTML_ELEMENT;
     },
 
+
+    function _nsResolver(self, prefix) {
+        var ns;
+        switch (prefix) {
+            case 'html':
+                ns = 'http://www.w3.org/1999/xhtml';
+                break;
+            case 'athena':
+                ns = 'http://divmod.org/ns/athena/0.7';
+                break;
+            default:
+                // this should never happen, but browsers still suck...
+                ns = null;
+        }
+        return ns;
+    },
+
     function parseXHTMLString(self, s) {
         return self._xmlparser.parseXHTMLString(s);
     },
