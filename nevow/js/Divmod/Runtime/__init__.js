@@ -757,6 +757,14 @@ Divmod.Runtime.Platform.namedMethods({
      */
     'addBeforeUnloadHandler': function (self, aWindow, handler) {
         Divmod.Base.addToCallStack(aWindow, 'onbeforeunload', handler);
+    },
+
+
+    /**
+     * Is this a legacy browser?
+     */
+    'isLegacy': function (self) {
+        return false;
     }
 });
 
@@ -1225,6 +1233,11 @@ Divmod.Runtime.InternetExplorerLegacy.methods(
                                   "checked": "defaultChecked",
                                   "usemap": "useMap",
                                   "for": "htmlFor"};
+    },
+
+
+    function isLegacy(self) {
+        return true;
     },
 
 
