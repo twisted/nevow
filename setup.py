@@ -81,5 +81,8 @@ setup(
             'nevow.test.test_package.Foo.Baz': [
                 '*.js'
                 ],
-            }
+            },
+    install_requires=[
+        "twisted>=13.0",
+        ],
 )
