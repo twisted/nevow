@@ -188,7 +188,14 @@ class JavaScriptTests(TestCase):
         An error should be reported if the JavaScript interpreter exits because
         it received a signal.
         """
-        segfault = FilePath(__file__).sibling('segfault.py')
+        segfault = FilePath(self.mktemp())
+        segfault.setContent("""\
+#!/usr/bin/python
+# Generate an unhandled SIGSEGV for this process immediately upon import.
+
+import os, signal
+os.kill(os.getpid(), signal.SIGSEGV)
+""")
 
         def stubFinder():
             return sys.executable
