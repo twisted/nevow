@@ -2,10 +2,7 @@
 
 from nevow import __version__ as version
 
-try:
-    import setuptools
-except ImportError:
-    setuptools = None
+from setuptools import setup, find_packages
 
 import os
 data_files=[]
@@ -83,54 +80,11 @@ setupdict = {
             }
 }
 
-if setuptools:
-    # Importing setuptools worked -- then we do the following setup script:
-    from setuptools import setup, find_packages
+setupdict['packages'] = find_packages()
+setupdict['include_package_data'] = True
 
-    setupdict['packages'] = find_packages()
-    setupdict['include_package_data'] = True
-else:
-    # No setuptools -- decide where the data files should go and explicitly list
-    # the packages.
-
-    from distutils.core import setup
-
-    import os.path
-    import glob
-    import sys
-
-    # Where should our data files go?
-    # They want to go in our package directory , which is under site-packages.
-    # We determine the location of site-packages here, for later use. It will be
-    # interpreted as relative to sys.prefix.
-
-    # This junk can go once we decide to drop Python 2.3 support or switch to
-    # requiring setuptools. package_data is a much cleaner solution.
-    if sys.platform.lower().startswith('win'):
-        site_packages = 'Lib/site-packages/'
-    else:
-        version = '.'.join([str(i) for i in sys.version_info[:2]])
-        site_packages = 'lib/python' + version + '/site-packages/'
-
-    # Turn the package_data into a data_files for 2.3 compatability
-    setupdict['data_files'] = []
-    for pkg, patterns in setupdict['package_data'].items():
-        pkgdir = os.path.join(*pkg.split('.'))
-        for pattern in patterns:
-            globdir = os.path.dirname(pattern)
-            files = glob.glob(os.path.join(pkgdir, pattern))
-            setupdict['data_files'].append((os.path.join(site_packages,pkgdir,globdir),files))
-
-    # We need to list the packages explicitly.
-    setupdict['packages'] = [
-        'formless', 'formless.test', 'nevow', 'nevow.flat',
-        'nevow.scripts', 'nevow.test', 'nevow.taglibrary',
-        'nevow.plugins', 'nevow.livetrial', 'twisted.plugins']
-
-if setuptools is not None:
-    from distutils.command.sdist import sdist
-    setupdict['cmdclass'] = {'sdist': sdist}
-
+from distutils.command.sdist import sdist
+setupdict['cmdclass'] = {'sdist': sdist}
 
 setup(**setupdict)
 
