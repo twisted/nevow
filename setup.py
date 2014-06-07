@@ -3,6 +3,7 @@
 from nevow import __version__ as version
 
 from setuptools import setup, find_packages
+from distutils.command.sdist import sdist
 
 import os
 data_files=[]
@@ -16,16 +17,19 @@ for (dirpath, dirnames, filenames) in os.walk("doc"):
 
 data_files.append((os.path.join('twisted', 'plugins'), [os.path.join('twisted', 'plugins', 'nevow_widget.py')]))
 
-setupdict = {
-    'name': 'Nevow',
-    'version': version,
-    'maintainer': 'Divmod, Inc.',
-    'maintainer_email': 'support@divmod.org',
-    'description': 'Web Application Construction Kit',
-    'url': 'http://divmod.org/trac/wiki/DivmodNevow',
-    'license': 'MIT',
-    'platforms': ["any"],
-    'classifiers': [
+setup(
+    name='Nevow',
+    version=version,
+    packages=find_packages(),
+    include_package_data=True,
+    cmdclass={'sdist': sdist},
+    maintainer='Divmod, Inc.',
+    maintainer_email='support@divmod.org',
+    description='Web Application Construction Kit',
+    url='http://divmod.org/trac/wiki/DivmodNevow',
+    license='MIT',
+    platforms=["any"],
+    classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Framework :: Twisted",
         "Intended Audience :: Developers",
@@ -34,9 +38,9 @@ setupdict = {
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Software Development :: Libraries",
         ],
-    'scripts': ['bin/nevow-xmlgettext', 'bin/nit'],
-    'data_files': data_files,
-    'package_data': {
+    scripts=['bin/nevow-xmlgettext', 'bin/nit'],
+    data_files=data_files,
+    package_data={
             'formless': [
                 'freeform-default.css'
                 ],
@@ -78,13 +82,4 @@ setupdict = {
                 '*.js'
                 ],
             }
-}
-
-setupdict['packages'] = find_packages()
-setupdict['include_package_data'] = True
-
-from distutils.command.sdist import sdist
-setupdict['cmdclass'] = {'sdist': sdist}
-
-setup(**setupdict)
-
+)
