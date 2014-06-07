@@ -20,14 +20,14 @@ for (dirpath, dirnames, filenames) in os.walk("doc"):
 data_files.append((os.path.join('twisted', 'plugins'), [os.path.join('twisted', 'plugins', 'nevow_widget.py')]))
 
 setupdict = {
-    'name': 'Nevow', 
+    'name': 'Nevow',
     'version': version,
-    'maintainer': 'Divmod, Inc.', 
-    'maintainer_email': 'support@divmod.org', 
-    'description': 'Web Application Construction Kit', 
-    'url': 'http://divmod.org/trac/wiki/DivmodNevow', 
-    'license': 'MIT', 
-    'platforms': ["any"], 
+    'maintainer': 'Divmod, Inc.',
+    'maintainer_email': 'support@divmod.org',
+    'description': 'Web Application Construction Kit',
+    'url': 'http://divmod.org/trac/wiki/DivmodNevow',
+    'license': 'MIT',
+    'platforms': ["any"],
     'classifiers': [
         "Development Status :: 5 - Production/Stable",
         "Framework :: Twisted",
