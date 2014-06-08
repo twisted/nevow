@@ -220,3 +220,7 @@ __all__ = [
     'accessors', 'appserver', 'blocks', 'canvas', 'context', 'dirlist', 'entities', 'events', 'failure', 'guard', 'inevow',
     'loaders', 'rend', 'scripts', 'stan', 'static', 'tags', 'test', 'testutil', 'url', 'util', 'vhost', 'flat'
 ]
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions

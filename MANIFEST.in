@@ -22,3 +22,5 @@ include nevow/canvas.as
 include win32/*
 prune */.svn 
 prune doc/html/*.html
+include versioneer.py
+include nevow/_version.py
