@@ -1,9 +1,13 @@
 #!/usr/bin/python
 
-from nevow import __version__ as version
+import versioneer
+versioneer.VCS = 'git'
+versioneer.versionfile_source = 'nevow/_version.py'
+versioneer.versionfile_build = 'nevow/_version.py'
+versioneer.tag_prefix = 'nevow-'
+versioneer.parentdir_prefix = 'Nevow-'
 
 from setuptools import setup, find_packages
-from distutils.command.sdist import sdist
 
 import os
 data_files=[]
@@ -19,10 +23,10 @@ data_files.append((os.path.join('twisted', 'plugins'), [os.path.join('twisted', 
 
 setup(
     name='Nevow',
-    version=version,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(),
     include_package_data=True,
-    cmdclass={'sdist': sdist},
     maintainer='Divmod, Inc.',
     maintainer_email='support@divmod.org',
     description='Web Application Construction Kit',
