@@ -52,8 +52,7 @@ the twisted daemon::
 More Information
 ----------------
 
-Nevow is an active project, and many new bugfixes and features are committed to the Nevow SVN repository.
-Information about `Nevow commits`_ is available on github.
+Information about `Nevow commits`_ is available on GitHub.
 The Nevow git repository can be checked out using::
 
   git clone https://github.com/twisted/nevow.git
