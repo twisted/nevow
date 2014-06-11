@@ -52,18 +52,16 @@ the twisted daemon::
 More Information
 ----------------
 
-Nevow is an active project, and many new bugfixes and features are committed to
-the Nevow SVN repository. Information about Nevow commits is available by
-subscribing to the `Nevow commits`_ mailing list. The Nevow SVN repository can
-be checked out using::
+Information about `Nevow commits`_ is available on GitHub.
+The Nevow git repository can be checked out using::
 
-  svn co http://divmod.org/svn/Divmod/trunk/Nevow Nevow
+  git clone https://github.com/twisted/nevow.git
 
 Discussion of Nevow occurs on the `twisted.web mailing list`_. The Nevow
 developers are also often available for real-time help on the `#twisted.web
 channel`_ on irc.freenode.net.
 
-.. _`Nevow commits`: http://divmod.org/users/mailman.twistd/listinfo/nevow-commits
+.. _`Nevow commits`: https://github.com/twisted/nevow/commits/master
 .. _`twisted.web mailing list`: http://twistedmatrix.com/cgi-bin/mailman/listinfo/twisted-web
 .. _`#twisted.web channel`: irc://irc.freenode.net/#twisted.web
 .. _`COMET`: http://alex.dojotoolkit.org/?p=545
