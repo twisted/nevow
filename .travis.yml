@@ -5,11 +5,8 @@ python:
   - "2.7"
 
 install:
-  - |
-    python setup.py --version
-  - |
-    pip install --editable .
+  - "python setup.py --version"
+  - "pip install --editable ."
 
 script:
-  - |
-  trial formless nevow
+  - "trial formless nevow"
