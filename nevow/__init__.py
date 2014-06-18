@@ -3,9 +3,13 @@
 # See LICENSE for details.
 
 from nevow._version import get_versions
-__version__ = get_versions()["full"]
-__version_info__ = tuple(__version__.split("-", 1)[0].split("."))
+__version__ = get_versions()["version"]
+__version_info__ = tuple(int(part) for part in __version__.split("-", 1)[0].split(".")[:3])
 del get_versions
+
+from twisted.python.versions import Version
+version = Version("nevow", *__version_info__)
+del Version
 
 import sys
 from twisted.python.components import registerAdapter
@@ -219,9 +223,5 @@ loadFlatteners(flatteners)
 
 __all__ = [
     'accessors', 'appserver', 'blocks', 'canvas', 'context', 'dirlist', 'entities', 'events', 'failure', 'guard', 'inevow',
-    'loaders', 'rend', 'scripts', 'stan', 'static', 'tags', 'test', 'testutil', 'url', 'util', 'vhost', 'flat'
+    'loaders', 'rend', 'scripts', 'stan', 'static', 'tags', 'test', 'testutil', 'url', 'util', 'vhost', 'flat', 'version',
 ]
-
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
