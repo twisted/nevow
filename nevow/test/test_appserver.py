@@ -153,10 +153,10 @@ class Logging(testutil.TestCase):
             def renderHTTP(self, ctx):
                 return "boring"
         self.site = appserver.NevowSite(Res1())
+        self.site.startFactory()
+        self.addCleanup(self.site.stopFactory)
         self.site.logFile = StringIO()
 
-    def tearDown(self):
-        del self.site
 
     def renderResource(self, path):
         """@todo: share me"""
@@ -188,8 +188,11 @@ class Logging(testutil.TestCase):
         logLines = proto.site.logFile.getvalue().splitlines()
         self.assertEquals(len(logLines), 1)
         # print proto.transport.data.getvalue()
-        self.assertEquals(logLines,
-                          ['fakeaddress2 - - faketime "GET /foo HTTP/1.0" 200 6 "fakerefer" "fakeagent"'])
+        self.assertEquals(
+            logLines,
+            ['"fakeaddress2" - - faketime "GET /foo HTTP/1.0" 200 6 '
+             '"fakerefer" "fakeagent"'])
+
 
     def test_newStyle(self):
         class FakeLogger(object):
