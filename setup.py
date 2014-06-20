@@ -19,13 +19,12 @@ for (dirpath, dirnames, filenames) in os.walk("doc"):
         thesedocs.append(os.path.join(dirpath, fname))
     data_files.append((dirpath, thesedocs))
 
-data_files.append((os.path.join('twisted', 'plugins'), [os.path.join('twisted', 'plugins', 'nevow_widget.py')]))
-
 setup(
     name='Nevow',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(),
+    py_modules=["twisted.plugins.nevow_widget"],
     include_package_data=True,
     author='Divmod, Inc.',
     author_email='support@divmod.org',
