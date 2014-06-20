@@ -91,4 +91,5 @@ setup(
     install_requires=[
         "twisted>=13.0",
         ],
+    zip_safe=False,
 )
