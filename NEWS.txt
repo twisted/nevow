@@ -1,3 +1,19 @@
+0.11.0 (2014-06-20):
+  - nevow.json now always emits escaped forms of U+2028 and U+2029.
+  - formless now works with recent versions of zope.interface without
+    triggering warnings.
+  - Several problems in the test suite which resulted in failing tests when
+    using recent versions of Twisted are now fixed.
+  - The JavaScript API Divmod.UnitTest.TestCase.assertThrows now accepts
+    variable arguments to be passed on to the API under test.
+  - Nevow now unconditionally depends on setuptools for packaging.
+  - Nevow now uses python-versioneer for version management.
+  - Nevow now requires Twisted 13.0 or newer.
+  - The dangerous testing helper module nevow.test.segfault has been removed.
+  - Nevow is now hosted on Github: https://github.com/twisted/nevow
+  - Nevow now uses travis-ci for continuous integration:
+    https://travis-ci.org/twisted/nevow
+
 0.10.0 (2009-11-25):
   - Added a system for CSS dependency declarations similar to the one in
     Athena for JavaScript.
