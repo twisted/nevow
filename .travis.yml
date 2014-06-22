@@ -13,14 +13,13 @@ env:
 install:
   - "python setup.py --version"
   - |
-    VERSION="$(python setup.py --version | tr - _)"
     if [ "${MODE}" == "wheel" ]; then
         pip install wheel
         python setup.py bdist_wheel
-        pip install dist/Nevow-"${VERSION}"-py27-none-any.whl
+        pip install dist/Nevow-"$(python setup.py --version | tr - _)"-py27-none-any.whl
     elif [ "${MODE}" == "sdist" ]; then
         python setup.py sdist
-        pip install dist/Nevow-"${VERSION}".tar.gz
+        pip install dist/Nevow-"$(python setup.py --version)".tar.gz
     elif [ "${MODE}" == "inplace" ]; then
         pip install --editable .
     elif [ "${MODE}" == "source" ]; then
