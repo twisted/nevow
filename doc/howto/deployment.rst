@@ -2,15 +2,15 @@ Deployment
 ==========
 
 Nevow includes two major phases for deciding what HTML to render.
-:doc:`Object Traversal <traversal>` is the procedure by which a URL
+:doc:`traversal` is the procedure by which a URL
 is mapped to a Python object which will perform the HTML generation.
-:doc:`Page Rendering <glossary>` is the process by which data objects
+:ref:`glossary-page_rendering` is the process by which data objects
 are combined with an HTML template to produce the final output.
 
 Before any of this can take place, however, we must have an environment
 in which our Python code can run in response to an HTTP request, and
 HTML can be returned to the browser for rendering. This is called the
-:doc:`Deployment Environment <glossary>`.
+:ref:`glossary-deployment_environment`.
 
 There are various deployment options for Nevow page code:
 
@@ -47,7 +47,7 @@ possible CGI:
 
 With this simple CGI you can use the Nevow template loaders and standard
 nevow template interpolation techniques in your CGIs. However, you do
-not get any :doc:`Object Traversal <traversal>` features, and you
+not get any :doc:`traversal` features, and you
 have to generate HTTP headers yourself. WSGI is a slightly higher-level
 deployment option which does not suffer these problems.
 

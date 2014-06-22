@@ -1,8 +1,5 @@
-Setting up an Environment
-=========================
-
-Install
--------
+Setting Up the Tutorial Environment and Running Tutorial Source Code
+====================================================================
 
 To run this tutorial, you need to have nevow available to python and
 you'll need the files in the doc/howto tree. You don't even have to

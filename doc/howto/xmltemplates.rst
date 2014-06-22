@@ -1,5 +1,5 @@
-Nevow XML Templates
-===================
+XML Templates
+=============
 
 Stan syntax is cool, but eventually you are going to want to integrate
 your Python code with a template designed by an HTML monkey. Nevow

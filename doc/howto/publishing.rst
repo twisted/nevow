@@ -1,11 +1,11 @@
 Object Publishing
 =================
 
-In :doc:`Object Traversal <traversal>`, we learned about the
+In :doc:`traversal`, we learned about the
 ``nevow.inevow.IResource.renderHTTP`` method, which is the most basic
 way to send HTML to a browser when using Nevow. However, it is not very
 convenient (or clean) to generate HTML tags by concatenating strings in
-Python code. In the :doc:`Deployment <deployment>` documentation, we
+Python code. In the :doc:`deployment` documentation, we
 saw that it was possible to render a *Hello World* page using a
 ``nevow.rend.Page`` subclass and providing a ``docFactory``:
 
@@ -169,11 +169,10 @@ constructor:
         docFactory = loaders.stan(tags.html[greet])
         
 
-Armed with this knowledge and the information in the :doc:`Object
-Traversal <traversal>` documentation, we now have enough
-information to create dynamic websites with arbitrary URL hierarchies
-whose pages render dynamically depending on which URL was used to access
-them.
+Armed with this knowledge and the information in the :doc:`traversal`
+documentation, we now have enough information to create dynamic websites with
+arbitrary URL hierarchies whose pages render dynamically depending on which URL
+was used to access them.
 
 Accessing query parameters and form post data
 ---------------------------------------------
@@ -318,7 +317,7 @@ larger parts more easily.
 
 Deciding which data gets passed as the data parameter is as simple as
 changing the "Data special" for a Tag. See the
-:doc:`Glossary <glossary>` under "Tag Specials" for more information
+:doc:`glossary` under "Tag Specials" for more information
 about specials. Assigning to the data special is as simple as assigning
 to a tag attribute:
 

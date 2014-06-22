@@ -12,6 +12,8 @@ The "Root Resource" returns an object and a list of unhandled path
 segments, and the traversal continues across this new Resource object
 until all path segments have been consumed.
 
+.. _glossary-page_rendering:
+
 Page Rendering
 --------------
 
@@ -19,6 +21,8 @@ The process by which a Python object, usually a rend.Page subclass,
 turns itself into HTML. Page Rendering involves locating some page data,
 loading a template document, and applying the template to the data, in
 the process generating HTML.
+
+.. _glossary-deployment_environment:
 
 Deployment Environment
 ----------------------

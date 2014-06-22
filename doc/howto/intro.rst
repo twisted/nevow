@@ -1,5 +1,6 @@
-A Web Application Construction Kit
-==================================
+============
+Introduction
+============
 
 Summary
 -------

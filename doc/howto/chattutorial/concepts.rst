@@ -1,5 +1,5 @@
-Concepts
-========
+Concepts of Athena: AJAX, COMET, and Python
+===========================================
 
 Servers and Clients
 -------------------

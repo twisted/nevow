@@ -11,15 +11,15 @@ example in this tutorial. The tutorial is split into several parts: a
 few introductory pages and then independent (but related) tutorials of
 increasing complexity.
 
-1. Basics
+.. toctree::
+    :maxdepth: 2
 
-   -  :doc:`Introduction <intro>`
-   -  :doc:`Concepts of Athena: AJAX, COMET, and Python <concepts>`
-   -  :doc:`Setting Up the Tutorial Environment and Running Tutorial Source
-      Code <env>`
+    intro
+    concepts
+    env
+    part00/index
+    part01/index
 
-2. :doc:`Toy Echo Application <part00/index>`
-3. :doc:`Simple Chat and Two-Way Communications <part01/index>`
 
 History
 -------
