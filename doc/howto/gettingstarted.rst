@@ -12,9 +12,11 @@ Our First Application
 ---------------------
 
 Let's dive straight in, here's the code for our first (very, very
-simple) application. Create the following module, helloworld.py:
+simple) application. Create the following module, ``helloworld.py``:
 
-`helloworld.py <listings/gettingstarted/helloworld.py>`__
+.. literalinclude:: listings/gettingstarted/helloworld.py
+    :language: python
+    :linenos:
 
 It looks quite simple but let's walk through it anyway.
 
@@ -35,10 +37,12 @@ that parses an HTML file (not shown) from disk.
 
 Hmm, ok I hear you say but how do I see it. Well, Twisted provides a
 good web server which we can use. Twisted also includes a clever little
-application for starting Twisted applications. Here's the helloworld.tac
+application for starting Twisted applications. Here's the ``helloworld.tac``
 file, a Twisted Application Configuration:
 
-`helloworld.tac <listings/gettingstarted/helloworld.tac>`__
+.. literalinclude:: listings/gettingstarted/helloworld.tac
+    :language: python
+    :linenos:
 
 Give it a go, run the following and connect to http://localhost:8080/ to
 see your application:

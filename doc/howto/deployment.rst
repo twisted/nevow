@@ -31,7 +31,7 @@ formatting and outputting the HTTP response headers, and Nevow is used
 only to generate the HTML body of your page. Here is the simplest
 possible CGI:
 
-::
+.. code-block:: python
 
     #!/usr/bin/env python
 
@@ -43,7 +43,7 @@ possible CGI:
         docFactory = loaders.stan("Hello, world!")
 
     print HelloWorld().renderSynchronously()
-        
+
 
 With this simple CGI you can use the Nevow template loaders and standard
 nevow template interpolation techniques in your CGIs. However, you do
@@ -63,7 +63,7 @@ function which takes a Page and returns a standard WSGI application
 callable. With the help of the ``run_with_cgi`` example gateway from the
 PEP (which I will omit here), our CGI example becomes shorter:
 
-::
+.. code-block:: python
 
     #!/usr/bin/env python
 
@@ -73,15 +73,15 @@ PEP (which I will omit here), our CGI example becomes shorter:
         docFactory = loaders.stan("Hello, world!")
 
     run_with_cgi(wsgi.createWSGIApplication(HelloWorld()))
-        
+
 
 Of course, you can use any available WSGI gateway to publish your
 application object, such as one of the gateways which comes with the
 `PEAK <http://peak.telecommunity.com/>`__ toolkit. For example, here is
 a simple python module which creates a WSGI application which we will
-then deploy with PEAK's SimpleHTTPServer gateway::
+then deploy with PEAK's SimpleHTTPServer gateway:
 
-::
+.. code-block:: python
 
     ## helloworld.py
 
@@ -91,7 +91,7 @@ then deploy with PEAK's SimpleHTTPServer gateway::
         docFactory = loaders.stan("Hello, world!")
 
     application = wsgi.createWSGIApplication(HelloWorld())
-        
+
 
 Save this file as "helloworld.py" somewhere on your PYTHONPATH and then
 run the following command:
@@ -126,7 +126,7 @@ twisted configuration file, but everything is included in one file here
 for brevity. Here is the minimal configuration file required to use
 Nevow with twisted.web:
 
-::
+.. code-block:: python
 
     from nevow import rend, loaders, appserver
 
@@ -136,7 +136,7 @@ Nevow with twisted.web:
     from twisted.application import service, internet
     application = service.Application("hello-world")
     internet.TCPServer(8080, appserver.NevowSite(HelloWorld())).setServiceParent(application)
-        
+
 
 Save this file as "helloworld.tac" and start the server using the
 command:
@@ -200,7 +200,7 @@ the application directory:
 Finally, create the zomne.tac file which the zomne.cgi will execute to
 start the long-running application server process:
 
-::
+.. code-block:: python
 
     from nevow import rend, loaders, zomnesrv
 
@@ -210,7 +210,7 @@ start the long-running application server process:
     from twisted.application import service, internet
     application = service.Application('nevow-zomne-test')
     internet.UNIXServer('zomne.socket', zomnesrv.ZomneFactory(HelloWorld())).setServiceParent(application)
-        
+
 
 Now, visiting the nevow.cgi URL through the web should render the Hello
 World page, after a pause while the server is starting up. Subsequent

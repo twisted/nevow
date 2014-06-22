@@ -65,7 +65,9 @@ The template is very similar as it was in the previous example, with the
 differences being a new login box, a "logged in as" area, and some name
 changes:
 
-` <listings/chatthing/template.html>`__
+.. literalinclude:: listings/chatthing/template.html
+    :language: html
+    :linenos:
 
 We've now got two JavaScript methods that need to be defined:
 ``doSetUsername()`` and ``doSay()``. We can also infer from this
@@ -84,8 +86,11 @@ can establish that the JavaScript code needs the following:
 -  implement the ``doSetUsername()`` and ``doSay()`` methods;
 -  create a method that will send a message to all users; and
 -  create a method that will let everyone know when someone says
-   something. Let's see how this is done.
-   ` <listings/chatthing/js/ChatThing.js>`__
+   something. Let's see how this is done:
+
+.. literalinclude:: listings/chatthing/js/ChatThing.js
+    :language: javascript
+    :linenos:
 
 There is a little abstraction here:
 
@@ -101,7 +106,10 @@ the same as the "Echo" tutorial. The ``display*()`` methods are only
 responsible for updating the UI, just as we would expect.
 
 We also need the same glue that we demonstrated in the "Echo" example:
-` <listings/nevow/plugins/chatthing_package.py>`__
+
+.. literalinclude:: listings/nevow/plugins/chatthing_package.py
+    :language: python
+    :linenos:
 
 Writing the Server
 ~~~~~~~~~~~~~~~~~~
@@ -110,7 +118,9 @@ The server code is a bit more complicated. We anticipated this above in
 the "Architecture" section where we noted that the Python code needs to
 receive, process and send messages.
 
-` <listings/chatthing/chatterbox.py>`__
+.. literalinclude:: listings/chatthing/chatterbox.py
+    :language: python
+    :linenos:
 
 There is something in our "Chat" code that is not at all present in the
 "Echo" application: the ``ChatRoom`` object. We need this object for the

@@ -19,7 +19,7 @@ and **object publishing** machinery uses only two methods to locate an
 object suitable for publishing and to generate the HTML from it; these
 methods are described in the interface ``nevow.inevow.IResource``:
 
-::
+.. code-block:: python
 
     class IResource(Interface):
         def locateChild(self, ctx, segments):
@@ -30,13 +30,13 @@ methods are described in the interface ``nevow.inevow.IResource``:
         def renderHTTP(self, ctx):
             """Render a request
             """
-        
+
 
 ``renderHTTP`` can be as simple as a method which simply returns a
 string of HTML. Let's examine what happens when object traversal occurs
 over a very simple root resource:
 
-::
+.. code-block:: python
 
     from zope.interface import implements
 
@@ -48,7 +48,7 @@ over a very simple root resource:
 
         def renderHTTP(self, ctx):
             return "Hello, world!"
-        
+
 
 This resource, when passed as the root resource to
 ``appserver.NevowSite`` or ``wsgi.createWSGIApplication``, will
@@ -79,7 +79,7 @@ directories, it does not know about the contents of them. Let's examine
 a simple ``Directory`` object which can provide directory listings and
 serves up objects for child directories and files:
 
-::
+.. code-block:: python
 
     from zope.interface import implements
 
@@ -109,7 +109,7 @@ serves up objects for child directories and files:
                 return Directory(fullpath), segments[1:]
             if os.path.isfile(fullpath):
                 return static.File(fullpath), segments[1:]
-        
+
 
 Because this implementation of ``locateChild`` only consumed one segment
 and returned the rest of them (``segments[1:]``), the object traversal
@@ -145,7 +145,7 @@ is ``childFactory``. Let us imagine for the sake of example that we
 wished to render a tree of dictionaries. Our data structure might look
 something like this:
 
-::
+.. code-block:: python
 
     tree = dict(
         one=dict(
@@ -154,23 +154,23 @@ something like this:
         two=dict(
             baz=dict(
             quux=None)))
-        
+
 
 Given this data structure, the valid URIs would be:
 
--  /
--  /one
--  /one/foo
--  /one/bar
--  /two
--  /two/baz
--  /two/baz/quux
+- ``/``
+- ``/one``
+- ``/one/foo``
+- ``/one/bar``
+- ``/two``
+- ``/two/baz``
+- ``/two/baz/quux``
 
 Let us construct a ``rend.Page`` subclass which uses the default
 ``locateChild`` implementation and overrides the ``childFactory`` hook
 instead:
 
-::
+.. code-block:: python
 
     class DictTree(rend.Page):
         def __init__(self, dataDict):
@@ -189,7 +189,7 @@ instead:
             if name not in self.dataDict:
                 return rend.NotFound # 404
             return DictTree(self.dataDict[name])
-        
+
 
 As you can see, the ``childFactory`` implementation is considerably
 shorter than the equivalent ``locateChild`` implementation would have
@@ -226,7 +226,7 @@ us to express these relationships by using child-prefixed methods:
 
         def child_images(self, ctx):
             return static.File('images/')
-        
+
 
 One thing you may have noticed is that all of the examples so far have
 returned new object instances whenever they were implementing a
@@ -244,7 +244,7 @@ particular URL, the child-prefixed attribute:
         child_css = static.File('styles.css')
         child_scripts = static.File('scripts.js')
         child_images = static.File('images/')
-        
+
 
 Dots in child names
 -------------------
@@ -268,7 +268,7 @@ methods. The solution is really quite simple:
             </html>"""
 
     setattr(DotChildren, 'child_scripts.js', static.File('scripts.js'))
-        
+
 
 The same technique could be used to install a child method with a dot in
 the name.
@@ -297,7 +297,7 @@ The final hook supported by the default implementation of
                 <p>bla bla bla</p>
               </body>
             </html>"""
-        
+
 
 Hooks are checked in the following order:
 
@@ -343,7 +343,7 @@ consumed during object traversal, use this syntax:
 ::
 
     segs = ICurrentSegments(ctx)
-        
+
 
 The same is true of ``IRemainingSegments``. ``IRemainingSegments`` is
 the same value which is passed as ``segments`` to ``locateChild``, but

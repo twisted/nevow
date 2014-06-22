@@ -38,7 +38,7 @@ methods at render time. The attribute technique was inspired by the
 attributes used by ZPT. However, no actual code may be embedded in the
 HTML template:
 
-::
+.. code-block:: html
 
     <html xmlns:nevow="http://nevow.com/ns/nevow/0.1">
       <head>
@@ -52,7 +52,7 @@ HTML template:
 
 This template can then be loaded and rendered like so:
 
-::
+.. code-block:: python
 
     class Greeter(rend.Page):
         docFactory = loaders.xmlfile("Greeting.html")
@@ -61,7 +61,7 @@ This template can then be loaded and rendered like so:
             return random.choice(["Hello", "Greetings", "Hi"]), " ", data
 
     Greeter("My name is").renderString()
-        
+
 
 data/render methods
 -------------------
@@ -72,7 +72,7 @@ write both 'data' methods and 'render' methods. These concepts are
 inspired by MVC, but simpler, since the framework can handle most of the
 controller aspect. An example:
 
-::
+.. code-block:: html
 
     <html xmlns:nevow="http://nevow.com/ns/nevow/0.1">
       <body>
@@ -83,7 +83,7 @@ controller aspect. An example:
 
 This template can be loaded and rendered using a class such as this:
 
-::
+.. code-block:: python
 
     class Colorful(rend.Page):
         docFactory = loaders.xmlfile("Colorful.html")
@@ -97,7 +97,7 @@ This template can be loaded and rendered using a class such as this:
 
         def data_fun(self, context, data):
             return "Are we having fun yet?"
-        
+
 
 Stan
 ----
@@ -108,7 +108,7 @@ syntax. Stan is not required for using nevow, but it is both a simple
 and powerful way to both lay out one's XHTML templates and express one's
 display logic. A brief example will illustrate its utility:
 
-::
+.. code-block:: python
 
     import random
     from nevow import rend, tags
@@ -125,15 +125,15 @@ display logic. A brief example will illustrate its utility:
                 greet
             ]
         ])
-        
+
 
 When the Greeter class is constructed, it is passed a Python object
 which will be used as that page's data:
 
-::
+.. code-block:: python
 
     Greeter("Your name here").renderString()
-        
+
 
 Formless
 --------
@@ -148,7 +148,7 @@ accept user input from a command line or from a web form, validate the
 input against the types described using formless, and call the method
 once validation has passed. A simple example:
 
-::
+.. code-block:: python
 
     from zope.interface import implements
     from formless.annotate import TypedInterface, Integer, String
@@ -168,7 +168,7 @@ once validation has passed. A simple example:
 
         def simple(self, name, age):
             print "Hello, %s, who is %s" % (name, age)
-        
+
 
 Webform
 -------
@@ -178,7 +178,8 @@ accept form posts based on types described using the classes in
 formless. Used in conjunction with the twisted.web HTTP server, the
 process is almost automatic:
 
-::
+.. code-block:: python
+
 
     from nevow import rend, tags
     from formless import webform
@@ -193,7 +194,7 @@ process is almost automatic:
     ])
 
     resource = WebForm(Implementation())
-        
+
 
 Exposing this resource instance to the web using twisted.web and
 visiting it will cause a form with two input boxes to be rendered.
@@ -211,7 +212,7 @@ JavaScript to the client in response to a server-side event. New for
 Nevow 0.3, LivePage has been updated to support Mozilla, Firefox, IE6
 Win, and Safari. Using LivePage is very easy:
 
-::
+.. code-block:: python
 
     from nevow.liveevil import handler
 
@@ -234,25 +235,25 @@ Win, and Safari. Using LivePage is very easy:
                 ]
             ]
         ])
-        
+
 
 More Information
 ----------------
 
-The `Nevow website <http://divmod.org/trac/wiki/DivmodNevow>`__ has more
+The `Nevow website <https://divmod.org/trac/wiki/DivmodNevow>`__ has more
 information. Starting with 0.3, it contains a simple WSGI implementation
 and can also be used to render CGIs. However, the recommended mode of
 operation is using the `Twisted
 web <http://twistedmatrix.com/trac/wiki/TwistedWeb>`__ server. Nevow is
 an active project, and many new bugfixes and features are committed to
-the Nevow SVN repository. Information about Nevow commits is available
+the Nevow Git repository. Information about Nevow commits is available
 by subscribing to the `Divmod
 commits <http://divmod.net/users/mailman.twistd/listinfo/divmod-commits>`__
-mailing list. The Nevow SVN repository can be checked out using:
+mailing list. The Nevow Git repository can be checked out using:
 
 ::
 
-    svn co svn://divmod.org/svn/Nevow/trunk Nevow
+    git clone git://github.com/twisted/nevow
 
 Discussion of Nevow occurs on the `twisted.web mailing
 list <http://twistedmatrix.com/cgi-bin/mailman/listinfo/twisted-web>`__.

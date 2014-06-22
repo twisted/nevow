@@ -55,7 +55,7 @@ For example, in the chat application we will be building in this series
 of tutorials, we will have a JavaScript class called ``ChatterBox`` with
 a ``say()`` method, like the following:
 
-::
+.. code-block:: javascript
 
     function say(self, msg) {
         self.callRemote("say", msg);
@@ -69,7 +69,7 @@ In Athena, the relationship between the browser code and the server code
 is established by declaring the JavaScript module in the Python server
 code, in the following manner:
 
-::
+.. code-block:: python
 
     class ChatterBox(LiveElement):
         jsClass = u'ChatThing.ChatterBox'
@@ -80,7 +80,7 @@ feature, implemented to ensure the JavaScript code can only call Python
 methods that have been specifically marked as safe. Appropriately
 enough, this is done in your Python class with the ``expose`` decorator:
 
-::
+.. code-block:: python
 
     def say(self, text):
         for chatter in chatRoom:
@@ -96,7 +96,7 @@ from our Python server. We use a similar Python method as the JavaScript
 one (when making calls from the browser to the server), acquired when
 our Python class inherited from ``nevow.athena.LiveElement``:
 
-::
+.. code-block:: python
 
     def hear(self, sayer, text):
         self.callRemote("hear", sayer, text)
@@ -105,7 +105,7 @@ In order for this call to work, we need to have the ``hear()`` method
 defined in our ``ChatterBox`` JavaScript class, and that will look like
 this:
 
-::
+.. code-block:: javascript
 
     function hear(self, avatarName, text) {
         // Here, you'd show the user some text.

@@ -17,11 +17,10 @@ server. This is the essence of our "Echo" application.
 Mental Preparation
 ------------------
 
-In the `Introduction <../intro.html>`__ and the
-`Concepts <../concepts.html>`__ pages, we had a refresher on AJAX and
-COMET and we learned a little bit about what that looks like for Athena.
-But as we sit down to actually write an Athena application, what do we
-need to wrap our heads around?
+In the :doc:`../intro` and the :doc:`../concepts` pages, we had a
+refresher on AJAX and COMET and we learned a little bit about what that
+looks like for Athena.  But as we sit down to actually write an Athena
+application, what do we need to wrap our heads around?
 
 Given the introductory knowledge we have, we know that we will need to
 write some JavaScript, some Python, and if our past experience in
@@ -82,7 +81,9 @@ Presentation
 Let's start with the easy bit: what our app will look like. Here is the
 template for our echo application:
 
-` <listings/echothing/template.html>`__
+.. literalinclude:: listings/echothing/template.html
+    :language: html
+    :linenos:
 
 Things to note:
 
@@ -109,7 +110,11 @@ Our JavaScript will need to do several things:
 3. setup convenience attributes;
 4. implement the ``doSay()`` method we put in our template above; and
 5. implement a method for updating the DOM with data it receives from
-   the server ` <listings/echothing/js/EchoThing.js>`__
+   the server:
+
+.. literalinclude:: listings/echothing/js/EchoThing.js
+    :language: javascript
+    :linenos:
 
 Points to note:
 
@@ -131,7 +136,9 @@ There's not much to say about the next one. This is what sets up the
 relationship between our module name and the actual file itself (so that
 the JavaScript can be loaded):
 
-` <listings/nevow/plugins/echothing_package.py>`__
+.. literalinclude:: listings/nevow/plugins/echothing_package.py
+    :language: python
+    :linenos:
 
 Writing the Server
 ~~~~~~~~~~~~~~~~~~
@@ -144,7 +151,9 @@ class with some boilerplate, that's about it.
 
 Let's take a look at the code:
 
-` <listings/echothing/echobox.py>`__
+.. literalinclude:: listings/echothing/echobox.py
+    :language: python
+    :linenos:
 
 As promised, simple as can be. We do make use of a Twisted utility that
 simplifies typing the path to our template. Some very important points:

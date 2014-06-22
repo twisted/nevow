@@ -16,16 +16,16 @@ Wherever you have seen a loaders.stan being created in any of the
 example code, a ``loaders.xmlfile`` can be substituted instead. At the
 most basic, ``xmlfile`` merely requires the name of an xml template:
 
-::
+.. code-block:: python
 
     class HelloXML(rend.Page):
         docFactory = loaders.xmlfile('hello.xml')
-        
+
 
 Placing the following xml in the ``hello.xml`` file will cause
 ``HelloXML`` to display a static page when it is rendered:
 
-::
+.. code-block:: html
 
     <html>Hello, world!</html>
 
@@ -60,7 +60,7 @@ document. Nevow's xmlns is:
 
 The syntax for declaring that your xml document uses this namespace is:
 
-::
+.. code-block:: html
 
     <html xmlns:nevow="http://nevow.com/ns/nevow/0.1"></html>
 
@@ -116,21 +116,21 @@ value. When the template is rendered, this means that the appropriate
 render\_\* method will be looked up on the ``IRendererFactory``
 (generally the Page instance):
 
-::
+.. code-block:: html
 
     <html><div nevow:render="foo" /></html>
 
-With the ``render_foo`` method::
+With the ``render_foo`` method:
 
-::
+.. code-block:: python
 
     def render_foo(self, ctx, data):
         return "Hello"
-        
+
 
 Will result in the document:
 
-::
+.. code-block:: html
 
     <html>Hello</html>
 
@@ -168,21 +168,21 @@ the appropriate data\_\ * method will be looked up on the current
 called, and the result will be set as the data special of the current
 Tag:
 
-::
+.. code-block:: html
 
     <html><div nevow:data="name" nevow:render="data" /></html>
 
 With the ``data_name`` method:
 
-::
+.. code-block:: python
 
     def data_name(self, ctx, data):
         return "Hello!"
-        
+
 
 Will result in the document:
 
-::
+.. code-block:: html
 
     <html><div>Hello!</div></html>
 
@@ -198,22 +198,22 @@ sets the pattern special of the current node to the attribute value as a
 string. Renderers which are above this node may then make copies of it
 using the ``nevow.inevow.IQ`` of the current context. With the template:
 
-::
+.. code-block:: html
 
     <html nevow:render="stuff"><div nevow:pattern="somePattern" nevow:render="data" /></html>
 
 And the renderer:
 
-::
+.. code-block:: python
 
     def render_stuff(self, ctx, data):
         pat = inevow.IQ(ctx).patternGenerator('somePattern')
         return [pat(data=1), pat(data=2)]
-        
+
 
 Will result in the document:
 
-::
+.. code-block:: html
 
     <html><div>1</div><div>2</div></html>
 
@@ -226,22 +226,22 @@ value as the slot name. The children of the slot node are added as
 children of the new slot instance. This is useful if you wish to put
 patterns inside the slot. With the template:
 
-::
+.. code-block:: html
 
     <html nevow:render="stuff"><nevow:slot name="slotName" /></html>
 
 And the render method:
 
-::
+.. code-block:: python
 
     def render_stuff(self, ctx, data):
         ctx.fillSlots('slotName', "Hello.")
         return ctx.tag
-        
+
 
 This document will be produced:
 
-::
+.. code-block:: html
 
     <html>Hello.</html>
 
@@ -253,13 +253,13 @@ nevow:attr node will be assigned to the attribute of the parent tag with
 the name of the value of the name attribute. Perhaps an example will be
 a little clearer:
 
-::
+.. code-block:: html
 
     <html><a><nevow:attr name="href">HELLO!</nevow:attr>Goodbye</a></html>
 
 This document will be produced:
 
-::
+.. code-block:: html
 
     <html><a href="HELLO!">Goodbye</a></html>
 
@@ -281,23 +281,24 @@ relationship in your XML structure. For these cases, use
 As suggested by the name, a ``nevow:invisible`` tag is removed in the
 rendered XML. Here is an example:
 
-::
+.. code-block:: html
 
     <html><nevow:invisible nevow:data="name" nevow:render="data" /></html>
 
 With the ``data_name`` method:
 
-::
+.. code-block:: python
 
     def data_name(self, ctx, data):
         return "Hello!"
-        
+
 
 Will result in the document:
 
-::
+.. code-block:: html
 
     <html>Hello!</html>
+
 
 xmlstr, htmlfile, and htmlstr
 -----------------------------
