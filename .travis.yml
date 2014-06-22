@@ -15,7 +15,7 @@ install:
   - |
     if [ "${MODE}" == "wheel" ]; then
         pip install wheel
-        python setup.py bdist_wheel
+        python setup.py bdist_wheel --python-tag py27
         echo dist/*
         pip install dist/Nevow-"$(python setup.py --version | tr - _)"-py27-none-any.whl
     elif [ "${MODE}" == "sdist" ]; then
