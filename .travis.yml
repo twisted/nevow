@@ -5,6 +5,8 @@ python:
   - "2.7"
 
 env:
+  # Test various kinds of Nevow installations.  See below for the precise
+  # meaning of each mode.
   - MODE=inplace
   - MODE=source
   - MODE=sdist
@@ -14,17 +16,36 @@ install:
   - "python setup.py --version"
   - |
     if [ "${MODE}" == "wheel" ]; then
+        # Build and install a wheel of Nevow.
         pip install wheel
+
+        # Explicitly select the py27 tag because it makes the filename more predictable.
         python setup.py bdist_wheel --python-tag py27
-        echo dist/*
+
+        # Install whatever was just built.  The filename is tricky to figure
+        # out because wheels mangle the version in certain ways.  Replicate
+        # some of that mangling here.
         pip install dist/Nevow-"$(python setup.py --version | tr - _)"-py27-none-any.whl
+
     elif [ "${MODE}" == "sdist" ]; then
+        # Build and install a normal source distribution
         python setup.py sdist
         pip install dist/Nevow-"$(python setup.py --version)".tar.gz
+
     elif [ "${MODE}" == "inplace" ]; then
+        # Don't actually install anything.  Just update the environment to make
+        # the source in the git checkout importable.  Then run the tests
+        # directly against that.  This is kind of a "control" case.  These
+        # results should be very similar to the results for any of the
+        # installation cases.
+
         pip install --editable .
+
     elif [ "${MODE}" == "source" ]; then
+
+        # Install directly from the git checkout.
         pip install .
+
     fi
 
 script:
