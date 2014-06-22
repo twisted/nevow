@@ -4,9 +4,27 @@ python:
   - "pypy"
   - "2.7"
 
+env:
+  - MODE=inplace
+  - MODE=source
+  - MODE=sdist
+  - MODE=wheel
+
 install:
   - "python setup.py --version"
-  - "pip install --editable ."
+  - |
+    if [ "${MODE}" == "wheel" ]; then
+        pip install wheel
+        python setup.py bdist_wheel
+        pip install dist/Nevow-"$(python setup.py --version)"-py27-none-any.whl
+    elif [ "${MODE}" == "sdist" ]; then
+        python setup.py sdist
+        pip install dist/Nevow-"$(python setup.py --version)".tar.gz
+    elif [ "${MODE}" == "inplace" ]; then
+        pip install --editable .
+    elif [ "${MODE}" == "source" ]; then
+        pip install .
+    fi
 
 script:
   - "trial formless nevow"
