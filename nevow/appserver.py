@@ -120,6 +120,12 @@ class NevowRequest(tpc.Componentized, server.Request):
     def __init__(self, *args, **kw):
         server.Request.__init__(self, *args, **kw)
         tpc.Componentized.__init__(self)
+        self._lostConnection = False
+
+        def flagLostConnection(err):
+            self._lostConnection = True
+
+        self.notifyFinish().addErrback(flagLostConnection)
 
     def process(self):
         # extra request parsing
@@ -173,10 +179,13 @@ class NevowRequest(tpc.Componentized, server.Request):
         self.deferred.callback("")
 
     def finishRequest( self, success ):
-        server.Request.finish(self)
+        if not self._lostConnection:
+            server.Request.finish(self)
 
     def _cbFinishRender(self, html, ctx):
-        if isinstance(html, str):
+        if self._lostConnection:
+            pass
+        elif isinstance(html, str):
             self.write(html)
             self.finishRequest(  True )
         elif html is errorMarker:

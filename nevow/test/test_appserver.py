@@ -94,6 +94,7 @@ class TestLookup(testutil.TestCase):
             lambda : self.fail(),
             asserterr)
 
+from twisted.internet import defer
 
 class TestSiteAndRequest(testutil.TestCase):
     def renderResource(self, resource, path):
@@ -129,6 +130,19 @@ class TestSiteAndRequest(testutil.TestCase):
 
         return self.renderResource(Res1(), 'bar').addCallback(
             lambda result: self.assertEquals(result, 'world'))
+
+    def test_connectionLost(self):
+        d = defer.Deferred()
+        class Res(Render):
+            def renderHTTP(self, ctx):
+                return d
+        s = appserver.NevowSite(Res())
+        r = appserver.NevowRequest(testutil.FakeChannel(s), True)
+        r.path = 'boo'
+        r.process()
+        r.connectionLost(Exception('Just Testing'))
+        d.callback('finished')
+
 
 from twisted.internet import protocol, address
 
