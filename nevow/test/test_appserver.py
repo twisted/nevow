@@ -132,6 +132,13 @@ class TestSiteAndRequest(testutil.TestCase):
             lambda result: self.assertEquals(result, 'world'))
 
     def test_connectionLost(self):
+        """
+        Test that Request.finish is not called on a request
+        when the connection is lost before rendering has finished.
+
+        This the fix for https://github.com/twisted/nevow/issues/11,
+        "Nevow should handle interrupted HTTP responses".
+        """
         d = defer.Deferred()
         class Res(Render):
             def renderHTTP(self, ctx):
