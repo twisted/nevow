@@ -112,20 +112,31 @@ class NevowRequest(tpc.Componentized, server.Request):
 
     @ivar fields: C{None} or, if the HTTP method is B{POST}, a
         L{cgi.FieldStorage} instance giving the content of the POST.
+
+    @ivar _lostConnection: A flag which keeps track of whether the response to
+        this request has been interrupted (for example, by the connection being
+        lost) or not.  C{False} until this happens, C{True} afterwards.
+    @type _lostConnection: L{bool}
     """
     implements(inevow.IRequest)
 
     fields = None
+    _lostConnection = False
 
     def __init__(self, *args, **kw):
         server.Request.__init__(self, *args, **kw)
         tpc.Componentized.__init__(self)
-        self._lostConnection = False
 
-        def flagLostConnection(err):
-            self._lostConnection = True
+        self.notifyFinish().addErrback(self._flagLostConnection)
 
-        self.notifyFinish().addErrback(flagLostConnection)
+
+    def _flagLostConnection(self, error):
+        """
+        Observe and record an error trying to deliver the response for this
+        request.
+        """
+        self._lostConnection = True
+
 
     def process(self):
         # extra request parsing
