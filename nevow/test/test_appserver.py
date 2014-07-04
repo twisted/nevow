@@ -136,19 +136,17 @@ class TestSiteAndRequest(testutil.TestCase):
         L{Request.finish} is not called when the connection is lost before
         rendering has finished.
         """
-        d = defer.Deferred()
+        rendering = defer.Deferred()
         class Res(Render):
             def renderHTTP(self, ctx):
-                return d
-        s = appserver.NevowSite(Res())
-        r = appserver.NevowRequest(testutil.FakeChannel(s), True)
-        r.path = 'boo'
-        r.process()
-        r.connectionLost(Exception('Just Testing'))
-        d.callback('finished')
+                return rendering
+        site = appserver.NevowSite(Res())
+        request = appserver.NevowRequest(testutil.FakeChannel(site), True)
+        request.connectionLost(Exception("Just Testing"))
+        rendering.callback(b"finished")
 
         self.assertFalse(
-            r.finished, "Request was incorrectly marked as finished.")
+            request.finished, "Request was incorrectly marked as finished.")
 
 
 from twisted.internet import protocol, address
