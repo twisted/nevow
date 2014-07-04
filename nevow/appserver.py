@@ -189,9 +189,20 @@ class NevowRequest(tpc.Componentized, server.Request):
     def finish(self):
         self.deferred.callback("")
 
-    def finishRequest( self, success ):
+
+    def finishRequest(self, success):
+        """
+        Indicate the response to this request has been completely generated
+        (headers have been set, the response body has been completely written).
+
+        @param success: Indicate whether this response is considered successful
+            or not.  Not used.
+        """
         if not self._lostConnection:
+            # Only bother doing the work associated with finishing if the
+            # connection is still there.
             server.Request.finish(self)
+
 
     def _cbFinishRender(self, html, ctx):
         if self._lostConnection:
