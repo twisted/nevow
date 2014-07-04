@@ -147,6 +147,9 @@ class TestSiteAndRequest(testutil.TestCase):
         r.connectionLost(Exception('Just Testing'))
         d.callback('finished')
 
+        self.assertFalse(
+            r.finished, "Request was incorrectly marked as finished.")
+
 
 from twisted.internet import protocol, address
 
