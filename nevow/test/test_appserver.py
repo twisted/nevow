@@ -133,11 +133,8 @@ class TestSiteAndRequest(testutil.TestCase):
 
     def test_connectionLost(self):
         """
-        Test that Request.finish is not called on a request
-        when the connection is lost before rendering has finished.
-
-        This the fix for https://github.com/twisted/nevow/issues/11,
-        "Nevow should handle interrupted HTTP responses".
+        L{Request.finish} is not called when the connection is lost before
+        rendering has finished.
         """
         d = defer.Deferred()
         class Res(Render):
