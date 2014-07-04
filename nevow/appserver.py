@@ -213,6 +213,7 @@ class NevowRequest(tpc.Componentized, server.Request):
             an object adaptable to L{IResource} to use to render the response.
         """
         if self._lostConnection:
+            # No response can be sent at this point.
             pass
         elif isinstance(html, str):
             self.write(html)
