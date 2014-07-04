@@ -205,6 +205,13 @@ class NevowRequest(tpc.Componentized, server.Request):
 
 
     def _cbFinishRender(self, html, ctx):
+        """
+        Callback for the page rendering process having completed.
+
+        @param html: Either the content of the response body (L{bytes}) or a
+            marker that an exception occurred and has already been handled or
+            an object adaptable to L{IResource} to use to render the response.
+        """
         if self._lostConnection:
             pass
         elif isinstance(html, str):
