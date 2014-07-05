@@ -10,6 +10,8 @@ from zope.interface import implements
 from cStringIO import StringIO
 
 from twisted.trial.unittest import TestCase
+from twisted.internet.defer import Deferred
+
 
 from nevow import inevow
 from nevow import appserver
@@ -94,7 +96,7 @@ class TestLookup(testutil.TestCase):
             lambda : self.fail(),
             asserterr)
 
-from twisted.internet import defer
+
 
 class TestSiteAndRequest(testutil.TestCase):
     def renderResource(self, resource, path):
@@ -136,7 +138,7 @@ class TestSiteAndRequest(testutil.TestCase):
         L{Request.finish} is not called when the connection is lost before
         rendering has finished.
         """
-        rendering = defer.Deferred()
+        rendering = Deferred()
         class Res(Render):
             def renderHTTP(self, ctx):
                 return rendering
