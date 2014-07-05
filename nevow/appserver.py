@@ -112,14 +112,31 @@ class NevowRequest(tpc.Componentized, server.Request):
 
     @ivar fields: C{None} or, if the HTTP method is B{POST}, a
         L{cgi.FieldStorage} instance giving the content of the POST.
+
+    @ivar _lostConnection: A flag which keeps track of whether the response to
+        this request has been interrupted (for example, by the connection being
+        lost) or not.  C{False} until this happens, C{True} afterwards.
+    @type _lostConnection: L{bool}
     """
     implements(inevow.IRequest)
 
     fields = None
+    _lostConnection = False
 
     def __init__(self, *args, **kw):
         server.Request.__init__(self, *args, **kw)
         tpc.Componentized.__init__(self)
+
+        self.notifyFinish().addErrback(self._flagLostConnection)
+
+
+    def _flagLostConnection(self, error):
+        """
+        Observe and record an error trying to deliver the response for this
+        request.
+        """
+        self._lostConnection = True
+
 
     def process(self):
         # extra request parsing
@@ -172,11 +189,33 @@ class NevowRequest(tpc.Componentized, server.Request):
     def finish(self):
         self.deferred.callback("")
 
-    def finishRequest( self, success ):
-        server.Request.finish(self)
+
+    def finishRequest(self, success):
+        """
+        Indicate the response to this request has been completely generated
+        (headers have been set, the response body has been completely written).
+
+        @param success: Indicate whether this response is considered successful
+            or not.  Not used.
+        """
+        if not self._lostConnection:
+            # Only bother doing the work associated with finishing if the
+            # connection is still there.
+            server.Request.finish(self)
+
 
     def _cbFinishRender(self, html, ctx):
-        if isinstance(html, str):
+        """
+        Callback for the page rendering process having completed.
+
+        @param html: Either the content of the response body (L{bytes}) or a
+            marker that an exception occurred and has already been handled or
+            an object adaptable to L{IResource} to use to render the response.
+        """
+        if self._lostConnection:
+            # No response can be sent at this point.
+            pass
+        elif isinstance(html, str):
             self.write(html)
             self.finishRequest(  True )
         elif html is errorMarker:

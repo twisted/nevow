@@ -10,6 +10,8 @@ from zope.interface import implements
 from cStringIO import StringIO
 
 from twisted.trial.unittest import TestCase
+from twisted.internet.defer import Deferred
+
 
 from nevow import inevow
 from nevow import appserver
@@ -95,6 +97,7 @@ class TestLookup(testutil.TestCase):
             asserterr)
 
 
+
 class TestSiteAndRequest(testutil.TestCase):
     def renderResource(self, resource, path):
         s = appserver.NevowSite(resource)
@@ -129,6 +132,24 @@ class TestSiteAndRequest(testutil.TestCase):
 
         return self.renderResource(Res1(), 'bar').addCallback(
             lambda result: self.assertEquals(result, 'world'))
+
+    def test_connectionLost(self):
+        """
+        L{Request.finish} is not called when the connection is lost before
+        rendering has finished.
+        """
+        rendering = Deferred()
+        class Res(Render):
+            def renderHTTP(self, ctx):
+                return rendering
+        site = appserver.NevowSite(Res())
+        request = appserver.NevowRequest(testutil.FakeChannel(site), True)
+        request.connectionLost(Exception("Just Testing"))
+        rendering.callback(b"finished")
+
+        self.assertFalse(
+            request.finished, "Request was incorrectly marked as finished.")
+
 
 from twisted.internet import protocol, address
 
