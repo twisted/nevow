@@ -1127,8 +1127,9 @@ Nevow.Athena.Widget.methods(
      * tracking system.
      */
     function _athenaDetachClient(self) {
-        var childWidgets = self.childWidgets.slice(); //copy self.childWidgets, fro safe iteration by removeChildWidget
-        
+        //copy of self.childWidgets for safe iteration by removeChildWidget
+        var childWidgets = self.childWidgets.slice();
+
         for (var i = 0; i < childWidgets.length; ++i) {
             childWidgets[i]._athenaDetachClient();
         }
