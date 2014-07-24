@@ -88,6 +88,15 @@ setup(
                 ],
             },
     install_requires=[
+        # Nevow builds on Twisted Web's HTTP server.  It also uses various
+        # other generally useful pieces of Twisted (such as its logging system,
+        # not to mention reactors and Deferreds).
+        #
+        # That dependency will be expressed here with a version range including
+        # only those versions of Twisted against which Nevow's continuous
+        # integration system is configured to actually test.  This ensures any
+        # combination allowed by this declaration has been tested and found to
+        # work.
         "twisted>=13.0",
         ],
     zip_safe=False,
