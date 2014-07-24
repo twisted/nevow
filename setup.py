@@ -7,6 +7,10 @@ versioneer.versionfile_build = 'nevow/_version.py'
 versioneer.tag_prefix = 'nevow-'
 versioneer.parentdir_prefix = 'Nevow-'
 
+# For the convenience of the travis configuration, make this information
+# particularly easy to find.  See .travis.yml.
+_MINIMUM_TWISTED_VERSION = "13.0"
+
 from setuptools import setup, find_packages
 
 import os
@@ -98,7 +102,7 @@ if __name__ == "__main__":
             # integration system is configured to actually test.  This ensures any
             # combination allowed by this declaration has been tested and found to
             # work.
-            "twisted>=13.0",
+            "twisted>=" + _MINIMUM_TWISTED_VERSION,
             ],
         zip_safe=False,
     )
