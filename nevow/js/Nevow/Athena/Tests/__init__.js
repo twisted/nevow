@@ -755,8 +755,9 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
 
     function _testDetachWithChildren(self, detach) {
         var parent = null;
-        var child = null;
-        var result = self.callRemote('getAndSaveDynamicWidgetWithChild');
+        var child0 = null;
+        var child1 = null;
+        var result = self.callRemote('getAndSaveDynamicWidgetWithChildren');
         result.addCallback(
             function(widgetInfo) {
                 return self.addChildWidgetFromWidgetInfo(widgetInfo);
@@ -764,18 +765,21 @@ Nevow.Athena.Tests.DynamicWidgetInstantiation.methods(
         result.addCallback(
             function(widget) {
                 parent = widget;
-                child = widget.childWidgets[0];
+                child0 = widget.childWidgets[0];
+                child1 = widget.childWidgets[1];
                 return widget.detach();
             });
         result.addCallback(
             function(ignored) {
                 self.assertEqual(parent.childWidgets.length, 0);
                 self.assertEqual(parent.widgetParent, null);
-                self.assertEqual(child.widgetParent, null);
+                self.assertEqual(child0.widgetParent, null);
+                self.assertEqual(child1.widgetParent, null);
 
                 var widgets = Nevow.Athena.Widget._athenaWidgets;
                 self.failIf(parent.objectID in widgets);
-                self.failIf(child.objectID in widgets);
+                self.failIf(child0.objectID in widgets);
+                self.failIf(child1.objectID in widgets);
             });
         return result;
     },

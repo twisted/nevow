@@ -1804,7 +1804,7 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         """
         if self.fragmentParent is None:
             raise OrphanedFragment(self)
-        for ch in self.liveFragmentChildren:
+        for ch in list(self.liveFragmentChildren):
             ch._athenaDetachServer()
         self.fragmentParent.liveFragmentChildren.remove(self)
         self.fragmentParent = None
