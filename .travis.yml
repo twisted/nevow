@@ -5,15 +5,43 @@ python:
   - "2.7"
 
 env:
-  # Test various kinds of Nevow installations.  See below for the precise
-  # meaning of each mode.
+  #
+  # The `MODE` environment variable will control the kind of Nevow installation
+  # being tested.  See below for the precise meaning of each mode.
+  #
+  #
+  # The `TWISTED` environment variable will give a (shell expression which
+  # evaluates to) a Twisted requirement string which can be used to select a
+  # version of Twisted to install.  This lets the test suite run against
+  # multiple versions of Twisted.  As a cop out, this configuration only
+  # actually tests the minimum supported version of Twisted, the latest release
+  # of Twisted, and the master@HEAD version of Twisted.
+  #
+  # For expediency, all combinations of `MODE` and `TWISTED` are not tested.
+  # The "wheel" MODE is (arbitrarily) selected and all values of `TWISTED` are
+  # exercised in that mode.
+  #
   - MODE=inplace
   - MODE=source
   - MODE=sdist
   - MODE=wheel
 
+  - MODE=wheel
+    TWISTED='echo twisted'
+  - MODE=wheel
+    TWISTED='echo -n "twisted=="; python -c "from setup import _MINIMUM_TWISTED_VERSION; print _MINIMUM_TWISTED_VERSION"'
+  - MODE=wheel
+    TWISTED='echo git+https://github.com/twisted/twisted.git'
+
+
 install:
   - "python setup.py --version"
+  - |
+    # If appropriate, install a specific version of Twisted.
+    if [ -v TWISTED ]; then
+        pip install "$(eval ${TWISTED})"
+    fi
+
   - |
     if [ "${MODE}" == "wheel" ]; then
         # Build and install a wheel of Nevow.
