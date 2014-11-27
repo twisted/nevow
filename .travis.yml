@@ -27,10 +27,20 @@ install:
         # some of that mangling here.
         pip install dist/Nevow-"$(python setup.py --version | tr - _)"-py27-none-any.whl
 
+        # Also install the extra documentation requirements.  Unfortunately, it
+        # seems pip doesn't automatically handle that case when installing from
+        # a built file.
+        pip install Sphinx
+
     elif [ "${MODE}" == "sdist" ]; then
         # Build and install a normal source distribution
         python setup.py sdist
         pip install dist/Nevow-"$(python setup.py --version)".tar.gz
+
+        # Also install the extra documentation requirements.  Unfortunately, it
+        # seems pip doesn't automatically handle that case when installing from
+        # a built file.
+        pip install Sphinx
 
     elif [ "${MODE}" == "inplace" ]; then
         # Don't actually install anything.  Just update the environment to make
@@ -38,15 +48,21 @@ install:
         # directly against that.  This is kind of a "control" case.  These
         # results should be very similar to the results for any of the
         # installation cases.
+        # Note that we also install the documentation requirements.
 
-        pip install --editable .
+        pip install --editable '.[doc]'
 
     elif [ "${MODE}" == "source" ]; then
 
         # Install directly from the git checkout.
-        pip install .
+        pip install '.'
+
+        # Also install the extra documentation requirements.  Unfortunately, it
+        # seems this can't be specified to the install command above.
+        pip install Sphinx
 
     fi
 
 script:
   - "trial formless nevow"
+  - "cd doc; make html"

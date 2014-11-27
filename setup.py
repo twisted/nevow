@@ -90,5 +90,10 @@ setup(
     install_requires=[
         "twisted>=13.0",
         ],
+    extras_require={
+        'doc': [
+            'Sphinx',
+        ],
+    },
     zip_safe=False,
 )
