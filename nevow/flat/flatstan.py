@@ -111,7 +111,7 @@ def TagSerializer(original, context, contextIsMine=False):
     yield '<%s' % original.tagName
     if original.attributes:
         attribContext = WovenContext(parent=context, precompile=context.precompile, isAttrib=True)
-        for (k, v) in original.attributes.iteritems():
+        for (k, v) in sorted(original.attributes.iteritems()):
             if v is None:
                 continue
             yield ' %s="' % k

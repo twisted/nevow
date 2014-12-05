@@ -82,7 +82,7 @@ class Complete(Base):
             self.assertSubstring('freeform_post!!foo', val)
             self.assertSubstring('foo', val)
             self.assertSubstring('type="text"', val)
-            self.assertSubstring('<input type="submit"', val)
+            self.assertSubstring('<input name="change" type="submit"', val)
         return self.renderForms(dumb).addCallback(doasserts)
 
 
@@ -138,7 +138,7 @@ class BuildingBlocksTest(Base):
         renderer = iformless.IBindingRenderer(binding)
         def later(val):
             self.assertSubstring('<form ', val)
-            self.assertSubstring('<input type="submit"', val)
+            self.assertSubstring('<input name="change" type="submit"', val)
             self.assertSubstring('name="goodbye"', val)
             self.assertSubstring('Goodbye', val)
             self.assertSubstring('Goodbye cruel world', val)
@@ -549,7 +549,7 @@ class TestCharsetDetectionSupport(Base):
         impl = Impl()
         ctx = self.setupContext()
         def later(val):
-            self.assertIn('<input type="hidden" name="_charset_" />', val)
+            self.assertIn('<input name="_charset_" type="hidden" />', val)
             self.assertIn('accept-charset="utf-8"', val)
         return self.renderForms(impl, ctx).addCallback(later)
 
@@ -566,7 +566,7 @@ class TestCharsetDetectionSupport(Base):
         impl = Impl()
         ctx = self.setupContext()
         def later(val):
-            self.assertIn('<input type="hidden" name="_charset_" />', val)
+            self.assertIn('<input name="_charset_" type="hidden" />', val)
             self.assertIn('accept-charset="utf-8"', val)
         return self.renderForms(impl, ctx).addCallback(later)
 
@@ -584,7 +584,7 @@ class TestCharsetDetectionSupport(Base):
         impl = Impl()
         ctx = self.setupContext()
         def later(val):
-            self.assertIn('<input type="hidden" name="_charset_" />', val)
+            self.assertIn('<input name="_charset_" type="hidden" />', val)
             self.assertIn('accept-charset="utf-8"', val)
         return self.renderForms(impl, ctx).addCallback(later)
 
