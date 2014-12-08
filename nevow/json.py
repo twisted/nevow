@@ -67,6 +67,7 @@ comma = re.compile(r',')
 true = re.compile(r'true')
 false = re.compile(r'false')
 null = re.compile(r'null')
+undefined = re.compile(r'undefined')
 floatNumber = re.compile(r'-?([1-9][0-9]*|0)(\.[0-9]+)([eE][-+]?[0-9]+)?')
 longNumber = re.compile(r'-?([1-9][0-9]*|0)([eE][-+]?[0-9]+)?')
 
@@ -100,6 +101,7 @@ actions = [
     (true, lambda s: (True, s)),
     (false, lambda s: (False, s)),
     (null, lambda s: (None, s)),
+    (undefined, lambda s: (None, s)),
     (identifier, lambda s: (IdentifierToken(s), s)),
     (floatNumber, lambda s: (float(s), s)),
     (longNumber, lambda s: (jsonlong(s), s)),
