@@ -98,6 +98,14 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
                 "Failed to roundtrip %r: %r (through %r)" % (
                     struct, unstruct, bytes))
 
+
+    def test_undefined(self):
+        """
+        C{undefined} is parsed as Python C{None}.
+        """
+        self.assertEquals(None, json.parse(b'undefined'))
+
+
     def testStringlikeRountrip(self):
         for struct in TEST_STRINGLIKE_OBJECTS:
             bytes = json.serialize(struct)
