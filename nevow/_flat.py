@@ -274,7 +274,7 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
                     else:
                         tagName = str(root.tagName)
                     yield tagName
-                    for k, v in root.attributes.iteritems():
+                    for k, v in sorted(root.attributes.iteritems()):
                         if isinstance(k, unicode):
                             k = k.encode('ascii')
                         yield " " + k + "=\""
