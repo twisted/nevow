@@ -239,9 +239,7 @@ Divmod.Class.subclass = function(classNameOrModule, /* optional */ subclassName)
     };
 
     subClass.method = function(methodName, methodFunction) {
-        if (methodFunction != undefined) {
-            Divmod.debug('deprecation', 'method() just takes a function now (called with name = ' + methodName +').');
-        } else {
+        if (methodFunction === undefined) {
             methodFunction = methodName;
             methodName = methodFunction.name;
         }
@@ -265,6 +263,14 @@ Divmod.Class.subclass = function(classNameOrModule, /* optional */ subclassName)
     subClass.methods = function() {
         for (var i = 0; i < arguments.length; ++i) {
             subClass.method(arguments[i]);
+        }
+    };
+
+    subClass.namedMethods = function(methods) {
+        for (var key in methods) {
+            if (methods.hasOwnProperty(key)) {
+                subClass.method(key, methods[key]);
+            }
         }
     };
 

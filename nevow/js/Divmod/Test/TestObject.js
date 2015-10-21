@@ -369,5 +369,28 @@ Divmod.Test.TestObject.TestObject.methods(
         self.assert(logEvents[2].isError == false, "Third event should not have been an error");
         self.assert(logEvents[2].message == logerr, "Third event had wrong message");
 
+    },
+
+    /**
+     * L{Divmod.Class.namedMethods} assigns methods from an L{Object} mapping
+     * method names to method functions.
+     */
+    function test_namedMethods(self) {
+        var SomeType = Divmod.Class.subclass('SomeType');
+        SomeType.namedMethods({
+            __init__: function(self, a, b) {
+                self.a = a;
+                self.b = b;
+            },
+
+            oneMore: function(self, c) {
+                return [self.a, self.b, c];
+            }
+        });
+
+        var st = SomeType(1, 2);
+        self.assertIdentical(st.a, 1);
+        self.assertIdentical(st.b, 2);
+        self.assertArraysEqual(st.oneMore(3), [1, 2, 3]);
     });
 
