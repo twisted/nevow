@@ -74,7 +74,7 @@ Divmod.Runtime._getElementByIdWithDocument = function _getElementByIdWithDocumen
 
 
 /**
- * Get a document by ID, falling back to using L{_getElementByIdWithDocument}
+ * Get an element by ID, falling back to using L{_getElementByIdWithDocument}
  * if it's not found in its owner document.
  */
 Divmod.Runtime._getElementByIdWithNode = function _getElementByIdWithNode (node, doc, id) {
