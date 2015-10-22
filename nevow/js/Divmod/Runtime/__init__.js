@@ -71,6 +71,49 @@ Divmod.Runtime._getElementByIdWithDocument = function _getElementByIdWithDocumen
     return foundNode;
 };
 
+
+
+/**
+ * Get an element by ID, falling back to using L{_getElementByIdWithDocument}
+ * if it's not found in its owner document.
+ */
+Divmod.Runtime._getElementByIdWithNode = function _getElementByIdWithNode (node, doc, id) {
+    var foundNode = node.ownerDocument.getElementById(id);
+    if (foundNode === null) {
+        // We didn't find it, maybe we need a workaround.
+        // Let's insert ourselves into the document temporarily.
+        foundNode = Divmod.Runtime._getElementByIdWithDocument(node, doc, id);
+    }
+
+    if (foundNode === null) {
+        throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
+    }
+
+    return foundNode;
+};
+
+
+
+/**
+ * Register a standard L{Error} JSON serializer.
+ */
+Divmod.Runtime._registerStandardErrorSerializer = function _registerStandardErrorSerializer() {
+    Divmod.Base.registerJSON(
+        'Error',
+        function (obj) {
+            return obj instanceof Error;
+        },
+        function (obj) {
+            return {
+                'name': obj.name,
+                'message': obj.message,
+                'stack': obj.stack || "No stacktrace available\n"
+            };
+        });
+};
+
+
+
 /**
  * XML parser for platforms which have the builtin "DOMParser" object.
  */
@@ -162,8 +205,8 @@ Divmod.Runtime._makeSingleEventHandler = function _makeSingleEventHandler(
  * @ivar: The number of milliseconds by which to delay invocation of events
  *     registered with C{addLoadEvent}.
  */
-Divmod.Runtime.Platform.methods(
-    function __init__(self, name) {
+Divmod.Runtime.Platform.namedMethods({
+    '__init__': function (self, name) {
         self.name = name;
         self.attrNameToMangled = {};
         self._loadEventDelay = 1;
@@ -189,9 +232,8 @@ Divmod.Runtime.Platform.methods(
      *
      * @rtype: C{undefined}
      */
-    function connectSingleDOMEvent(
+    'connectSingleDOMEvent': function (
         self, domEventName, handlerObject, domNode, methodName) {
-
         Divmod.Runtime._eventHandlerObjects[
             handlerObject.__id__] = handlerObject;
 
@@ -217,7 +259,7 @@ Divmod.Runtime.Platform.methods(
      * @throw Error: If there is no node with an attribute which matches the
      * given value.
      */
-    function firstNodeByAttribute(self, root, attrName, attrValue) {
+    'firstNodeByAttribute': function (self, root, attrName, attrValue) {
         /* duplicate this here rather than adding an "onlyOne" arg to
            nodesByAttribute so adding an extra arg accidentally doesn't change
            it's behaviour if called directly
@@ -241,7 +283,7 @@ Divmod.Runtime.Platform.methods(
         return result;
     },
 
-    function nodesByAttribute(self, root, attrName, attrValue) {
+    'nodesByAttribute': function (self, root, attrName, attrValue) {
         var descend = Divmod.Runtime.Platform.DOM_DESCEND;
         var results = [];
         self.traverse(
@@ -255,7 +297,8 @@ Divmod.Runtime.Platform.methods(
         return results;
     },
 
-    function nodeByAttribute(self, root, attrName, attrValue, /* optional */ defaultNode) {
+    'nodeByAttribute': function (self, root, attrName, attrValue,
+                                 /* optional */ defaultNode) {
         var nodes = self.nodesByAttribute(root, attrName, attrValue);
         if (nodes.length > 1) {
             throw new Error("Found too many " + attrName + " = " + attrValue);
@@ -280,7 +323,7 @@ Divmod.Runtime.Platform.methods(
      *
      * @return: object with "x" and "y" slots
      */
-    function getEventCoords(self, event) {
+    'getEventCoords': function (self, event) {
         if(!event) {
             event = window.event;
         }
@@ -305,7 +348,7 @@ Divmod.Runtime.Platform.methods(
      *
      * @rtype: C{Number}
      */
-    function findPosX(self, node) {
+    'findPosX': function (self, node) {
         var curleft = 0;
         if (node.offsetParent) {
             while (node.offsetParent) {
@@ -324,7 +367,7 @@ Divmod.Runtime.Platform.methods(
      *
      * @rtype: C{Number}
      */
-    function findPosY(self, node) {
+    'findPosY': function (self, node) {
         var curtop = 0;
         if (node.offsetParent) {
             while (node.offsetParent) {
@@ -344,8 +387,8 @@ Divmod.Runtime.Platform.methods(
      *
      * @return: object with "w" and "h" attributes
      */
-    function getPageSize(self, /* optional */ win) {
-        var w, h
+    'getPageSize': function (self, /* optional */ win) {
+        var w, h;
         var theWindow = win || window;
 
         /* slightly modified version of code from
@@ -379,7 +422,7 @@ Divmod.Runtime.Platform.methods(
      *
      * @return: object with "w" and "h" attributes
      */
-    function getElementSize(self, e) {
+    'getElementSize': function (self, e) {
         var hidden = e.style.display == "none";
         if(hidden) {
             e.style.display = "";
@@ -394,7 +437,7 @@ Divmod.Runtime.Platform.methods(
     /**
      * Return all immediate children of C{root} that have tag name C{tagName}
      */
-    function getElementsByTagNameShallow(self, root, tagName) {
+    'getElementsByTagNameShallow': function (self, root, tagName) {
         var child, result = [];
         for(var i = 0; i < root.childNodes.length; i++) {
             child = root.childNodes[i];
@@ -412,7 +455,7 @@ Divmod.Runtime.Platform.methods(
      * L{Divmod.Runtime.Platform.setAttribute} when they encounter a
      * namespace-less attribute.
      */
-    function _mangleAttributeName(self, localName) {
+    '_mangleAttributeName': function (self, localName) {
         if(localName in self.attrNameToMangled) {
             return self.attrNameToMangled[localName];
         }
@@ -422,7 +465,8 @@ Divmod.Runtime.Platform.methods(
     /**
      * Reliably set the value for a node attribute.
      */
-    function setAttribute(self, node, localName, value, namespaceURI, namespaceIdentifier) {
+    'setAttribute': function (self, node, localName, value, namespaceURI,
+                              namespaceIdentifier) {
         if (namespaceURI === undefined && namespaceIdentifier === undefined) {
             localName = self._mangleAttributeName(localName);
         }
@@ -444,7 +488,8 @@ Divmod.Runtime.Platform.methods(
     /**
      * This is _the_way_ to get the value of an attribute off of node
      */
-    function getAttribute(self, node, localName, namespaceURI, namespaceIdentifier) {
+    'getAttribute': function (self, node, localName, namespaceURI,
+                              namespaceIdentifier) {
         if(namespaceURI == undefined && namespaceIdentifier == undefined) {
             localName = self._mangleAttributeName(localName);
         }
@@ -483,9 +528,11 @@ Divmod.Runtime.Platform.methods(
         return null;
     },
 
-    function makeHTTPRequest(self) {
-        throw new Error("makeHTTPRequest is unimplemented on " + self);
+
+    'makeHTTPRequest': function (self) {
+        return new XMLHttpRequest();
     },
+
 
     /**
      * Asynchronously retrieve an HTTP resource.
@@ -513,7 +560,8 @@ Divmod.Runtime.Platform.methods(
      * code of the response.  For example, 200 if successful.  The 'response'
      * will be a string, the text of the response.
      */
-    function getPage(self, url, /* optional */ args, action, headers, content, synchronous) {
+    'getPage': function (self, url, /* optional */ args, action, headers,
+                         content, synchronous) {
         // Fill out defaults.
         if (args === undefined) {
             args = [];
@@ -572,11 +620,11 @@ Divmod.Runtime.Platform.methods(
         return [req, d];
     },
 
-    function parseXHTMLString(self, s) {
+    'parseXHTMLString': function (self, s) {
         throw new Error("parseXHTMLString not implemented on " + self.name);
     },
 
-    function traverse(self, rootNode, visitor) {
+    'traverse': function (self, rootNode, visitor) {
         if(rootNode == undefined) {
             throw new Error("traverse() passed bad rootNode");
         }
@@ -614,7 +662,7 @@ Divmod.Runtime.Platform.methods(
      * @param node: A DOM node.
      * @param innerHTML The XHTML 1.0 string to append.
      */
-    function appendNodeContent(self, node, innerHTML) {
+    'appendNodeContent': function (self, node, innerHTML) {
         throw new Error("appendNodeContent not implemented on " + self.name);
     },
 
@@ -625,14 +673,14 @@ Divmod.Runtime.Platform.methods(
      * @param node: A DOM node.
      * @param innerHTML The XHTML 1.0 string to append.
      */
-    function setNodeContent(self, node, innerHTML) {
+    'setNodeContent': function (self, node, innerHTML) {
         while (node.childNodes.length) {
             node.removeChild(node.firstChild);
         }
         self.appendNodeContent(node, innerHTML);
     },
 
-    function loadScript(self, location) {
+    'loadScript': function (self, location) {
         // <script> tricks produce spectacularly bizarre behaviour in IE and
         // Safari doesn't support onerror, so we just use getPage/eval here.
         var req = Divmod.Runtime.theRuntime.getPage(location);
@@ -652,7 +700,7 @@ Divmod.Runtime.Platform.methods(
      *
      * @rtype: C{undefined}
      */
-    function loadStylesheet(self, location) {
+    'loadStylesheet': function (self, location) {
         var linkNode = document.createElement('link');
         linkNode.setAttribute('rel', 'stylesheet');
         linkNode.setAttribute('type', 'text/css');
@@ -669,7 +717,7 @@ Divmod.Runtime.Platform.methods(
      * @param deep: A boolean indicating whether children should be imported.
      * @returns: The imported Node.
      */
-    function importNode(self, node, deep) {
+    'importNode': function (self, node, deep) {
         return document.importNode(node, deep);
     },
 
@@ -681,7 +729,7 @@ Divmod.Runtime.Platform.methods(
      * is merely to allow for platfom-specific workarounds for certain edge
      * cases.
      */
-    function getElementByIdWithNode(self, node, id) {
+    'getElementByIdWithNode': function (self, node, id) {
         var foundNode = node.ownerDocument.getElementById(id);
         if (foundNode == null) {
             throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
@@ -696,7 +744,7 @@ Divmod.Runtime.Platform.methods(
      * this callable is not invoked directly in response to the DOM page load
      * event, but in a delayed call scheduled from that event.
      */
-    function addLoadEvent(self, callable) {
+    'addLoadEvent': function (self, callable) {
         var func = function() { setTimeout(callable, self._loadEventDelay); };
         Divmod.Base.addToCallStack(window, "onload", func, true);
     },
@@ -707,9 +755,18 @@ Divmod.Runtime.Platform.methods(
      * @param aWindow: The window object.
      * @param handler: The handler.
      */
-    function addBeforeUnloadHandler(self, aWindow, handler) {
+    'addBeforeUnloadHandler': function (self, aWindow, handler) {
         Divmod.Base.addToCallStack(aWindow, 'onbeforeunload', handler);
-    });
+    },
+
+
+    /**
+     * Is this a legacy browser?
+     */
+    'isLegacy': function (self) {
+        return false;
+    }
+});
 
 
 /**
@@ -743,99 +800,8 @@ Divmod.Runtime.Spidermonkey.isThisTheOne = function isSpidermonkeyTheOne() {
 };
 
 
-Divmod.Runtime.XPathSupportingPlatform = Divmod.Runtime.Platform.subclass(
-    'Divmod.Runtime.XPathSupportingPlatform');
-Divmod.Runtime.XPathSupportingPlatform.methods(
-    function _nsResolver(self, prefix) {
-        var ns;
-        switch(prefix) {
-            case 'html':
-                ns = 'http://www.w3.org/1999/xhtml';
-                break;
-            case 'athena':
-                ns = 'http://divmod.org/ns/athena/0.7';
-                break;
-            default:
-                // this should never happen, but browsers still suck...
-                ns = null;
-        }
-        return ns;
-    },
 
-    function _xpathNodeByAttribute(self, attrName, attrValue) {
-        var upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        var lower = upper.toLowerCase();
-        return (
-            ".//*[@*[translate(name(),'" + upper + "', '" + lower + "')='" +
-            attrName + "']='" + attrValue + "'] | .[@*[translate(name(),'" +
-            upper + "', '" + lower + "')='" + attrName + "']='" + attrValue +
-            "']");
-    },
-
-    function firstNodeByAttribute(self, root, attrName, attrValue) {
-        /* duplicate this here rather than adding an "onlyOne" arg to
-           nodesByAttribute so adding an extra arg accidentally doesn't change
-           it's behaviour if called directly
-        */
-        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
-        var node = document.evaluate(
-            xpath,
-            root,
-            null,
-            XPathResult.FIRST_ORDERED_NODE_TYPE,
-            null
-        ).singleNodeValue;
-        if (!node) {
-            throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
-        }
-        return node;
-    },
-
-    function nodeByAttribute(self, root, attrName, attrValue, /* optional */ defaultNode){
-        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
-        var nodes = document.evaluate(
-            xpath,
-            root,
-            null,
-            XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,
-            null
-        );
-        if (nodes.snapshotLength > 1) {
-            throw new Error("Found too many " + attrName + " = " + attrValue);
-        }
-        else if (nodes.snapshotLength < 1) {
-            if (defaultNode === undefined) {
-                throw Divmod.Runtime.NodeAttributeError(root, attrName, attrValue);
-            }
-            else {
-                return defaultNode;
-            }
-        }
-        else {
-            var result = nodes.snapshotItem(0);
-            return result;
-        }
-    },
-
-    function nodesByAttribute(self, root, attrName, attrValue) {
-        var results = [];
-        var xpath = self._xpathNodeByAttribute(attrName, attrValue);
-        var nodes = document.evaluate(
-            xpath,
-            root,
-            null,
-            XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-            null
-        );
-        var node = nodes.iterateNext();
-        while(node){
-            results.push(node);
-            node = nodes.iterateNext();
-        }
-        return results;
-    });
-
-Divmod.Runtime.Firefox = Divmod.Runtime.XPathSupportingPlatform.subclass(
+Divmod.Runtime.Firefox = Divmod.Runtime.Platform.subclass(
     'Divmod.Runtime.Firefox');
 
 Divmod.Runtime.Firefox.isThisTheOne = function isThisTheOne() {
@@ -856,6 +822,7 @@ Divmod.Runtime.Firefox.methods(
         self._xmlparser = Divmod.Runtime._XMLParser();
         self._scriptCounter = 0;
         self._scriptDeferreds = {};
+        Divmod.Runtime._registerStandardErrorSerializer();
     },
 
     function makeHTML(self, element) {
@@ -880,6 +847,23 @@ Divmod.Runtime.Firefox.methods(
             HTML_ELEMENT.appendChild(MAKE_HTML(element.childNodes[i]));
         }
         return HTML_ELEMENT;
+    },
+
+
+    function _nsResolver(self, prefix) {
+        var ns;
+        switch (prefix) {
+            case 'html':
+                ns = 'http://www.w3.org/1999/xhtml';
+                break;
+            case 'athena':
+                ns = 'http://divmod.org/ns/athena/0.7';
+                break;
+            default:
+                // this should never happen, but browsers still suck...
+                ns = null;
+        }
+        return ns;
     },
 
     function parseXHTMLString(self, s) {
@@ -916,9 +900,6 @@ Divmod.Runtime.Firefox.methods(
         node.appendChild(document.importNode(doc.documentElement, true));
     },
 
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
-    },
 
     /**
      * Load the JavaScript module at the given URL.
@@ -959,6 +940,7 @@ Divmod.Runtime.Firefox.methods(
         return self._scriptDeferreds[scriptID];
     },
 
+
     function _scriptLoaded(self, scriptID) {
         var script = document.getElementById(scriptID);
         script.parentNode.removeChild(script);
@@ -968,6 +950,7 @@ Divmod.Runtime.Firefox.methods(
         loaded.callback(null);
     },
 
+
     function _scriptError(self, scriptID, error) {
         var script = document.getElementById(scriptID);
         script.parentNode.removeChild(script);
@@ -975,7 +958,13 @@ Divmod.Runtime.Firefox.methods(
         var loaded = self._scriptDeferreds[scriptID];
         delete self._scriptDeferreds[scriptID];
         loaded.errback(Divmod.Runtime.ScriptLoadingError(error));
+    },
+
+
+    function getElementByIdWithNode(self, node, id) {
+        return Divmod.Runtime._getElementByIdWithNode(node, document, id);
     });
+
 
 
 Divmod.Runtime.WebKit = Divmod.Runtime.Platform.subclass(
@@ -1033,19 +1022,7 @@ Divmod.Runtime.WebKit.methods(
     },
 
     function getElementByIdWithNode(self, node, id) {
-        var foundNode = node.ownerDocument.getElementById(id);
-        if (foundNode === null) {
-            // We didn't find it, maybe we need a workaround.
-            // Let's insert ourselves into the document temporarily.
-            foundNode = Divmod.Runtime._getElementByIdWithDocument(
-                node, document, id);
-        }
-
-        if (foundNode === null) {
-            throw Divmod.Runtime.NodeNotFound('Node with id ' + id + ' not found');
-        }
-
-        return foundNode;
+        return Divmod.Runtime._getElementByIdWithNode(node, document, id);
     },
 
     function parseXHTMLString(self, s) {
@@ -1055,55 +1032,97 @@ Divmod.Runtime.WebKit.methods(
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
         node.appendChild(document.importNode(doc.documentElement, true));
-    },
-
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
     });
 
-Divmod.Runtime.InternetExplorer = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorer");
 
-Divmod.Runtime.InternetExplorer.isThisTheOne = function isThisTheOne() {
+
+Divmod.Runtime._internetExplorerVersion = function _internetExplorerVersion() {
     try {
-        return navigator.appName == "Microsoft Internet Explorer";
+        // http://msdn.microsoft.com/en-us/library/ms537509%28v=vs.85%29.aspx
+        var userAgent = navigator.userAgent;
+        var result = userAgent.match(/MSIE ([0-9]+[\.0-9]*)/);
+        if (result === null && navigator.appName === 'Netscape') {
+            // We might be IE 11.
+            result = userAgent.match(/Trident\/.*rv:([0-9]+[\.0-9])/);
+        }
+        if (result === null) {
+            return null;
+        }
+        return parseFloat(result[1]);
     } catch (err) {
         if (err instanceof ReferenceError) {
-            return false;
+            return null;
         } else {
             throw err;
         }
     }
 };
 
-Divmod.Runtime.InternetExplorer.methods(
-    function __init__(self) {
-        Divmod.Runtime.InternetExplorer.upcall(self, '__init__', 'Internet Explorer');
-        // IE has no equivalent to the stacktrace that FF provides, so this
-        // JSON adapter will provide a dummy object to make Athena happy when
-        // it tries to send exceptions from the client to the server
-        Divmod.Base.registerJSON(
-            'Error',
-            function(obj) {
-                return obj instanceof Error;
-            },
-            function(obj) {
-                return {
-                    'name': obj.name,
-                    'message': obj.message,
-                    'stack': 'No stacktrace available\n'
-                };
-            }
-        );
 
-        /* IE rewrites attributes with names matching these
-           keys to their corresponding values.
-           e.g. class -> className, etc
-         */
-        self.attrNameToMangled = {"class": "className",
-                                  "checked": "defaultChecked",
-                                  "usemap": "useMap",
-                                  "for": "htmlFor"};
+
+Divmod.Runtime.InternetExplorerModern = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorerModern");
+
+Divmod.Runtime.InternetExplorerModern.isThisTheOne = function isThisTheOne() {
+    var version = Divmod.Runtime._internetExplorerVersion();
+    return version !== null && version >= 10;
+};
+
+Divmod.Runtime.InternetExplorerModern.methods(
+    function __init__(self) {
+        Divmod.Runtime.InternetExplorerModern.upcall(
+            self, '__init__', 'Internet Explorer 10+');
+        self._xmlparser = Divmod.Runtime._XMLParser();
     },
+
+
+    function appendNodeContent(self, node, innerHTML) {
+        var head = document.getElementsByTagName('head').item(0);
+        var doc = self.parseXHTMLString(innerHTML);
+        var scripts = doc.getElementsByTagName('script');
+
+        while (scripts.length > 0) {
+            var oldScript = scripts[0].parentNode.removeChild(scripts[0]);
+            var src = oldScript.getAttribute('src');
+            var text = oldScript.text;
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            if(src != '' && src != null){
+                script.src = src;
+            }
+            else if(text != '' && text != null){
+                script.text = text;
+            }
+            head.appendChild(script);
+        }
+        node.appendChild(document.importNode(doc.documentElement, true));
+    },
+
+
+    function parseXHTMLString(self, s) {
+        return self._xmlparser.parseXHTMLString(s);
+    },
+
+
+    function getElementByIdWithNode(self, node, id) {
+        return Divmod.Runtime._getElementByIdWithNode(node, document, id);
+    });
+
+
+
+Divmod.Runtime.InternetExplorerSemiModern = Divmod.Runtime.Platform.subclass("Divmod.Runtime.InternetExplorerSemiModern");
+
+Divmod.Runtime.InternetExplorerSemiModern.isThisTheOne = function isThisTheOne() {
+    var version = Divmod.Runtime._internetExplorerVersion();
+    return version !== null && version >= 8 && version < 10;
+};
+
+Divmod.Runtime.InternetExplorerSemiModern.methods(
+    function __init__(self) {
+        Divmod.Runtime.InternetExplorerSemiModern.upcall(
+            self, '__init__', 'Internet Explorer 8/9');
+        Divmod.Runtime._registerStandardErrorSerializer();
+    },
+
 
     function parseXHTMLString(self, s) {
         var xmldoc = new ActiveXObject("MSXML.DOMDocument");
@@ -1114,6 +1133,7 @@ Divmod.Runtime.InternetExplorer.methods(
         }
         return xmldoc;
     },
+
 
     function appendNodeContent(self, node, innerHTML) {
         var head = document.getElementsByTagName('head').item(0);
@@ -1138,23 +1158,6 @@ Divmod.Runtime.InternetExplorer.methods(
         node.innerHTML += doc.xml;
     },
 
-    function makeHTTPRequest(self) {
-        if (!self._xmlhttpname) {
-            var names = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
-            while (names.length) {
-                self._xmlhttpname = names.shift();
-                try {
-                    return self.makeHTTPRequest();
-                } catch (e) {
-                    // pass
-                }
-            }
-            self._xmlhttpname = null;
-            throw new Error("No support XML HTTP Request thingy on this platform");
-        } else {
-            return new ActiveXObject(self._xmlhttpname);
-        }
-    },
 
     /**
      * Simulate importNode by rebuilding the node contents in a node created in
@@ -1172,6 +1175,7 @@ Divmod.Runtime.InternetExplorer.methods(
         tmpNode.innerHTML = nodeXML;
         return tmpNode.firstChild.cloneNode(deep);
     },
+
 
     function getElementByIdWithNode(self, node, id) {
         var foundNode = node.ownerDocument.getElementById(id);
@@ -1200,6 +1204,7 @@ Divmod.Runtime.InternetExplorer.methods(
         return foundNode;
     },
 
+
     /**
      * Add the handler to the <body> element instead.
      */
@@ -1208,7 +1213,55 @@ Divmod.Runtime.InternetExplorer.methods(
     });
 
 
-Divmod.Runtime.Opera = Divmod.Runtime.XPathSupportingPlatform.subclass("Divmod.Runtime.Opera");
+
+Divmod.Runtime.InternetExplorerLegacy = Divmod.Runtime.InternetExplorerSemiModern.subclass("Divmod.Runtime.InternetExplorerLegacy");
+
+Divmod.Runtime.InternetExplorerLegacy.isThisTheOne = function isThisTheOne() {
+    var version = Divmod.Runtime._internetExplorerVersion();
+    return version !== null && version < 8;
+};
+
+Divmod.Runtime.InternetExplorerLegacy.methods(
+    function __init__(self) {
+        Divmod.Runtime.InternetExplorerLegacy.upcall(
+            self, '__init__', 'Internet Explorer 6/7');
+        /* IE rewrites attributes with names matching these
+           keys to their corresponding values.
+           e.g. class -> className, etc
+         */
+        self.attrNameToMangled = {"class": "className",
+                                  "checked": "defaultChecked",
+                                  "usemap": "useMap",
+                                  "for": "htmlFor"};
+    },
+
+
+    function isLegacy(self) {
+        return true;
+    },
+
+
+    function makeHTTPRequest(self) {
+        if (!self._xmlhttpname) {
+            var names = ["Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
+            while (names.length) {
+                self._xmlhttpname = names.shift();
+                try {
+                    return self.makeHTTPRequest();
+                } catch (e) {
+                    // pass
+                }
+            }
+            self._xmlhttpname = null;
+            throw new Error("No support XML HTTP Request thingy on this platform");
+        } else {
+            return new ActiveXObject(self._xmlhttpname);
+        }
+    });
+
+
+
+Divmod.Runtime.Opera = Divmod.Runtime.Platform.subclass("Divmod.Runtime.Opera");
 
 Divmod.Runtime.Opera.isThisTheOne = function isThisTheOne() {
     try {
@@ -1263,10 +1316,6 @@ Divmod.Runtime.Opera.methods(
     function appendNodeContent(self, node, innerHTML) {
         var doc = self.parseXHTMLString(innerHTML);
         node.appendChild(document.importNode(doc.documentElement, true));
-    },
-
-    function makeHTTPRequest(self) {
-        return new XMLHttpRequest();
     });
 
 
@@ -1274,8 +1323,10 @@ Divmod.Runtime.Opera.methods(
 Divmod.Runtime.Platform.determinePlatform = function determinePlatform() {
     var platforms = [
         Divmod.Runtime.WebKit,
+        Divmod.Runtime.InternetExplorerModern,
         Divmod.Runtime.Firefox,
-        Divmod.Runtime.InternetExplorer,
+        Divmod.Runtime.InternetExplorerSemiModern,
+        Divmod.Runtime.InternetExplorerLegacy,
         Divmod.Runtime.Opera,
         Divmod.Runtime.Spidermonkey];
     for (var cls = 0; cls < platforms.length; ++cls) {
