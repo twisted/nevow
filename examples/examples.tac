@@ -58,8 +58,6 @@ try:
     from cal import cal
     from tabbed import tabbed
     from progress import progress
-    from tests import testformless, testexamples
-    from nevow import livetest
 
     from athenademo import calculator
     from athenademo import typeahead
@@ -162,12 +160,6 @@ class Examples(rend.Page):
         calendar=cal.Calendar(),
         tabbed=tabbed.TabbedPage(),
         progress=progress.createResource(),
-        tests=testexamples.createResource(),
-        livetests=testexamples.createLiveSuite(),
-        testtests=livetest.createResource(),
-        testformless=testformless.NameWizard(),
-        formless_redirector=testformless.Redirector(),
-        formless_tests=testformless.formless_tests,
         fragments=fragments.Root(),
         macros=macros.Root(),
         typeahead=typeahead.DataEntry(),

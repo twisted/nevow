@@ -25,7 +25,7 @@ prefixed with '_'.
 """
 
 
-from nevow.stan import Proto, Tag, directive, raw, xml, CommentProto, invisible, slot, cdata, inlineJS
+from nevow.stan import Proto, Tag, directive, raw, xml, CommentProto, invisible, slot, cdata
 
 
 comment = CommentProto()
@@ -60,7 +60,7 @@ def drange(x):
     return [globs['_%s' % i] for i in range(x)]
 
 
-__all__ = tags + ['invisible', 'comment', '_dir', '_del', '_object', '_map', 'drange', 'Tag', 'directive', 'xml', 'raw', 'slot', 'cdata', 'inlineJS'] + ['_%s' % x for x in range(100)]
+__all__ = tags + ['invisible', 'comment', '_dir', '_del', '_object', '_map', 'drange', 'Tag', 'directive', 'xml', 'raw', 'slot', 'cdata'] + ['_%s' % x for x in range(100)]
 
 
 ########################

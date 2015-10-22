@@ -206,8 +206,6 @@ nevow.flat.flatstan.ListSerializer  itertools.takewhile
 
 nevow.flat.flatstan.DocFactorySerializer nevow.inevow.IDocFactory
 
-nevow.flat.flatstan.inlineJSSerializer nevow.stan.inlineJS
-
 # I18N
 nevow.i18n.flattenL10n              nevow.i18n.PlaceHolder
 """

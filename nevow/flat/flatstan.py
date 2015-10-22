@@ -372,15 +372,3 @@ def DocFactorySerializer(original, ctx):
 def FailureSerializer(original, ctx):
     from nevow import failure
     return serialize(failure.formatFailure(original), ctx)
-
-
-def inlineJSSerializer(original, ctx):
-    from nevow import livepage
-    from nevow.tags import script, xml
-    theJS = livepage.js(original.children)
-    new = livepage.JavascriptContext(ctx, invisible[theJS])
-    return serialize(script(type="text/javascript")[
-        xml('\n//<![CDATA[\n'),
-        serialize(theJS, new),
-        xml('\n//]]>\n')], ctx)
-
