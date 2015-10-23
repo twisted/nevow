@@ -867,10 +867,6 @@ class ReliableMessageDelivery(object):
                     for (seq, msg) in incomingMessages:
                         if seq > lastSentAck:
                             self.livePage.liveTransportMessageReceived(ctx, msg)
-                        else:
-                            log.msg("Athena transport duplicate message, discarding: %r %r" %
-                                    (self.livePage.clientID,
-                                     seq))
                     d = self._createOutputDeferred()
                 finally:
                     self.unpause()
