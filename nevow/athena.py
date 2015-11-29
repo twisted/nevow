@@ -747,9 +747,6 @@ class ReliableMessageDelivery(object):
 
 
     def addOutput(self, output):
-        if not self._connected:
-            self._connected = True
-            self.connectionMade()
         if self._transportlessTimeoutCall is not None:
             self._transportlessTimeoutCall.cancel()
             self._transportlessTimeoutCall = None
@@ -833,6 +830,10 @@ class ReliableMessageDelivery(object):
         exact code path, you should not encounter it.  If you do, something has
         gone *badly* wrong.
         """
+        if not self._connected:
+            self._connected = True
+            self.connectionMade()
+
         ack, incomingMessages = basketCase
 
         outgoingMessages = self.messages
