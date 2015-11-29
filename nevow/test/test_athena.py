@@ -997,9 +997,9 @@ class Transport(unittest.TestCase):
         is added.
         """
         self.assertEqual(self.connectionsMade, 0)
-        self.rdm.addOutput(mappend(self.transport))
+        self.rdm.basketCaseReceived(None, [0, []])
         self.assertEqual(self.connectionsMade, 1)
-        self.rdm.addOutput(mappend(self.transport))
+        self.rdm.basketCaseReceived(None, [0, []])
         self.assertEqual(self.connectionsMade, 1)
 
 
