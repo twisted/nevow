@@ -1,3 +1,21 @@
+0.12.0 (2015-12-16):
+  - Responses are no longer finished if the connection went away, avoiding an
+    error message that this used to cause.
+  - Detach all children on detach (previously only every other child was
+    detached due to a bug).
+  - The documentation is now in Sphinx format instead of Lore format.
+  - Nevow templates now have attributes serialized in a stable order (the
+    ordering is lexicographic).
+  - The Athena runtime now works on Internet Explorer versions higher than 7.
+  - Athena can now handle messages containing `undefined` (this deserializes to
+    `None`, same as `null`; previously an error would occur).
+  - Athena no longer logs about receiving duplicate messages (there is nothing
+    the user / developer can do about these, so the log message didn't serve
+    any purpose other than flooding your logs).
+  - connectionMade on Athena widgets is now always invoked before any remote
+    calls are handled (previously some remote calls might be handled before
+    connectionMade was invoked).
+
 0.11.1 (2014-06-21):
   - The athena-widget twistd plugin is now distributed in the wheel package.
 
