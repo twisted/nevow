@@ -666,11 +666,3 @@ class Entity(object):
 
     def __repr__(self):
         return "Entity(%r, %r, %r)" % (self.name, self.num, self.description)
-
-
-class inlineJS(object):
-    def __init__(self, children):
-        self.children = children
-
-    def __repr__(self):
-        return "inlineJS(%s)" % (self.children, )

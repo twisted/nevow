@@ -108,15 +108,14 @@ instructions once I do.)
 Twisted.Web
 -----------
 
-A convenient and powerful way to deploy Nevow applications is inside a
-process running the twisted.web HTTP server. With Python, Twisted, and
-Nevow installed, you have all you need to run a Web Application, with no
-other dependencies or external HTTP servers such as Apache required.
-Running your Nevow applications under twisted.web also gives you access
-to some of the more advanced "Live" features of Nevow, such as
-``nevow.livepage`` and ``nevow.canvas``. Currently, these modules
-require more control over the HTTP socket than CGI or WSGI can provide.
-(This may change in the future.)
+A convenient and powerful way to deploy Nevow applications is inside a process
+running the twisted.web HTTP server. With Python, Twisted, and Nevow installed,
+you have all you need to run a Web Application, with no other dependencies or
+external HTTP servers such as Apache required.  Running your Nevow applications
+under twisted.web also gives you access to some of the more advanced "Live"
+features of Nevow, such as ``nevow.athena``.  Currently, these modules require
+more control over the HTTP socket than CGI can provide.  (This may change in
+the future.)
 
 Deploying a Nevow application under twisted.web requires a little more
 boilerplate, but can be considerably easier to set up than other
@@ -241,7 +240,7 @@ try out the Nevow templating mechanism, but can be slow. A long-running
 application server process can be a good way to get good performance as
 well as additional features such as in-memory server-side sessions,
 advanced automatic form handling with formless, and live page updating
-features such as nevow.livepage and nevow.canvas.
+features such as nevow.athena.
 
 Which deployment option you choose will depend on the amount of control
 you have over your deployment environment, and what advanced features

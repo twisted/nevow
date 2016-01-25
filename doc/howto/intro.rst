@@ -25,9 +25,6 @@ web solution:
 -  formless.webform: For rendering web forms based on formless type
    descriptions, accepting form posts and passing them to formless
    validators, and rendering error forms in the event validation fails
--  livepage: Cross-browser JavaScript glue for sending client side
-   events to the server and server side events to the client after the
-   page has loaded, without causing the entire page to refresh
 
 Disk based templates
 --------------------
