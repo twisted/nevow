@@ -50,12 +50,11 @@ over a very simple root resource:
             return "Hello, world!"
 
 
-This resource, when passed as the root resource to
-``appserver.NevowSite`` or ``wsgi.createWSGIApplication``, will
-immediately return itself, consuming all path segments. This means that
+This resource, when passed as the root resource to ``appserver.NevowSite``,
+will immediately return itself, consuming all path segments. This means that
 for every URI a user visits on a web server which is serving this root
-resource, the text ``"Hello, world!"`` will be rendered. Let's examine
-the value of ``segments`` for various values of URI:
+resource, the text ``"Hello, world!"`` will be rendered. Let's examine the
+value of ``segments`` for various values of URI:
 
 -  ``/`` - ``('',)``
 -  ``/foo/bar`` - ``('foo', 'bar')``

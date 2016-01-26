@@ -1,6 +1,5 @@
 include ChangeLog
 include LICENSE
-include zomne.c
 include formless/freeform-default.css
 include nevow/Canvas.swf
 include nevow/athena_private/*.png
@@ -15,7 +14,6 @@ include examples/files/words
 include examples/pastebin/data
 include examples/pastebin/static/robots.txt
 include examples/pastebin/TODO
-include examples/wsgi/README
 include extras/xhtml-nevow.rnc
 include nevow/Canvas.fla
 include nevow/canvas.as
