@@ -8,13 +8,13 @@ A web application server built using twisted.web
 
 import cgi
 import warnings
+from collections import MutableMapping
 from urllib import unquote
 
 from zope.interface import implements, classImplements
 
 import twisted.python.components as tpc
 from twisted.web import server
-from twisted.web.http_headers import _DictHeaders
 
 try:
     from twisted.web import http
@@ -29,6 +29,81 @@ from nevow import inevow
 from nevow import url
 from nevow import flat
 from nevow import stan
+
+
+
+class _DictHeaders(MutableMapping):
+    """
+    A C{dict}-like wrapper around L{Headers} to provide backwards compatibility
+    for L{twisted.web.http.Request.received_headers} and
+    L{twisted.web.http.Request.headers} which used to be plain C{dict}
+    instances.
+
+    @type _headers: L{Headers}
+    @ivar _headers: The real header storage object.
+    """
+    def __init__(self, headers):
+        self._headers = headers
+
+
+    def __getitem__(self, key):
+        """
+        Return the last value for header of C{key}.
+        """
+        if self._headers.hasHeader(key):
+            return self._headers.getRawHeaders(key)[-1]
+        raise KeyError(key)
+
+
+    def __setitem__(self, key, value):
+        """
+        Set the given header.
+        """
+        self._headers.setRawHeaders(key, [value])
+
+
+    def __delitem__(self, key):
+        """
+        Delete the given header.
+        """
+        if self._headers.hasHeader(key):
+            self._headers.removeHeader(key)
+        else:
+            raise KeyError(key)
+
+
+    def __iter__(self):
+        """
+        Return an iterator of the lowercase name of each header present.
+        """
+        for k, v in self._headers.getAllRawHeaders():
+            yield k.lower()
+
+
+    def __len__(self):
+        """
+        Return the number of distinct headers present.
+        """
+        # XXX Too many _
+        return len(self._headers._rawHeaders)
+
+
+    # Extra methods that MutableMapping doesn't care about but that we do.
+    def copy(self):
+        """
+        Return a C{dict} mapping each header name to the last corresponding
+        header value.
+        """
+        return dict(self.items())
+
+
+    def has_key(self, key):
+        """
+        Return C{True} if C{key} is a header in this collection, C{False}
+        otherwise.
+        """
+        return key in self
+
 
 
 class UninformativeExceptionHandler:
