@@ -8,10 +8,10 @@ Tests for L{nevow.appserver}.
 from zope.interface import implements
 
 from cStringIO import StringIO
+from shlex import split
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
-
 
 from nevow import inevow
 from nevow import appserver
@@ -208,11 +208,10 @@ class Logging(testutil.TestCase):
         proto = self.renderResource('/foo')
         logLines = proto.site.logFile.getvalue().splitlines()
         self.assertEquals(len(logLines), 1)
-        # print proto.transport.data.getvalue()
-        self.assertEquals(
-            logLines,
-            ['"fakeaddress2" - - faketime "GET /foo HTTP/1.0" 200 6 '
-             '"fakerefer" "fakeagent"'])
+        self.assertEqual(
+            split(logLines[0]),
+            ['fakeaddress2', '-', '-', 'faketime', 'GET /foo HTTP/1.0', '200', '6',
+             'fakerefer', 'fakeagent'])
 
 
     def test_newStyle(self):
