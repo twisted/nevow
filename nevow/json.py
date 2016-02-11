@@ -267,6 +267,8 @@ def _serialize(obj, w, seen):
             w('false')
     elif isinstance(obj, (int, float)):
         w(str(obj))
+    elif isinstance(obj, bytes):
+        obj=unicode(obj)
     elif isinstance(obj, str):
         w('"')
         w(stringEncode(obj))
