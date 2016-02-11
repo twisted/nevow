@@ -164,7 +164,7 @@ def StringSerializer(original, context):
         if not context.inJSSingleQuoteString:
             original = b"'%s'" % (original, )
     if context.isAttrib:
-        return original.replace(b"&", "&amp;").replace(b"<", b"&lt;").replace(b">", b"&gt;").replace(b'"', b"&quot;")
+        return original.replace(b"&", b"&amp;").replace(b"<", b"&lt;").replace(b">", b"&gt;").replace(b'"', b"&quot;")
     elif context.inJS:
         return original
     else:
