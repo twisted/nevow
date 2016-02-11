@@ -152,6 +152,7 @@ def StringSerializer(original, context):
     # alphanumeric and a few punctation characters are valid.
     # Otherwise we use normal XML escaping rules but also replacing "
     # in an attribute because Nevow always uses "..." for values.
+    original=toBytes(original)
     if context.inURL:
         # The magic string "-_.!*'()" also appears in url.py.  Thinking about
         # changing this?  Change that, too.
