@@ -909,7 +909,8 @@ class _HasJSClass(object):
         the page before this Fragment's widget can be instantiated.  modules
         are accessible.
         """
-        print(912, self.page.getJSModuleURL(dep.name))
+        for i in self._getModuleForClass().allDependencies(memo):
+            print(913, self.page.getJSModuleURL(i.name))
         return [
             (dep.name, self.page.getJSModuleURL(dep.name))
             for dep
