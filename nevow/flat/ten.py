@@ -127,7 +127,7 @@ def flatten(stan, ctx=None):
         ctx.remember(None, inevow.IData)
     result = []
     list(iterflatten(stan, ctx, result.append))
-    return tags.raw(''.join(result))
+    return tags.raw(b''.join(result))
 
 
 def precompile(stan, ctx=None):
