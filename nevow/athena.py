@@ -1346,7 +1346,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
 
     def getJSModuleURL(self, moduleName):
-        print(1349, moduleName)
+        print(1349, self.jsModuleRoot.child(moduleName), flat.flatten(self.jsModuleRoot.child(moduleName)))
         return self.jsModuleRoot.child(moduleName)
 
 
