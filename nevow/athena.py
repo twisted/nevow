@@ -1359,7 +1359,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         moduleDef = jsModuleDeclaration(moduleName);
         
         t=tags.script(type='text/javascript')
-        r=tags.raw(moduleDef)
+        r=tags.raw(toBytes(moduleDef))
         t[r]
         
         return [t,
