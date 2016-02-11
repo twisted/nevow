@@ -13,6 +13,7 @@ import re, types
 
 from nevow.inevow import IAthenaTransportable
 from nevow import rend, page, _flat, tags
+from nevow.util import unicode, toBytes
 
 class ParseError(ValueError):
     pass
@@ -327,6 +328,6 @@ def serialize(obj=_undefined, **kw):
         obj = kw
     L = []
     _serialize(obj, L.append, {})
-    return ''.join(L)
+    return b''.join([toBytes(i) for i in L])
 
 __all__ = ['parse', 'serialize']
