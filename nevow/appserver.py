@@ -5,7 +5,7 @@
 """
 A web application server built using twisted.web
 """
-from nevow.utils import unicode, toBytes
+from nevow.util import unicode, toBytes
 import cgi
 import warnings
 from collections import MutableMapping

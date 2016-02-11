@@ -18,7 +18,7 @@ from nevow import inevow, flat
 from nevow.stan import raw
 from nevow.flat import serialize
 from nevow.context import WovenContext
-from nevow.utils import unicode, toBytes
+from nevow.util import unicode, toBytes
 
 def _uqf(query):
     for x in query.split('&'):
