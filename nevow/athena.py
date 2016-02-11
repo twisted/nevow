@@ -1363,7 +1363,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
 
     def render_liveglue(self, ctx, data):
-        bootstrapString = '\n'.join(
+        bootstrapString = b'\n'.join(
             [self._bootstrapCall(method, args) for
              method, args in self._bootstraps(ctx)])
         return ctx.tag[
