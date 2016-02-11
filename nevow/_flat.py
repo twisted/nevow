@@ -61,14 +61,14 @@ class FlattenerError(Exception):
         @return: A string representation of C{obj}.
         @rtype: L{str}
         """
-        if isinstance(obj, str):
+        if isinstance(obj, bytes):
             # It's somewhat unlikely that there will ever be a str in the roots
             # list.  However, something like a MemoryError during a str.replace
             # call (eg, replacing " with &quot;) could possibly cause this.
             # Likewise, UTF-8 encoding a unicode string to a byte string might
             # fail like this.
             if len(obj) > 40:
-                if isinstance(obj, str):
+                if isinstance(obj, bytes):
                     prefix = 1
                 else:
                     prefix = 2
@@ -237,18 +237,18 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
         root = root.tag
 
     if isinstance(root, raw):
-        root = str(root)
+        root = toBytes(root)
         if inAttribute:
-            root = root.replace('"', '&quot;')
+            root = root.replace(b'"', b'&quot;')
         yield root
     elif isinstance(root, Proto):
-        root = str(root)
+        root = toBytes(root)
         if root:
             if root in allowSingleton:
-                yield '<' + root + ' />'
+                yield b'<' + root + b' />'
             else:
-                yield '<' + root + '></' + root + '>'
-    elif isinstance(root, str):
+                yield b'<' + root + b'></' + root + '>'
+    elif isinstance(root, bytes):
         yield escapedData(root, inAttribute, inXML)
     elif isinstance(root, slot):
         slotValue = _getSlotValue(root.name, slotData)
@@ -467,7 +467,7 @@ def _flattensome(state, write, schedule, result):
         except:
             result.errback()
         else:
-            if type(element) is str:
+            if type(element) is bytes:
                 write(element)
                 continue
             else:
