@@ -79,7 +79,6 @@ def iterflatten(stan, ctx, writer, shouldYieldItem=None):
     rest = [ iter([partialflatten(ctx, stan)]) ]
     straccum = []
     while rest:
-        print(82, straccum, rest)
         gen = rest.pop()
         for item in gen:
             if isinstance(item, bytes):
@@ -95,7 +94,7 @@ def iterflatten(stan, ctx, writer, shouldYieldItem=None):
             else:
                 if straccum:
                     writer(util.toBytes(tags.raw(''.join(straccum))))
-                    del straccum[:]
+                    straccum=[]
                 if shouldYieldItem is not None and shouldYieldItem(item):
                     replacement = []
                     yield item, replacement.append
