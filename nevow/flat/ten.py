@@ -112,8 +112,7 @@ def iterflatten(stan, ctx, writer, shouldYieldItem=None):
                         break
 
     if straccum:
-        print(115, b''.join(straccum))
-        writer(tags.raw(b''.join(flatten(straccum))))
+        writer(tags.raw(b''.join([i for i in straccum])))
 
 
 def flatten(stan, ctx=None):

@@ -63,7 +63,7 @@ class xml(object):
         return '<xml %r>' % self.content
 
 
-class raw(str):
+class raw(bytes):
     """Raw content marker.
 
     Raw content is never altered in any way. It is a sequence of bytes that will
