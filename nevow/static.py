@@ -361,51 +361,7 @@ class File:
         return f
 
 
-class FileTransfer(pb.Viewable):
-    """
-    A class to represent the transfer of a file over the network.
-    """
-    request = None
-    def __init__(self, file, size, request):
-        self.file = file
-        self.size = size
-        self.request = request
-        request.registerProducer(self, 0)
 
-    def resumeProducing(self):
-        if not self.request:
-            return
-        data = self.file.read(min(abstract.FileDescriptor.bufferSize, self.size))
-        if data:
-            self.request.write(data)
-            self.size -= len(data)
-        if self.size <= 0:
-            self.request.unregisterProducer()
-            self.request.finish()
-            self.request = None
-
-    def pauseProducing(self):
-        pass
-
-    def stopProducing(self):
-        self.file.close()
-        self.request = None
-
-    # Remotely relay producer interface.
-
-    def view_resumeProducing(self, issuer):
-        self.resumeProducing()
-
-    def view_pauseProducing(self, issuer):
-        self.pauseProducing()
-
-    def view_stopProducing(self, issuer):
-        self.stopProducing()
-
-
-    synchronized = ['resumeProducing', 'stopProducing']
-
-threadable.synchronize(FileTransfer)
 
 """I contain AsIsProcessor, which serves files 'As Is'
    Inspired by Apache's mod_asis
