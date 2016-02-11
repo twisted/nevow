@@ -401,6 +401,7 @@ class JSDependencies(object):
             try:
                 self.mapping[jsMod]
                 print(403, self.mapping[jsMod])
+                print(404, JSModule.getOrCreate(jsMod, self.mapping))
             except KeyError:
                 if '.' not in jsMod:
                     break
