@@ -12,7 +12,7 @@ from twisted import plugin
 from nevow import inevow, plugins, flat, _flat
 from nevow import rend, loaders, static
 from nevow import json, util, tags, guard, stan
-from nevow.util import CachedFile
+from nevow.util import CachedFile, unicode, toBytes
 from nevow.useragent import UserAgent, browsers
 from nevow.url import here, URL
 
