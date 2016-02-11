@@ -177,7 +177,7 @@ class AthenaModule(object):
     def _extractImports(self, fileObj):
         s = fileObj.read()
         for m in self._importExpression.finditer(s):
-            yield self.getOrCreate(m.group(1).decode('ascii'), self.mapping)
+            yield self.getOrCreate(unicode(m.group(1), 'ascii'), self.mapping)
 
 
 
