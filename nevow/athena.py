@@ -185,7 +185,7 @@ class AthenaModule(object):
         """
         Calculate our dependencies given the path to our source.
         """
-        depgen = self._extractImports(file(jsFile, 'rU'))
+        depgen = self._extractImports(open(jsFile, 'rU'))
         return self.packageDeps + list(dict.fromkeys(depgen).keys())
 
 
