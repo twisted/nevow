@@ -3,6 +3,21 @@
 
 import inspect, os.path
 
+def toBytes(obj, codec='utf-8'):
+    if isinstance(obj, str):
+        return obj.encode(codec)
+    if isinstance(obj, bytes):
+        return obj
+    return str(obj).encode(codec)
+
+def unicode(obj, codec='utf-8'):
+    if isinstance(obj, str):
+        return obj
+    if isinstance(obj, bytes):
+        return obj.decode(codec)
+    return str(obj)
+
+
 class UnexposedMethodError(Exception):
     """
     Raised on any attempt to get a method which has not been exposed.

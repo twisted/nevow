@@ -127,11 +127,11 @@ class DefaultExceptionHandler:
         log.err(reason)
         request = inevow.IRequest(ctx)
         request.setResponseCode(http.INTERNAL_SERVER_ERROR)
-        request.write("<html><head><title>Exception</title></head><body>")
+        request.write(b"<html><head><title>Exception</title></head><body>")
         from nevow import failure
         result = failure.formatFailure(reason)
-        request.write(''.join(flat.flatten(result)))
-        request.write("</body></html>")
+        request.write(''.join(flat.flatten(result)).encode('utf-8'))
+        request.write(b"</body></html>")
 
         request.finishRequest( False )
 
@@ -161,8 +161,8 @@ def processingFailed(reason, request, ctx):
         log.err()
         log.err("Original exception:", isErr=1)
         log.err(reason)
-        request.write("<html><head><title>Internal Server Error</title></head>")
-        request.write("<body><h1>Internal Server Error</h1>An error occurred rendering the requested page. Additionally, an error occurred rendering the error page.</body></html>")
+        request.write(b"<html><head><title>Internal Server Error</title></head>")
+        request.write(b"<body><h1>Internal Server Error</h1>An error occurred rendering the requested page. Additionally, an error occurred rendering the error page.</body></html>")
         request.finishRequest( False )
 
     return errorMarker
