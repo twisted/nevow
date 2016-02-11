@@ -3,7 +3,7 @@
 
 from twisted.internet import defer
 
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 
 from nevow import stan
 from nevow import context
@@ -356,8 +356,9 @@ class TestComplexSerialization(Base):
     def test_nested_remember(self):
         class IFoo(Interface):
             pass
+        @implementer(IFoo)
         class Foo(str):
-            implements(IFoo)
+            pass
 
         def checkContext(ctx, data):
             self.assertEqual(ctx.locate(IFoo), Foo("inner"))

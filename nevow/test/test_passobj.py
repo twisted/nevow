@@ -2,14 +2,13 @@
 # See LICENSE for details.
 
 import formless
-from zope.interface import implements
+from zope.interface import implementer
 
 class IBar(formless.TypedInterface):
     bar = formless.String()
 
-
+@implementer(IBar)
 class Bar:
-    implements(IBar)
 
     def __init__(self, bar):
         self.bar = bar
@@ -21,9 +20,8 @@ class Bar:
 class IFrob(formless.TypedInterface):
     integer = formless.Integer()
 
-
+@implementer(IFrob)
 class Frob:
-    implements(IFrob)
 
     def __init__(self, integer):
         self.integer = integer
@@ -54,9 +52,8 @@ class IObjectTest(formless.TypedInterface):
 
     someList = formless.List()
 
-
+@implementer(IObjectTest)
 class ObjectTester:
-    implements(IObjectTest)
 
     def __init__(self):
         self.someList = [
@@ -144,9 +141,8 @@ class IAnotherTest(formless.TypedInterface):
         return formless.Object(label="The Answer", interface=formless.Integer)
     compoundChecker = formless.autocallable(compoundChecker)
 
-
+@implementer(IAnotherTest)
 class AnotherTest:
-    implements(IAnotherTest)
 
     def aBarMethod(self, abar):
         return "You passed me %s" % abar
@@ -184,8 +180,8 @@ class AnotherTest:
                     del debugInstance.breaks[removal.fn]
                 list.remove(self, removal)
         class Dummy(formless.TypedInterface): pass
+        @implementer(Dummy)
         class BP:
-            implements(Dummy)
             def __init__(self, fn, ln):
                 self.fn=fn
                 self.ln=ln

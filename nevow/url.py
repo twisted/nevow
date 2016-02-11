@@ -10,7 +10,7 @@ import weakref
 import urllib.parse
 import urllib.request, urllib.parse, urllib.error
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.web.util import redirectTo
 
@@ -585,7 +585,7 @@ class URLGenerator:
         self.__dict__ = state
         self._objmap = weakref.WeakKeyDictionary()
 
-
+@implementer(inevow.IResource)
 class URLRedirectAdapter:
     """
     Adapter for URL and URLOverlay instances that results in an HTTP
@@ -610,7 +610,6 @@ class URLRedirectAdapter:
             # Redirect to the URL of this resource
             return url.URL.fromContext(ctx)
     """
-    implements(inevow.IResource)
 
     def __init__(self, original):
         self.original = original

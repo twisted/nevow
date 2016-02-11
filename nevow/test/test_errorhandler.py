@@ -1,5 +1,5 @@
 
-from zope.interface import implements
+from zope.interface import implementer
 from twisted.python import log
 from twisted.internet import defer
 from nevow import appserver, context, inevow, loaders, rend, tags as T, testutil
@@ -9,9 +9,8 @@ class Root(rend.Page):
     docFactory = loaders.stan(T.html[T.p['Root']])
 
 
-
+@implementer(inevow.ICanHandleNotFound)
 class NotFoundHandler(object):
-    implements(inevow.ICanHandleNotFound)
     html = 'NotFoundHandler'
     def renderHTTP_notFound(self, ctx):
         return self.html
@@ -19,8 +18,8 @@ class NotFoundHandler(object):
 class BrokenException(Exception):
     pass
 
+@implementer(inevow.ICanHandleNotFound)
 class BadNotFoundHandler(object):
-    implements(inevow.ICanHandleNotFound)
     html = 'NotFoundHandler'
     exceptionType = BrokenException
     exceptionMessage ='Error from BadNotFoundHandler'

@@ -5,7 +5,7 @@
 Tests for L{nevow.appserver}.
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from io import StringIO
 from shlex import split
@@ -24,8 +24,8 @@ from nevow.context import RequestContext
 from nevow.rend import Page
 from nevow.testutil import FakeRequest
 
+@implementer(inevow.IResource)
 class Render:
-    implements(inevow.IResource)
 
     rendered = False
 
@@ -81,8 +81,8 @@ class TestLookup(testutil.TestCase):
             lambda result: self.assertIdentical(r, result.tag))
 
     def test_cycle(self):
+        @implementer(inevow.IResource)
         class Resource(object):
-            implements(inevow.IResource)
             def locateChild(self, ctx, segments):
                 if segments[0] == 'self':
                     return self, segments
