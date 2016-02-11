@@ -18,6 +18,7 @@ from nevow import inevow, flat
 from nevow.stan import raw
 from nevow.flat import serialize
 from nevow.context import WovenContext
+from nevow.utils import unicode, toBytes
 
 def _uqf(query):
     for x in query.split('&'):
@@ -148,10 +149,11 @@ class URL(object):
         '''Create a URL object that represents the current URL in the traversal
         process.'''
         request = inevow.IRequest(context)
-        uri = request.prePathURL()
-        if '?' in request.uri:
-            uri += '?' + request.uri.split('?')[-1]
-        return klass.fromString(uri)
+        request.prepath=[toBytes(i) for i in request.prepath]
+        uri = toBytes(request.prePathURL())
+        if b'?' in toBytes(request.uri):
+            uri += b'?' + toBytes(request.uri).split(b'?')[-1]
+        return klass.fromString(unicode(uri))
     fromContext = classmethod(fromContext)
 
     ## path manipulations ##

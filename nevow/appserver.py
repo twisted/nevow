@@ -5,7 +5,7 @@
 """
 A web application server built using twisted.web
 """
-
+from nevow.utils import unicode, toBytes
 import cgi
 import warnings
 from collections import MutableMapping
@@ -130,7 +130,7 @@ class DefaultExceptionHandler:
         request.write(b"<html><head><title>Exception</title></head><body>")
         from nevow import failure
         result = failure.formatFailure(reason)
-        request.write(''.join(flat.flatten(result)).encode('utf-8'))
+        request.write(toBytes(''.join(flat.flatten(result))))
         request.write(b"</body></html>")
 
         request.finishRequest( False )
@@ -291,7 +291,7 @@ class NevowRequest(server.Request, tpc.Componentized):
             # No response can be sent at this point.
             pass
         elif isinstance(html, str):
-            self.write(html.encode('utf-8'))
+            self.write(toBytes(html))
             self.finishRequest(  True )
         elif isinstance(html, bytes):
             self.write(html)
