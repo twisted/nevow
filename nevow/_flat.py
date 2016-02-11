@@ -268,29 +268,29 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
                                             False, True):
                         yield element
                 else:
-                    yield '<'
+                    yield b'<'
                     if isinstance(root.tagName, str):
                         tagName = root.tagName.encode('ascii')
                     else:
-                        tagName = str(root.tagName)
+                        tagName = toBytes(root.tagName)
                     yield tagName
                     for k, v in sorted(root.attributes.items()):
                         if isinstance(k, str):
                             k = k.encode('ascii')
-                        yield " " + k + "=\""
+                        yield b" " + k + b"=\""
                         for element in _flatten(request, v, slotData,
                                                 renderFactory, True, True):
                             yield element
-                        yield "\""
+                        yield b"\""
                     if root.children or tagName not in allowSingleton:
-                        yield '>'
+                        yield b'>'
                         for element in _flatten(request, root.children,
                                                 slotData, renderFactory,
                                                 False, True):
                             yield element
-                        yield '</' + tagName + '>'
+                        yield b'</' + tagName + b'>'
                     else:
-                        yield ' />'
+                        yield b' />'
             else:
                 if isinstance(root.render, directive):
                     rendererName = root.render.name
