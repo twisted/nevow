@@ -1515,7 +1515,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
 
 handler = stan.Proto('athena:handler')
-_handlerFormat = "return Nevow.Athena.Widget.handleEvent(this, %(event)s, %(handler)s);"
+_handlerFormat = b"return Nevow.Athena.Widget.handleEvent(this, %(event)s, %(handler)s);"
 
 def _rewriteEventHandlerToAttribute(tag):
     """
