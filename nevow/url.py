@@ -127,7 +127,7 @@ class URL(object):
 
     def fromString(klass, st):
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(st)
-        print(130, st)
+        print(130, scheme, netloc, path, query, fragment)
         u = klass(
             scheme, netloc,
             
