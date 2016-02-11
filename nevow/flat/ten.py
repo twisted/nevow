@@ -93,7 +93,7 @@ def iterflatten(stan, ctx, writer, shouldYieldItem=None):
                 break
             else:
                 if straccum:
-                    writer(tags.raw(''.join(straccum)))
+                    writer(util.toBytes(tags.raw(''.join(straccum))))
                     del straccum[:]
                 if shouldYieldItem is not None and shouldYieldItem(item):
                     replacement = []
