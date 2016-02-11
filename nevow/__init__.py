@@ -164,7 +164,6 @@ nevow.flat.flatstan.StringSerializer              builtins.bytes
 nevow.flat.flatstan.NoneWarningSerializer         types.NoneType
 nevow.flat.flatstan.StringCastSerializer          builtins.int
 nevow.flat.flatstan.StringCastSerializer          builtins.float
-nevow.flat.flatstan.StringCastSerializer          builtins.long
 nevow.flat.flatstan.BooleanSerializer          builtins.bool
 nevow.flat.flatstan.ListSerializer                builtins.list
 nevow.flat.flatstan.StringCastSerializer          builtins.dict
