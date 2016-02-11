@@ -170,15 +170,15 @@ class _NamedAnyError(Exception):
     'Internal error for when importing fails.'
 
 def _namedAnyWithBuiltinTranslation(name):
-    if name == '__builtin__.function':
+    if name == 'builtins.function':
         name='types.FunctionType'
-    elif name == '__builtin__.method':
+    elif name == 'builtins.method':
         return _RandomClazz # Hack
-    elif name == '__builtin__.instancemethod':
+    elif name == 'builtins.instancemethod':
         name='types.MethodType'
-    elif name == '__builtin__.NoneType':
+    elif name == 'builtins.NoneType':
         name='types.NoneType'
-    elif name == '__builtin__.generator':
+    elif name == 'builtins.generator':
         name='types.GeneratorType'
     return namedAny(name)
 
