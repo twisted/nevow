@@ -338,9 +338,7 @@ class File:
             return ''
 
         # return data
-        FileTransfer(f, size, request)
-        # and make sure the connection doesn't get closed
-        return request.deferred
+        return f.read()
 
     def redirect(self, request):
         return redirectTo(addSlash(request), request)
