@@ -21,13 +21,13 @@ def _drive(iterable, finished):
     it after those Deferreds fire.
     """
     try:
-        next = next(iterable)
+        n = next(iterable)
     except StopIteration:
         finished.callback('')
     except:
         finished.errback()
     else:
-        deferred, returner = next
+        deferred, returner = n
         def cb(result):
             """
             Pass the result of a Deferred on to the callable which is
