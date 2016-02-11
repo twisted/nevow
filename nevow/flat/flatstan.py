@@ -166,7 +166,7 @@ def StringSerializer(original, context):
     elif context.inJS:
         return original
     else:
-        return original.replace(b"&", b"&amp;").replace(b"<", "&lt;").replace(b">", "&gt;")
+        return original.replace(b"&", b"&amp;").replace(b"<", b"&lt;").replace(b">", b"&gt;")
 
 
 def NoneWarningSerializer(original, context):
