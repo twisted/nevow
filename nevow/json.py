@@ -62,15 +62,15 @@ class StringTokenizer(object):
         return self.matched
 
 string = StringTokenizer()
-identifier = re.compile(r'[A-Za-z_][A-Za-z_0-9]*')
-colon = re.compile(r':')
-comma = re.compile(r',')
-true = re.compile(r'true')
-false = re.compile(r'false')
-null = re.compile(r'null')
-undefined = re.compile(r'undefined')
-floatNumber = re.compile(r'-?([1-9][0-9]*|0)(\.[0-9]+)([eE][-+]?[0-9]+)?')
-longNumber = re.compile(r'-?([1-9][0-9]*|0)([eE][-+]?[0-9]+)?')
+identifier = re.compile(br'[A-Za-z_][A-Za-z_0-9]*')
+colon = re.compile(br':')
+comma = re.compile(br',')
+true = re.compile(br'true')
+false = re.compile(br'false')
+null = re.compile(br'null')
+undefined = re.compile(br'undefined')
+floatNumber = re.compile(br'-?([1-9][0-9]*|0)(\.[0-9]+)([eE][-+]?[0-9]+)?')
+longNumber = re.compile(br'-?([1-9][0-9]*|0)([eE][-+]?[0-9]+)?')
 
 class StringToken(str):
     pass
