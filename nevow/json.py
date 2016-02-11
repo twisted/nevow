@@ -227,7 +227,7 @@ def parse(s):
     """
     Return the object represented by the JSON-encoded string C{s}.
     """
-    tokens = tokenise(s)
+    tokens = tokenise(unicode(s))
     value, tokens = parseValue(tokens)
     if tokens:
         raise ParseError("Unexpected %r" % tokens[0])
