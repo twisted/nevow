@@ -620,8 +620,8 @@ class GroupBinding(Binding):
         print("CONFIGURING GROUP BINDING", boundTo, group)
 
 
-def _sorter(x, y):
-    return cmp(x.id, y.id)
+def _sorter(x):
+    return x.id
 
 
 class _Marker(object):

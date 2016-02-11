@@ -1,18 +1,15 @@
 try:
     import zope.interface
 except ImportError:
-    print """ Please install ZopeInterface product from
+    print(""" Please install ZopeInterface product from
     http://www.zope.org/Products/ZopeInterface/
-to run Nevow """
+to run Nevow """)
     import sys
     sys.exit(1)
 
 
 from twisted.python import components
 import warnings
-warnings.filterwarnings(
-    'ignore',
-    category=components.ComponentsDeprecationWarning)
 
 from twisted.application import service, strports
 from twisted.python import util
@@ -63,7 +60,7 @@ try:
     from athenademo import typeahead
     from athenademo import widgets
     from athenademo import benchmark
-except ImportError, e:
+except ImportError as e:
     if str(e).find('No module named') != -1:
         msg = """
 Original error message:
@@ -81,7 +78,7 @@ command:
 """ % str(e)
         raise Exception(msg)
     raise e
-except AttributeError, e:
+except AttributeError as e:
     if str(e).find("'module' object has no attribute") != -1:
         msg = """
 Original error message:
@@ -99,7 +96,7 @@ class Sources(rend.Page):
 
     def render_htmlizer(self, ctx, path):
         from twisted.python import htmlizer
-        from StringIO import StringIO
+        from io import StringIO
         output = StringIO()
         try:
             htmlizer.filter(open(path), output, writer=htmlizer.SmallerHTMLWriter)
