@@ -291,6 +291,9 @@ class NevowRequest(server.Request, tpc.Componentized):
             # No response can be sent at this point.
             pass
         elif isinstance(html, str):
+            self.write(html.encode('utf-8'))
+            self.finishRequest(  True )
+        elif isinstance(html, bytes):
             self.write(html)
             self.finishRequest(  True )
         elif html is errorMarker:
