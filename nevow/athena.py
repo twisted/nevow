@@ -314,7 +314,7 @@ def _collectPackageBelow(baseDir, extension):
 
             name = stem + fn[:-(len(extension) + 1)]
             path = os.path.join(root, fn)
-            mapping[str(name, 'ascii')] = path
+            mapping[unicode(name, 'ascii')] = path
     return mapping
 
 
@@ -1314,7 +1314,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
     def callRemote(self, methodName, *args):
         requestID = 's2c%i' % (self._requestIDCounter(),)
-        message = ('call', (str(methodName, 'ascii'), requestID, args))
+        message = ('call', (bytes(methodName, 'ascii'), requestID, args))
         resultD = defer.Deferred()
         self._remoteCalls[requestID] = resultD
         self.addMessage(message)
@@ -1406,8 +1406,8 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         @param args: a list of objects that will be JSON-serialized as
         arguments to the named method.
         """
-        return '%s(%s);' % (
-            methodName, unicode(b', '.join([json.serialize(arg) for arg in args])))
+        return b'%s(%s);' % (
+            toBytes(methodName), (b', '.join([json.serialize(arg) for arg in args])))
 
 
     def child_jsmodule(self, ctx):
@@ -1474,7 +1474,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
                         ['%s: %s' % (
                                 result.type.__name__.decode('ascii'),
                                 result.getErrorMessage().decode('ascii'))])
-            message = ('respond', (str(requestId), success, result))
+            message = ('respond', (unicode(requestId), success, result))
             self.addMessage(message)
         result.addBoth(_cbCall)
 
@@ -1631,14 +1631,14 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         C{self.page}, add this object to the page and fill the I{athena:id}
         slot with this object's Athena identifier.
         """
-        assert isinstance(self.jsClass, str), "jsClass must be a unicode string"
+        assert isinstance(self.jsClass, bytes), "jsClass must be a unicode string"
 
         if self.page is None:
             raise OrphanedFragment(self)
         self._athenaID = self.page.addLocalObject(self)
         if self.page._didConnect:
             self.connectionMade()
-        tag.fillSlots('athena:id', str(self._athenaID))
+        tag.fillSlots('athena:id', toBytes(self._athenaID))
 
 
     def setFragmentParent(self, fragmentParent):
