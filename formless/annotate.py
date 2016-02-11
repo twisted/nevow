@@ -70,6 +70,7 @@ class ValidateError(Exception):
 
 
 
+@implementer(iformless.ITyped)
 class Typed(Attribute):
     """A typed value. Subclasses of Typed are constructed inside of
     TypedInterface class definitions to describe the types of properties,
@@ -93,7 +94,6 @@ class Typed(Attribute):
         of the data from the browser and pass unicode strings to
         coerce.
     """
-    implements(iformless.ITyped)
 
     complexType = False
     strip = False
