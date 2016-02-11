@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python.components import registerAdapter, Adapter
 
@@ -58,10 +58,11 @@ class Bookmark:
         self.name = name
         self.url = url
 
+
+@implementer(inevow.IRenderer)
 class PersonView(Adapter):
     """Render a full view of a Person.
     """
-    implements(inevow.IRenderer)
     def rend(self, data):
         attrs = ['firstName', 'lastName', 'nickname']
         return T.div(_class="View person")[
@@ -72,10 +73,10 @@ class PersonView(Adapter):
                 ]
             ]
 
+@implementer(inevow.IRenderer)
 class BookmarkView(Adapter):
     """Render a full view of a Bookmark.
     """
-    implements(inevow.IRenderer)
     def rend(self, data):
         attrs = ['name', 'url']
         return T.div(_class="View bookmark")[

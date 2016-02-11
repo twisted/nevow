@@ -1,7 +1,7 @@
 import string
 import urllib
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet import defer
 from twisted.python import failure
@@ -173,8 +173,8 @@ class NotLoggedIn(rend.Page):
         ]
     ])
 
+@implementer(ILogout)
 class Logout(rend.Page):
-    implements(ILogout)
 
     def logout(self, request):
         request.getSession().expire()
@@ -182,8 +182,8 @@ class Logout(rend.Page):
 
     docFactory = loaders.stan(html[webform.renderForms()])
 
+@implementer(IEditUser, IDeleteUser)
 class UserPage(rend.Page):
-    implements(IEditUser, IDeleteUser)
 
     def __init__(self, user):
         rend.Page.__init__(self)
@@ -295,8 +295,8 @@ class UserPage(rend.Page):
     ]
     ])
 
+@implementer(ICreateUser)
 class UserBrowserPage(rend.Page):
-    implements(ICreateUser)
 
     addSlash = True
     

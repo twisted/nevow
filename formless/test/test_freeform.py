@@ -17,8 +17,8 @@ from formless import configurable
 
 from nevow.test import test_flatstan
 
+@implementer(iformless.IConfigurableFactory)
 class Base(test_flatstan.Base):
-    implements(iformless.IConfigurableFactory)
 
     synchronousLocateConfigurable = False
 
@@ -68,9 +68,8 @@ class Complete(Base):
     def test_configureProperty(self):
         class IStupid(formless.TypedInterface):
             foo = formless.String()
-
+        @implementer(IStupid)
         class StupidThing(configurable.Configurable):
-            implements(IStupid)
 
             def __init__(self):
                 configurable.Configurable.__init__(self, None)
@@ -92,8 +91,8 @@ class Complete(Base):
                 return formless.String()
             foo = formless.autocallable(foo)
 
+        @implementer(IDumb)
         class DumbThing(configurable.Configurable):
-            implements(IDumb)
 
             def foo(self, bar):
                 return "baz"
@@ -184,8 +183,8 @@ class TestDefaults(Base):
         class IDefaultProperty(formless.TypedInterface):
             default = formless.Integer(default=2)
 
+        @implementer(IDefaultProperty)
         class Foo(configurable.Configurable):
-            implements(IDefaultProperty)
             default = 54
 
         def later(val):
@@ -200,8 +199,9 @@ class TestDefaults(Base):
         class Adaptee(object):
             default = 69
 
+        @implementer(IDefaultProperty)
         class Bar(configurable.Configurable):
-            implements(IDefaultProperty)
+            pass
 
         def later(val):
             self.failIfSubstring('2', val)
@@ -216,8 +216,9 @@ class TestDefaults(Base):
 
             aProperty = formless.String(default="The property")
 
+        @implementer(IBindingDefaults)
         class Implements(configurable.Configurable):
-            implements(IBindingDefaults)
+            pass
 
         def later(val):
             self.assertSubstring("The foo", val)
@@ -233,8 +234,9 @@ class TestDefaults(Base):
             aMethod = formless.autocallable(aMethod)
             bMethod = formless.autocallable(bMethod)
 
+        @implementer(IDynamicDefaults)
         class Implements(configurable.Configurable):
-            implements(IDynamicDefaults)
+            pass
 
         def later(val):
             self.assertSubstring("YESFOO", val)
@@ -255,8 +257,9 @@ class TestNonConfigurableSubclass(Base):
                 return None
             aMethod = formless.autocallable(aMethod)
 
+        @implementer(ISimpleTypedInterface)
         class ANonConfigurable(object): # Not subclassing Configurable
-            implements(ISimpleTypedInterface) # But implements a TypedInterface
+            pass
 
         def later(val):
             self.assertSubstring('anInt', val)
@@ -273,8 +276,8 @@ class TestPostAForm(Base):
                 pass
             password = formless.autocallable(password)
 
+        @implementer(IAPasswordMethod)
         class APasswordImplementation(object):
-            implements(IAPasswordMethod)
             matched = False
             def password(self, pword, integer):
                 self.matched = True
@@ -296,8 +299,8 @@ class TestPostAForm(Base):
         class IAProperty(formless.TypedInterface):
             prop = formless.Integer()
 
+        @implementer(IAProperty)
         class Impl(object):
-            implements(IAProperty)
             prop = 5
 
         theObj = Impl()
@@ -325,8 +328,8 @@ class TestRenderPropertyGroup(Base):
                     pass
                 buriedAlive = formless.autocallable(buriedAlive)
 
+        @implementer(Outer)
         class Implementation(object):
-            implements(Outer)
             one = 1
             two = 2
             buckled = False
@@ -373,8 +376,8 @@ class TestRenderMethod(Base):
                 pass
             foo = formless.autocallable(foo)
 
-        class Impl:
-            implements(IFoo)
+        @implementer(IFoo)
+        class Impl: pass
 
         def later(val):
             self.assertSubstring('value="Foo"', val)
@@ -389,8 +392,9 @@ class TestRenderMethod(Base):
                 pass
             foo = formless.autocallable(foo, action='FooFooFoo')
 
+        @implementer(IFoo)
         class Impl:
-            implements(IFoo)
+            pass
 
         def later(val):
             self.assertSubstring('value="FooFooFoo"', val)
@@ -405,8 +409,9 @@ class TestRenderMethod(Base):
             foo = formless.autocallable(sig)
             bar = formless.autocallable(sig, action='FooFooFOo')
 
+        @implementer(IFoo)
         class Impl:
-            implements(IFoo)
+            pass
 
         def later1(val):
             self.assertSubstring('value="Foo"', val)
@@ -434,8 +439,8 @@ class TestCustomTyped(Base):
                 pass
             theFunc = formless.autocallable(theFunc)
 
+        @implementer(IMyInterface)
         class Implementation(object):
-            implements(IMyInterface)
             called = False
             def theFunc(self, test):
                 self.called = True
@@ -455,8 +460,9 @@ class TestUneditableProperties(Base):
         class Uneditable(formless.TypedInterface):
             aProp = formless.String(description="the description", immutable=True)
 
+        @implementer(Uneditable)
         class Impl(object):
-            implements(Uneditable)
+            pass
 
             aProp = property(lambda self: "HELLO")
 
@@ -477,8 +483,8 @@ class TestAfterValidation(Base):
         class IThing(formless.TypedInterface):
             foo = formless.Integer()
 
+        @implementer(IThing)
         class Thing:
-            implements(IThing)
             foo = 1
 
         inst = Thing()
@@ -504,8 +510,8 @@ class TestHandAndStatus(Base):
             def foo(): pass
             foo = formless.autocallable(foo)
 
+        @implementer(IMethod)
         class Method(object):
-            implements(IMethod)
             def foo(self):
                 return returnResult
 
@@ -543,8 +549,9 @@ class TestCharsetDetectionSupport(Base):
         class ITest(formless.TypedInterface):
             foo = formless.String()
 
+        @implementer(ITest)
         class Impl:
-            implements(ITest)
+            pass
 
         impl = Impl()
         ctx = self.setupContext()
@@ -578,8 +585,9 @@ class TestCharsetDetectionSupport(Base):
                 pass
             foo = formless.autocallable(foo)
 
+        @implementer(ITest)
         class Impl:
-            implements(ITest)
+            pass
 
         impl = Impl()
         ctx = self.setupContext()
@@ -596,8 +604,8 @@ class TestUnicode(Base):
         class IThing(formless.TypedInterface):
             aString = formless.String(str=True)
 
+        @implementer(IThing)
         class Impl(object):
-            implements(IThing)
             aString = None
 
         inst = Impl()
@@ -619,8 +627,8 @@ class TestChoice(Base):
                 pass
             choiceyFunc = formless.autocallable(choiceyFunc)
 
+        @implementer(IFormyThing
         class Impl(object):
-            implements(IFormyThing)
 
             def choiceyFunc(innerSelf, arg):
                 self.called.append(arg)
@@ -645,8 +653,8 @@ class mg(Base):
                 pass
             meth = formless.autocallable(meth)
 
+        @implementer(ITest)
         class Impl:
-            implements(ITest)
             foo = 'fooFOOfoo'
 
         impl = Impl()

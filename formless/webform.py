@@ -7,7 +7,7 @@
 
 
 import warnings
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 
 from twisted.python import components
 
@@ -25,18 +25,16 @@ from nevow.static import File
 
 defaultCSS = File(util.resource_filename('formless', 'freeform-default.css'), 'text/css')
 
-
+@implementer(inevow.IRenderer, iformless.ITypedRenderer)
 class DefaultRenderer(object):
-    implements(inevow.IRenderer, iformless.ITypedRenderer)
     complexType = False
     def rend(self, context, data):
         return StringRenderer(data)
 
 defaultBindingRenderer = DefaultRenderer()
 
-
+@implementer(inevow.IRenderer, iformless.ITypedRenderer)
 class BaseInputRenderer(components.Adapter):
-    implements(inevow.IRenderer, iformless.ITypedRenderer)
     complexType = False
     def rend(self, context, data):
         defaults = context.locate(iformless.IFormDefaults)
@@ -176,25 +174,22 @@ class RadioRenderer(ChoiceRenderer):
             tags.input(type="radio", name=slot('name'), value=valToKey, render=isChecked)[
                 lambda c, d: iformless.ITyped(c).stringify(d)]]]
 
-
+@implementer(inevow.IRenderer, iformless.ITypedRenderer)
 class ObjectRenderer(components.Adapter):
-    implements(inevow.IRenderer, iformless.ITypedRenderer)
     complexType = True
     def rend(self, context, data):
         configurable = context.locate(iformless.IConfigurable)
         return getattr(configurable, data.name)
-
+@implementer(inevow.IRenderer, iformless.ITypedRenderer)
 class NullRenderer(components.Adapter):
     """Use a NullRenderer as the ITypedRenderer adapter when nothing should
     be included in the output.
     """
-    implements(inevow.IRenderer, iformless.ITypedRenderer)
     def rend(self, context, data):
         return ''
 
-
+@implementer(inevow.IRenderer)
 class GroupBindingRenderer(components.Adapter):
-    implements(inevow.IRenderer)
 
     def rend(self, context, data):
         context.remember(data, iformless.IBinding)
@@ -229,9 +224,8 @@ class GroupBindingRenderer(components.Adapter):
                     generateBindings(),
                     tags.input(type="submit")]]
 
-
+@implementer(inevow.IRenderer)
 class BaseBindingRenderer(components.Adapter):
-    implements(inevow.IRenderer)
 
     isGrouped = False
     needsSkin = False
@@ -359,9 +353,8 @@ class MethodBindingRenderer(BaseBindingRenderer):
             context.fillSlots( 'argument!!%s' % argument.name, pat )
             yield pat
 
-
+@implementer(inevow.IRenderer)
 class ButtonRenderer(components.Adapter):
-    implements(inevow.IRenderer)
 
     def rend(self, context, data):
         return tags.input(id=keyToXMLID(context.key), type='submit', value=data.label, name=data.name, class_="freeform-button")

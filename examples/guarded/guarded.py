@@ -1,5 +1,5 @@
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.cred import portal, checkers, credentials
 
@@ -60,11 +60,11 @@ def noLogout():
     return None
 
 
+@implementer(portal.IRealm)
 class MyRealm:
     """A simple implementor of cred's IRealm.
        For web, this gives us the LoggedIn page.
     """
-    implements(portal.IRealm)
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         for iface in interfaces:

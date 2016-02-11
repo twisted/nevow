@@ -10,7 +10,7 @@ import os
 import sys
 import inspect
 import warnings
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface.interface import InterfaceClass, Attribute
 
 from nevow import util
@@ -359,8 +359,8 @@ class Object(Typed):
 
 
 
+@implementer(iformless.IActionableType)
 class List(Object):
-    implements(iformless.IActionableType)
 
     complexType = True
     def __init__(self, actions=None, header='', footer='', separator='', *args, **kw):
@@ -489,7 +489,7 @@ def autocallable(method, action=None, visible=False, **kw):
 ## what names are bound to what types
 #######################################
 
-
+@implementer(iformless.IBinding)
 class Binding(object):
     """Bindings bind a Typed instance to a name. When TypedInterface is subclassed,
     the metaclass looks through the dict looking for all properties and methods.
@@ -509,7 +509,6 @@ class Binding(object):
     Binding when it is constructed to keep track of what the method is
     supposed to return.
     """
-    implements(iformless.IBinding)
 
     label = None
     description = ''

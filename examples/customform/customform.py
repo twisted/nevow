@@ -4,7 +4,7 @@
 #from twisted.application import internet, service
 #from twisted.web import static
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import rend
 from nevow import url
@@ -121,10 +121,10 @@ class ISomething(annotate.TypedInterface):
     doSomething = annotate.autocallable(doSomething)
     
 
+@implementer(ISomething)
 class Root(rend.Page):
     """Render a custom and normal form for an ISomething.
     """
-    implements(ISomething)
     addSlash = True
     
     child_webform_css = webform.defaultCSS

@@ -7,7 +7,7 @@ so that nevow works with it.
 
 import warnings
 
-from zope.interface import Interface, implements as zimplements, Attribute
+from zope.interface import Interface, implementer as zimplements, Attribute
 
 from twisted.python.components import *
 
@@ -46,8 +46,9 @@ class IComponentized(Interface):
     pass
 
 _Componentized = Componentized
+@zimplements(IComponentized)
 class Componentized(_Componentized):
-    zimplements(IComponentized)
+    
     
     def __init__(self, adapterCache=None):
         _Componentized.__init__(self)

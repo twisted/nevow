@@ -11,7 +11,7 @@ import warnings
 from collections import MutableMapping
 from urllib.parse import unquote
 
-from zope.interface import implements, classImplements
+from zope.interface import implementer, classImplements
 
 import twisted.python.components as tpc
 from twisted.web import server
@@ -105,9 +105,8 @@ class _DictHeaders(MutableMapping):
         return key in self
 
 
-
+@implementer(inevow.ICanHandleException)
 class UninformativeExceptionHandler:
-    implements(inevow.ICanHandleException)
 
     def renderHTTP_exception(self, ctx, reason):
         request = inevow.IRequest(ctx)
@@ -121,9 +120,8 @@ class UninformativeExceptionHandler:
         log.err(reason)
         return """<div style="border: 1px dashed red; color: red; clear: both">[[ERROR]]</div>"""
 
-
+@implementer(inevow.ICanHandleException)
 class DefaultExceptionHandler:
-    implements(inevow.ICanHandleException)
 
     def renderHTTP_exception(self, ctx, reason):
         log.err(reason)
@@ -173,7 +171,7 @@ def processingFailed(reason, request, ctx):
 def defaultExceptionHandlerFactory(ctx):
     return DefaultExceptionHandler()
 
-
+@implementer(inevow.IRequest)
 class NevowRequest(tpc.Componentized, server.Request):
     """
     A Request subclass which does additional
@@ -195,7 +193,7 @@ class NevowRequest(tpc.Componentized, server.Request):
         lost) or not.  C{False} until this happens, C{True} afterwards.
     @type _lostConnection: L{bool}
     """
-    implements(inevow.IRequest)
+    
 
     fields = None
     _lostConnection = False
@@ -475,9 +473,8 @@ class NevowSite(server.Site):
 
 
 ## This should be moved somewhere else, it's cluttering up this module.
-
+@implementer(inevow.IResource)
 class OldResourceAdapter(object):
-    implements(inevow.IResource)
 
     # This is required to properly handle the interaction between
     # original.isLeaf and request.postpath, from which PATH_INFO is set in

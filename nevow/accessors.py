@@ -12,7 +12,7 @@ and sequence (tuple, list) types as well as call any functions and
 methods found in the stan tree.
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 import twisted.python.components as tpc
 
@@ -40,9 +40,8 @@ def convertToData(data, context):
 class NoAccessor(NotImplementedError):
     pass
 
-
+@implementer(IGettable)
 class DirectiveAccessor(tpc.Adapter):
-    implements(IGettable)
 
     def get(self, context):
         data = context.locate(IData)
@@ -52,27 +51,24 @@ class DirectiveAccessor(tpc.Adapter):
         child = container.child(context, self.original.name)
         return child
 
-
+@implementer(IGettable)
 class SlotAccessor(tpc.Adapter):
-    implements(IGettable)
 
     def get(self, context):
         return context.locateSlotData(self.original.name)
 
-
+@implementer(IGettable)
 class FunctionAccessor(tpc.Adapter):
-    implements(IGettable)
     def get(self, context):
         return self.original(context, context.locate(IData))
 
-
+@implementer(IGettable)
 class DictionaryContainer(tpc.Adapter):
-    implements(IContainer)
     
     def child(self, context, name):
         return self.original[name]
 
-
+@implementer(IContainer)
 class ObjectContainer(tpc.Adapter):
     """Retrieve object attributes in response to a data directive; providing
     easy access to your application objects' attributes.
@@ -104,7 +100,6 @@ class ObjectContainer(tpc.Adapter):
         </div>
     """
     
-    implements(IContainer)
     
     def child(self, context, name):
         if name[:1] == '_':
@@ -118,9 +113,8 @@ def intOrNone(s):
     except ValueError:
         return None
 
-
+@implementer(IContainer)
 class ListContainer(tpc.Adapter):
-    implements(IContainer)
 
     def child(self, context, name):
         if ':' in name:

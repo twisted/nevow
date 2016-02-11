@@ -1,4 +1,4 @@
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 
 from axiom import item, store
 from axiom.attributes import text, timestamp
@@ -18,8 +18,8 @@ class Post(item.Item):
     author = text()
     created = timestamp()
 
+@implementer(IPostit)
 class Application(item.Item, item.InstallableMixin):
-    implements(IPostit)
 
     name = text()
 
