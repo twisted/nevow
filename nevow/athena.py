@@ -1357,7 +1357,12 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
     def getImportStan(self, moduleName):
         moduleDef = jsModuleDeclaration(moduleName);
-        return [tags.script(type='text/javascript')[tags.raw(moduleDef)],
+        
+        t=tags.script(type='text/javascript')
+        r=tags.raw(moduleDef)
+        t[r]
+        
+        return [t,
                 tags.script(type='text/javascript', src=self.getJSModuleURL(moduleName))]
 
 
