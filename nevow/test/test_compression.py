@@ -154,10 +154,10 @@ class RequestWrapperTests(TestCase):
         Content-Length header should be discarded when compression is in use.
         """
         self.assertNotIn('content-length', self.request.headers)
-        self.wrapper.setHeader('content-length', 1234)
+        self.wrapper.setHeader(b'content-length', 1234)
         self.assertNotIn('content-length', self.request.headers)
 
-        self.request.setHeader('content-length', 1234)
+        self.request.setHeader(b'content-length', 1234)
         self.wrapper = CompressingRequestWrapper(self.request)
         self.assertNotIn('content-length', self.request.headers)
 

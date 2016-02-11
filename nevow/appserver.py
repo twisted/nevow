@@ -226,9 +226,9 @@ class NevowRequest(server.Request, tpc.Componentized):
         self.site = self.channel.site
 
         # set various default headers
-        self.setHeader('server', server.version)
-        self.setHeader('date', server.http.datetimeToString())
-        self.setHeader('content-type', "text/html; charset=UTF-8")
+        self.setHeader(b'server', server.version)
+        self.setHeader(b'date', server.http.datetimeToString())
+        self.setHeader(b'content-type', "text/html; charset=UTF-8")
 
         # Resource Identification
         self.prepath = []

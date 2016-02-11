@@ -109,7 +109,7 @@ class CompressingRequestWrapper(_makeBase()):
 
     def __init__(self, underlying):
         self.underlying = underlying
-        self.setHeader('content-encoding', self.encoding)
+        self.setHeader(b'content-encoding', self.encoding)
         self._gzipFile = None
 
         # See setHeader docstring for more commentary.

@@ -176,7 +176,7 @@ class Atom(BaseUI):
     docFactory = loaders.xmlfile('atom.xml')
     
     def beforeRender(self, ctx):
-        inevow.IRequest(ctx).setHeader("Content-Type", "application/application+xml; charset=UTF-8")
+        inevow.IRequest(ctx).setHeader(b"Content-Type", "application/application+xml; charset=UTF-8")
     
     def data_getFirstPost(self, ctx, data):
         for post in IBlog(IStore(ctx)).getPosts(1):

@@ -75,7 +75,7 @@ class TestFakeRequest(TestCase):
         """
         host = 'divmod.com'
         req = FakeRequest()
-        req.setHeader('host', host)
+        req.setHeader(b'host', host)
         self.assertEqual(req.headers['host'], host)
 
 
@@ -137,7 +137,7 @@ class TestFakeRequest(TestCase):
         Test that they are handled separately.
         """
         req = FakeRequest()
-        req.setHeader('foo', 'bar')
+        req.setHeader(b'foo', 'bar')
         self.assertNotIn('foo', req.received_headers)
         self.assertEqual(req.getHeader('foo'), None)
         req.received_headers['foo'] = 'bar'

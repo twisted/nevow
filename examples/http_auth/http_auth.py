@@ -22,7 +22,7 @@ class AuthorizationRequired(rend.Page):
         request = inevow.IRequest(ctx)
         username, password = request.getUser(), request.getPassword()
         if (username, password) == ('', ''):
-            request.setHeader('WWW-Authenticate', 'Basic realm="Whatever"')
+            request.setHeader(b'WWW-Authenticate', 'Basic realm="Whatever"')
             request.setResponseCode(http.UNAUTHORIZED)
             return "Authentication required."
         ## They provided a username and password, so let's let them in! horray

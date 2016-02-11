@@ -64,10 +64,10 @@ class Data:
 
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
-        request.setHeader("content-type", self.type)
-        request.setHeader("content-length", str(len(self.data)))
+        request.setHeader(b"content-type", self.type)
+        request.setHeader(b"content-length", str(len(self.data)))
         if self.expires is not None:
-            request.setHeader("expires",
+            request.setHeader(b"expires",
                               http.datetimeToString(self.time() + self.expires))
         if request.method == "HEAD":
             return ''
@@ -289,12 +289,12 @@ class File:
         # size is the length of the part actually transmitted
         fsize = size = self.getFileSize()
 
-        request.setHeader('accept-ranges','bytes')
+        request.setHeader(b'accept-ranges','bytes')
 
         if self.type:
-            request.setHeader('content-type', self.type)
+            request.setHeader(b'content-type', self.type)
         if self.encoding:
-            request.setHeader('content-encoding', self.encoding)
+            request.setHeader(b'content-encoding', self.encoding)
 
         try:
             f = self.openForReading()
@@ -324,13 +324,13 @@ class File:
                 else:
                     end = fsize-1
                 request.setResponseCode(http.PARTIAL_CONTENT)
-                request.setHeader('content-range',"bytes %s-%s/%s" % (
+                request.setHeader(b'content-range',"bytes %s-%s/%s" % (
                     str(start), str(end), str(fsize)))
                 #content-length should be the actual size of the stuff we're
                 #sending, not the full size of the on-server entity.
                 size = 1 + end - int(start)
 
-            request.setHeader('content-length', str(size))
+            request.setHeader(b'content-length', str(size))
         except:
             traceback.print_exc(file=log.logfile)
 

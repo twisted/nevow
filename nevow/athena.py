@@ -72,8 +72,8 @@ def neverEverCache(request):
     Set headers to indicate that the response to this request should never,
     ever be cached.
     """
-    request.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
-    request.setHeader('Pragma', 'no-cache')
+    request.setHeader(b'Cache-Control', 'no-store, no-cache, must-revalidate')
+    request.setHeader(b'Pragma', 'no-cache')
 
 
 def activeChannel(request):
@@ -81,7 +81,7 @@ def activeChannel(request):
     Mark this connection as a 'live' channel by setting the Connection: close
     header and flushing all headers immediately.
     """
-    request.setHeader("Connection", "close")
+    request.setHeader(b"Connection", "close")
     request.write('')
 
 
