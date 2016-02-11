@@ -149,12 +149,6 @@ load(basic_adapters)
 
 
 flatteners = """
-nevow.flat.flatmdom.MicroDomDocumentSerializer          twisted.web.microdom.Document
-nevow.flat.flatmdom.MicroDomTextSerializer              twisted.web.microdom.Text
-nevow.flat.flatmdom.MicroDomCommentSerializer           twisted.web.microdom.Comment
-nevow.flat.flatmdom.MicroDomElementSerializer           twisted.web.microdom.Element
-nevow.flat.flatmdom.MicroDomEntityReferenceSerializer   twisted.web.microdom.EntityReference
-nevow.flat.flatmdom.MicroDomCDATASerializer   twisted.web.microdom.CDATASection
 
 nevow.flat.flatstan.ProtoSerializer               nevow.stan.Proto
 nevow.flat.flatstan.TagSerializer                 nevow.stan.Tag
