@@ -130,7 +130,7 @@ class URL(object):
         u = klass(
             scheme, netloc,
             
-            [ for seg in toBytes(path).split(b'/')[1:]],
+            [urllib.parse.unquote(toBytes(seg)) for seg in toBytes(path).split(b'/')[1:]],
             unquerify(toBytes(query)), urllib.parse.unquote(toBytes(fragment)))
         return u
     fromString = classmethod(fromString)
