@@ -401,7 +401,6 @@ class JSDependencies(object):
             try:
                 self.mapping[jsMod]
                 print(403, self.mapping[jsMod])
-                print(404, JSModule.getOrCreate(jsMod, self.mapping))
             except KeyError:
                 if '.' not in jsMod:
                     break
@@ -903,7 +902,6 @@ class _HasJSClass(object):
         Get a L{JSModule} object for the class specified by this object's
         jsClass string.
         """
-        print(906, self.page.getJSModuleURL(jsDeps.getModuleForClass(self.jsClass).name))
         return jsDeps.getModuleForClass(self.jsClass)
 
 
@@ -1242,6 +1240,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         if not self._supportedBrowser(request):
             request.write(self.renderUnsupported(ctx))
             return ''
+
         self._becomeLive(URL.fromString(flat.flatten(here, ctx)))
 
         neverEverCache(request)
@@ -1346,7 +1345,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
 
     def getJSModuleURL(self, moduleName):
-        print(1349, moduleName, self.jsModuleRoot.child(moduleName), flat.flatten(self.jsModuleRoot.child(moduleName)))
         return self.jsModuleRoot.child(moduleName)
 
 
@@ -1370,16 +1368,13 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         t[r]
         
         return [t,
-                tags.script(type='text/javascript', src=flat.flatten(self.getJSModuleURL(moduleName)))]
+                tags.script(type='text/javascript', src=self.getJSModuleURL(moduleName))]
 
 
     def render_liveglue(self, ctx, data):
         bootstrapString = b'\n'.join(
             [self._bootstrapCall(method, args) for
              method, args in self._bootstraps(ctx)])
-        print(1379, [flat.flatten(url)
-             for (name, url)
-             in self._getRequiredModules(self._jsDepsMemo)])
         return ctx.tag[
             self.getStylesheetStan(self._getRequiredCSSModules(self._cssDepsMemo)),
 
