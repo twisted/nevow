@@ -155,7 +155,7 @@ flatteners = """
 
 nevow.flat.flatstan.ProtoSerializer               nevow.stan.Proto
 nevow.flat.flatstan.TagSerializer                 nevow.stan.Tag
-nevow.flat.flatstan.EntitySerializer                 nevow.stan.Entity
+nevow.flat.flatstan.EntitySerializer              nevow.stan.Entity
 nevow.flat.flatstan.CommentSerializer             nevow.stan.Comment
 nevow.flat.flatstan.XmlSerializer                 nevow.stan.xml
 nevow.flat.flatstan.RawSerializer                 nevow.stan.raw
@@ -164,7 +164,7 @@ nevow.flat.flatstan.StringSerializer              builtins.bytes
 nevow.flat.flatstan.NoneWarningSerializer         types.NoneType
 nevow.flat.flatstan.StringCastSerializer          builtins.int
 nevow.flat.flatstan.StringCastSerializer          builtins.float
-nevow.flat.flatstan.BooleanSerializer          builtins.bool
+nevow.flat.flatstan.BooleanSerializer             builtins.bool
 nevow.flat.flatstan.ListSerializer                builtins.list
 nevow.flat.flatstan.StringCastSerializer          builtins.dict
 nevow.flat.flatstan.ListSerializer                builtins.tuple
@@ -191,11 +191,12 @@ nevow.flat.flatstan.ListSerializer  itertools.chain
 nevow.flat.flatstan.ListSerializer  itertools.count
 nevow.flat.flatstan.ListSerializer  itertools.cycle
 nevow.flat.flatstan.ListSerializer  itertools.dropwhile
-nevow.flat.flatstan.ListSerializer  itertools.ifilter
-nevow.flat.flatstan.ListSerializer  itertools.ifilterfalse
-nevow.flat.flatstan.ListSerializer  itertools.imap
-nevow.flat.flatstan.ListSerializer  itertools.islice
-nevow.flat.flatstan.ListSerializer  itertools.izip
+nevow.flat.flatstan.ListSerializer  builtins.filter
+nevow.flat.flatstan.ListSerializer  itertools.filterfalse
+nevow.flat.flatstan.ListSerializer  builtins.map
+nevow.flat.flatstan.ListSerializer  builtins.slice
+nevow.flat.flatstan.ListSerializer  builtins.zip
+nevow.flat.flatstan.ListSerializer  builtins.range
 nevow.flat.flatstan.ListSerializer  itertools.repeat
 nevow.flat.flatstan.ListSerializer  itertools.starmap
 nevow.flat.flatstan.ListSerializer  itertools.takewhile
