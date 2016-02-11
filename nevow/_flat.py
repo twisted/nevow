@@ -31,6 +31,7 @@ from nevow.flat.flatstan import allowSingleton
 from nevow.flat import flattenFactory
 from nevow.flat.ten import getFlattener
 from nevow.tags import raw
+from nevow.util import unicode, toBytes
 
 
 class FlattenerError(Exception):
