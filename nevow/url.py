@@ -128,7 +128,7 @@ class URL(object):
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(st)
         u = klass(
             scheme, netloc,
-            [urllib.parse.unquote(toBytes(seg)) for seg in path.split('/')[1:]],
+            [urllib.parse.unquote(toBytes(seg)) for seg in toBytes(path).split(b'/')[1:]],
             unquerify(query), urllib.parse.unquote(fragment))
         return u
     fromString = classmethod(fromString)
