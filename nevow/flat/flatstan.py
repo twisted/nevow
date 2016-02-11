@@ -13,6 +13,7 @@ from nevow.inevow import ICanHandleException, IData, IMacroFactory, IRenderer, I
 from nevow.flat import precompile, serialize
 from nevow.accessors import convertToData
 from nevow.context import WovenContext
+from nevow.util import toBytes, unicode
 
 allowSingleton = ('img', 'br', 'hr', 'base', 'meta', 'link', 'param', 'area',
                   'input', 'col', 'basefont', 'isindex', 'frame')
