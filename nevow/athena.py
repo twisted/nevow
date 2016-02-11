@@ -1370,7 +1370,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         t[r]
         
         return [t,
-                tags.script(type='text/javascript', src=self.getJSModuleURL(moduleName))]
+                tags.script(type='text/javascript', src=flat.flatten(self.getJSModuleURL(moduleName)))]
 
 
     def render_liveglue(self, ctx, data):
