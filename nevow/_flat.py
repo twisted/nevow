@@ -409,7 +409,6 @@ def flatten(request, root, inAttribute, inXML):
     """
     stack = [_flatten(request, root, [], None, inAttribute, inXML)]
     while stack:
-        print(411,stack)
         try:
             # In Python 2.5, after an exception, a generator's gi_frame is
             # None.
