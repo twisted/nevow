@@ -1376,7 +1376,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         bootstrapString = b'\n'.join(
             [self._bootstrapCall(method, args) for
              method, args in self._bootstraps(ctx)])
-        print(1379, [flatten(url)
+        print(1379, [flat.flatten(url)
              for (name, url)
              in self._getRequiredModules(self._jsDepsMemo)])
         return ctx.tag[
