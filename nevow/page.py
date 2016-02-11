@@ -17,7 +17,7 @@ from nevow.rend import _getPreprocessors
 from nevow.flat.ten import registerFlattener
 from nevow._flat import FlattenerError, _OldRendererFactory, _ctxForRequest
 from nevow._flat import deferflatten
-
+from nevow import inevow
 
 renderer = Expose(
     """
