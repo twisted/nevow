@@ -227,7 +227,7 @@ def FunctionSerializer(original, context, nocontextfun=FunctionSerializer_nocont
         try:
             nocontext = nocontextfun(original)
             if nocontext is True:
-                result = original(data)
+                result = original(None, data)
             else:
                 if nocontext is PASS_SELF:
                     renderer = context.locate(IRenderer)
