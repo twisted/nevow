@@ -813,8 +813,8 @@ class MetaTypedInterface(InterfaceClass):
                 )
         for attacher in actionAttachers:
             attacher.attachActionBindings(possibleActions)
-        methods.sort(_sorter)
-        properties.sort(_sorter)
+        methods.sort(key=_sorter)
+        properties.sort(key=_sorter)
         cls.__spec__ = spec = methods + properties
         spec.sort(_sorter)
         cls.name = name
