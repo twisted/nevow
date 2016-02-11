@@ -142,6 +142,7 @@ nevow.query.QuerySlot       nevow.stan.slot               nevow.inevow.IQ
 nevow.query.QuerySlot       nevow.stan._PrecompiledSlot   nevow.inevow.IQ
 nevow.query.QueryNeverFind  nevow.stan.xml                nevow.inevow.IQ
 nevow.query.QueryNeverFind  nevow.stan.raw                nevow.inevow.IQ
+nevow.query.QueryNeverFind  builtins.bytes                nevow.inevow.IQ
 nevow.query.QueryNeverFind  nevow.stan.directive          nevow.inevow.IQ
 
 # I18N
