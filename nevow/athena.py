@@ -395,9 +395,12 @@ class JSDependencies(object):
             self._loadPlugins = False
 
         jsMod = className
+        
         while jsMod:
+            print(398, jsMod)
             try:
                 self.mapping[jsMod]
+                print(403, self.mapping[jsMod])
             except KeyError:
                 if '.' not in jsMod:
                     break
