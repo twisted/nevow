@@ -2,6 +2,9 @@
 # Copyright (c) 2004-2006 Divmod.
 # See LICENSE for details.
 
+import types
+types.NoneType=type(None)
+
 from nevow._version import get_versions
 __version__ = get_versions()["version"]
 __version_info__ = tuple(int(part) for part in __version__.split("-", 1)[0].split(".")[:3])
@@ -158,7 +161,7 @@ nevow.flat.flatstan.XmlSerializer                 nevow.stan.xml
 nevow.flat.flatstan.RawSerializer                 nevow.stan.raw
 nevow.flat.flatstan.StringSerializer              builtins.str
 nevow.flat.flatstan.StringSerializer              builtins.bytes
-nevow.flat.flatstan.NoneWarningSerializer         builtins.NoneType
+nevow.flat.flatstan.NoneWarningSerializer         types.NoneType
 nevow.flat.flatstan.StringCastSerializer          builtins.int
 nevow.flat.flatstan.StringCastSerializer          builtins.float
 nevow.flat.flatstan.StringCastSerializer          builtins.long
