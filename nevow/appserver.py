@@ -130,7 +130,7 @@ class DefaultExceptionHandler:
         request.write(b"<html><head><title>Exception</title></head><body>")
         from nevow import failure
         result = failure.formatFailure(reason)
-        request.write(toBytes(''.join(flat.flatten(result))))
+        request.write(toBytes(b''.join(flat.flatten(result))))
         request.write(b"</body></html>")
 
         request.finishRequest( False )
