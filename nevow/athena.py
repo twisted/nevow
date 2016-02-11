@@ -395,7 +395,6 @@ class JSDependencies(object):
             self._loadPlugins = False
 
         jsMod = className
-        print(398, jsMod, self.mapping)
         while jsMod:
             try:
                 self.mapping[jsMod]

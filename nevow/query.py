@@ -4,7 +4,7 @@
 """inevow.IQ adapter implementations.
 """
 import twisted.python.components as tpc
-
+from nevow.util import unicode
 from nevow import inevow, stan
 from zope.interface import implementer
 
@@ -67,7 +67,7 @@ class QueryList(tpc.Adapter):
         for item in self.original:
             try:
                 print(69, type(item))
-                newNode = inevow.IQ(item).onePattern(pattern)
+                newNode = inevow.IQ(unicode(item)).onePattern(pattern)
             except stan.NodeNotFound:
                 continue
             else:
