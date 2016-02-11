@@ -21,6 +21,7 @@ from nevow.context import WovenContext
 from nevow.util import unicode, toBytes
 
 def _uqf(query):
+    query=unicode(query)
     for x in query.split('&'):
         if '=' in x:
             yield tuple( [urllib.parse.unquote_plus(s) for s in x.split('=', 1)] )
