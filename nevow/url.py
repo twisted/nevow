@@ -126,11 +126,10 @@ class URL(object):
 
     def fromString(klass, st):
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(st)
-        print(131, [urllib.parse.unquote(toBytes(seg)) for seg in toBytes(path).split(b'/')[1:]])
         u = klass(
             scheme, netloc,
             
-            [urllib.parse.unquote(toBytes(seg)) for seg in toBytes(path).split(b'/')[1:]],
+            [urllib.parse.unquote(unicode(seg)) for seg in unicode(path).split('/')[1:]],
             unquerify(toBytes(query)), urllib.parse.unquote(toBytes(fragment)))
         return u
     fromString = classmethod(fromString)
