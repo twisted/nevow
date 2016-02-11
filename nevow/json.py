@@ -179,7 +179,7 @@ def _stringSub(m):
 def parseString(tokens):
     if type(tokens[0]) is not StringToken:
         raise ParseError("Unexpected %r" % tokens[0])
-    s = _stringExpr.sub(_stringSub, tokens.pop(0)[1:-1].decode('utf-8'))
+    s = _stringExpr.sub(_stringSub, tokens.pop(0)[1:-1])
     return s, tokens
 
 
