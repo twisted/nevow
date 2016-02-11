@@ -126,9 +126,10 @@ class URL(object):
 
     def fromString(klass, st):
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(st)
+        print(131, [toBytes(seg) for seg in toBytes(path).split(b'/')[1:]])
         u = klass(
             scheme, netloc,
-            print(131, [toBytes(seg) for seg in toBytes(path).split(b'/')[1:]])
+            
             [urllib.parse.unquote(toBytes(seg)) for seg in toBytes(path).split(b'/')[1:]],
             unquerify(toBytes(query)), urllib.parse.unquote(toBytes(fragment)))
         return u
