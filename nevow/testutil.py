@@ -283,7 +283,7 @@ if not hasattr(TrialTestCase, 'mktemp'):
         return tempfile.mktemp()
     TestCase.mktemp = mktemp
 
-@implementer(inevow.IFormDefaults)
+@implementer(iformless.IFormDefaults)
 class AccumulatingFakeRequest(FakeRequest):
     """
     I am a fake IRequest that is also a stub implementation of
