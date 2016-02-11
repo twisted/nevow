@@ -903,6 +903,7 @@ class _HasJSClass(object):
         Get a L{JSModule} object for the class specified by this object's
         jsClass string.
         """
+        print(906, jsDeps.getModuleForClass(self.jsClass))
         return jsDeps.getModuleForClass(self.jsClass)
 
 
