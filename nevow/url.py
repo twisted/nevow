@@ -144,6 +144,7 @@ class URL(object):
         uri = request.prePathURL()
         if '?' in request.uri:
             uri += '?' + request.uri.split('?')[-1]
+        print(147, klass.fromString(uri))
         return klass.fromString(uri)
     fromRequest = classmethod(fromRequest)
 
