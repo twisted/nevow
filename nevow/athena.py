@@ -1529,9 +1529,12 @@ def _rewriteEventHandlerToAttribute(tag):
                 info = tag.children.pop(i)
                 name = info.attributes['event'].encode('ascii')
                 handler = info.attributes['handler']
-                extraAttributes[unicode(name)] = _handlerFormat % {
-                    b'handler': json.serialize(bytes(handler, 'ascii')),
-                    b'event': json.serialize(bytes(name, 'ascii'))}
+                kw={
+                    b'handler': json.serialize(unicode(handler, 'ascii')),
+                    b'event': json.serialize(unicode(name, 'ascii'))}
+                print(1535,kw)
+                
+                extraAttributes[unicode(name)] = _handlerFormat % kw
                 tag(**extraAttributes)
     return tag
 
