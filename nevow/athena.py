@@ -1635,7 +1635,7 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         C{self.page}, add this object to the page and fill the I{athena:id}
         slot with this object's Athena identifier.
         """
-        assert isinstance(self.jsClass, bytes), "jsClass must be a unicode string"
+        assert isinstance(self.jsClass, str), "jsClass must be a unicode string"
 
         if self.page is None:
             raise OrphanedFragment(self)
