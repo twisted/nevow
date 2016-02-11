@@ -182,6 +182,8 @@ class URL(object):
         """Construct a url where the given path segment is a child of this url
         """
         l = self.pathList()
+        if not l:
+            l=[path]
         if l[-1] == '':
             l[-1] = path
         else:
