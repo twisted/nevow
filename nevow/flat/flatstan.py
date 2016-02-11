@@ -227,7 +227,10 @@ def FunctionSerializer(original, context, nocontextfun=FunctionSerializer_nocont
         try:
             nocontext = nocontextfun(original)
             if nocontext is True:
-                result = original(None, data)
+                if original.__code__.co_argcount==3:
+                    result = original(context, data)
+                else:
+                    result = original(data)
             else:
                 if nocontext is PASS_SELF:
                     renderer = context.locate(IRenderer)
