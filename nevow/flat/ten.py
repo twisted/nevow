@@ -82,7 +82,7 @@ def iterflatten(stan, ctx, writer, shouldYieldItem=None):
         print(82, straccum, rest)
         gen = rest.pop()
         for item in gen:
-            if isinstance(item, str):
+            if isinstance(item, bytes):
                 straccum.append(item)
             elif isinstance(item, str):
                 straccum.append(item.encode('utf8'))
