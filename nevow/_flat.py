@@ -412,8 +412,6 @@ def flatten(request, root, inAttribute, inXML):
         try:
             # In Python 2.5, after an exception, a generator's gi_frame is
             # None.
-            if not hasattr(stack[-1], 'gi_frame'):
-                raise StopIteration();
             frame = stack[-1].gi_frame
             element = next(stack[-1])
         except StopIteration:
