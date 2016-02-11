@@ -131,7 +131,7 @@ class URL(object):
         u = klass(
             scheme, netloc,
             
-            [urllib.parse.unquote(unicode(seg)) for seg in unicode(path).split('/')[1:]],
+            b''.join([urllib.parse.unquote(unicode(seg)) for seg in unicode(path).split('/')[1:]]),
             unquerify(toBytes(query)), urllib.parse.unquote(unicode(fragment)))
         print(135, u)
         return u
