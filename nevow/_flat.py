@@ -468,7 +468,7 @@ def _flattensome(state, write, schedule, result):
         except:
             result.errback()
         else:
-            if type(element) is bytes:
+            if isinstance(element, bytes):
                 write(element)
                 continue
             else:
