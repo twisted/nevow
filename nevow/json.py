@@ -19,16 +19,16 @@ class ParseError(ValueError):
     pass
 
 whitespace = re.compile(
-            br'('
-            br'[\r\n\t\ ]+'
-            br'|/\*.*?\*/'
-            br'|//[^\n]*[\n]'
-            br')'
+            r'('
+            r'[\r\n\t\ ]+'
+            r'|/\*.*?\*/'
+            r'|//[^\n]*[\n]'
+            r')'
             , re.VERBOSE + re.DOTALL)
-openBrace = re.compile(br'{')
-closeBrace = re.compile(br'}')
-openSquare = re.compile(br'\[')
-closeSquare = re.compile(br'\]')
+openBrace = re.compile(r'{')
+closeBrace = re.compile(r'}')
+openSquare = re.compile(r'\[')
+closeSquare = re.compile(r'\]')
 
 class StringTokenizer(object):
     """
@@ -36,12 +36,12 @@ class StringTokenizer(object):
     """
 
     def match(self, s):
-        if not s.startswith(b'"'):
+        if not s.startswith('"'):
             return None
 
         bits = []
 
-        SLASH = b"\\"
+        SLASH = "\\"
 
         IT = iter(s)
         bits = [next(IT)]
@@ -52,8 +52,8 @@ class StringTokenizer(object):
                     bits.append(next(IT))
                 except StopIteration:
                     return None
-            if char == b'"':
-                self.matched = b''.join(bits)
+            if char == '"':
+                self.matched = ''.join(bits)
                 return self
 
         return None
@@ -62,15 +62,15 @@ class StringTokenizer(object):
         return self.matched
 
 string = StringTokenizer()
-identifier = re.compile(br'[A-Za-z_][A-Za-z_0-9]*')
-colon = re.compile(br':')
-comma = re.compile(br',')
-true = re.compile(br'true')
-false = re.compile(br'false')
-null = re.compile(br'null')
-undefined = re.compile(br'undefined')
-floatNumber = re.compile(br'-?([1-9][0-9]*|0)(\.[0-9]+)([eE][-+]?[0-9]+)?')
-longNumber = re.compile(br'-?([1-9][0-9]*|0)([eE][-+]?[0-9]+)?')
+identifier = re.compile(r'[A-Za-z_][A-Za-z_0-9]*')
+colon = re.compile(r':')
+comma = re.compile(r',')
+true = re.compile(r'true')
+false = re.compile(r'false')
+null = re.compile(r'null')
+undefined = re.compile(r'undefined')
+floatNumber = re.compile(r'-?([1-9][0-9]*|0)(\.[0-9]+)([eE][-+]?[0-9]+)?')
+longNumber = re.compile(r'-?([1-9][0-9]*|0)([eE][-+]?[0-9]+)?')
 
 class StringToken(str):
     pass
@@ -82,8 +82,8 @@ class WhitespaceToken(object):
     pass
 
 def jsonlong(s):
-    if b'e' in s:
-        m, e = list(map(int, s.split(b'e', 1)))
+    if 'e' in s:
+        m, e = list(map(int, s.split('e', 1)))
     else:
         m, e = int(s), 0
     return m * 10 ** e
@@ -130,10 +130,10 @@ def accept(want, tokens):
         raise ParseError("Unexpected %r, %s expected" % (t , want))
 
 def parseValue(tokens):
-    if tokens[0] == b'{':
+    if tokens[0] == '{':
         return parseObject(tokens)
 
-    if tokens[0] == b'[':
+    if tokens[0] == '[':
         return parseList(tokens)
 
     if tokens[0] in (True, False, None):
@@ -149,11 +149,11 @@ def parseValue(tokens):
 
 
 _stringExpr = re.compile(
-    br'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' b'\n'
-    br'|' b'\n'
-    br'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' b'\n'
-    br'|' b'\n'
-    br'(?P<control>\\[fbntr\\"]) # Match escaped control characters' b'\n',
+    r'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' '\n'
+    r'|' '\n'
+    r'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' '\n'
+    r'|' '\n'
+    r'(?P<control>\\[fbntr\\"]) # Match escaped control characters' '\n',
     re.VERBOSE)
 
 _controlMap = {
