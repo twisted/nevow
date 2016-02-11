@@ -299,7 +299,7 @@ def _collectPackageBelow(baseDir, extension):
             path = os.path.join(root, dir, '__init__.' + extension)
             if not os.path.exists(path):
                 path = EMPTY
-            mapping[str(name, 'ascii')] = path
+            mapping[unicode(name, 'ascii')] = path
             _revMap[os.path.join(root, dir)] = name + '.'
 
         for fn in filenames:
@@ -395,6 +395,7 @@ class JSDependencies(object):
             self._loadPlugins = False
 
         jsMod = className
+        print(398, jsMod, self.mapping)
         while jsMod:
             try:
                 self.mapping[jsMod]

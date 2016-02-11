@@ -207,7 +207,6 @@ def htmlUnknown(u):
 htmlReprTypes = {
     dict: htmlDict,
     list: htmlList,
-    types.InstanceType: htmlInst,
     bytes: htmlString,
     types.FunctionType: htmlFunc,
     types.MethodType: htmlMeth,
