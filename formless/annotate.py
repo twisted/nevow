@@ -816,7 +816,7 @@ class MetaTypedInterface(InterfaceClass):
         methods.sort(key=_sorter)
         properties.sort(key=_sorter)
         cls.__spec__ = spec = methods + properties
-        spec.sort(_sorter)
+        spec.sort(key=_sorter)
         cls.name = name
 
         # because attributes "label" and "description" would become Properties,
