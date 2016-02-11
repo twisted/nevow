@@ -149,12 +149,12 @@ def escapedData(data, inAttribute, inXML):
     @return: The quoted form of C{data}.
     """
     if inXML or inAttribute:
-        data = data.replace('&', '&amp;'
-            ).replace('<', '&lt;'
-            ).replace('>', '&gt;')
+        data = toBytes(data).replace(b'&', b'&amp;'
+            ).replace(b'<', b'&lt;'
+            ).replace(b'>', b'&gt;')
     if inAttribute:
-        data = data.replace('"', '&quot;')
-    return data
+        data = toBytes(data).replace(b'"', b'&quot;')
+    return toBytes(data)
 
 
 
