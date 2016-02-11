@@ -66,8 +66,7 @@ class QueryList(tpc.Adapter):
         node = None
         for item in self.original:
             try:
-                print(69, type(item), item)
-                newNode = inevow.IQ(unicode(item)).onePattern(pattern)
+                newNode = inevow.IQ(item).onePattern(pattern)
             except stan.NodeNotFound:
                 continue
             else:
