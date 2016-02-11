@@ -24,6 +24,7 @@ from formless import iformless
 
 from nevow import inevow, context, athena, loaders, tags, appserver
 from nevow.jsutil import findJavascriptInterpreter, generateTestScript
+from nevow.util import unicode, toBytes
 
 class FakeChannel:
     def __init__(self, site):
@@ -190,8 +191,8 @@ class FakeRequest(Componentized):
 
         @rtype: C{str}.
         """
-        return 'http://%s/%s' % (self.getHeader('host') or 'localhost',
-                                 '/'.join(self.prepath))
+        return 'http://%s/%s' % (unicode(self.getHeader('host')) or 'localhost',
+                                 unicode(b'/'.join(self.prepath)))
 
     def getClientIP(self):
         return '127.0.0.1'
