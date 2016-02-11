@@ -34,10 +34,10 @@ except ImportError:
 
 # Nevow imports
 from nevow import inevow, url, stan
-
+from nevow.util import unicode, toBytes
 
 def _sessionCookie():
-    return md5("%s_%s" % (str(random.random()) , str(time.time()))).hexdigest()
+    return md5(toBytes("%s_%s" % (str(random.random()) , str(time.time())))).hexdigest()
 
 @implementer(inevow.ISession, inevow.IGuardSession)
 class GuardSession(components.Componentized):
