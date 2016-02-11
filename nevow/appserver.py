@@ -232,8 +232,7 @@ class NevowRequest(server.Request, tpc.Componentized):
 
         # Resource Identification
         self.prepath = []
-        print(unquote,self.path,type(self.path))
-        self.postpath = list(map(unquote, self.path[1:].split('/')))
+        self.postpath = list(map(unquote, str(self.path[1:].split('/'), 'utf-8')))
         self.sitepath = []
 
         self.deferred = defer.Deferred()
