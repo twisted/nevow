@@ -79,7 +79,7 @@ def iterflatten(stan, ctx, writer, shouldYieldItem=None):
     rest = [ iter([partialflatten(ctx, stan)]) ]
     straccum = []
     while rest:
-        print(82)
+        print(82, straccum, rest)
         gen = rest.pop()
         for item in gen:
             if isinstance(item, str):
