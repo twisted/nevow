@@ -374,6 +374,7 @@ class URL(object):
     ## object protocol override ##
 
     def __str__(self):
+        print(377,flat.flatten(self))
         return str(flat.flatten(self))
 
     def __repr__(self):
