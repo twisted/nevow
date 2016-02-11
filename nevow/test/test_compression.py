@@ -1,7 +1,7 @@
 """
 Tests for on-the-fly content compression encoding.
 """
-from StringIO import StringIO
+from io import StringIO
 from gzip import GzipFile
 
 from zope.interface import implements

@@ -47,7 +47,7 @@ class QueryList(tpc.Adapter):
                     yield x.clone(deep=False, clearPattern=True)
 
         if default is None:
-            raise stan.NodeNotFound, ("pattern", pattern)
+            raise stan.NodeNotFound("pattern", pattern)
         if hasattr(default, 'clone'):
             while True: yield default.clone(deep=False)
         else:
@@ -86,13 +86,13 @@ class QuerySlot(QueryList):
 
 class QueryNeverFind(tpc.Adapter):
     def patternGenerator(self, pattern, default=None):
-        raise stan.NodeNotFound, ('pattern', pattern)
+        raise stan.NodeNotFound('pattern', pattern)
 
     def allPatterns(self, pattern):
         return []
 
     def onePattern(self, pattern):
-        raise stan.NodeNotFound, ('pattern', pattern)
+        raise stan.NodeNotFound('pattern', pattern)
 
     def _locatePatterns(self, pattern, default, loop=True):
         return []

@@ -209,7 +209,7 @@ def render(translator=None):
         children = ctx.tag.children
         ctx.tag.clear()
         for child in children:
-            if isinstance(child, basestring):
+            if isinstance(child, str):
                 child = translator(child)
             ctx.tag[child]
         return ctx.tag

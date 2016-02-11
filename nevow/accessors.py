@@ -48,7 +48,7 @@ class DirectiveAccessor(tpc.Adapter):
         data = context.locate(IData)
         container = IContainer(data, None)
         if container is None:
-            raise NoAccessor, "%r does not implement IContainer, and there is no registered adapter." % data
+            raise NoAccessor("%r does not implement IContainer, and there is no registered adapter." % data)
         child = container.child(context, self.original.name)
         return child
 

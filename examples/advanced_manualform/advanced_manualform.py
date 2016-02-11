@@ -61,7 +61,7 @@ class ManualFormMixin(rend.Page):
             magicCookie = str(now())
             refpath = refpath.replace('_nevow_carryover_', magicCookie)
             _CARRYOVER[magicCookie] = C = tpc.Componentized()
-            for k, v in aspects.iteritems():
+            for k, v in aspects.items():
                 C.setComponent(k, v)
             request.redirect(str(refpath))
             from nevow import static
@@ -99,8 +99,8 @@ class Page(ManualFormMixin, rend.Page):
     def form_post_btn1(self, what=None):
         # 'what' is a keyword argument, and must be the same name that you
         # give to the widget.
-        print "btn1:", what
+        print("btn1:", what)
     
     def form_post_btn2(self, what=None):
         # see above for 'what'.
-        print "btn2:", what
+        print("btn2:", what)

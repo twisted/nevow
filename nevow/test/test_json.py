@@ -21,31 +21,31 @@ TEST_OBJECTS = [
     [0],
     [0, 1, 2],
     [None, 1, 2],
-    [None, u'one', 2],
-    [True, False, u'string', 10],
+    [None, 'one', 2],
+    [True, False, 'string', 10],
     [[1, 2], [3, 4]],
     [[1.5, 2.5], [3.5, 4.5]],
-    [0, [1, 2], [u'hello'], [u'world'], [True, None, False]],
+    [0, [1, 2], ['hello'], ['world'], [True, None, False]],
     {},
-    {u'foo': u'bar'},
-    {u'foo': None},
-    {u'bar': True},
-    {u'baz': [1, 2, 3]},
-    {u'quux': {u'bar': u'foo'}},
+    {'foo': 'bar'},
+    {'foo': None},
+    {'bar': True},
+    {'baz': [1, 2, 3]},
+    {'quux': {'bar': 'foo'}},
     ]
 
 TEST_STRINGLIKE_OBJECTS = [
-    u'',
-    u'string',
-    u'string with "embedded" quotes',
-    u"string with 'embedded' single-quotes",
-    u'string with \\"escaped embedded\\" quotes',
-    u"string with \\'escaped embedded\\' single-quotes",
-    u"string with backslashes\\\\",
-    u"string with trailing accented vowels: \xe1\xe9\xed\xf3\xfa\xfd\xff",
-    u"string with trailing control characters: \f\b\n\t\r",
-    u'string with high codepoint characters: \u0111\u2222\u3333\u4444\uffff',
-    u'string with very high codepoint characters: \U00011111\U00022222\U00033333\U00044444\U000fffff',
+    '',
+    'string',
+    'string with "embedded" quotes',
+    "string with 'embedded' single-quotes",
+    'string with \\"escaped embedded\\" quotes',
+    "string with \\'escaped embedded\\' single-quotes",
+    "string with backslashes\\\\",
+    "string with trailing accented vowels: \xe1\xe9\xed\xf3\xfa\xfd\xff",
+    "string with trailing control characters: \f\b\n\t\r",
+    'string with high codepoint characters: \u0111\u2222\u3333\u4444\uffff',
+    'string with very high codepoint characters: \U00011111\U00022222\U00033333\U00044444\U000fffff',
     ]
 
 
@@ -93,7 +93,7 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         for struct in TEST_OBJECTS:
             bytes = json.serialize(struct)
             unstruct = json.parse(bytes)
-            self.assertEquals(
+            self.assertEqual(
                 unstruct, struct,
                 "Failed to roundtrip %r: %r (through %r)" % (
                     struct, unstruct, bytes))
@@ -103,7 +103,7 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         """
         C{undefined} is parsed as Python C{None}.
         """
-        self.assertEquals(None, json.parse(b'undefined'))
+        self.assertEqual(None, json.parse(b'undefined'))
 
 
     def testStringlikeRountrip(self):
@@ -112,8 +112,8 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
             unstruct = json.parse(bytes)
             failMsg = "Failed to roundtrip %r: %r (through %r)" % (
                     struct, unstruct, bytes)
-            self.assertEquals(unstruct, struct, failMsg)
-            self.assert_(isinstance(unstruct, unicode), failMsg)
+            self.assertEqual(unstruct, struct, failMsg)
+            self.assertTrue(isinstance(unstruct, str), failMsg)
 
 
     def test_lineTerminators(self):
@@ -127,30 +127,30 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         handle them properly.
         """
         # These are the four line terminators currently in Unicode.
-        self.assertEqual('"\\r"', json.serialize(u"\r"))
-        self.assertEqual('"\\n"', json.serialize(u"\n"))
-        self.assertEqual('"\\u2028"', json.serialize(u"\u2028"))
-        self.assertEqual('"\\u2029"', json.serialize(u"\u2029"))
+        self.assertEqual('"\\r"', json.serialize("\r"))
+        self.assertEqual('"\\n"', json.serialize("\n"))
+        self.assertEqual('"\\u2028"', json.serialize("\u2028"))
+        self.assertEqual('"\\u2029"', json.serialize("\u2029"))
 
 
     def testScientificNotation(self):
-        self.assertEquals(json.parse('1e10'), 10**10)
-        self.assertEquals(json.parse('1e0'), 1)
+        self.assertEqual(json.parse('1e10'), 10**10)
+        self.assertEqual(json.parse('1e0'), 1)
 
 
     def testHexEscapedCodepoints(self):
-        self.assertEquals(
+        self.assertEqual(
             json.parse('"\\xe1\\xe9\\xed\\xf3\\xfa\\xfd"'),
-            u"\xe1\xe9\xed\xf3\xfa\xfd")
+            "\xe1\xe9\xed\xf3\xfa\xfd")
 
     def testEscapedControls(self):
-        self.assertEquals(
+        self.assertEqual(
             json.parse('"\\f\\b\\n\\t\\r"'),
-            u"\f\b\n\t\r")
+            "\f\b\n\t\r")
 
 
     def _rendererTest(self, cls):
-        self.assertEquals(
+        self.assertEqual(
             json.serialize(
                 cls(
                     docFactory=loaders.stan(tags.p['Hello, world.']))),
@@ -276,18 +276,18 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
                 self.getInitialArguments = lambda: initialArgs
 
         self.assertEqual(
-            json.serialize(Transportable(u"Foo", ())),
+            json.serialize(Transportable("Foo", ())),
             "(new Foo())")
         self.assertEqual(
-            json.serialize(Transportable(u"Bar", (None,))),
+            json.serialize(Transportable("Bar", (None,))),
             "(new Bar(null))")
         self.assertEqual(
-            json.serialize(Transportable(u"Baz.Quux", (1, 2))),
+            json.serialize(Transportable("Baz.Quux", (1, 2))),
             "(new Baz.Quux(1,2))")
 
         # The style of the quotes in this assertion is basically irrelevant.
         # If, for some reason, the serializer changes to use ' instead of ",
         # there's no reason not to change this test to reflect that. -exarkun
         self.assertEqual(
-            json.serialize(Transportable(u"Quux", (u"Foo",))),
+            json.serialize(Transportable("Quux", ("Foo",))),
             '(new Quux("Foo"))')

@@ -86,8 +86,8 @@ class MyRealm:
             session = mind.request.getSession()
             values = session.getComponent(IValueHistory)
             session.unsetComponent(IValueHistory)
-            print 'Logging avatar', avatar_id, 'out of session', session
-            print 'Random numbers generated were', values
+            print('Logging avatar', avatar_id, 'out of session', session)
+            print('Random numbers generated were', values)
         return logout
 
 # Code for examples.tac

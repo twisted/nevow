@@ -50,7 +50,7 @@ def run():
     config = NitOptions()
     try:
         config.parseOptions()
-    except UsageError, ue:
+    except UsageError as ue:
         raise SystemExit("%s: %s" % (sys.argv[0], ue))
     else:
         if not config['testmodules']:

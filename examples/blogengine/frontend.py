@@ -132,10 +132,10 @@ class NewEntry(BaseUI):
     def insert(self, ctx, id, title, author, category, content):
         newPost = Post(store=IStore(ctx),
                        id=int(id),
-                       author=unicode(author),
-                       title=unicode(title),
-                       category=unicode(category),
-                       content=unicode(content))
+                       author=str(author),
+                       title=str(title),
+                       category=str(category),
+                       content=str(content))
         IBlog(IStore(ctx)).addNewPost(newPost)
         inevow.IRequest(ctx).setComponent(iformless.IRedirectAfterPost, '/thx')
 
@@ -165,10 +165,10 @@ class Entry(UI):
         return webform.renderForms()
 
     def insert(self, ctx, id, title, author, category, content):
-        self.original.author = unicode(author)
-        self.original.title = unicode(title)
-        self.original.category = unicode(category)
-        self.original.content = unicode(content)
+        self.original.author = str(author)
+        self.original.title = str(title)
+        self.original.category = str(category)
+        self.original.content = str(content)
         inevow.IRequest(ctx).setComponent(iformless.IRedirectAfterPost, '/thx')
 
 #####################################
@@ -213,10 +213,10 @@ class BlogRPC(xmlrpc.XMLRPC):
         newid = IBlog(self.store).getNextId()
         newPost = Post(store=self.store,
                        id=newid,
-                       author=unicode(author),
-                       title=unicode(title),
-                       category=unicode(category),
-                       content=unicode(content))
+                       author=str(author),
+                       title=str(title),
+                       category=str(category),
+                       content=str(content))
         IBlog(self.store).addNewPost(newPost)
         return 'Successfully added post number %s' % newid
     xmlrpc_publish = transacted(xmlrpc_publish)

@@ -1,6 +1,6 @@
 
 import os, sets
-from itertools import izip
+
 from xml.dom.minidom import parseString
 
 from twisted.trial import unittest
@@ -35,7 +35,7 @@ class MappingResourceTests(unittest.TestCase):
         L{athena.MappingResource} isn't directly renderable.
         """
         m = athena.MappingResource({})
-        self.failUnless(isinstance(m.renderHTTP(None), rend.FourOhFour))
+        self.assertTrue(isinstance(m.renderHTTP(None), rend.FourOhFour))
 
 
     def test_lookupNonExistentKey(self):
@@ -44,7 +44,7 @@ class MappingResourceTests(unittest.TestCase):
         for a non-existent key.
         """
         m = athena.MappingResource({'name': 'value'})
-        self.assertEquals(m.locateChild(None, ('key',)), rend.NotFound)
+        self.assertEqual(m.locateChild(None, ('key',)), rend.NotFound)
 
 
     def test_lookupKey(self):
@@ -55,8 +55,8 @@ class MappingResourceTests(unittest.TestCase):
         m = athena.MappingResource({'name': 'value'})
         m.resourceFactory = sets.Set
         resource, segments = m.locateChild(None, ('name',))
-        self.assertEquals(segments, [])
-        self.assertEquals(resource, sets.Set('value'))
+        self.assertEqual(segments, [])
+        self.assertEqual(resource, sets.Set('value'))
 
 
 
@@ -68,7 +68,7 @@ class ModuleRegistryTestMixin:
         """
         C{getModuleForName} should return the right kind of module.
         """
-        moduleName = u'test_getModuleForName'
+        moduleName = 'test_getModuleForName'
         mapping = {moduleName: self.mktemp()}
         reg = self.registryClass(mapping)
         mod = reg.getModuleForName(moduleName)
@@ -82,7 +82,7 @@ class ModuleRegistryTestMixin:
         C{getModuleForName} should get angry if we ask for a module which
         doesn't exist.
         """
-        moduleName = u'test_getModuleForName'
+        moduleName = 'test_getModuleForName'
         reg = self.registryClass({})
         self.assertRaises(
             RuntimeError,
@@ -104,7 +104,7 @@ class CSSRegistryTests(unittest.TestCase, ModuleRegistryTestMixin):
         L{athena.CSSRegistry} should initialize its mapping from
         L{athena.allCSSPackages} as needed.
         """
-        moduleName = u'test_getModuleForNameLoad'
+        moduleName = 'test_getModuleForNameLoad'
         origAllCSSPackages = athena.allCSSPackages
         theCSSPackages = {moduleName: self.mktemp()}
         athena.allCSSPackages = lambda: theCSSPackages
@@ -131,7 +131,7 @@ class JSDependenciesTests(unittest.TestCase, ModuleRegistryTestMixin):
         L{athena.JSDependencies} should initialize its mapping from
         L{athena.allCSSPackages} as needed.
         """
-        moduleName = u'test_getModuleForNameLoad'
+        moduleName = 'test_getModuleForNameLoad'
         origAllJavascriptPackages = athena.allJavascriptPackages
         theJavascriptPackages = {moduleName: self.mktemp()}
         athena.allJavascriptPackages = lambda: theJavascriptPackages
@@ -180,7 +180,7 @@ the end
         m2 = self.moduleClass.getOrCreate('testmodule', modules)
 
         self.assertTrue(isinstance(m1, self.moduleClass))
-        self.assertEquals(m1.name, 'testmodule')
+        self.assertEqual(m1.name, 'testmodule')
 
         self.assertIdentical(m1, m2)
 
@@ -219,7 +219,7 @@ the end
         m = self.moduleClass.getOrCreate('testmodule', modules)
         deps = [d.name for d in m.dependencies()]
         deps.sort()
-        self.assertEquals(deps, ['Another', 'ExampleModule', 'Module'])
+        self.assertEqual(deps, ['Another', 'ExampleModule', 'Module'])
 
 
     def test_allDependencies(self):
@@ -246,7 +246,7 @@ the end
                 # that depends upon them.
                 self.assertIn(d, allDeps)
                 self.assertIn(depMod, allDeps)
-                self.failUnless(allDeps.index(d) < allDeps.index(depMod))
+                self.assertTrue(allDeps.index(d) < allDeps.index(depMod))
 
 
     def test_crlfNewlines(self):
@@ -268,7 +268,7 @@ the end
         module = self.moduleClass('Foo', modules)
         fooDependencies = list(module.dependencies())
         self.assertEqual(len(fooDependencies), 1)
-        self.assertEqual(fooDependencies[0].name, u'Bar')
+        self.assertEqual(fooDependencies[0].name, 'Bar')
 
 
     def test_dependencyCaching(self):
@@ -290,15 +290,15 @@ the end
         m._extractImports = _extractImports
 
         list(m.dependencies())
-        self.assertEquals(m.extractCounter, 1)
+        self.assertEqual(m.extractCounter, 1)
 
         list(m.dependencies())
-        self.assertEquals(m.extractCounter, 1)
+        self.assertEqual(m.extractCounter, 1)
 
         newTime = m.lastModified
         os.utime(testModuleFilename, (newTime + 1, newTime + 1))
         list(m.dependencies())
-        self.assertEquals(m.extractCounter, 2)
+        self.assertEqual(m.extractCounter, 2)
 
 
     def test_packageDependencies(self):
@@ -306,11 +306,11 @@ the end
         L{athena.AthenaModule} should include a module's package in its
         dependencies.
         """
-        modules = {u'Foo': self.mktemp(), u'Foo.Bar': self.mktemp()}
-        file(modules[u'Foo'], 'wb').close()
-        file(modules[u'Foo.Bar'], 'wb').close()
-        foo = self.moduleClass.getOrCreate(u'Foo', modules)
-        bar = self.moduleClass.getOrCreate(u'Foo.Bar', modules)
+        modules = {'Foo': self.mktemp(), 'Foo.Bar': self.mktemp()}
+        file(modules['Foo'], 'wb').close()
+        file(modules['Foo.Bar'], 'wb').close()
+        foo = self.moduleClass.getOrCreate('Foo', modules)
+        bar = self.moduleClass.getOrCreate('Foo.Bar', modules)
         self.assertIn(foo, bar.allDependencies())
 
 
@@ -318,7 +318,7 @@ the end
         """
         L{athena.AthenaModule} should C{repr} to something helpful.
         """
-        moduleName = u'Foo.Bar'
+        moduleName = 'Foo.Bar'
         module = self.moduleClass(
             moduleName, {moduleName: self.mktemp()})
         self.assertEqual(
@@ -445,11 +445,11 @@ class ModuleInteractionTests(unittest.TestCase):
         namespaces.
         """
         cssModule = athena.CSSModule.getOrCreate(
-            u'test_separateModuleNamespace',
-            {u'test_separateModuleNamespace': self.mktemp()})
+            'test_separateModuleNamespace',
+            {'test_separateModuleNamespace': self.mktemp()})
         jsModule = athena.JSModule.getOrCreate(
-            u'test_separateModuleNamespace',
-            {u'test_separateModuleNamespace': self.mktemp()})
+            'test_separateModuleNamespace',
+            {'test_separateModuleNamespace': self.mktemp()})
         self.assertNotIdentical(cssModule, jsModule)
         self.assertTrue(isinstance(cssModule, athena.CSSModule))
         self.assertTrue(isinstance(jsModule, athena.JSModule))
@@ -477,10 +477,10 @@ class _AutoPackageTestMixin:
             return path
 
         expected = {
-            u'Foo': childPath('Foo', '__init__.' + self.moduleExtension),
-            u'Foo.Bar': childPath('Foo', 'Bar.' + self.moduleExtension),
-            u'Foo.Baz': util.sibpath(athena.__file__, 'empty-module.' + self.moduleExtension),
-            u'Foo.Baz.Quux': childPath('Foo', 'Baz', 'Quux.' + self.moduleExtension)}
+            'Foo': childPath('Foo', '__init__.' + self.moduleExtension),
+            'Foo.Bar': childPath('Foo', 'Bar.' + self.moduleExtension),
+            'Foo.Baz': util.sibpath(athena.__file__, 'empty-module.' + self.moduleExtension),
+            'Foo.Baz.Quux': childPath('Foo', 'Baz', 'Quux.' + self.moduleExtension)}
 
         childPath('Foo', '.foo.' + self.moduleExtension)
         os.mkdir(os.path.join(packageDir, 'Foo', '.test'))
@@ -489,10 +489,10 @@ class _AutoPackageTestMixin:
         childPath('Foo', 'Zot.other')
 
         package = self.packageFactory(packageDir)
-        for module, path in expected.iteritems():
+        for module, path in expected.items():
             m = package.mapping.pop(module)
-            self.assertEquals(m, path)
-        self.assertEquals(package.mapping, {})
+            self.assertEqual(m, path)
+        self.assertEqual(package.mapping, {})
 
 
 
@@ -558,7 +558,7 @@ class UtilitiesTests(unittest.TestCase):
         tag = tags.span[athena.handler(event='onclick', handler='bar')]
         mutated = athena._rewriteEventHandlerToAttribute(tag)
         output = flat.flatten(mutated)
-        self.assertEquals(
+        self.assertEqual(
             output,
             '<span onclick="' + expectedOutput + '"></span>')
 
@@ -569,7 +569,7 @@ class UtilitiesTests(unittest.TestCase):
         macro is.
         """
         tag = ["hello", " ", "world"]
-        self.assertEquals(
+        self.assertEqual(
             athena._rewriteEventHandlerToAttribute(tag),
             tag)
 
@@ -618,7 +618,7 @@ class UtilitiesTests(unittest.TestCase):
         renderDeferred = renderPage(page)
         def rendered(result):
             page.action_close(None)
-            self.assertEquals(preprocessed, [[tag]])
+            self.assertEqual(preprocessed, [[tag]])
         renderDeferred.addCallback(rendered)
         return renderDeferred
 
@@ -681,7 +681,7 @@ class StandardLibraryTestCase(unittest.TestCase):
     def _importTest(self, moduleName):
         mod = self.deps.getModuleForName(moduleName)
         inspect = [dep for dep in mod.allDependencies() if dep.name == moduleName]
-        self.failUnless(inspect)
+        self.assertTrue(inspect)
 
 
     def test_divmodImport(self):
@@ -775,14 +775,14 @@ class Nesting(unittest.TestCase):
         tf1.setFragmentParent(lp)
         tf2.setFragmentParent(tf1)
 
-        self.assertEquals(lp.liveFragmentChildren, [tf1])
-        self.assertEquals(tf1.liveFragmentChildren, [tf2])
-        self.assertEquals(tf2.liveFragmentChildren, [])
-        self.assertEquals(tf2.fragmentParent, tf1)
-        self.assertEquals(tf1.fragmentParent, lp)
+        self.assertEqual(lp.liveFragmentChildren, [tf1])
+        self.assertEqual(tf1.liveFragmentChildren, [tf2])
+        self.assertEqual(tf2.liveFragmentChildren, [])
+        self.assertEqual(tf2.fragmentParent, tf1)
+        self.assertEqual(tf1.fragmentParent, lp)
 
-        self.assertEquals(tf2.page, lp)
-        self.assertEquals(tf1.page, lp)
+        self.assertEqual(tf2.page, lp)
+        self.assertEqual(tf1.page, lp)
 
 
     def testInsideOutFragmentNesting(self):
@@ -797,13 +797,13 @@ class Nesting(unittest.TestCase):
         innerFragment.setFragmentParent(outerFragment)
         outerFragment.setFragmentParent(page)
 
-        self.assertEquals(page.liveFragmentChildren, [outerFragment])
-        self.assertEquals(outerFragment.fragmentParent, page)
-        self.assertEquals(outerFragment.page, page)
+        self.assertEqual(page.liveFragmentChildren, [outerFragment])
+        self.assertEqual(outerFragment.fragmentParent, page)
+        self.assertEqual(outerFragment.page, page)
 
-        self.assertEquals(outerFragment.liveFragmentChildren, [innerFragment])
-        self.assertEquals(innerFragment.fragmentParent, outerFragment)
-        self.assertEquals(innerFragment.page, page)
+        self.assertEqual(outerFragment.liveFragmentChildren, [innerFragment])
+        self.assertEqual(innerFragment.fragmentParent, outerFragment)
+        self.assertEqual(innerFragment.page, page)
 
 
 
@@ -814,14 +814,14 @@ class Tracebacks(unittest.TestCase):
 
     stack = '\n'.join(['%s@%s:%d' % frame for frame in frames])
 
-    exc = {u'name': 'SomeError',
-           u'message': 'An error occurred.',
-           u'stack': stack}
+    exc = {'name': 'SomeError',
+           'message': 'An error occurred.',
+           'stack': stack}
 
     def testStackParsing(self):
         p = athena.parseStack(self.stack)
-        for iframe, oframe in izip(self.frames[::-1], p):
-            self.assertEquals(oframe, iframe)
+        for iframe, oframe in zip(self.frames[::-1], p):
+            self.assertEqual(oframe, iframe)
 
     def testStackLengthAndOrder(self):
         f = athena.getJSFailure(self.exc, {})
@@ -840,7 +840,8 @@ class _DelayedCall(object):
 
 
 def mappend(transport):
-    def send((ack, messages)):
+    def send(xxx_todo_changeme):
+        (ack, messages) = xxx_todo_changeme
         transport.append(messages[:])
     return send
 
@@ -898,9 +899,9 @@ class Transport(unittest.TestCase):
         """
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.addMessage(self.theMessage)
-        self.assertEquals(self.transport, [[(0, self.theMessage)]])
+        self.assertEqual(self.transport, [[(0, self.theMessage)]])
         self.rdm.addMessage(self.theMessage)
-        self.assertEquals(self.transport, [[(0, self.theMessage)]])
+        self.assertEqual(self.transport, [[(0, self.theMessage)]])
 
 
     def testSendMessageQueued(self):
@@ -910,7 +911,7 @@ class Transport(unittest.TestCase):
         """
         self.rdm.addMessage(self.theMessage)
         self.rdm.addOutput(mappend(self.transport))
-        self.assertEquals(self.transport, [[(0, self.theMessage)]])
+        self.assertEqual(self.transport, [[(0, self.theMessage)]])
 
 
     def testMultipleQueuedMessages(self):
@@ -921,7 +922,7 @@ class Transport(unittest.TestCase):
         self.rdm.addMessage(self.theMessage)
         self.rdm.addMessage(self.theMessage.encode('hex'))
         self.rdm.addOutput(mappend(self.transport))
-        self.assertEquals(self.transport, [[(0, self.theMessage), (1, self.theMessage.encode('hex'))]])
+        self.assertEqual(self.transport, [[(0, self.theMessage), (1, self.theMessage.encode('hex'))]])
 
 
     def testMultipleQueuedOutputs(self):
@@ -933,8 +934,8 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.addOutput(mappend(secondTransport))
         self.rdm.addMessage(self.theMessage)
-        self.assertEquals(self.transport, [[(0, self.theMessage)]])
-        self.assertEquals(secondTransport, [])
+        self.assertEqual(self.transport, [[(0, self.theMessage)]])
+        self.assertEqual(secondTransport, [])
 
 
     def testMessageRedelivery(self):
@@ -949,15 +950,15 @@ class Transport(unittest.TestCase):
         self.rdm.addMessage(self.theMessage)
         self.rdm.addMessage(secondMessage)
         self.rdm.addOutput(mappend(self.transport))
-        self.assertEquals(self.transport, [[(0, self.theMessage), (1, secondMessage)]])
+        self.assertEqual(self.transport, [[(0, self.theMessage), (1, secondMessage)]])
         self.rdm.addOutput(mappend(secondTransport))
-        self.assertEquals(secondTransport, [[(0, self.theMessage), (1, secondMessage)]])
+        self.assertEqual(secondTransport, [[(0, self.theMessage), (1, secondMessage)]])
         self.rdm.basketCaseReceived(None, [0, []])
         self.rdm.addOutput(mappend(thirdTransport))
-        self.assertEquals(thirdTransport, [[(1, secondMessage)]])
+        self.assertEqual(thirdTransport, [[(1, secondMessage)]])
         self.rdm.basketCaseReceived(None, [1, []])
         self.rdm.addOutput(mappend(fourthTransport))
-        self.assertEquals(fourthTransport, [])
+        self.assertEqual(fourthTransport, [])
 
 
     def testConnectTimeout(self):
@@ -967,15 +968,15 @@ class Transport(unittest.TestCase):
         established.
         """
         n, f, a, kw = self.scheduled.pop()
-        self.failIf(self.scheduled, "Too many tasks scheduled.")
+        self.assertFalse(self.scheduled, "Too many tasks scheduled.")
 
-        self.assertEquals(n, self.connectTimeout)
+        self.assertEqual(n, self.connectTimeout)
         f(*a, **kw)
 
-        self.assertEquals(len(self.events), 1)
+        self.assertEqual(len(self.events), 1)
         self.events[0].trap(athena.ConnectFailed)
 
-        self.failIf(self.scheduled, "Unexpected task scheduled after connect failed.")
+        self.assertFalse(self.scheduled, "Unexpected task scheduled after connect failed.")
 
 
     def testConnectSucceeds(self):
@@ -983,12 +984,12 @@ class Transport(unittest.TestCase):
         Test that the connection timeout is cancelled when an output channel is
         added.
         """
-        self.failUnless(self.scheduled, "No connect timeout scheduled.") # Sanity check
+        self.assertTrue(self.scheduled, "No connect timeout scheduled.") # Sanity check
         self.rdm.addOutput(mappend(self.transport))
         n, f, a, kw = self.scheduled.pop()
-        self.assertEquals(n, self.idleTimeout)
-        self.failIf(self.scheduled, "Output channel added but there is still a task pending.")
-        self.assertEquals(self.transport, [], "Received unexpected output.")
+        self.assertEqual(n, self.idleTimeout)
+        self.assertFalse(self.scheduled, "Output channel added but there is still a task pending.")
+        self.assertEqual(self.transport, [], "Received unexpected output.")
 
 
     def test_connectionMade(self):
@@ -1014,15 +1015,15 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
 
         n, f, a, kw = self.scheduled.pop()
-        self.failIf(self.scheduled, "Too many tasks scheduled.")
+        self.assertFalse(self.scheduled, "Too many tasks scheduled.")
 
-        self.assertEquals(n, self.transportlessTimeout)
+        self.assertEqual(n, self.transportlessTimeout)
         f(*a, **kw)
 
-        self.assertEquals(len(self.events), 1)
+        self.assertEqual(len(self.events), 1)
         self.events[0].trap(athena.ConnectionLost)
 
-        self.failIf(self.scheduled, "Unexpected task scheduled after connection lost.")
+        self.assertFalse(self.scheduled, "Unexpected task scheduled after connection lost.")
 
 
     def testMessageConsumedOutputTimeout(self):
@@ -1035,15 +1036,15 @@ class Transport(unittest.TestCase):
         self.rdm.addMessage(self.theMessage)
 
         n, f, a, kw = self.scheduled.pop()
-        self.failIf(self.scheduled, "Too many tasks scheduled.")
+        self.assertFalse(self.scheduled, "Too many tasks scheduled.")
 
-        self.assertEquals(n, self.transportlessTimeout)
+        self.assertEqual(n, self.transportlessTimeout)
         f(*a, **kw)
 
-        self.assertEquals(len(self.events), 1)
+        self.assertEqual(len(self.events), 1)
         self.events[0].trap(athena.ConnectionLost)
 
-        self.failIf(self.scheduled, "Unexpected task scheduled after connection lost.")
+        self.assertFalse(self.scheduled, "Unexpected task scheduled after connection lost.")
 
 
     def testOutputConnectionAdded(self):
@@ -1054,17 +1055,17 @@ class Transport(unittest.TestCase):
         self.rdm.addMessage(self.theMessage)
         self.rdm.addOutput(mappend(self.transport))
 
-        self.assertEquals(len(self.scheduled), 1, "Transportless timeout not created.")
+        self.assertEqual(len(self.scheduled), 1, "Transportless timeout not created.")
         n, f, a, kw = self.scheduled[0]
-        self.assertEquals(n, self.transportlessTimeout, "Unexpected task still scheduled after output added.")
+        self.assertEqual(n, self.transportlessTimeout, "Unexpected task still scheduled after output added.")
 
         self.rdm.basketCaseReceived(None, [0, []])
 
         n, f, a, kw = self.scheduled.pop()
-        self.assertEquals(n, self.idleTimeout)
+        self.assertEqual(n, self.idleTimeout)
 
-        self.failIf(self.scheduled, "Unexpected task still scheduled after output added.")
-        self.failIf(self.events, "Unexpectedly received some kind of event.")
+        self.assertFalse(self.scheduled, "Unexpected task still scheduled after output added.")
+        self.assertFalse(self.events, "Unexpectedly received some kind of event.")
 
 
     def testIdleOutputTimeout(self):
@@ -1075,12 +1076,12 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
 
         n, f, a, kw = self.scheduled.pop()
-        self.assertEquals(n, self.idleTimeout)
-        self.failIf(self.scheduled, "Unexpected tasks still scheduled in addition to idle timeout task.")
+        self.assertEqual(n, self.idleTimeout)
+        self.assertFalse(self.scheduled, "Unexpected tasks still scheduled in addition to idle timeout task.")
 
         f(*a, **kw)
 
-        self.assertEquals(self.transport, [[]])
+        self.assertEqual(self.transport, [[]])
 
 
     def testIdleTimeoutStartsOutputlessTimeout(self):
@@ -1091,16 +1092,16 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
 
         n, f, a, kw = self.scheduled.pop()
-        self.assertEquals(n, self.idleTimeout)
+        self.assertEqual(n, self.idleTimeout)
         f(*a, **kw)
 
-        self.failIf(self.events, "Unexpectedly received some events.")
+        self.assertFalse(self.events, "Unexpectedly received some events.")
 
         n, f, a, kw = self.scheduled.pop()
-        self.assertEquals(n, self.transportlessTimeout)
+        self.assertEqual(n, self.transportlessTimeout)
         f(*a, **kw)
 
-        self.assertEquals(len(self.events), 1)
+        self.assertEqual(len(self.events), 1)
         self.events[0].trap(athena.ConnectionLost)
 
 
@@ -1114,15 +1115,15 @@ class Transport(unittest.TestCase):
 
         # The connection timeout should have been cancelled and
         # replaced with an idle timeout.
-        self.assertEquals(len(self.scheduled), 1)
+        self.assertEqual(len(self.scheduled), 1)
         n, f, a, kw = self.scheduled[0]
-        self.assertEquals(n, self.idleTimeout)
+        self.assertEqual(n, self.idleTimeout)
 
         self.rdm.addMessage(self.theMessage)
-        self.assertEquals(self.transport, [])
+        self.assertEqual(self.transport, [])
 
         self.rdm.unpause()
-        self.assertEquals(self.transport, [[(0, self.theMessage)]])
+        self.assertEqual(self.transport, [[(0, self.theMessage)]])
 
 
     def testTransportlessPause(self):
@@ -1135,10 +1136,10 @@ class Transport(unittest.TestCase):
 
         self.rdm.pause()
         self.rdm.addMessage(self.theMessage)
-        self.assertEquals(self.transport, [])
+        self.assertEqual(self.transport, [])
 
         self.rdm.unpause()
-        self.assertEquals(self.transport, [[(0, self.theMessage)]])
+        self.assertEqual(self.transport, [[(0, self.theMessage)]])
 
 
     def testMessagelessPause(self):
@@ -1151,10 +1152,10 @@ class Transport(unittest.TestCase):
 
         self.rdm.pause()
         self.rdm.addMessage(self.theMessage)
-        self.assertEquals(self.transport, [])
+        self.assertEqual(self.transport, [])
 
         self.rdm.unpause()
-        self.assertEquals(self.transport, [[(0, self.theMessage)]])
+        self.assertEqual(self.transport, [[(0, self.theMessage)]])
 
 
     def testStaleMessages(self):
@@ -1168,7 +1169,7 @@ class Transport(unittest.TestCase):
             [-1, [[0, self.theMessage],
                   [1, self.theMessage + "-1"],
                   [2, self.theMessage + "-2"]]])
-        self.assertEquals(
+        self.assertEqual(
             self.outgoingMessages,
             [(None, self.theMessage),
              (None, self.theMessage + "-1"),
@@ -1178,14 +1179,14 @@ class Transport(unittest.TestCase):
         self.rdm.basketCaseReceived(
             None,
             [-1, [[1, self.theMessage + "-1"]]])
-        self.assertEquals(
+        self.assertEqual(
             self.outgoingMessages,
             [])
 
         self.rdm.basketCaseReceived(
             None,
             [-1, [[2, self.theMessage + "-2"]]])
-        self.assertEquals(
+        self.assertEqual(
             self.outgoingMessages,
             [])
 
@@ -1200,11 +1201,11 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.close()
-        self.assertEquals(self.transport, [[(0, (athena.CLOSE, []))], [(0, (athena.CLOSE, []))]])
+        self.assertEqual(self.transport, [[(0, (athena.CLOSE, []))], [(0, (athena.CLOSE, []))]])
 
         self.transport = []
         self.rdm.addOutput(mappend(self.transport))
-        self.assertEquals(self.transport, [[(0, (athena.CLOSE, []))]])
+        self.assertEqual(self.transport, [[(0, (athena.CLOSE, []))]])
 
 
     def testCloseBeforeConnect(self):
@@ -1213,7 +1214,7 @@ class Transport(unittest.TestCase):
         ever established properly cleans up any timeouts.
         """
         self.rdm.close()
-        self.failIf(self.scheduled, "Expected no scheduled calls.")
+        self.assertFalse(self.scheduled, "Expected no scheduled calls.")
 
 
     def test_closeExcessOnReceived(self):
@@ -1224,9 +1225,9 @@ class Transport(unittest.TestCase):
         self.rdm.addOutput(mappend(self.transport))
         self.rdm.addOutput(mappend(secondTransport))
         d = self.rdm.basketCaseReceived(None, [0, []])
-        self.assertEquals(self.transport, [[]])
-        self.assertEquals(secondTransport, [[]])
-        self.failIf(d.called)
+        self.assertEqual(self.transport, [[]])
+        self.assertEqual(secondTransport, [[]])
+        self.assertFalse(d.called)
 
 
     def test_closeExcessOnUnpaused(self):
@@ -1459,7 +1460,7 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         Our element's glue should include inline stylesheet references.
         """
         element = self.elementFactory()
-        element.cssModule = u'TestCSSModuleDependencies.Dependor'
+        element.cssModule = 'TestCSSModuleDependencies.Dependor'
         element.docFactory = loaders.stan(
             tags.div(render=tags.directive(self.liveGlueRenderer)))
 
@@ -1470,8 +1471,8 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         def cbRendered(result):
             expected = flat.flatten(
                 page.getStylesheetStan(
-                    [page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependee'),
-                     page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependor')]))
+                    [page.getCSSModuleURL('TestCSSModuleDependencies.Dependee'),
+                     page.getCSSModuleURL('TestCSSModuleDependencies.Dependor')]))
             self.assertIn(expected, result)
         D.addCallback(cbRendered)
         return D
@@ -1482,7 +1483,7 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         Our element's glue shouldn't include redundant stylesheet references.
         """
         element = self.elementFactory()
-        element.cssModule = u'TestCSSModuleDependencies.Dependor'
+        element.cssModule = 'TestCSSModuleDependencies.Dependor'
         element.docFactory = loaders.stan(
             tags.div(render=tags.directive(self.liveGlueRenderer)))
 
@@ -1497,8 +1498,8 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
         def cbRendered(result):
             expected = flat.flatten(
                 page.getStylesheetStan(
-                    [page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependee'),
-                     page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependor')]))
+                    [page.getCSSModuleURL('TestCSSModuleDependencies.Dependee'),
+                     page.getCSSModuleURL('TestCSSModuleDependencies.Dependor')]))
             self.assertIn(expected, result)
         D.addCallback(cbRendered)
         return D
@@ -1567,7 +1568,7 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         calling a single JavaScript function.
         """
         bc = self.page._bootstrapCall(
-            "SomeModule.someMethod", [u"one", 2, {u"three": 4.1}])
+            "SomeModule.someMethod", ["one", 2, {"three": 4.1}])
         self.assertEqual(
             bc, 'SomeModule.someMethod("one", 2, {"three":4.1});')
 
@@ -1577,14 +1578,14 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         L{LivePage.render_liveglue} should include modules that the
         L{LivePage}'s jsClass depends on.
         """
-        self.page.jsClass = u'PythonTestSupport.Dependor.PageTest'
+        self.page.jsClass = 'PythonTestSupport.Dependor.PageTest'
         freq = FakeRequest()
         self.page._becomeLive(url.URL.fromRequest(freq))
         ctx = WovenContext(tag=tags.div())
         ctx.remember(freq, IRequest)
         self.assertEqual(self.page.render_liveglue(ctx, None), ctx.tag)
-        expectDependor = flat.flatten(self.page.getImportStan(u'PythonTestSupport.Dependor'))
-        expectDependee = flat.flatten(self.page.getImportStan(u'PythonTestSupport.Dependee'))
+        expectDependor = flat.flatten(self.page.getImportStan('PythonTestSupport.Dependor'))
+        expectDependee = flat.flatten(self.page.getImportStan('PythonTestSupport.Dependee'))
         result = flat.flatten(ctx.tag, ctx)
         self.assertIn(expectDependor, result)
         self.assertIn(expectDependee, result)
@@ -1595,7 +1596,7 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         L{athena.LivePage.render_liveglue} should include CSS modules that
         the top-level C{cssModule} depends on.
         """
-        self.page.cssModule = u'TestCSSModuleDependencies.Dependor'
+        self.page.cssModule = 'TestCSSModuleDependencies.Dependor'
         self.page.cssModules = self._makeCSSRegistry()
 
         self.page._becomeLive(url.URL())
@@ -1604,8 +1605,8 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         self.assertEqual(self.page.render_liveglue(ctx, None), ctx.tag)
         expected = flat.flatten(
             self.page.getStylesheetStan(
-                [self.page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependee'),
-                 self.page.getCSSModuleURL(u'TestCSSModuleDependencies.Dependor')]))
+                [self.page.getCSSModuleURL('TestCSSModuleDependencies.Dependee'),
+                 self.page.getCSSModuleURL('TestCSSModuleDependencies.Dependor')]))
         self.assertIn(expected, flat.flatten(ctx.tag, ctx))
 
 
@@ -1629,9 +1630,9 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
               # Nevow's URL quoting rules are weird, but this is the URL
               # flattener's fault, not mine.  Adjust to taste if that changes
               # (it won't) -glyph
-              [u"http://localhost/'%22"]),
+              ["http://localhost/'%22"]),
              ("Nevow.Athena.bootstrap",
-              [u'Nevow.Athena.PageWidget', u'asdf'])])
+              ['Nevow.Athena.PageWidget', 'asdf'])])
 
 
     def test_renderReconnect(self):
@@ -1681,7 +1682,7 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         page = athena.LivePage(
             cssModuleRoot=theCSSModuleRoot)
         self.assertEqual(
-            page.getCSSModuleURL(u'X.Y'),
+            page.getCSSModuleURL('X.Y'),
             theCSSModuleRoot.child('X.Y'))
 
 
@@ -1855,7 +1856,7 @@ class WidgetSubcommandTests(unittest.TestCase):
         """
         options = widgetServiceMaker.options()
         options.parseOptions(['--element', qual(DummyLiveElement)])
-        self.assertEquals(options['element'], DummyLiveElement)
+        self.assertEqual(options['element'], DummyLiveElement)
 
 
     def test_invalidWidgetOption(self):
@@ -1895,8 +1896,8 @@ class WidgetSubcommandTests(unittest.TestCase):
         Verify that the necessary interfaces for the object to be found as a
         twistd subcommand plugin are provided.
         """
-        self.failUnless(IPlugin.providedBy(widgetServiceMaker))
-        self.failUnless(IServiceMaker.providedBy(widgetServiceMaker))
+        self.assertTrue(IPlugin.providedBy(widgetServiceMaker))
+        self.assertTrue(IServiceMaker.providedBy(widgetServiceMaker))
 
 
     def test_makeService(self):
@@ -1908,11 +1909,11 @@ class WidgetSubcommandTests(unittest.TestCase):
                 'element': DummyLiveElement,
                 'port': 8080,
                 })
-        self.failUnless(isinstance(service, TCPServer))
+        self.assertTrue(isinstance(service, TCPServer))
         self.assertEqual(service.args[0], 8080)
-        self.failUnless(isinstance(service.args[1], NevowSite))
-        self.failUnless(isinstance(service.args[1].resource, WidgetPluginRoot))
-        self.failUnless(isinstance(service.args[1].resource.elementFactory(),
+        self.assertTrue(isinstance(service.args[1], NevowSite))
+        self.assertTrue(isinstance(service.args[1].resource, WidgetPluginRoot))
+        self.assertTrue(isinstance(service.args[1].resource.elementFactory(),
                                    DummyLiveElement))
 
 
@@ -1922,7 +1923,7 @@ class WidgetSubcommandTests(unittest.TestCase):
         particular LiveElement properly renders that element.
         """
         element = DummyLiveElement()
-        element.jsClass = u'Dummy.ClassName'
+        element.jsClass = 'Dummy.ClassName'
         element.docFactory = stan('the element')
         page = ElementRenderingLivePage(element)
         renderDeferred = renderLivePage(page)
@@ -1949,8 +1950,8 @@ class WidgetSubcommandTests(unittest.TestCase):
         page2, seg = w.locateChild(None, [''])
 
         # Make sure the pages aren't the same.
-        self.failUnless(isinstance(page1, ElementRenderingLivePage))
-        self.failUnless(isinstance(page2, ElementRenderingLivePage))
+        self.assertTrue(isinstance(page1, ElementRenderingLivePage))
+        self.assertTrue(isinstance(page2, ElementRenderingLivePage))
         self.assertNotIdentical(page1, page2)
 
         # Make sure the elements aren't the same.
@@ -1972,7 +1973,7 @@ class WidgetSubcommandTests(unittest.TestCase):
         w = WidgetPluginRoot(DummyLiveElement)
         page1, seg = w.locateChild(None, [''])
         page1.element.docFactory = stan('the element')
-        page1.element.jsClass = u'Dummy.ClassName'
+        page1.element.jsClass = 'Dummy.ClassName'
         def cbCheckPageByClientID(result):
             req = FakeRequest()
             ctx = WovenContext()

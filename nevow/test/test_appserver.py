@@ -7,7 +7,7 @@ Tests for L{nevow.appserver}.
 
 from zope.interface import implements
 
-from cStringIO import StringIO
+from io import StringIO
 from shlex import split
 
 from twisted.trial.unittest import TestCase
@@ -111,7 +111,7 @@ class TestSiteAndRequest(testutil.TestCase):
                 return util.succeed("hello")
 
         return self.renderResource(Deferreder(), 'foo').addCallback(
-            lambda result: self.assertEquals(result, "hello"))
+            lambda result: self.assertEqual(result, "hello"))
 
     def test_regularRender(self):
         class Regular(Render):
@@ -119,7 +119,7 @@ class TestSiteAndRequest(testutil.TestCase):
                 return "world"
 
         return self.renderResource(Regular(), 'bar').addCallback(
-            lambda result: self.assertEquals(result, 'world'))
+            lambda result: self.assertEqual(result, 'world'))
 
     def test_returnsResource(self):
         class Res2(Render):
@@ -131,7 +131,7 @@ class TestSiteAndRequest(testutil.TestCase):
                 return Res2()
 
         return self.renderResource(Res1(), 'bar').addCallback(
-            lambda result: self.assertEquals(result, 'world'))
+            lambda result: self.assertEqual(result, 'world'))
 
     def test_connectionLost(self):
         """
@@ -207,7 +207,7 @@ class Logging(testutil.TestCase):
         self.setSiteTime('faketime')
         proto = self.renderResource('/foo')
         logLines = proto.site.logFile.getvalue().splitlines()
-        self.assertEquals(len(logLines), 1)
+        self.assertEqual(len(logLines), 1)
         self.assertEqual(
             split(logLines[0]),
             ['fakeaddress2', '-', '-', 'faketime', 'GET /foo HTTP/1.0', '200', '6',
@@ -231,8 +231,8 @@ class Logging(testutil.TestCase):
         self.site.remember(myLog, inevow.ILogger)
         proto = self.renderResource('/foo')
         logLines = proto.site.logFile.getvalue().splitlines()
-        self.assertEquals(len(logLines), 0)
-        self.assertEquals(myLog.logged,
+        self.assertEqual(len(logLines), 0)
+        self.assertEqual(myLog.logged,
                           [
             ('fakeLog', 'fakeaddress2', 'GET', '/foo', 'HTTP/1.0', 200, 6),
             ])

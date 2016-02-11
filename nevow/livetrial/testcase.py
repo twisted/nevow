@@ -62,7 +62,7 @@ class TestCase(athena.LiveFragment, unittest.TestCase):
 
         Subclasses may want to override this.
         """
-        return u''
+        return ''
 
 
     def head(self):
@@ -150,11 +150,11 @@ class TestLoader(runner.TestLoader):
 
 
     def loadMethod(self, method):
-        raise NotImplementedError, 'livetests must be classes'
+        raise NotImplementedError('livetests must be classes')
 
 
     def loadClass(self, klass):
-        if not (isinstance(klass, type) or isinstance(klass, types.ClassType)):
+        if not (isinstance(klass, type) or isinstance(klass, type)):
             raise TypeError("%r is not a class" % (klass,))
         if not self.isTestCase(klass):
             raise ValueError("%r is not a test case" % (klass,))
@@ -171,7 +171,7 @@ class TestLoader(runner.TestLoader):
 
 
     def isTestCase(self, obj):
-        return isinstance(obj, (type, types.ClassType)) and issubclass(obj, TestCase) and obj is not TestCase
+        return isinstance(obj, type) and issubclass(obj, TestCase) and obj is not TestCase
 
 
     def _findTestClasses(self, module):

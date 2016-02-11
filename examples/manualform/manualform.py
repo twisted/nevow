@@ -17,7 +17,7 @@ class Page(rend.Page):
         # Handle the form post
         if segments[0] == SUBMIT:
             # Just print out the name
-            print '*** name:', ctx.arg('name')
+            print('*** name:', ctx.arg('name'))
             # Redirect away from the POST
             return url.URL.fromContext(ctx), ()
         

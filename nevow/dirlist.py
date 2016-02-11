@@ -5,7 +5,7 @@
 
 # system imports
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import stat
 
 # twisted imports
@@ -49,7 +49,7 @@ class DirectoryLister(rend.Page):
         files = []; dirs = []
 
         for path in directory:
-            url = urllib.quote(path, '/')
+            url = urllib.parse.quote(path, '/')
             if os.path.isdir(os.path.join(self.path, path)):
                 url = url + '/'
                 dirs.append({
@@ -65,7 +65,7 @@ class DirectoryLister(rend.Page):
                     self.contentTypes, self.contentEncodings, self.defaultType)
                 try:
                     filesize = os.stat(os.path.join(self.path, path))[stat.ST_SIZE]
-                except OSError, x:
+                except OSError as x:
                     if x.errno != 2 and x.errno != 13:
                         raise x
                 else:
@@ -80,7 +80,7 @@ class DirectoryLister(rend.Page):
 
     def data_header(self, context, data):
         request = context.locate(inevow.IRequest)
-        return "Directory listing for %s" % urllib.unquote(request.uri)
+        return "Directory listing for %s" % urllib.parse.unquote(request.uri)
 
     def render_tableLink(self, context, data):
         return tags.a(href=data['link'])[data['linktext']]

@@ -30,8 +30,8 @@ class ExposeTestCase(TestCase):
                 return 'baz'
             expose(bar)
 
-        self.assertEquals(list(expose.exposedMethodNames(Foo())), ['bar'])
-        self.assertEquals(expose.get(Foo(), 'bar')(), 'baz')
+        self.assertEqual(list(expose.exposedMethodNames(Foo())), ['bar'])
+        self.assertEqual(expose.get(Foo(), 'bar')(), 'baz')
 
 
     def test_multipleExposeCalls(self):
@@ -51,9 +51,9 @@ class ExposeTestCase(TestCase):
             expose(quux)
 
 
-        self.assertEquals(list(expose.exposedMethodNames(Foo())), ['bar', 'quux'])
-        self.assertEquals(expose.get(Foo(), 'bar')(), 'baz')
-        self.assertEquals(expose.get(Foo(), 'quux')(), 'fooble')
+        self.assertEqual(list(expose.exposedMethodNames(Foo())), ['bar', 'quux'])
+        self.assertEqual(expose.get(Foo(), 'bar')(), 'baz')
+        self.assertEqual(expose.get(Foo(), 'quux')(), 'fooble')
 
 
     def test_multipleExposeArguments(self):
@@ -72,9 +72,9 @@ class ExposeTestCase(TestCase):
 
             expose(bar, quux)
 
-        self.assertEquals(list(expose.exposedMethodNames(Foo())), ['bar', 'quux'])
-        self.assertEquals(expose.get(Foo(), 'bar')(), 'baz')
-        self.assertEquals(expose.get(Foo(), 'quux')(), 'fooble')
+        self.assertEqual(list(expose.exposedMethodNames(Foo())), ['bar', 'quux'])
+        self.assertEqual(expose.get(Foo(), 'bar')(), 'baz')
+        self.assertEqual(expose.get(Foo(), 'quux')(), 'fooble')
 
 
     def test_inheritanceExpose(self):
@@ -92,7 +92,7 @@ class ExposeTestCase(TestCase):
             def bar(self):
                 return 'BAZ'
 
-        self.assertEquals(list(expose.exposedMethodNames(Quux())), [])
+        self.assertEqual(list(expose.exposedMethodNames(Quux())), [])
         self.assertRaises(UnexposedMethodError, expose.get, Quux(), 'bar')
 
 
@@ -112,8 +112,8 @@ class ExposeTestCase(TestCase):
                 return 'smokey'
             expose(bar)
 
-        self.assertEquals(list(expose.exposedMethodNames(Quux())), ['bar'])
-        self.assertEquals(expose.get(Quux(), 'bar')(), 'smokey')
+        self.assertEqual(list(expose.exposedMethodNames(Quux())), ['bar'])
+        self.assertEqual(expose.get(Quux(), 'bar')(), 'smokey')
 
 
     def test_inheritanceExposeMore(self):
@@ -137,12 +137,12 @@ class ExposeTestCase(TestCase):
                 return 'alligator'
             expose(smokey, pogo)
 
-        self.assertEquals(set(expose.exposedMethodNames(Quux())), set(['pogo', 'smokey', 'bar']))
-        self.assertEquals(expose.get(Quux(), 'bar')(), 'baz')
-        self.assertEquals(expose.get(Quux(), 'smokey')(), 'stover')
-        self.assertEquals(expose.get(Quux(), 'pogo')(), 'kelly')
+        self.assertEqual(set(expose.exposedMethodNames(Quux())), set(['pogo', 'smokey', 'bar']))
+        self.assertEqual(expose.get(Quux(), 'bar')(), 'baz')
+        self.assertEqual(expose.get(Quux(), 'smokey')(), 'stover')
+        self.assertEqual(expose.get(Quux(), 'pogo')(), 'kelly')
         self.assertRaises(UnexposedMethodError, expose.get, Quux(), 'albert')
-        self.assertEquals(Quux().albert(), 'alligator')
+        self.assertEqual(Quux().albert(), 'alligator')
 
 
     def test_multipleInheritanceExpose(self):
@@ -167,9 +167,9 @@ class ExposeTestCase(TestCase):
                 pass
             expose(quux)
 
-        self.assertEquals(set(expose.exposedMethodNames(C())), set(['quux', 'foo', 'baz']))
-        self.assertEquals(expose.get(C(), 'foo')(), 'bar')
-        self.assertEquals(expose.get(C(), 'baz')(), 'quux')
+        self.assertEqual(set(expose.exposedMethodNames(C())), set(['quux', 'foo', 'baz']))
+        self.assertEqual(expose.get(C(), 'foo')(), 'bar')
+        self.assertEqual(expose.get(C(), 'baz')(), 'quux')
 
 
     def test_multipleInheritanceExposeWithoutSubclassCall(self):
@@ -192,9 +192,9 @@ class ExposeTestCase(TestCase):
         class C(A, B):
             pass
 
-        self.assertEquals(set(expose.exposedMethodNames(C())), set(['foo', 'baz']))
-        self.assertEquals(expose.get(C(), 'foo')(), 'bar')
-        self.assertEquals(expose.get(C(), 'baz')(), 'quux')
+        self.assertEqual(set(expose.exposedMethodNames(C())), set(['foo', 'baz']))
+        self.assertEqual(expose.get(C(), 'foo')(), 'bar')
+        self.assertEqual(expose.get(C(), 'baz')(), 'quux')
 
 
     def test_unexposedMethodInaccessable(self):
@@ -224,8 +224,8 @@ class ExposeTestCase(TestCase):
                 return 'bar'
             expose(foo)
 
-        self.assertEquals(expose.get(A(), 'foo', None)(), 'bar')
-        self.assertEquals(expose.get(A(), 'bar', None), None)
+        self.assertEqual(expose.get(A(), 'foo', None)(), 'bar')
+        self.assertEqual(expose.get(A(), 'bar', None), None)
 
 
     def test_exposeReturnValue(self):
@@ -268,11 +268,11 @@ class ExposeTestCase(TestCase):
                 return 'quux'
             expose(quux)
 
-        self.assertEquals(
+        self.assertEqual(
             set(expose.exposedMethodNames(Foo())),
             set(['bar', 'quux']))
-        self.assertEquals(expose.get(Foo(), 'bar')(), 'baz')
-        self.assertEquals(expose.get(Foo(), 'quux')(), 'quux')
+        self.assertEqual(expose.get(Foo(), 'bar')(), 'baz')
+        self.assertEqual(expose.get(Foo(), 'quux')(), 'quux')
 
 
 
@@ -282,7 +282,7 @@ class CachedFileTests(TestCase):
         file(self.testFile, 'w').close()
 
         counter = count()
-        self.cache = CachedFile(self.testFile, lambda path: counter.next())
+        self.cache = CachedFile(self.testFile, lambda path: next(counter))
 
     def test_cache(self):
         """
@@ -341,7 +341,7 @@ class CachedFileTests(TestCase):
         def _loadMe(path, crashMe=False):
             if crashMe:
                 raise Exception('It is an exception!')
-            return counter.next()
+            return next(counter)
 
         cf = CachedFile(self.testFile, _loadMe)
 

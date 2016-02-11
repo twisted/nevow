@@ -3,6 +3,7 @@ import os, string, random
 from twisted.internet import task
 
 from nevow import canvas, rend
+import imp
 
 
 DEBUG = False
@@ -84,7 +85,7 @@ class CanvasDemo(canvas.Canvas):
         """Demo of drawing with a CanvasSocket object.
         """
         ## Create a bunch of groups
-        for x in xrange(random.randint(5, 15)):
+        for x in range(random.randint(5, 15)):
             newGroup = canvas.group()
             if random.choice([True, False]):
                 Alphaerizer(newGroup)
@@ -164,7 +165,7 @@ class Reloader(rend.Page):
     canvas = None
     def locateChild(self, ctx, segs):
         if segs == ('',):
-            reload(__import__(__name__))
+            imp.reload(__import__(__name__))
             self.canvas = CanvasDemo(words)
             self.canvas.addSlash = True
             return self.canvas, segs

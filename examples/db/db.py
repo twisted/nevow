@@ -28,7 +28,7 @@ def doQuery(q, *args):
         for dbid, subj in whole:
             if dbid == theId:
                 return [(dbid, subj)]
-        raise KeyError, theId
+        raise KeyError(theId)
     elif q.startswith(setsql):
         newsubj, theId = args
         for index, (dbid, subj) in enumerate(whole):

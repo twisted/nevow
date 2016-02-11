@@ -48,7 +48,7 @@ class MyRealm:
         def logout():
             # This will be a nevow.guard.GuardSession instance
             session = mind.request.getSession()
-            print 'Logging avatar', avatar_id, 'out of session', session
+            print('Logging avatar', avatar_id, 'out of session', session)
         return logout
 
 # Code for examples.tac

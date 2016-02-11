@@ -31,5 +31,5 @@ def initialize():
    s = store.Store('imagination.axiom')
    images = IImages(s, None)
    if not images:
-       Application(store=s, name=u'Imagination').installOn(s)
+       Application(store=s, name='Imagination').installOn(s)
    return s

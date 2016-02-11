@@ -136,7 +136,7 @@ class Root(rend.Page):
         return webform.renderForms()[FORM_LAYOUT]
     
     def doSomething(self, ctx, **kwargs):
-        print '***** doSomething called with:', kwargs
+        print('***** doSomething called with:', kwargs)
     
     docFactory = loaders.stan(
         T.html[

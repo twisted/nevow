@@ -1,7 +1,7 @@
 from zope.interface import implements
 
 from twisted.trial import unittest
-from cStringIO import StringIO
+from io import StringIO
 from nevow import inevow, flat, context, tags, loaders, rend
 from nevow import i18n
 from nevow.testutil import FakeRequest
@@ -11,7 +11,7 @@ def mockTranslator(s, languages=None, domain=None):
     if domain is not None:
         args['domain'] = domain
     return 'MOCK(%s)[%s]' % (', '.join(['%s=%r' % (k,v)
-                                        for k,v in args.items()]),
+                                        for k,v in list(args.items())]),
                              s)
 
 class Misc(unittest.TestCase):
@@ -21,13 +21,13 @@ class Misc(unittest.TestCase):
     def test_simple_flat(self):
         s = i18n._('foo')
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, 'foo')
+        self.assertEqual(r, 'foo')
 
     def test_translator(self):
         _ = i18n.Translator(translator=mockTranslator)
         s = _('foo')
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, 'MOCK()[foo]')
+        self.assertEqual(r, 'MOCK()[foo]')
 
 class Config(unittest.TestCase):
     def test_remember(self):
@@ -41,13 +41,13 @@ class Domain(unittest.TestCase):
                             domain='bar')
         s = _('foo')
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "MOCK(domain='bar')[foo]")
+        self.assertEqual(r, "MOCK(domain='bar')[foo]")
 
     def test_runTime(self):
         _ = i18n.Translator(translator=mockTranslator)
         s = _('foo', domain='baz')
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "MOCK(domain='baz')[foo]")
+        self.assertEqual(r, "MOCK(domain='baz')[foo]")
 
     def test_context(self):
         _ = i18n.Translator(translator=mockTranslator)
@@ -56,7 +56,7 @@ class Domain(unittest.TestCase):
         ctx.remember(cfg)
         s = _('foo')
         r = flat.ten.flatten(s, ctx)
-        self.assertEquals(r, "MOCK(domain='thud')[foo]")
+        self.assertEqual(r, "MOCK(domain='thud')[foo]")
 
     def test_runTime_beats_all(self):
         _ = i18n.Translator(translator=mockTranslator,
@@ -66,7 +66,7 @@ class Domain(unittest.TestCase):
         ctx.remember(cfg)
         s = _('foo', domain='baz')
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "MOCK(domain='baz')[foo]")
+        self.assertEqual(r, "MOCK(domain='baz')[foo]")
 
 
     def test_classInit_beats_context(self):
@@ -77,14 +77,14 @@ class Domain(unittest.TestCase):
         ctx.remember(cfg)
         s = _('foo')
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "MOCK(domain='baz')[foo]")
+        self.assertEqual(r, "MOCK(domain='baz')[foo]")
 
 class Format(unittest.TestCase):
     def test_simple(self):
         _ = i18n.Translator(translator=mockTranslator)
         s = _('foo %s') % 'bar'
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "MOCK()[foo bar]")
+        self.assertEqual(r, "MOCK()[foo bar]")
 
     def test_multiple(self):
         _ = i18n.Translator(translator=mockTranslator)
@@ -92,7 +92,7 @@ class Format(unittest.TestCase):
         s = s % 'bar %s'
         s = s % 'baz'
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "MOCK()[foo bar baz]")
+        self.assertEqual(r, "MOCK()[foo bar baz]")
 
 
 
@@ -101,7 +101,7 @@ class Languages(unittest.TestCase):
         request = FakeRequest(headers={})
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEquals(r, [])
+        self.assertEqual(r, [])
 
     def test_oneLanguage(self):
         request = FakeRequest(headers={
@@ -109,7 +109,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEquals(r, ['fo'])
+        self.assertEqual(r, ['fo'])
 
     def test_multipleLanguages(self):
         request = FakeRequest(headers={
@@ -117,7 +117,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEquals(r, ['fo', 'ba', 'th'])
+        self.assertEqual(r, ['fo', 'ba', 'th'])
 
     def test_quality_simple(self):
         request = FakeRequest(headers={
@@ -125,7 +125,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEquals(r, ['fo'])
+        self.assertEqual(r, ['fo'])
 
     def test_quality_sort(self):
         request = FakeRequest(headers={
@@ -133,7 +133,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEquals(r, ['xy', 'fo', 'ba'])
+        self.assertEqual(r, ['xy', 'fo', 'ba'])
 
     def test_quality_invalid_notQ(self):
         request = FakeRequest(headers={
@@ -141,7 +141,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEquals(r, ['ba', 'fo'])
+        self.assertEqual(r, ['ba', 'fo'])
 
     def test_quality_invalid_notFloat(self):
         request = FakeRequest(headers={
@@ -149,7 +149,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEquals(r, ['ba', 'fo'])
+        self.assertEqual(r, ['ba', 'fo'])
 
 class Render(unittest.TestCase):
     def makePage(self, content):
@@ -172,15 +172,15 @@ class Render(unittest.TestCase):
 
     def test_empty(self):
         return self.makePage(['']).addCallback(
-            lambda r: self.assertEquals(r, 'MOCK()[]'))
+            lambda r: self.assertEqual(r, 'MOCK()[]'))
 
     def test_simple(self):
         return self.makePage(['foo']).addCallback(
-            lambda r: self.assertEquals(r, 'MOCK()[foo]'))
+            lambda r: self.assertEqual(r, 'MOCK()[foo]'))
 
     def test_stan(self):
         return self.makePage([tags.p['You should really avoid tags in i18n input.']]).addCallback(
-            lambda r: self.assertEquals(r, 'MOCK()[<p>You should really avoid tags in i18n input.</p>]'))
+            lambda r: self.assertEqual(r, 'MOCK()[<p>You should really avoid tags in i18n input.</p>]'))
 
 class InterpolateTests:
     def test_mod_string(self):
@@ -188,7 +188,7 @@ class InterpolateTests:
                    'foo bar')
 
     def test_mod_unicode(self):
-        self.check('foo %s', u'bar',
+        self.check('foo %s', 'bar',
                    'foo bar')
 
     def test_mod_int(self):
@@ -255,7 +255,7 @@ class InterpolateMixin:
         self._ = i18n.Translator(translator=mockTranslator)
 
     def mangle(self, s):
-        raise NotImplementedError, 'override mangle somewhere'
+        raise NotImplementedError('override mangle somewhere')
 
     def check(self, fmt, args, *wants):
         got = self.mangle(self._(fmt) % args)
@@ -296,24 +296,24 @@ class UNGettext(unittest.TestCase):
     def test_simple_flat_one(self):
         s = i18n.ungettext('%d foo', '%d foos', 1)
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, '%d foo')
+        self.assertEqual(r, '%d foo')
 
     def test_simple_flat_many(self):
         s = i18n.ungettext('%d foo', '%d foos', 42)
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, '%d foos')
+        self.assertEqual(r, '%d foos')
 
     def test_simple_flat_many(self):
         s = i18n.ungettext('%d foo', '%d foos', 42)
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, '%d foos')
+        self.assertEqual(r, '%d foos')
 
     def test_format_one(self):
         s = i18n.ungettext('%d foo', '%d foos', 1) % 1
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "1 foo")
+        self.assertEqual(r, "1 foo")
 
     def test_format_many(self):
         s = i18n.ungettext('%d foo', '%d foos', 42) % 42
         r = flat.ten.flatten(s, None)
-        self.assertEquals(r, "42 foos")
+        self.assertEqual(r, "42 foos")

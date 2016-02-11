@@ -61,7 +61,7 @@ class FlattenerError(Exception):
         @return: A string representation of C{obj}.
         @rtype: L{str}
         """
-        if isinstance(obj, (str, unicode)):
+        if isinstance(obj, str):
             # It's somewhat unlikely that there will ever be a str in the roots
             # list.  However, something like a MemoryError during a str.replace
             # call (eg, replacing " with &quot;) could possibly cause this.
@@ -175,7 +175,7 @@ def _ctxForRequest(request, slotData, renderFactory, inAttribute):
     ctx.remember(request, IRequest)
     for slotGroup in slotData:
         if slotGroup is not None:
-            for k, v in slotGroup.items():
+            for k, v in list(slotGroup.items()):
                 ctx.fillSlots(k, v)
     if renderFactory is not None:
         ctx.remember(_OldRendererFactory(renderFactory), IRendererFactory)
@@ -224,7 +224,7 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
     @return: An iterator which yields C{str}, L{Deferred}, and more iterators
         of the same type.
     """
-    if isinstance(root, unicode):
+    if isinstance(root, str):
         root = root.encode('utf-8')
     elif isinstance(root, WovenContext):
         # WovenContext is supported via the getFlattener case, but that is a
@@ -269,13 +269,13 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
                         yield element
                 else:
                     yield '<'
-                    if isinstance(root.tagName, unicode):
+                    if isinstance(root.tagName, str):
                         tagName = root.tagName.encode('ascii')
                     else:
                         tagName = str(root.tagName)
                     yield tagName
-                    for k, v in sorted(root.attributes.iteritems()):
-                        if isinstance(k, unicode):
+                    for k, v in sorted(root.attributes.items()):
+                        if isinstance(k, str):
                             k = k.encode('ascii')
                         yield " " + k + "=\""
                         for element in _flatten(request, v, slotData,
@@ -313,7 +313,7 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
         yield root.num
         yield ';'
     elif isinstance(root, xml):
-        if isinstance(root.content, unicode):
+        if isinstance(root.content, str):
             yield root.content.encode('utf-8')
         else:
             yield root.content
@@ -412,10 +412,10 @@ def flatten(request, root, inAttribute, inXML):
             # In Python 2.5, after an exception, a generator's gi_frame is
             # None.
             frame = stack[-1].gi_frame
-            element = stack[-1].next()
+            element = next(stack[-1])
         except StopIteration:
             stack.pop()
-        except Exception, e:
+        except Exception as e:
             stack.pop()
             roots = []
             for generator in stack:
@@ -426,7 +426,8 @@ def flatten(request, root, inAttribute, inXML):
             if type(element) is str:
                 yield element
             elif isinstance(element, Deferred):
-                def cbx((original, toFlatten)):
+                def cbx(xxx_todo_changeme):
+                    (original, toFlatten) = xxx_todo_changeme
                     stack.append(toFlatten)
                     return original
                 yield element.addCallback(cbx)
@@ -459,7 +460,7 @@ def _flattensome(state, write, schedule, result):
     """
     while True:
         try:
-            element = state.next()
+            element = next(state)
         except StopIteration:
             result.callback(None)
         except:

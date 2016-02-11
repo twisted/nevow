@@ -109,7 +109,7 @@ class TestFakeRequest(TestCase):
                 root.child('foo'))
 
         def _checkForUrl(result):
-            return self.assertEquals('http://localhost/foo', result)
+            return self.assertEqual('http://localhost/foo', result)
 
         return renderPage(_URLPage()).addCallback(_checkForUrl)
 
@@ -206,7 +206,7 @@ os.kill(os.getpid(), signal.SIGSEGV)
         result = TestResult()
         self.case.run(result)
         self.assertEqual(len(result.errors), 1)
-        self.assertEquals(
+        self.assertEqual(
             result.errors[0][1],
             'Exception: JavaScript interpreter exited due to signal 11\n')
 

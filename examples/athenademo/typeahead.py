@@ -3,10 +3,10 @@ from nevow import tags as T, rend, loaders, athena, url
 from formless import annotate, webform
 from twisted.python import util
 
-animals = {u'elf' : u'Pointy ears.  Bad attitude regarding trees.',
-           u'chipmunk': u'Cute.  Fuzzy.  Sings horribly.',
-           u'chupacabra': u'It sucks goats.',
-           u'ninja': u'Stealthy and invisible, and technically an animal.',
+animals = {'elf' : 'Pointy ears.  Bad attitude regarding trees.',
+           'chipmunk': 'Cute.  Fuzzy.  Sings horribly.',
+           'chupacabra': 'It sucks goats.',
+           'ninja': 'Stealthy and invisible, and technically an animal.',
            }
 
 
@@ -26,8 +26,8 @@ class TypeAheadFieldFragment(athena.LiveFragment):
                 ])
 
     def loadDescription(self, typed):
-        if typed == u'':
-            return None, u'--'
+        if typed == '':
+            return None, '--'
         matches = []
         for key in animals:
             if key.startswith(typed):
@@ -35,9 +35,9 @@ class TypeAheadFieldFragment(athena.LiveFragment):
         if len(matches) == 1:
             return matches[0], animals[matches[0]]
         elif len(matches) > 1:
-            return None, u"(Multiple found)"
+            return None, "(Multiple found)"
         else:
-            return None, u'--'
+            return None, '--'
     athena.expose(loadDescription)
 
 class DataEntry(rend.Page):
@@ -75,7 +75,7 @@ class DataEntry(rend.Page):
         return url.here
 
     def data_animals(self, ctx, data):
-        return animals.keys()
+        return list(animals.keys())
 
     def child_typeahead(self, ctx):
         return TypeAheadPage(None, None)

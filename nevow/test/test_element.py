@@ -182,7 +182,7 @@ class FlattenIntegrationTests(TestCase):
         """
         f = Element(docFactory=stan(p["Hello, world."]))
         return self._render(f).addCallback(
-            self.assertEquals, "<p>Hello, world.</p>")
+            self.assertEqual, "<p>Hello, world.</p>")
 
 
     def test_docFactoryClassAttribute(self):
@@ -194,7 +194,7 @@ class FlattenIntegrationTests(TestCase):
         class SubElement(Element):
             docFactory = stan(p["Hello, world."])
         return self._render(SubElement()).addCallback(
-            self.assertEquals, "<p>Hello, world.</p>")
+            self.assertEqual, "<p>Hello, world.</p>")
 
 
     def test_simpleXHTMLRendering(self):
@@ -204,7 +204,7 @@ class FlattenIntegrationTests(TestCase):
         """
         f = Element(docFactory=xmlstr("<p>Hello, world.</p>"))
         return self._render(f).addCallback(
-            self.assertEquals, "<p>Hello, world.</p>")
+            self.assertEqual, "<p>Hello, world.</p>")
 
 
     def test_stanDirectiveRendering(self):
@@ -242,7 +242,7 @@ class FlattenIntegrationTests(TestCase):
             docFactory=stan(p(render=directive('renderMethod'))[
                     "Goodbye, world."]))
         return self._render(f).addCallback(
-            self.assertEquals, "Hello, world.")
+            self.assertEqual, "Hello, world.")
 
 
     def test_elementContainingStaticElement(self):
@@ -257,7 +257,7 @@ class FlattenIntegrationTests(TestCase):
         f = RenderfulElement(
             docFactory=stan(p(render=directive('renderMethod'))))
         return self._render(f).addCallback(
-            self.assertEquals, "<p>Hello, world.</p>")
+            self.assertEqual, "<p>Hello, world.</p>")
 
 
     def test_elementContainingDynamicElement(self):
@@ -277,7 +277,7 @@ class FlattenIntegrationTests(TestCase):
         f = OuterElement(
             docFactory=stan(p(render=directive('outerMethod'))))
         return self._render(f).addCallback(
-            self.assertEquals, "<p>Hello, world.</p>")
+            self.assertEqual, "<p>Hello, world.</p>")
 
 
     def test_synchronousFlatten(self):

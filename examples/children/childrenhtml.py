@@ -22,7 +22,7 @@ class ChildPage(rend.Page):
         self.name = name
 
     def child_childOfChild(self, context):
-        print "istanzaaa"
+        print("istanzaaa")
         return ChildOfChildPage(self.name)
 
     def render_name(self, context, data):

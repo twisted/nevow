@@ -172,7 +172,7 @@ class OnePatternTestCase(testutil.TestCase):
         T.pattern = "outer"
         C = context.WovenContext(tag=T)
         new = IQ(C).onePattern('outer')
-        self.assertEquals(new.tagName, 'html')
+        self.assertEqual(new.tagName, 'html')
 
     def test_listNotEnough(self):
         P = flat.precompile(notEnough)
@@ -189,11 +189,11 @@ multiple = tags.html[tags.div(pattern="foo", bar="one"), tags.span(pattern="foo"
 class TestAll(testutil.TestCase):
     def verify(self, them):
         them = list(them)
-        self.assertEquals(len(them), 2)
-        self.assertEquals(them[0].tagName, 'div')
-        self.assertEquals(them[1].tagName, 'span')
-        self.assertEquals(them[0].attributes['bar'], 'one')
-        self.assertEquals(them[1].attributes['bar'], 'two')
+        self.assertEqual(len(them), 2)
+        self.assertEqual(them[0].tagName, 'div')
+        self.assertEqual(them[1].tagName, 'span')
+        self.assertEqual(them[0].attributes['bar'], 'one')
+        self.assertEqual(them[1].attributes['bar'], 'two')
 
     def testTagPatterns(self):
         self.verify(
@@ -218,14 +218,14 @@ class TestGenerator(testutil.TestCase):
         two = it(color="blue")
         three = it(color="green")
         four = it(color="orange")
-        self.assertEquals(one.attributes['color'], 'red')
-        self.assertEquals(one.attributes['bar'], 'one')
-        self.assertEquals(two.attributes['color'], 'blue')
-        self.assertEquals(two.attributes['bar'], 'two')
-        self.assertEquals(three.attributes['color'], 'green')
-        self.assertEquals(three.attributes['bar'], 'one')
-        self.assertEquals(four.attributes['color'], 'orange')
-        self.assertEquals(four.attributes['bar'], 'two')
+        self.assertEqual(one.attributes['color'], 'red')
+        self.assertEqual(one.attributes['bar'], 'one')
+        self.assertEqual(two.attributes['color'], 'blue')
+        self.assertEqual(two.attributes['bar'], 'two')
+        self.assertEqual(three.attributes['color'], 'green')
+        self.assertEqual(three.attributes['bar'], 'one')
+        self.assertEqual(four.attributes['color'], 'orange')
+        self.assertEqual(four.attributes['bar'], 'two')
 
     def testTagGenerators(self):
         self.verify(
@@ -258,14 +258,14 @@ class TestGenerator(testutil.TestCase):
     def testClonableDefault(self):
         orig = tags.p["Hello"]
         gen = IQ(flat.precompile(notEnough)).patternGenerator('foo', orig)
-        new = gen.next()
-        self.assertEquals(new.tagName, 'p')
+        new = next(gen)
+        self.assertEqual(new.tagName, 'p')
         self.assertNotIdentical(orig, new)
 
     def testNonClonableDefault(self):
         gen = IQ(flat.precompile(notEnough)).patternGenerator('foo', 'bar')
-        new = gen.next()
-        self.assertEquals(new, 'bar')
+        new = next(gen)
+        self.assertEqual(new, 'bar')
 
     def testXmlMissing(self):
         self.assertRaises(stan.NodeNotFound, IQ(stan.xml('<html>hello</html>')).patternGenerator, 'foo')
@@ -277,5 +277,5 @@ class TestGenerator(testutil.TestCase):
         the tag has a matching pattern special.
         """
         patterns = IQ([tags.div(pattern="foo", bar="baz")]).patternGenerator("foo")
-        for i in xrange(3):
+        for i in range(3):
             self.assertEqual(patterns.next().attributes['bar'], "baz")

@@ -18,7 +18,7 @@ Mostly, you'll use the renderers:
 """
 
 from time import time as now
-from cStringIO import StringIO
+from io import StringIO
 import random
 import warnings
 
@@ -33,6 +33,7 @@ from nevow.util import log
 
 import formless
 from formless import iformless, annotate
+import collections
 
 
 def _getPreprocessors(inst):
@@ -210,7 +211,7 @@ class ConfigurableMixin(object):
         described in the ConfigurableMixin class docstring.
         """
         def _get_binding(binding):
-            if callable(binding):
+            if isinstance(binding, collections.Callable):
                 binding = util.maybeDeferred(binding, ctx)
             return binding
 
@@ -298,7 +299,7 @@ class ConfigurableFactory:
         ...
         ...     docFactory = stan(render_forms).
         """
-        if filter(lambda x: issubclass(x, annotate.TypedInterface), providedBy(self)):
+        if [x for x in providedBy(self) if issubclass(x, annotate.TypedInterface)]:
             warnings.warn("[0.5] Subclassing TypedInterface to declare annotations is deprecated. Please provide bind_* methods on your Page or Fragment subclass instead.", DeprecationWarning)
             from formless import configurable
             return configurable.TypedInterfaceConfigurable(self)
@@ -329,7 +330,7 @@ def defaultsFactory(ctx):
     defaults = webform.FormDefaults()
     if co is not None:
         e = iformless.IFormErrors(co, {})
-        for k, v in e.items():
+        for k, v in list(e.items()):
             defaults.getAllDefaults(k).update(v.partialForm)
     return defaults
 
@@ -341,7 +342,7 @@ def errorsFactory(ctx):
     errs = webform.FormErrors()
     if co is not None:
         e = iformless.IFormErrors(co, {})
-        for k, v in e.items():
+        for k, v in list(e.items()):
             errs.updateErrors(k, v.errors)
             errs.setError(k, v.formErrorMessage)
     return errs
@@ -408,7 +409,7 @@ class Fragment(DataFactory, RenderFactory, MacroFactory, ConfigurableMixin):
             finally:
                 self.docFactory.pattern = old
                 self.docFactory.precompiledDoc = None
-        except TypeError, e:
+        except TypeError as e:
             # Avert your eyes now! I don't want to catch anything but IQ
             # adaption exceptions here but all I get is TypeError. This whole
             # section of code is a complete hack anyway so one more won't
@@ -546,7 +547,7 @@ class Page(Fragment, ConfigurableFactory, ChildLookupMixin):
 
         def finishRequest():
             carryover = request.args.get('_nevow_carryover_', [None])[0]
-            if carryover is not None and _CARRYOVER.has_key(carryover):
+            if carryover is not None and carryover in _CARRYOVER:
                 del _CARRYOVER[carryover]
             if self.afterRender is not None:
                 return util.maybeDeferred(self.afterRender,ctx)
@@ -668,7 +669,7 @@ class Page(Fragment, ConfigurableFactory, ChildLookupMixin):
                 magicCookie = '%s%s%s' % (now(),request.getClientIP(),random.random())
                 refpath = refpath.replace('_nevow_carryover_', magicCookie)
                 _CARRYOVER[magicCookie] = C = tpc.Componentized()
-                for k, v in aspects.iteritems():
+                for k, v in aspects.items():
                     C.setComponent(k, v)
 
             destination = flat.flatten(refpath, ctx)
@@ -768,7 +769,7 @@ def mapping(context, data):
        <td><nevow:slot name="email"/></td>
      </tr>
     """
-    for k, v in data.items():
+    for k, v in list(data.items()):
         context.fillSlots(k, v)
     return context.tag
 
@@ -799,7 +800,7 @@ class FourOhFour:
         # Look for an application-remembered handler
         try:
             notFoundHandler = ctx.locate(inevow.ICanHandleNotFound)
-        except KeyError, e:
+        except KeyError as e:
             return self.notFound
         # Call the application-remembered handler but if there are any errors
         # then log it and fallback to the standard message.
@@ -809,7 +810,7 @@ class FourOhFour:
             log.err()
             return self.notFound
 
-    def __nonzero__(self):
+    def __bool__(self):
         return False
 
 

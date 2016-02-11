@@ -52,7 +52,7 @@ class LoggedIn(rend.Page):
     def logout(self):
         ## self.original is the page's main data -- the object that was passed in to the constructor, and
         ## the object that is initially passed as the 'data' parameter to renderers
-        print "%s logged out!" % self.original
+        print("%s logged out!" % self.original)
 
 
 ### Authentication

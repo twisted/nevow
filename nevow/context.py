@@ -2,7 +2,7 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-from __future__ import generators
+
 
 import warnings
 
@@ -109,7 +109,7 @@ class WebContext(object):
 
             contextParent = currentContext.parent
             if contextParent is None:
-                raise KeyError, "Interface %s was not remembered." % key
+                raise KeyError("Interface %s was not remembered." % key)
 
             currentContext = contextParent
 
@@ -151,7 +151,7 @@ class WebContext(object):
                 if data is not Unset:
                     return data
             if currentContext.parent is None:
-                raise KeyError, "Slot named '%s' was not filled." % name
+                raise KeyError("Slot named '%s' was not filled." % name)
             currentContext = currentContext.parent
 
     def clone(self, deep=True, cloneTags=True):

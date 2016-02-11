@@ -21,7 +21,7 @@ faketag = tags.html()
 def exceptblock(f, handler, exception, *a, **kw):
     try:
         result = f(*a, **kw)
-    except exception, e:
+    except exception as e:
         return handler(e)
     if isinstance(result, Deferred):
         def _(fail):
@@ -91,7 +91,7 @@ class ProcessMethodBinding(components.Adapter):
         typedValue = self.original.typedValue
         results = {}
         failures = {}
-        if data.has_key('----'):
+        if '----' in data:
             ## ---- is the "direct object", the one argument you can specify using the command line without saying what the argument name is
             data[typedValue.arguments[0].name] = data['----']
             del data['----']
@@ -101,7 +101,7 @@ class ProcessMethodBinding(components.Adapter):
                 context = WovenContext(context, faketag)
                 context.remember(binding, iformless.IBinding)
                 results[name] = iformless.IInputProcessor(binding.typedValue).process(context, boundTo, data.get(name, ['']))
-            except formless.InputError, e:
+            except formless.InputError as e:
                 results[name] = data.get(name, [''])[0]
                 failures[name] = e.reason
 
@@ -130,14 +130,14 @@ class ProcessPropertyBinding(components.Adapter):
         result = {}
         try:
             result[binding.name] = iformless.IInputProcessor(binding.typedValue).process(context, boundTo, data.get(binding.name, ['']))
-        except formless.InputError, e:
+        except formless.InputError as e:
             result[binding.name] = data.get(binding.name, [''])
             raise formless.ValidateError({binding.name: e.reason}, e.reason, result)
 
         if autoConfigure:
             try:
                 return self.original.configure(boundTo, result)
-            except formless.InputError, e:
+            except formless.InputError as e:
                 result[binding.name] = data.get(binding.name, [''])
                 raise formless.ValidateError({binding.name: e.reason}, e.reason, result)
         return result
@@ -150,7 +150,7 @@ class ProcessTyped(components.Adapter):
         """
         typed = self.original
         val = data[0]
-        if typed.unicode:
+        if typed.str:
             try:
                 val = val.decode(getPOSTCharset(context), 'replace')
             except LookupError:
@@ -164,7 +164,7 @@ class ProcessTyped(components.Adapter):
                 return typed.null
         try:
             return typed.coerce(val, boundTo)
-        except TypeError, e:
+        except TypeError as e:
             warnings.warn('Typed.coerce takes two values now, the value to coerce and the configurable in whose context the coerce is taking place. %s %s' % (typed.__class__, typed))
             return typed.coerce(val)
 
@@ -190,7 +190,7 @@ class ProcessPassword(components.Adapter):
             else:
                 return typed.null
         val = data[0]
-        if typed.unicode:
+        if typed.str:
             try:
                 val = val.decode(getPOSTCharset(context), 'replace')
             except LookupError:

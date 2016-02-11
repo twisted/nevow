@@ -28,8 +28,8 @@ class Calculator(object):
         entered into the calculator.  For example, if the buttons '3', '5', and
         '+' have been pressed (in that order), C{expression} will be C{'35+'}.
     """
-    defaultExpression = u'0'
-    errorExpression = u'E'
+    defaultExpression = '0'
+    errorExpression = 'E'
 
     def __init__(self):
         self.expression = self.defaultExpression
@@ -57,7 +57,7 @@ class Calculator(object):
         # Evaluate the expression
         if symbol == '=':
             try:
-                self.expression = unicode(eval(self.expression))
+                self.expression = str(eval(self.expression))
             except ZeroDivisionError:
                 self.expression = self.errorExpression
             return self.expression
@@ -86,7 +86,7 @@ class CalculatorElement(LiveElement):
     """
     docFactory = xmlfile(sibling('calculator.html').path, 'CalculatorPattern')
 
-    jsClass = u"CalculatorDemo.Calculator"
+    jsClass = "CalculatorDemo.Calculator"
 
     validSymbols = '0123456789/*-=+.C'
 
@@ -123,7 +123,7 @@ class CalculatorParentPage(LivePage):
         # Update the mapping of known JavaScript modules so that the
         # client-side code for this example can be found and served to the
         # browser.
-        self.jsModules.mapping[u'CalculatorDemo'] = sibling(
+        self.jsModules.mapping['CalculatorDemo'] = sibling(
             'calculator.js').path
 
 

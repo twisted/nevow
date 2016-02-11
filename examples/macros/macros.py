@@ -12,7 +12,7 @@ class Base(rend.Page):
     def render_advice(self, ctx, data):
         return ctx.tag[
             t.p["This counter has been called:"],
-            t.p(style="text-align: center")["===>",t.strong[inside_counter.next()+1],"<==="]
+            t.p(style="text-align: center")["===>",t.strong[next(inside_counter)+1],"<==="]
         ]
 
 class Root(Base):
@@ -21,7 +21,7 @@ class Root(Base):
     def macro_content(self, ctx):
         return t.invisible[
                    t.p["This macro has been called ",
-                       counter1.next()+1,
+                       next(counter1)+1,
                        " time(s)"],
                    loaders.xmlfile(util.sibpath(__file__,'root_macro.html'), ignoreDocType=True).load()
                ]
@@ -35,7 +35,7 @@ class Child(Base):
     def macro_content(self, ctx):
         return t.invisible[
                    t.p["This macro has been called ",
-                       counter2.next()+1,
+                       next(counter2)+1,
                        " time(s)"],
                    loaders.xmlfile(util.sibpath(__file__,'child_macro.html'), ignoreDocType=True).load()
             ]

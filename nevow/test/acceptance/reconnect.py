@@ -26,7 +26,7 @@ class ReconnectableElementRenderingLivePage(OriginalPage):
     that API.  We should not attempt to keep this working as-is; if you do find
     it in a broken state, just update it to use newer, better documented APIs.
     """
-    jsClass = u'Nevow.Test.ReconnectAcceptanceTest.ReconnectingPage'
+    jsClass = 'Nevow.Test.ReconnectAcceptanceTest.ReconnectingPage'
     def __init__(self, *a, **k):
         """
         Make sure our interface allows the particular method we want to expose.
@@ -52,7 +52,7 @@ _widget_plugin.ElementRenderingLivePage = ReconnectableElementRenderingLivePage
 
 import itertools
 
-counter = itertools.count().next
+counter = itertools.count().__next__
 
 class ReconnectableElement(LiveElement):
     """

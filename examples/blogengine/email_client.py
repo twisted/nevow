@@ -1,8 +1,8 @@
 import sys, smtplib
 
-fromaddr = raw_input("From: ")
-toaddrs  = raw_input("To: ").split(',')
-print "Enter message, end with ^D:"
+fromaddr = input("From: ")
+toaddrs  = input("To: ").split(',')
+print("Enter message, end with ^D:")
 msg = ''
 while 1:
     line = sys.stdin.readline()

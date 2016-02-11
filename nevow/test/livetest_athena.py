@@ -23,15 +23,15 @@ class WidgetInitializerArguments(testcase.TestCase):
     getInitialArguments are properly passed to the widget class's __init__
     method.
     """
-    jsClass = u'Nevow.Athena.Tests.WidgetInitializerArguments'
+    jsClass = 'Nevow.Athena.Tests.WidgetInitializerArguments'
 
-    _args = [1, u"two", [3.0 for four in range(5)]]
+    _args = [1, "two", [3.0 for four in range(5)]]
 
     def getInitialArguments(self):
         return self._args
 
     def test(self, args):
-        self.assertEquals(self._args, args)
+        self.assertEqual(self._args, args)
     expose(test)
 
 
@@ -40,7 +40,7 @@ class CallRemoteTestCase(testcase.TestCase):
     """
     Test the callRemote method of Widgets.
     """
-    jsClass = u'Nevow.Athena.Tests.CallRemoteTestCase'
+    jsClass = 'Nevow.Athena.Tests.CallRemoteTestCase'
 
 
 
@@ -50,18 +50,18 @@ class ClientToServerArgumentSerialization(testcase.TestCase):
     received.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ClientToServerArgumentSerialization'
+    jsClass = 'Nevow.Athena.Tests.ClientToServerArgumentSerialization'
 
     def test(self, i, f, s, l, d):
-        self.assertEquals(i, 1)
-        self.assertEquals(f, 1.5)
-        self.failUnless(isinstance(s, unicode))
-        self.assertEquals(s, u'Hello world')
-        self.failUnless(isinstance(l[2], unicode))
-        self.assertEquals(l, [1, 1.5, u'Hello world'])
-        self.assertEquals(d, {u'hello world': u'object value'})
-        self.failUnless(isinstance(d.keys()[0], unicode))
-        self.failUnless(isinstance(d.values()[0], unicode))
+        self.assertEqual(i, 1)
+        self.assertEqual(f, 1.5)
+        self.assertTrue(isinstance(s, str))
+        self.assertEqual(s, 'Hello world')
+        self.assertTrue(isinstance(l[2], str))
+        self.assertEqual(l, [1, 1.5, 'Hello world'])
+        self.assertEqual(d, {'hello world': 'object value'})
+        self.assertTrue(isinstance(list(d.keys())[0], str))
+        self.assertTrue(isinstance(list(d.values())[0], str))
     expose(test)
 
 
@@ -71,7 +71,7 @@ class ClientToServerResultSerialization(testcase.TestCase):
     received by the client.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ClientToServerResultSerialization'
+    jsClass = 'Nevow.Athena.Tests.ClientToServerResultSerialization'
 
     def test(self, i, f, s, l, d):
         return (i, f, s, l, d)
@@ -85,13 +85,13 @@ class JSONRoundtrip(testcase.TestCase):
     through the real client implementation, too.
     """
 
-    jsClass = u'Nevow.Athena.Tests.JSONRoundtrip'
+    jsClass = 'Nevow.Athena.Tests.JSONRoundtrip'
 
     def test(self):
         cases = test_json.TEST_OBJECTS + test_json.TEST_STRINGLIKE_OBJECTS
         def _verifyRoundtrip(_cases):
             for v1, v2 in zip(cases, _cases):
-                self.assertEquals(v1, v2)
+                self.assertEqual(v1, v2)
         return self.callRemote('identity', cases).addCallback(_verifyRoundtrip)
     expose(test)
 
@@ -103,7 +103,7 @@ class ExceptionFromServer(testcase.TestCase):
     properly receives an error.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ExceptionFromServer'
+    jsClass = 'Nevow.Athena.Tests.ExceptionFromServer'
 
     def testSync(self, s):
         raise Exception(s)
@@ -117,7 +117,7 @@ class AsyncExceptionFromServer(testcase.TestCase):
     the client properly receives an error.
     """
 
-    jsClass = u'Nevow.Athena.Tests.AsyncExceptionFromServer'
+    jsClass = 'Nevow.Athena.Tests.AsyncExceptionFromServer'
 
     def testAsync(self, s):
         return defer.fail(Exception(s))
@@ -131,7 +131,7 @@ class ExceptionFromClient(testcase.TestCase):
     properly receives an error.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ExceptionFromClient'
+    jsClass = 'Nevow.Athena.Tests.ExceptionFromClient'
 
     def loopbackError(self):
         return self.callRemote('generateError').addErrback(self.checkError)
@@ -140,7 +140,7 @@ class ExceptionFromClient(testcase.TestCase):
 
     def checkError(self, f):
         f.trap(athena.JSException)
-        if u'This is a test exception' in f.value.args[0]:
+        if 'This is a test exception' in f.value.args[0]:
             return True
         else:
             raise f
@@ -153,7 +153,7 @@ class AsyncExceptionFromClient(testcase.TestCase):
     the server properly receives an error.
     """
 
-    jsClass = u'Nevow.Athena.Tests.AsyncExceptionFromClient'
+    jsClass = 'Nevow.Athena.Tests.AsyncExceptionFromClient'
 
     def loopbackError(self):
         return self.callRemote('generateError').addErrback(self.checkError)
@@ -162,7 +162,7 @@ class AsyncExceptionFromClient(testcase.TestCase):
 
     def checkError(self, f):
         f.trap(athena.JSException)
-        if u'This is a deferred test exception' in f.value.args[0]:
+        if 'This is a deferred test exception' in f.value.args[0]:
             return True
         else:
             raise f
@@ -174,10 +174,10 @@ class CustomTransportable(object):
     """
     implements(IAthenaTransportable)
 
-    jsClass = u'Nevow.Athena.Tests.CustomTransportable'
+    jsClass = 'Nevow.Athena.Tests.CustomTransportable'
 
     def getInitialArguments(self):
-        return (u"Hello", 5, u"world")
+        return ("Hello", 5, "world")
 
 
 
@@ -187,11 +187,11 @@ class ServerToClientArgumentSerialization(testcase.TestCase):
     correct arguments.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ServerToClientArgumentSerialization'
+    jsClass = 'Nevow.Athena.Tests.ServerToClientArgumentSerialization'
 
     def test(self):
         return self.callRemote(
-            'reverse', 1, 1.5, u'hello', {u'world': u'value'},
+            'reverse', 1, 1.5, 'hello', {'world': 'value'},
             CustomTransportable())
     expose(test)
 
@@ -203,14 +203,14 @@ class ServerToClientResultSerialization(testcase.TestCase):
     server is correct.
     """
 
-    jsClass = u'Nevow.Athena.Tests.ServerToClientResultSerialization'
+    jsClass = 'Nevow.Athena.Tests.ServerToClientResultSerialization'
 
     def test(self):
         def cbResults(result):
-            self.assertEquals(result[0], 1)
-            self.assertEquals(result[1], 1.5)
-            self.assertEquals(result[2], u'hello')
-            self.assertEquals(result[3], {u'world': u'value'})
+            self.assertEqual(result[0], 1)
+            self.assertEqual(result[1], 1.5)
+            self.assertEqual(result[2], 'hello')
+            self.assertEqual(result[3], {'world': 'value'})
         d = self.callRemote('reverse')
         d.addCallback(cbResults)
         return d
@@ -219,7 +219,7 @@ class ServerToClientResultSerialization(testcase.TestCase):
 
 
 class WidgetInATable(testcase.TestCase):
-    jsClass = u"Nevow.Athena.Tests.WidgetInATable"
+    jsClass = "Nevow.Athena.Tests.WidgetInATable"
 
     def getTestContainer(self):
         return tags.table[tags.tbody[tags.tr[tags.td[tags.slot('widget')]]]]
@@ -227,7 +227,7 @@ class WidgetInATable(testcase.TestCase):
 
 
 class WidgetIsATable(testcase.TestCase):
-    jsClass = u"Nevow.Athena.Tests.WidgetIsATable"
+    jsClass = "Nevow.Athena.Tests.WidgetIsATable"
 
     def getWidgetTag(self):
         """
@@ -246,7 +246,7 @@ class WidgetIsATable(testcase.TestCase):
 
 
 class ParentChildRelationshipTest(testcase.TestCase):
-    jsClass = u"Nevow.Athena.Tests.ChildParentRelationshipTest"
+    jsClass = "Nevow.Athena.Tests.ChildParentRelationshipTest"
 
     def getWidgetDocument(self):
         """
@@ -260,7 +260,7 @@ class ParentChildRelationshipTest(testcase.TestCase):
         Put some children into this widget.  The client portion of this test
         will assert things about their presence in C{Widget.childWidgets}.
         """
-        for i in xrange(3):
+        for i in range(3):
             yield ChildFragment(self.page, i)
 
 
@@ -271,7 +271,7 @@ class ParentChildRelationshipTest(testcase.TestCase):
 
 
 class ChildFragment(athena.LiveFragment):
-    jsClass = u'Nevow.Athena.Tests.ChildParentRelationshipTest'
+    jsClass = 'Nevow.Athena.Tests.ChildParentRelationshipTest'
 
     docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment'))[
         tags.div(render=tags.directive('childrenWidgets')),
@@ -285,7 +285,7 @@ class ChildFragment(athena.LiveFragment):
 
     def render_childrenWidgets(self, ctx, data):
         # yield tags.div['There are ', self.childCount, 'children']
-        for i in xrange(self.childCount):
+        for i in range(self.childCount):
             yield ChildFragment(self.page, self.childCount - 1)
 
 
@@ -296,7 +296,7 @@ class ChildFragment(athena.LiveFragment):
 
 
 class AutomaticClass(testcase.TestCase):
-    jsClass = u'Nevow.Athena.Tests.AutomaticClass'
+    jsClass = 'Nevow.Athena.Tests.AutomaticClass'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveTest')))
 
 
@@ -313,7 +313,7 @@ class ButtonElement(Element):
 
 
 class AthenaHandler(testcase.TestCase):
-    jsClass = u'Nevow.Athena.Tests.AthenaHandler'
+    jsClass = 'Nevow.Athena.Tests.AthenaHandler'
 
     def getWidgetDocument(self):
         """
@@ -372,14 +372,14 @@ class NodeInsertedHelper(LiveElement):
     Simple widget to be dynamically instatiated for testing nodeInserted
     behaviour on client side.
     """
-    jsClass = u'Nevow.Athena.Tests.NodeInsertedHelper'
+    jsClass = 'Nevow.Athena.Tests.NodeInsertedHelper'
     docFactory = loaders.stan(
         tags.div(render=tags.directive('liveElement')))
 
 
 
 class NodeLocation(testcase.TestCase):
-    jsClass = u'Nevow.Athena.Tests.NodeLocation'
+    jsClass = 'Nevow.Athena.Tests.NodeLocation'
 
     def getWidgetDocument(self):
         """
@@ -398,13 +398,13 @@ class WidgetRequiresImport(LiveElement):
     Widget which has no behavior, but which has a JavaScript class which will
     require a dynamic import.
     """
-    jsClass = u'Nevow.Athena.Tests.Resources.ImportWidget'
+    jsClass = 'Nevow.Athena.Tests.Resources.ImportWidget'
     docFactory = loaders.stan(tags.div(render=tags.directive('liveElement')))
 
 
 
 class DynamicWidgetInstantiation(testcase.TestCase):
-    jsClass = u'Nevow.Athena.Tests.DynamicWidgetInstantiation'
+    jsClass = 'Nevow.Athena.Tests.DynamicWidgetInstantiation'
 
 
     def makeDynamicWidget(self):
@@ -413,10 +413,10 @@ class DynamicWidgetInstantiation(testcase.TestCase):
         """
         class DynamicFragment(athena.LiveFragment):
             docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment')))
-            jsClass = u'Nevow.Athena.Tests.DynamicWidgetClass'
+            jsClass = 'Nevow.Athena.Tests.DynamicWidgetClass'
 
             def someMethod(self):
-                return u'foo'
+                return 'foo'
             expose(someMethod)
         return DynamicFragment()
 
@@ -440,10 +440,10 @@ class DynamicWidgetInstantiation(testcase.TestCase):
         """
         class DynamicFragment(athena.LiveFragment):
             docFactory = loaders.stan(tags.div(render=tags.directive('liveFragment')))
-            jsClass = u'Nevow.Athena.Tests.DynamicWidgetClass'
+            jsClass = 'Nevow.Athena.Tests.DynamicWidgetClass'
 
             def someMethod(self):
-                return u'foo'
+                return 'foo'
             expose(someMethod)
 
         f = DynamicFragment()
@@ -466,8 +466,8 @@ class DynamicWidgetInstantiation(testcase.TestCase):
         widgetInfo = f._structured()
 
         return {
-            u'id': widgetInfo[u'id'],
-            u'klass': widgetInfo[u'class']}
+            'id': widgetInfo['id'],
+            'klass': widgetInfo['class']}
     expose(getDynamicWidgetInfo)
 
 
@@ -517,7 +517,7 @@ class DynamicWidgetInstantiation(testcase.TestCase):
             docFactory = loaders.stan(
                 tags.div(render=tags.directive('liveFragment'))[
                     tags.div(render=tags.directive('child'))])
-            jsClass = u'Nevow.Athena.Tests.DynamicWidgetClass'
+            jsClass = 'Nevow.Athena.Tests.DynamicWidgetClass'
 
             def render_child(self, ctx):
                 childFragment.setFragmentParent(self)
@@ -547,12 +547,12 @@ class DynamicWidgetInstantiation(testcase.TestCase):
 
 
 class GettingWidgetlessNodeRaisesException(testcase.TestCase):
-    jsClass = u'Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException'
+    jsClass = 'Nevow.Athena.Tests.GettingWidgetlessNodeRaisesException'
 
 
 
 class RemoteMethodErrorShowsDialog(testcase.TestCase):
-    jsClass = u'Nevow.Athena.Tests.RemoteMethodErrorShowsDialog'
+    jsClass = 'Nevow.Athena.Tests.RemoteMethodErrorShowsDialog'
 
     def raiseValueError(self):
         raise ValueError('hi')
@@ -564,7 +564,7 @@ class DelayedCallTests(testcase.TestCase):
     """
     Tests for the behavior of scheduling timed calls in the client.
     """
-    jsClass = u'Nevow.Athena.Tests.DelayedCallTests'
+    jsClass = 'Nevow.Athena.Tests.DelayedCallTests'
 
 
 
@@ -573,7 +573,7 @@ class DynamicStylesheetFetching(testcase.TestCase, CSSModuleTestMixin):
     Tests for stylesheet fetching when dynamic widget instantiation is
     involved.
     """
-    jsClass = u'Nevow.Athena.Tests.DynamicStylesheetFetching'
+    jsClass = 'Nevow.Athena.Tests.DynamicStylesheetFetching'
     # lala we want to use TestCase.mktemp
     _testMethodName = 'DynamicStylesheetFetching'
 
@@ -584,14 +584,14 @@ class DynamicStylesheetFetching(testcase.TestCase, CSSModuleTestMixin):
         self.page.cssModules = self._makeCSSRegistry()
 
         element = athena.LiveElement()
-        element.cssModule = u'TestCSSModuleDependencies.Dependor'
+        element.cssModule = 'TestCSSModuleDependencies.Dependor'
         element.setFragmentParent(self)
         element.docFactory = loaders.stan(
             tags.div(render=tags.directive('liveElement')))
 
         return (
             element,
-            [unicode(self.page.getCSSModuleURL(n))
+            [str(self.page.getCSSModuleURL(n))
                 for n in ('TestCSSModuleDependencies',
                           'TestCSSModuleDependencies.Dependee',
                           'TestCSSModuleDependencies.Dependor')])

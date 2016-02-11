@@ -26,7 +26,7 @@ chat = ChatRoom().makeChatter
 class ChatterElement(LiveElement):
 
     docFactory = xmlfile(sibpath(__file__, 'template.html'))
-    jsClass = u'ChatThing.ChatterWidget'
+    jsClass = 'ChatThing.ChatterWidget'
 
     def __init__(self, room):
         self.room = room

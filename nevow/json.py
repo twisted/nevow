@@ -43,12 +43,12 @@ class StringTokenizer(object):
         SLASH = "\\"
 
         IT = iter(s)
-        bits = [IT.next()]
+        bits = [next(IT)]
         for char in IT:
             bits.append(char)
             if char == SLASH:
                 try:
-                    bits.append(IT.next())
+                    bits.append(next(IT))
                 except StopIteration:
                     return None
             if char == '"':
@@ -82,9 +82,9 @@ class WhitespaceToken(object):
 
 def jsonlong(s):
     if 'e' in s:
-        m, e = map(long, s.split('e', 1))
+        m, e = list(map(int, s.split('e', 1)))
     else:
-        m, e = long(s), 0
+        m, e = int(s), 0
     return m * 10 ** e
 
 # list of tuples, the first element is a compiled regular expression the second
@@ -115,7 +115,7 @@ def tokenise(s):
                 tok, tokstr = action(m.group(0))
                 break
         else:
-            raise ValueError, "Invalid Input, %r" % (s[:10],)
+            raise ValueError("Invalid Input, %r" % (s[:10],))
 
         if tok is not WhitespaceToken:
             tokens.append(tok)
@@ -126,7 +126,7 @@ def tokenise(s):
 def accept(want, tokens):
     t = tokens.pop(0)
     if want != t:
-        raise ParseError, "Unexpected %r, %s expected" % (t , want)
+        raise ParseError("Unexpected %r, %s expected" % (t , want))
 
 def parseValue(tokens):
     if tokens[0] == '{':
@@ -141,28 +141,28 @@ def parseValue(tokens):
     if type(tokens[0]) == StringToken:
         return parseString(tokens)
 
-    if type(tokens[0]) in (int, float, long):
+    if type(tokens[0]) in (int, float, int):
         return tokens.pop(0), tokens
 
-    raise ParseError, "Unexpected %r" % tokens[0]
+    raise ParseError("Unexpected %r" % tokens[0])
 
 
 _stringExpr = re.compile(
-    ur'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' u'\n'
-    ur'|' u'\n'
-    ur'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' u'\n'
-    ur'|' u'\n'
-    ur'(?P<control>\\[fbntr\\"]) # Match escaped control characters' u'\n',
+    r'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' '\n'
+    r'|' '\n'
+    r'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' '\n'
+    r'|' '\n'
+    r'(?P<control>\\[fbntr\\"]) # Match escaped control characters' '\n',
     re.VERBOSE)
 
 _controlMap = {
-    u'\\f': u'\f',
-    u'\\b': u'\b',
-    u'\\n': u'\n',
-    u'\\t': u'\t',
-    u'\\r': u'\r',
-    u'\\"': u'"',
-    u'\\\\': u'\\',
+    '\\f': '\f',
+    '\\b': '\b',
+    '\\n': '\n',
+    '\\t': '\t',
+    '\\r': '\r',
+    '\\"': '"',
+    '\\\\': '\\',
     }
 
 def _stringSub(m):
@@ -170,14 +170,14 @@ def _stringSub(m):
     if u is None:
         u = m.group('unicode2')
     if u is not None:
-        return unichr(int(u, 16))
+        return chr(int(u, 16))
     c = m.group('control')
     return _controlMap[c]
 
 
 def parseString(tokens):
     if type(tokens[0]) is not StringToken:
-        raise ParseError, "Unexpected %r" % tokens[0]
+        raise ParseError("Unexpected %r" % tokens[0])
     s = _stringExpr.sub(_stringSub, tokens.pop(0)[1:-1].decode('utf-8'))
     return s, tokens
 
@@ -229,27 +229,27 @@ def parse(s):
     tokens = tokenise(s)
     value, tokens = parseValue(tokens)
     if tokens:
-        raise ParseError, "Unexpected %r" % tokens[0]
+        raise ParseError("Unexpected %r" % tokens[0])
     return value
 
 class CycleError(Exception):
     pass
 
-_translation = dict([(o, u'\\x%02x' % (o,)) for o in range(0x20)])
+_translation = dict([(o, '\\x%02x' % (o,)) for o in range(0x20)])
 
 # Characters which cannot appear as literals in the output
 _translation.update({
-    ord(u'\\'): u'\\\\',
-    ord(u'"'): ur'\"',
-    ord(u'\f'): ur'\f',
-    ord(u'\b'): ur'\b',
-    ord(u'\n'): ur'\n',
-    ord(u'\t'): ur'\t',
-    ord(u'\r'): ur'\r',
+    ord('\\'): '\\\\',
+    ord('"'): r'\"',
+    ord('\f'): r'\f',
+    ord('\b'): r'\b',
+    ord('\n'): r'\n',
+    ord('\t'): r'\t',
+    ord('\r'): r'\r',
     # The next two are sneaky, see
     # http://timelessrepo.com/json-isnt-a-javascript-subset
-    ord(u'\u2028'): u'\\u2028',
-    ord(u'\u2029'): u'\\u2029',
+    ord('\u2028'): '\\u2028',
+    ord('\u2029'): '\\u2029',
     })
 
 def stringEncode(s):
@@ -259,18 +259,18 @@ def stringEncode(s):
 def _serialize(obj, w, seen):
     from nevow import athena
 
-    if isinstance(obj, types.BooleanType):
+    if isinstance(obj, bool):
         if obj:
             w('true')
         else:
             w('false')
-    elif isinstance(obj, (int, long, float)):
+    elif isinstance(obj, (int, float)):
         w(str(obj))
-    elif isinstance(obj, unicode):
+    elif isinstance(obj, str):
         w('"')
         w(stringEncode(obj))
         w('"')
-    elif isinstance(obj, types.NoneType):
+    elif isinstance(obj, type(None)):
         w('null')
     elif id(obj) in seen:
         raise CycleError(type(obj))
@@ -283,7 +283,7 @@ def _serialize(obj, w, seen):
         w(']')
     elif isinstance(obj, dict):
         w('{')
-        for n, (k, v) in enumerate(obj.iteritems()):
+        for n, (k, v) in enumerate(obj.items()):
             _serialize(k, w, seen)
             w(':')
             _serialize(v, w, seen)
