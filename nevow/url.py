@@ -524,29 +524,29 @@ def URLSerializer(original, context):
     urlContext = WovenContext(parent=context, precompile=context.precompile, inURL=True)
     if original.scheme:
         # TODO: handle Unicode (see #2409)
-        yield "%s://%s" % (original.scheme, original.netloc)
+        yield b"%s://%s" % (toBytes(original.scheme), toBytes(original.netloc))
     for pathsegment in original._qpathlist:
-        yield '/'
+        yield b'/'
         yield serialize(_maybeEncode(pathsegment), urlContext)
     query = original._querylist
     if query:
-        yield '?'
+        yield b'?'
         first = True
         for key, value in query:
             if not first:
                 # xhtml can't handle unescaped '&'
                 if context.isAttrib is True:
-                    yield '&amp;'
+                    yield b'&amp;'
                 else:
-                    yield '&'
+                    yield b'&'
             else:
                 first = False
             yield serialize(_maybeEncode(key), urlContext)
             if value is not None:
-                yield '='
+                yield b'='
                 yield serialize(_maybeEncode(value), urlContext)
     if original.fragment:
-        yield "#"
+        yield b"#"
         yield serialize(_maybeEncode(original.fragment), urlContext)
 
 
