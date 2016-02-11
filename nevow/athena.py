@@ -1390,9 +1390,9 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         """
         return [
             ("Divmod.bootstrap",
-             [flat.flatten(self.transportRoot, ctx).decode("ascii")]),
+             [flat.flatten(self.transportRoot, ctx)]),
             ("Nevow.Athena.bootstrap",
-             [self.jsClass, self.clientID.decode('ascii')])]
+             [self.jsClass, self.clientID])]
 
 
     def _bootstrapCall(self, methodName, args):
