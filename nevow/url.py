@@ -550,12 +550,14 @@ def URLOverlaySerializer(original, context):
         yield original
     else:
         url = original.urlaccessor(context)
+        print(553,url)
         for (cmd, args, kw) in original.dolater:
             url = getattr(url, cmd)(*args, **kw)
         req = context.locate(inevow.IRequest)
         for key in original._keep:
             for value in req.args.get(key, []):
                 url = url.add(key, value)
+        print(560,url)
         yield serialize(url, context)
 
 
