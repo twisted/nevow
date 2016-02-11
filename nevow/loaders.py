@@ -25,7 +25,6 @@ import os.path
 from zope.interface import implementer
 
 from twisted.python.reflect import getClass
-from twisted.web import microdom
 
 from nevow import inevow
 from nevow import flat
@@ -60,74 +59,7 @@ class stan(object):
         return self._cache
 
 
-@implementer(inevow.IDocFactory)
-class htmlstr(object):
-    """A document factory for HTML contained in a string"""
 
-
-    template = None
-    pattern = None
-    beExtremelyLenient = True
-    _cache = None
-
-    def __init__(self, template=None, pattern=None, beExtremelyLenient=None):
-        warnings.warn(
-            "[v0.8] htmlstr is deprecated because it's buggy. Please start using xmlfile and/or xmlstr.",
-            DeprecationWarning,
-            stacklevel=2)
-        if template is not None:
-            self.template = template
-        if pattern is not None:
-            self.pattern = pattern
-        if beExtremelyLenient is not None:
-            self.beExtremelyLenient = beExtremelyLenient
-
-    def load(self, ctx=None, preprocessors=()):
-        assert not preprocessors, "preprocessors not supported by htmlstr"
-        if self._cache is None:
-            doc = microdom.parseString(self.template, beExtremelyLenient=self.beExtremelyLenient)
-            doc = flat.precompile(doc, ctx)
-            if self.pattern is not None:
-                doc = inevow.IQ(doc).onePattern(self.pattern)
-            self._cache = doc
-        return self._cache
-
-@implementer(inevow.IDocFactory)
-class htmlfile(object):
-    """A document factory for an HTML disk template"""
-
-
-    template = None
-    pattern = None
-    templateDir = ''
-    beExtremelyLenient = True
-
-    def __init__(self, template=None, pattern=None, templateDir=None, beExtremelyLenient=None):
-        warnings.warn(
-            "[v0.8] htmlfile is deprecated because it's buggy. Please start using xmlfile and/or xmlstr.",
-            DeprecationWarning,
-            stacklevel=2)
-        if template is not None:
-            self.template = template
-        if pattern is not None:
-            self.pattern = pattern
-        if templateDir is not None:
-            self.templateDir = templateDir
-        if beExtremelyLenient is not None:
-            self.beExtremelyLenient = beExtremelyLenient
-        _filename = os.path.join(self.templateDir, self.template)
-        self._cache = CachedFile(_filename, self._reallyLoad)
-
-    def _reallyLoad(self, path, ctx):
-        doc = microdom.parse(path, beExtremelyLenient=self.beExtremelyLenient)
-        doc = flat.precompile(doc, ctx)
-        if self.pattern is not None:
-            doc = inevow.IQ(doc).onePattern(self.pattern)
-        return doc
-
-    def load(self, ctx=None, preprocessors=()):
-        assert not preprocessors, "preprocessors not supported by htmlfile"
-        return self._cache.load(ctx)
 
 @implementer(inevow.IDocFactory)
 class xmlstr(object):
