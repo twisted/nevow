@@ -397,10 +397,8 @@ class JSDependencies(object):
         jsMod = className
         
         while jsMod:
-            print(398, jsMod)
             try:
                 self.mapping[jsMod]
-                print(403, self.mapping[jsMod])
             except KeyError:
                 if '.' not in jsMod:
                     break
@@ -912,8 +910,6 @@ class _HasJSClass(object):
         the page before this Fragment's widget can be instantiated.  modules
         are accessible.
         """
-        for i in self._getModuleForClass().allDependencies(memo):
-            print(913, self.page.getJSModuleURL(i.name))
         return [
             (dep.name, self.page.getJSModuleURL(dep.name))
             for dep
@@ -1532,7 +1528,6 @@ def _rewriteEventHandlerToAttribute(tag):
                 kw={
                     b'handler': json.serialize(unicode(handler, 'ascii')),
                     b'event': json.serialize(unicode(name, 'ascii'))}
-                print(1535,kw)
                 
                 extraAttributes[unicode(name)] = _handlerFormat % kw
                 tag(**extraAttributes)

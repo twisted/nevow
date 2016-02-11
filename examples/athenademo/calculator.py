@@ -138,7 +138,7 @@ class CalculatorParentPage(LivePage):
 
 
 def main():
-   # log.startLogging(sys.stdout)
+    log.startLogging(sys.stdout)
     site = NevowSite(CalculatorParentPage(calc=Calculator()))
     reactor.listenTCP(8081, site)
     reactor.run()
