@@ -160,24 +160,24 @@ def StringSerializer(original, context):
     if context.inJS:
         original = _jsSingleQuoteQuote(original)
         if not context.inJSSingleQuoteString:
-            original = "'%s'" % (original, )
+            original = b"'%s'" % (original, )
     if context.isAttrib:
-        return original.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+        return original.replace(b"&", "&amp;").replace(b"<", b"&lt;").replace(b">", b"&gt;").replace(b'"', b"&quot;")
     elif context.inJS:
         return original
     else:
-        return original.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        return original.replace(b"&", b"&amp;").replace(b"<", "&lt;").replace(b">", "&gt;")
 
 
 def NoneWarningSerializer(original, context):
     if context.isAttrib:
         ## We don't want the big red None warning inside a html attribute. Just leave it blank.
-        return ''
+        return b''
     elif context.inURL:
-        return ''
+        return b''
     elif context.inJS:
-        return ''
-    return '<span style="font-size: xx-large; font-weight: bold; color: red; border: thick solid red;">None</span>'
+        return b''
+    return b'<span style="font-size: xx-large; font-weight: bold; color: red; border: thick solid red;">None</span>'
 
 
 def StringCastSerializer(original, context):
@@ -190,8 +190,8 @@ def StringCastSerializer(original, context):
 def BooleanSerializer(original, context):
     if context.inJS:
         if original:
-            return 'true'
-        return 'false'
+            return b'true'
+        return b'false'
     return str(original)
 
 
