@@ -1406,7 +1406,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         arguments to the named method.
         """
         return '%s(%s);' % (
-            methodName, ', '.join([json.serialize(arg) for arg in args]))
+            methodName, unicode(b', '.join([json.serialize(arg) for arg in args])))
 
 
     def child_jsmodule(self, ctx):
