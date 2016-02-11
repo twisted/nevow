@@ -127,13 +127,11 @@ class URL(object):
 
     def fromString(klass, st):
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(st)
-        print(130, scheme, netloc, path, query, fragment)
         u = klass(
             scheme, netloc,
             
             toBytes(''.join([urllib.parse.unquote(unicode(seg)) for seg in unicode(path).split('/')[1:]])),
             unquerify(toBytes(query)), urllib.parse.unquote(unicode(fragment)))
-        print(135, u)
         return u
     fromString = classmethod(fromString)
 
@@ -146,7 +144,6 @@ class URL(object):
         uri = request.prePathURL()
         if '?' in request.uri:
             uri += '?' + request.uri.split('?')[-1]
-        print(147, klass.fromString(uri))
         return klass.fromString(uri)
     fromRequest = classmethod(fromRequest)
 
@@ -374,7 +371,6 @@ class URL(object):
     ## object protocol override ##
 
     def __str__(self):
-        print(377,flat.flatten(self))
         return str(flat.flatten(self))
 
     def __repr__(self):

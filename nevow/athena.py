@@ -1241,8 +1241,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         if not self._supportedBrowser(request):
             request.write(self.renderUnsupported(ctx))
             return ''
-        print(1244,here)
-        print(1244,URL.fromString(flat.flatten(here, ctx)))
         self._becomeLive(URL.fromString(flat.flatten(here, ctx)))
 
         neverEverCache(request)
@@ -1347,8 +1345,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
 
     def getJSModuleURL(self, moduleName):
-        print(1349, self.jsModuleRoot)
-        print(1350, self.jsModuleRoot.child(''))
         return self.jsModuleRoot.child(moduleName)
 
 

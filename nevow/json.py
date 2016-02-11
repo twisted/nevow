@@ -19,16 +19,16 @@ class ParseError(ValueError):
     pass
 
 whitespace = re.compile(
-            r'('
-            r'[\r\n\t\ ]+'
-            r'|/\*.*?\*/'
-            r'|//[^\n]*[\n]'
-            r')'
+            br'('
+            br'[\r\n\t\ ]+'
+            br'|/\*.*?\*/'
+            br'|//[^\n]*[\n]'
+            br')'
             , re.VERBOSE + re.DOTALL)
-openBrace = re.compile(r'{')
-closeBrace = re.compile(r'}')
-openSquare = re.compile(r'\[')
-closeSquare = re.compile(r'\]')
+openBrace = re.compile(br'{')
+closeBrace = re.compile(br'}')
+openSquare = re.compile(br'\[')
+closeSquare = re.compile(br'\]')
 
 class StringTokenizer(object):
     """
@@ -36,12 +36,12 @@ class StringTokenizer(object):
     """
 
     def match(self, s):
-        if not s.startswith('"'):
+        if not s.startswith(b'"'):
             return None
 
         bits = []
 
-        SLASH = "\\"
+        SLASH = b"\\"
 
         IT = iter(s)
         bits = [next(IT)]
@@ -52,8 +52,8 @@ class StringTokenizer(object):
                     bits.append(next(IT))
                 except StopIteration:
                     return None
-            if char == '"':
-                self.matched = ''.join(bits)
+            if char == b'"':
+                self.matched = b''.join(bits)
                 return self
 
         return None
@@ -82,8 +82,8 @@ class WhitespaceToken(object):
     pass
 
 def jsonlong(s):
-    if 'e' in s:
-        m, e = list(map(int, s.split('e', 1)))
+    if b'e' in s:
+        m, e = list(map(int, s.split(b'e', 1)))
     else:
         m, e = int(s), 0
     return m * 10 ** e
@@ -130,10 +130,10 @@ def accept(want, tokens):
         raise ParseError("Unexpected %r, %s expected" % (t , want))
 
 def parseValue(tokens):
-    if tokens[0] == '{':
+    if tokens[0] == b'{':
         return parseObject(tokens)
 
-    if tokens[0] == '[':
+    if tokens[0] == b'[':
         return parseList(tokens)
 
     if tokens[0] in (True, False, None):
@@ -149,11 +149,11 @@ def parseValue(tokens):
 
 
 _stringExpr = re.compile(
-    r'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' '\n'
-    r'|' '\n'
-    r'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' '\n'
-    r'|' '\n'
-    r'(?P<control>\\[fbntr\\"]) # Match escaped control characters' '\n',
+    br'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' '\n'
+    br'|' '\n'
+    br'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' '\n'
+    br'|' '\n'
+    br'(?P<control>\\[fbntr\\"]) # Match escaped control characters' '\n',
     re.VERBOSE)
 
 _controlMap = {
