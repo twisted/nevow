@@ -149,11 +149,11 @@ def parseValue(tokens):
 
 
 _stringExpr = re.compile(
-    br'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' '\n'
-    br'|' '\n'
-    br'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' '\n'
-    br'|' '\n'
-    br'(?P<control>\\[fbntr\\"]) # Match escaped control characters' '\n',
+    br'(?:\\x(?P<unicode>[a-fA-F0-9]{2})) # Match hex-escaped unicode' b'\n'
+    br'|' b'\n'
+    br'(?:\\u(?P<unicode2>[a-fA-F0-9]{4})) # Match hex-escaped high unicode' b'\n'
+    br'|' b'\n'
+    br'(?P<control>\\[fbntr\\"]) # Match escaped control characters' b'\n',
     re.VERBOSE)
 
 _controlMap = {
