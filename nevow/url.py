@@ -556,7 +556,7 @@ def URLOverlaySerializer(original, context):
         for key in original._keep:
             for value in req.args.get(key, []):
                 url = url.add(key, value)
-        yield b''.join(serialize(url, context))
+        yield toBytes(''.join(serialize(url, context)))
 
 
 ## This is totally unfinished and doesn't work yet.
