@@ -25,7 +25,6 @@ except ImportError:
     from twisted.protocols import http
 from twisted.python import threadable, log, components, filepath
 from twisted.internet import abstract
-from twisted.spread import pb
 from twisted.python.util import InsensitiveDict
 from twisted.python.runtime import platformType
 
