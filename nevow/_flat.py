@@ -425,7 +425,7 @@ def flatten(request, root, inAttribute, inXML):
             roots.append(frame.f_locals['root'])
             raise FlattenerError(e, roots, extract_tb(exc_info()[2]))
         else:
-            if type(element) is bytes:
+            if isinstance(element, bytes):
                 yield element
             elif isinstance(element, Deferred):
                 def cbx(xxx_todo_changeme):
