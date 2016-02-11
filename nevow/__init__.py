@@ -21,8 +21,8 @@ from nevow.util import _namedAnyWithBuiltinTranslation
 # '__builtin__.instance method' instead of '__builtin__.instancemethod'
 # Workaround this error.
 def clean(o):
-    if o == '__builtin__.instancemethod' and sys.version_info < (2,3):
-        return '__builtin__.instance method'
+    if o == '__builtins__.instancemethod' and sys.version_info < (2,3):
+        return '__builtins__.instance method'
     return o
 
 
@@ -51,9 +51,9 @@ namespace = "http://nevow.com/ns/nevow/0.1"
 basic_adapters = """
 formless.annotate.Group                   formless.annotate.MetaTypedInterface        formless.iformless.ITyped
 
-nevow.accessors.DictionaryContainer    __builtin__.dict                         nevow.inevow.IContainer
-nevow.accessors.ListContainer          __builtin__.list                         nevow.inevow.IContainer
-nevow.accessors.ListContainer          __builtin__.tuple                        nevow.inevow.IContainer
+nevow.accessors.DictionaryContainer    __builtins__.dict                         nevow.inevow.IContainer
+nevow.accessors.ListContainer          __builtins__.list                         nevow.inevow.IContainer
+nevow.accessors.ListContainer          __builtins__.tuple                        nevow.inevow.IContainer
 
 nevow.accessors.FunctionAccessor       __builtin__.function                     nevow.inevow.IGettable
 nevow.accessors.FunctionAccessor       __builtin__.method                       nevow.inevow.IGettable
@@ -109,7 +109,7 @@ formless.webform.FormErrors       nevow.guard.GuardSession                 forml
 formless.webform.FormErrors       nevow.testutil.FakeSession               formless.iformless.IFormErrors
 
 nevow.appserver.OldResourceAdapter                  twisted.web.resource.IResource      nevow.inevow.IResource
-nevow.static.staticHTML                 __builtin__.str                          nevow.inevow.IResource
+nevow.static.staticHTML                 __builtins__.str                          nevow.inevow.IResource
 
 nevow.appserver.sessionFactory  nevow.context.RequestContext    nevow.inevow.ISession
 nevow.rend.handFactory   nevow.context.RequestContext    nevow.inevow.IHand
@@ -162,19 +162,19 @@ nevow.flat.flatstan.EntitySerializer                 nevow.stan.Entity
 nevow.flat.flatstan.CommentSerializer             nevow.stan.Comment
 nevow.flat.flatstan.XmlSerializer                 nevow.stan.xml
 nevow.flat.flatstan.RawSerializer                 nevow.stan.raw
-nevow.flat.flatstan.StringSerializer              __builtin__.str
-nevow.flat.flatstan.StringSerializer              __builtin__.unicode
-nevow.flat.flatstan.NoneWarningSerializer         __builtin__.NoneType
-nevow.flat.flatstan.StringCastSerializer          __builtin__.int
-nevow.flat.flatstan.StringCastSerializer          __builtin__.float
-nevow.flat.flatstan.StringCastSerializer          __builtin__.long
-nevow.flat.flatstan.BooleanSerializer          __builtin__.bool
-nevow.flat.flatstan.ListSerializer                __builtin__.list
-nevow.flat.flatstan.StringCastSerializer          __builtin__.dict
-nevow.flat.flatstan.ListSerializer                __builtin__.tuple
+nevow.flat.flatstan.StringSerializer              __builtins__.str
+nevow.flat.flatstan.StringSerializer              __builtins__.bytes
+nevow.flat.flatstan.NoneWarningSerializer         __builtins__.NoneType
+nevow.flat.flatstan.StringCastSerializer          __builtins__.int
+nevow.flat.flatstan.StringCastSerializer          __builtins__.float
+nevow.flat.flatstan.StringCastSerializer          __builtins__.long
+nevow.flat.flatstan.BooleanSerializer          __builtins__.bool
+nevow.flat.flatstan.ListSerializer                __builtins__.list
+nevow.flat.flatstan.StringCastSerializer          __builtins__.dict
+nevow.flat.flatstan.ListSerializer                __builtins__.tuple
 nevow.flat.flatstan.ListSerializer                __builtin__.generator
 nevow.flat.flatstan.FunctionSerializer            __builtin__.function
-nevow.flat.flatstan.FunctionSerializer            __builtin__.type
+nevow.flat.flatstan.FunctionSerializer            __builtins__.type
 nevow.flat.flatstan.MethodSerializer              __builtin__.instancemethod
 nevow.flat.flatstan.RendererSerializer            nevow.inevow.IRenderer
 nevow.flat.flatstan.DirectiveSerializer           nevow.stan.directive
