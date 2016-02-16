@@ -14,6 +14,7 @@ from twisted.cred.portal import Portal, IRealm
 from twisted.cred.credentials import IUsernamePassword, IAnonymous
 from twisted.internet import address
 from twisted.trial.unittest import TestCase
+from twisted.web.http_headers import Headers
 
 from nevow import rend
 from nevow import inevow
@@ -72,11 +73,11 @@ class FakeHTTPRequest(appserver.NevowRequest):
         self._cookieCache = {}
         from cStringIO import StringIO
         self.content = StringIO()
-        self.received_headers['host'] = 'fake.com'
+        self.requestHeaders.setRawHeaders(b'host', [b'fake.com'])
         self.written = StringIO()
 
     def followRedirect(self):
-        L = self.headers['location']
+        [L] = self.responseHeaders.getRawHeaders('location')
         if L.startswith('http://'):
             L = L[len("http://"):]
             urlist = L.split('/')
@@ -91,8 +92,8 @@ class FakeHTTPRequest(appserver.NevowRequest):
         R = self
         MAX_REDIRECTS = 5
         I = 1
-        while R.headers.has_key('location'):
-            assert I < MAX_REDIRECTS, "Too many redirects (to %s)" % R.headers['location']
+        while R.responseHeaders.hasHeader('location'):
+            assert I < MAX_REDIRECTS, "Too many redirects (to %s)" % R.responseHeaders.getRawHeaders('location')[0]
             R = R.followRedirect()
             I += 1
         return R
@@ -155,7 +156,7 @@ class InspectfulPage(rend.Page):
                 request.fields,
                 content,
                 request.method,
-                request.received_headers))
+                request.requestHeaders))
         return ''
 
 
@@ -314,22 +315,23 @@ class GuardTestFuncs:
         req = chan.makeFakeRequest('%s/xxx/yyy/' % self.getGuardPath())
         self.assertEquals( len(req._cookieCache.values()), 1, "Bad number of cookies in response.")
         # The redirect is set immediately and should have a path segment at the beginning matching our cookie
-        self.failUnless(req.headers.has_key('location'))
+        self.failUnless(req.responseHeaders.hasHeader('location'))
         cookie = req._cookieCache.values()[0][0]
 
         # The URL should have the cookie segment in it and the correct path segments at the end
-        self.assertEquals(req.headers['location'],
+        self.assertEquals(req.responseHeaders.getRawHeaders('location')[0],
             'http://fake.com%s/%s/xxx/yyy/' % (self.getGuardPath(), guard.SESSION_KEY+cookie, ))
 
         # Now, let's follow the redirect
         req = req.followRedirect()
         # Our session should now be set up and we will be redirected to our final destination
-        self.assertEquals(req.headers['location'].split('?')[0],
+        self.assertEquals(
+            req.responseHeaders.getRawHeaders('location')[0].split('?')[0],
             'http://fake.com%s/xxx/yyy/' % self.getGuardPath())
 
         # Let's follow the redirect to the final page
         req = req.followRedirect()
-        self.failIf(req.headers.has_key('location'))
+        self.failIf(req.responseHeaders.hasHeader('location'))
 
         # We should have the final resource, which is an anonymous resource
         self.assertEquals(req.written.getvalue(), "No")
@@ -352,10 +354,10 @@ class GuardTestFuncs:
         # is a cookie being set and a redirect being issued to the session url
         req = chan.makeFakeRequest('%s/xxx/yyy/' % self.getGuardPath(), requestClass=FakeHTTPRequest_noCookies)
         # The redirect is set immediately and should have a path segment at the beginning matching our session id
-        self.failUnless(req.headers.has_key('location'))
+        self.failUnless(req.responseHeaders.hasHeader('location'))
 
         # The URL should have the session id segment in it and the correct path segments at the end
-        location = req.headers['location']
+        [location] = req.responseHeaders.getRawHeaders('location')
         prefix = 'http://fake.com%s/%s' % (self.getGuardPath(), guard.SESSION_KEY)
         suffix = '/xxx/yyy/'
         self.failUnless(location.startswith(prefix))
@@ -365,7 +367,7 @@ class GuardTestFuncs:
 
         # Now, let's follow the redirect
         req = req.followRedirect()
-        self.failIf(req.headers.has_key('location'))
+        self.failIf(req.responseHeaders.hasHeader('location'))
 
         # We should have the final resource, which is an anonymous resource
         self.assertEquals(req.written.getvalue(), "No")
@@ -422,7 +424,7 @@ class GuardTestFuncs:
                        None,
                        None,
                        'GET',
-                       {'host': 'fake.com'})])
+                       Headers({'host': ['fake.com']}))])
 
 
     def test_loginRestoresRequestParameters(self):
@@ -450,8 +452,8 @@ class GuardTestFuncs:
         request.session.fields = None
         request.session.method = 'GET'
         request.session.content = None
-        request.session.received_headers = {'host': 'fake.com',
-                                            'extra': 'bar'}
+        request.session._requestHeaders = Headers({'host': ['fake.com'],
+                                                   'extra': ['bar']})
 
         # Perform the login.
         request = channel.makeFakeRequest(
@@ -464,7 +466,7 @@ class GuardTestFuncs:
                        None,
                        None,
                        'GET',
-                       {'host': 'fake.com', 'extra': 'bar'})])
+                       Headers({'host': ['fake.com'], 'extra': ['bar']}))])
 
 
     def test_oldRequestParametersIgnored(self):
@@ -497,7 +499,7 @@ class GuardTestFuncs:
                        None,
                        '',
                        'GET',
-                       {'host': 'fake.com'})])
+                       Headers({'host': ['fake.com']}))])
 
 
     def testNoSlash(self):
@@ -790,7 +792,7 @@ class GuardTestFuncs:
 
         req = chan.makeFakeRequest('%s' % self.getGuardPath(),
                                    "test", "invalid-password")
-        self.assertEquals(req.headers.get('location', None), None)
+        self.assertFalse(req.responseHeaders.hasHeader('location'))
         self.assertEquals(req.code, 403)
         self.assertEquals(req.written.getvalue(),
                           '<html><head><title>Forbidden</title></head>'
@@ -807,7 +809,7 @@ class GuardTestFuncs:
 
         req = chan.makeFakeRequest('%s/quux/thud' % self.getGuardPath(),
                                    "test", "invalid-password")
-        self.assertEquals(req.headers.get('location', None), None)
+        self.assertFalse(req.responseHeaders.hasHeader('location'))
         self.assertEquals(req.code, 403)
         self.assertEquals(req.written.getvalue(),
                           '<html><head><title>Forbidden</title></head>'
