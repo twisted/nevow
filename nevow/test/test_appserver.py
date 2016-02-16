@@ -151,6 +151,26 @@ class TestSiteAndRequest(testutil.TestCase):
             request.finished, "Request was incorrectly marked as finished.")
 
 
+    def test_renderPOST(self):
+        """
+        A POST request with form data has the form data parsed into
+        C{request.fields}.
+        """
+        class Res(Render):
+            def renderHTTP(self, ctx):
+                return b''
+
+        s = appserver.NevowSite(Res())
+        r = appserver.NevowRequest(
+            testutil.FakeChannel(s), True)
+        r.method = b'POST'
+        r.path = b'/'
+        r.content = StringIO(b'foo=bar')
+        self.successResultOf(r.process())
+        self.assertEquals(r.fields[b'foo'].value, b'bar')
+
+
+
 from twisted.internet import protocol, address
 
 class FakeTransport(protocol.FileWrapper):
