@@ -497,11 +497,9 @@ class TestPage(unittest.TestCase):
 
         root = RootPage()
         r = self.successResultOf(getResource(root, b'/child'))
-
         r.tag.renderHTTP(r)
         req = inevow.IRequest(r)
         self.assertTrue(req.redirected_to.endswith(b'/'))
-
 
 
 
