@@ -1,5 +1,4 @@
 from nevow import tags as t, static, util, loaders, athena, inevow
-from nevow.livepage import js, flt
 
 
 class tabbedPaneGlue:
@@ -10,85 +9,19 @@ class tabbedPaneGlue:
     @type stylesheetPath: C{str}
     @ivar stylesheetPath: Filesystem path of the tabbed pane stylesheet.
 
-    @type javascriptPath: C{str}
-    @ivar javascriptPath: Filesystem path of the tabbed pane Javascript
-    module.
-
     @type fileCSS: L{static.File}
     @ivar fileCSS: Resource which serves L{stylesheetPath}.
 
-    @type fileJS: L{static.File}
-    @ivar fileJS: Resource which serves L{javascriptPath}.
-
-    @type fileGlue: Stan
-    @ivar fileGlue: Stan which, when placed in the <head> of an HTML document,
-    will include the required CSS & Javascript.
-
     @type inlineCSS: L{t.style}
     @ivar inlineCSS: <style> tag containing the tabbedpane CSS inline.
-
-    @type inlineJS: L{t.script}
-    @ivar inlineJS: <script> tag containing the tabbedpane Javascript inline.
-
-    @type inlineGlue: Stan
-    @ivar inlineGlue: A tuple of L{inlineCSS} and L{inlineJS}.
     """
     stylesheetPath = util.resource_filename('nevow', 'css/Nevow/TagLibrary/TabbedPane.css')
-    javascriptPath = util.resource_filename('nevow', 'js/Nevow/TagLibrary/TabbedPane.js')
 
     fileCSS = static.File(stylesheetPath, 'text/css')
-    fileJS = static.File(javascriptPath, 'text/javascript')
-    fileGlue = (
-        t.link(rel='stylesheet', type='text/css', href='/tabbedPane.css'),
-        t.script(type='text/javascript', src='/tabbedPane.js')
-        )
 
     inlineCSS = t.style(type_='text/css')[ t.xml(file(stylesheetPath).read()) ]
-    inlineJS = t.inlineJS(file(javascriptPath).read())
-    inlineGlue = inlineJS, inlineCSS
 
 
-class TabbedPane(object):
-    """
-    Data
-    ====
-
-      name     : name for this component (default 'theTabbedPane')
-      pages    : sequence of (tab, page) (mandatory)
-      selected : index of the selected tab (default 0)
-
-    Live component interface
-    ========================
-
-      None currently.
-    """
-
-    def tabbedPane(self, ctx, data):
-        name = data.get('name', 'theTabbedPane')
-        pages = data.get('pages')
-        selected = data.get('selected', 0)
-
-        def _():
-            for n, (tab, page) in enumerate(pages):
-                tID = '%s_tab_%i'%(name, n)
-                pID = '%s_page_%i'%(name, n)
-                yield (t.li(class_='nevow-tabbedpane-tab', id_=tID)[tab],
-                       t.div(class_='nevow-tabbedpane-pane', id_=pID)[page],
-                       flt(js[tID,pID], quote = False))
-
-        tabs, pages, j = zip(*_())
-        if selected >= len(tabs):
-            selected = 0
-
-        return t.invisible[
-            t.div(class_='nevow-tabbedpane',id_=name)[
-                t.ul(class_='nevow-tabbedpane-tabs')[tabs], pages
-              ],
-            t.inlineJS('setupTabbedPane([' + ','.join(j) + '], %i);'%selected)
-            ]
-
-
-tabbedPane = TabbedPane().tabbedPane
 
 class TabbedPaneFragment(athena.LiveFragment):
     jsClass = u'Nevow.TagLibrary.TabbedPane.TabbedPane'
@@ -146,6 +79,6 @@ class TabbedPaneFragment(athena.LiveFragment):
                     'page-content', content).fillSlots(
                     'class', cls)
 
-__all__ = [ "tabbedPane", "tabbedPaneGlue", "TabbedPaneFragment" ]
+__all__ = [ "tabbedPaneGlue", "TabbedPaneFragment" ]
 
 
