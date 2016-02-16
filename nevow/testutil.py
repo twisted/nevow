@@ -129,7 +129,7 @@ class FakeRequest(Componentized):
 
     def URLPath(self):
         from nevow import url
-        return url.URL.fromString('')
+        return url.URL.fromContext(self)
 
     def getSession(self):
         return self.sess

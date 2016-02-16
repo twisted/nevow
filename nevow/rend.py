@@ -537,7 +537,7 @@ class Page(Fragment, ConfigurableFactory, ChildLookupMixin):
         request = inevow.IRequest(ctx)
         ## XXX request is really ctx now, change the name here
         if self.addSlash and inevow.ICurrentSegments(ctx)[-1] != '':
-            request.redirect(request.URLPath().child(''))
+            request.redirect(str(request.URLPath().child('')))
             return ''
 
         log.msg(http_render=None, uri=request.uri)

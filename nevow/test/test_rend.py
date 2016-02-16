@@ -482,6 +482,26 @@ class TestPage(unittest.TestCase):
         test_missingRendererDeprecated.skip = "TestCase.assertWarns missing"
 
 
+    def test_addSlash(self):
+        """
+        Accessing a resource that has addSlash set via a path without a
+        trailing slash generates a redirect.
+        """
+        class RootPage(rend.Page):
+            def child_child(self, ctx):
+                return SlashyPage()
+
+        class SlashyPage(rend.Page):
+            addSlash = True
+            docFactory = loaders.stan(div(id='inner'))
+
+        root = RootPage()
+        r = self.successResultOf(getResource(root, b'/child'))
+        r.tag.renderHTTP(r)
+        req = inevow.IRequest(r)
+        self.assertTrue(req.redirected_to.endswith(b'/'))
+
+
 
 class TestFragment(unittest.TestCase):
 
