@@ -288,6 +288,7 @@ class FakeRequest(Componentized):
         return appserver._DictHeaders(self.requestHeaders)
 
 
+
 class TestCase(TrialTestCase):
     hasBools = (sys.version_info >= (2,3))
     _assertions = 0
