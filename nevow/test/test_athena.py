@@ -645,11 +645,11 @@ class UtilitiesTests(unittest.TestCase):
                        "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 5.0)"]
         for ua in supported:
             req = FakeRequest()
-            req.received_headers['user-agent'] = ua
+            req.requestHeaders.setRawHeaders('user-agent', [ua])
             self.assertTrue(page._supportedBrowser(req))
         for ua in unsupported:
             req = FakeRequest()
-            req.received_headers['user-agent'] = ua
+            req.requestHeaders.setRawHeaders('user-agent', [ua])
             self.assertFalse(page._supportedBrowser(req))
 
 
@@ -660,7 +660,9 @@ class UtilitiesTests(unittest.TestCase):
         ctx = WovenContext()
         page = athena.LivePage()
         req = FakeRequest()
-        req.received_headers['user-agent'] = "Mozilla/4.0 (compatible; MSIE 2.0; Windows NT 5.1)"
+        req.requestHeaders.setRawHeaders(
+            'user-agent',
+            ["Mozilla/4.0 (compatible; MSIE 2.0; Windows NT 5.1)"])
         ctx.remember(req, IRequest)
         d = renderPage(page, reqFactory=lambda: req)
         d.addCallback(
