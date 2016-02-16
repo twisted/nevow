@@ -76,7 +76,7 @@ class TestFakeRequest(TestCase):
         host = 'divmod.com'
         req = FakeRequest()
         req.setHeader('host', host)
-        self.assertEqual(req.headers['host'], host)
+        self.assertEqual(req.responseHeaders.getRawHeaders('host'), [host])
 
 
     def test_caseInsensitiveHeaders(self):
@@ -86,7 +86,7 @@ class TestFakeRequest(TestCase):
         """
         host = 'example.com'
         request = FakeRequest()
-        request.received_headers['host'] = host
+        request.requestHeaders.setRawHeaders('host', [host])
         self.assertEqual(request.getHeader('hOsT'), host)
 
 
@@ -138,9 +138,9 @@ class TestFakeRequest(TestCase):
         """
         req = FakeRequest()
         req.setHeader('foo', 'bar')
-        self.assertNotIn('foo', req.received_headers)
+        self.assertFalse(req.requestHeaders.hasHeader('foo'))
         self.assertEqual(req.getHeader('foo'), None)
-        req.received_headers['foo'] = 'bar'
+        req.requestHeaders.setRawHeaders('foo', ['bar'])
         self.assertEqual(req.getHeader('foo'), 'bar')
 
 
