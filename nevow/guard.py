@@ -374,7 +374,7 @@ class SessionWrapper:
         sz.args = request.args
         sz.fields = request.fields
         sz.method = request.method
-        sz.received_headers = request.received_headers
+        sz._requestHeaders = request.requestHeaders
         sz.checkExpired()
         return urlToChild(ctx, SESSION_KEY+newCookie, *segments)
 
@@ -428,9 +428,9 @@ class SessionWrapper:
             request.content = StringIO.StringIO()
             request.content.close()
             request.method = session.method
-            request.received_headers = session.received_headers
+            request.requestHeaders = session._requestHeaders
 
-            del session.args, session.fields, session.method, session.received_headers
+            del session.args, session.fields, session.method, session._requestHeaders
 
 
         if segments and segments[0] in (LOGIN_AVATAR, LOGOUT_AVATAR):
