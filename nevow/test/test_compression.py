@@ -133,7 +133,7 @@ class RequestWrapperTests(TestCase):
         Attributes on the wrapper should be forwarded to the underlying
         request.
         """
-        attributes = ['method', 'uri', 'path', 'args', 'received_headers']
+        attributes = ['method', 'uri', 'path', 'args', 'requestHeaders']
         for attrName in attributes:
             self.assertIdentical(getattr(self.wrapper, attrName),
                                  getattr(self.request, attrName))
