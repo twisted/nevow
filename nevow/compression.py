@@ -112,7 +112,7 @@ class CompressingRequestWrapper(_makeBase()):
         self._gzipFile = None
 
         # See setHeader docstring for more commentary.
-        self.underlying.headers.pop('content-length', None)
+        self.underlying.responseHeaders.removeHeader('content-length')
 
 
     def setHeader(self, name, value):
