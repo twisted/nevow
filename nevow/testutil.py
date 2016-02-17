@@ -3,6 +3,7 @@
 # See LICENSE for details.
 
 import os, sys, signal
+import warnings
 
 from subprocess import PIPE, Popen
 
@@ -19,6 +20,7 @@ from twisted.python.components import Componentized
 from twisted.internet import defer
 from twisted.web import http
 from twisted.protocols.basic import LineReceiver
+from twisted.web.http_headers import Headers
 
 from formless import iformless
 
@@ -110,14 +112,14 @@ class FakeRequest(Componentized):
                 self.prepath.append(self.postpath.pop(0))
         else:
             self.prepath.append('')
-        self.headers = {}
+        self.responseHeaders = Headers()
         self.args = args or {}
         self.sess = FakeSession(avatar)
         self.site = FakeSite()
-        self.received_headers = {}
+        self.requestHeaders = Headers()
         if headers:
             for k, v in headers.iteritems():
-                self.received_headers[k.lower()] = v
+                self.requestHeaders.setRawHeaders(k, [v])
         if cookies is not None:
             self.cookies = cookies
         else:
@@ -129,7 +131,7 @@ class FakeRequest(Componentized):
 
     def URLPath(self):
         from nevow import url
-        return url.URL.fromString('')
+        return url.URL.fromContext(self)
 
     def getSession(self):
         return self.sess
@@ -169,10 +171,10 @@ class FakeRequest(Componentized):
         self.deferred.callback('')
 
     def getHeader(self, key):
-        return self.received_headers.get(key.lower())
+        return self.requestHeaders.getRawHeaders(key, [None])[0]
 
     def setHeader(self, key, val):
-        self.headers[key.lower()] = val
+        self.responseHeaders.setRawHeaders(key, [val])
 
     def redirect(self, url):
         self.redirected_to = url
@@ -244,6 +246,47 @@ class FakeRequest(Componentized):
         Returns whether this is an HTTPS request or not.
         """
         return self.secure
+
+
+    def _warnHeaders(self, old, new):
+        """
+        Emit a warning related to use of one of the deprecated C{headers} or
+        C{received_headers} attributes.
+
+        @param old: The name of the deprecated attribute to which the warning
+            pertains.
+
+        @param new: The name of the preferred attribute which replaces the old
+            attribute.
+        """
+        warnings.warn(
+            category=DeprecationWarning,
+            message=(
+                "nevow.testutil.FakeRequest.%(old)s was deprecated in "
+                "Nevow 0.13.0: Please use nevow.testutil.FakeRequest."
+                "%(new)s instead." % dict(old=old, new=new)),
+            stacklevel=3)
+
+
+    @property
+    def headers(self):
+        """
+        Transform the L{Headers}-style C{responseHeaders} attribute into a
+        deprecated C{dict}-style C{headers} attribute.
+        """
+        self._warnHeaders("headers", "responseHeaders")
+        return appserver._DictHeaders(self.responseHeaders)
+
+
+    @property
+    def received_headers(self):
+        """
+        Transform the L{Headers}-style C{requestHeaders} attribute into a
+        deprecated C{dict}-style C{received_headers} attribute.
+        """
+        self._warnHeaders("received_headers", "requestHeaders")
+        return appserver._DictHeaders(self.requestHeaders)
+
 
 
 class TestCase(TrialTestCase):

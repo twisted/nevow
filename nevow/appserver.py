@@ -220,8 +220,9 @@ class NevowRequest(tpc.Componentized, server.Request):
         if self.method == 'POST':
             t = self.content.tell()
             self.content.seek(0)
-            self.fields = cgi.FieldStorage(self.content, self.received_headers,
-                                           environ={'REQUEST_METHOD': 'POST'})
+            self.fields = cgi.FieldStorage(
+                self.content, _DictHeaders(self.requestHeaders),
+                environ={'REQUEST_METHOD': 'POST'})
             self.content.seek(t)
 
         # get site from channel

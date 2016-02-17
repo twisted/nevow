@@ -133,7 +133,7 @@ class RequestWrapperTests(TestCase):
         Attributes on the wrapper should be forwarded to the underlying
         request.
         """
-        attributes = ['method', 'uri', 'path', 'args', 'received_headers']
+        attributes = ['method', 'uri', 'path', 'args', 'requestHeaders']
         for attrName in attributes:
             self.assertIdentical(getattr(self.wrapper, attrName),
                                  getattr(self.request, attrName))
@@ -153,20 +153,25 @@ class RequestWrapperTests(TestCase):
         """
         Content-Length header should be discarded when compression is in use.
         """
-        self.assertNotIn('content-length', self.request.headers)
+        self.assertFalse(
+            self.request.responseHeaders.hasHeader('content-length'))
         self.wrapper.setHeader('content-length', 1234)
-        self.assertNotIn('content-length', self.request.headers)
+        self.assertFalse(
+            self.request.responseHeaders.hasHeader('content-length'))
 
         self.request.setHeader('content-length', 1234)
         self.wrapper = CompressingRequestWrapper(self.request)
-        self.assertNotIn('content-length', self.request.headers)
+        self.assertFalse(
+            self.request.responseHeaders.hasHeader('content-length'))
 
 
     def test_responseHeaders(self):
         """
         Content-Encoding header should be set appropriately.
         """
-        self.assertEqual(self.request.headers['content-encoding'], 'gzip')
+        self.assertEqual(
+            self.request.responseHeaders.getRawHeaders('content-encoding'),
+            ['gzip'])
 
 
     def test_lazySetup(self):
@@ -452,14 +457,17 @@ class ResourceWrapper(TestCase):
         """
         self.assertFalse(self.wrapped.canCompress(self.request))
 
-        self.request.received_headers['accept-encoding'] = 'foo;q=1.0, bar;q=0.5, baz'
+        self.request.requestHeaders.setRawHeaders(
+            'accept-encoding', ['foo;q=1.0, bar;q=0.5, baz'])
         self.assertFalse(self.wrapped.canCompress(self.request))
 
-        self.request.received_headers['accept-encoding'] = 'gzip'
+        self.request.requestHeaders.setRawHeaders('accept-encoding', ['gzip'])
         self.assertTrue(self.wrapped.canCompress(self.request))
 
-        self.request.received_headers['accept-encoding'] = 'gzip;q=0.5'
+        self.request.requestHeaders.setRawHeaders(
+            'accept-encoding', ['gzip;q=0.5'])
         self.assertTrue(self.wrapped.canCompress(self.request))
 
-        self.request.received_headers['accept-encoding'] = 'gzip;q=0'
+        self.request.requestHeaders.setRawHeaders(
+            'accept-encoding', ['gzip;q=0'])
         self.assertFalse(self.wrapped.canCompress(self.request))
