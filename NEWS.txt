@@ -1,3 +1,15 @@
+0.13.0 (2016-02-16):
+  - nevow.appserver.Request.headers and received_headers are now deprecated to
+    follow suit with Twisted; older versions of Nevow will not be compatible
+    with Twisted 16.0.0 due to these being removed in Twisted.
+  - nevow.testutil.FakeRequest had similar changes made to assist with
+    compatibility in test code, and there should be no Nevow code left that
+    touches the deprecated APIs, but any application code using the old APIs
+    should be migrated.
+  - Some very ancient, deprecated things were removed: nevow.canvas,
+    nevow.livepage, nevow.livetest, nevow.taglibrary (except for the Athena
+    version of nevow.taglibrary.tabbedPane), nevow.wsgi, and zomne.
+
 0.12.0 (2015-12-16):
   - Responses are no longer finished if the connection went away, avoiding an
     error message that this used to cause.
