@@ -79,7 +79,7 @@ class RenderFactory(object):
         if args:
             return callable(*args)
 
-        return callable
+        return callable 
 
     render_sequence = lambda self, context, data: sequence(context, data)
     render_mapping = lambda self, context, data: mapping(context, data)

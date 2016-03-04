@@ -31,7 +31,7 @@ class ITreeEdit(annotate.TypedInterface):
 @implementer(ITreeEdit)
 class TreeRenderer(rend.Page):
     addSlash = True
-    docFactory = loaders.htmlstr("""
+    docFactory = loaders.xmlstr("""
 <html>
 <head><title>Tree Editor</title></head>
 <body><h1><span nevow:data="description"

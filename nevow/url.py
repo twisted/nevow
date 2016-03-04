@@ -166,6 +166,8 @@ class URL(object):
             result = list(map(urllib.parse.unquote, result))
         if copy:
             result = result[:]
+        if isinstance(result, (str, bytes)):
+            return [result]
         return result
 
     def sibling(self, path):
@@ -253,12 +255,13 @@ class URL(object):
             return self
 
         query = unquerify(query)
-
+        if isinstance(path, bytes):
+            path=path.decode('charmap')
         if scheme:
             if path and path[0] == '/':
                 path = path[1:]
             return self.cloneURL(
-                scheme, netloc, list(map(raw, path.split('/'))), query, fragment)
+                scheme, netloc, list(map(raw, path.encode('charmap').split(b'/'))), query, fragment)
         else:
             scheme = self.scheme
 
@@ -557,7 +560,7 @@ def URLOverlaySerializer(original, context):
         for key in original._keep:
             for value in req.args.get(key, []):
                 url = url.add(key, value)
-        yield toBytes(b''.join(serialize(url, context)))
+        yield toBytes(b''.join([toBytes(b) for b in serialize(url, context)]))
 
 
 ## This is totally unfinished and doesn't work yet.
@@ -630,9 +633,12 @@ class URLRedirectAdapter:
         bits = []
         def flattened(spam):
             # Join the bits to make a complete URL.
-            u = ''.join(bits)
+            print(635)
+            u = (b''.join([bytes(b) for b in bits]))
             # It might also be relative so resolve it against the current URL
             # and flatten it again.
+            print(639, u)
             u = flat.flatten(URL.fromContext(ctx).click(u), ctx)
+            print(639, u)
             return redirectTo(u, inevow.IRequest(ctx))
         return flat.flattenFactory(self.original, ctx, bits.append, flattened)

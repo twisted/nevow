@@ -55,7 +55,7 @@ def partialflatten(context, obj):
     
     The return results from this function will not necessarily be a string, but will probably
     need further processing.
-    """
+    """ 
     flattener = getFlattener(obj)
     if flattener is not None:
         return flattener(obj, context)

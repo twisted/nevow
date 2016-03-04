@@ -41,8 +41,6 @@ try:
     from manualform import manualform
     from guarded import guarded
     from guarded import guarded2
-    from xul import xul_nevow
-    from liveanimal import liveanimal
     from most_basic import most_basic
     from http_auth import http_auth
     from logout_guard import logout_guard
@@ -53,8 +51,6 @@ try:
     from macros import macros
     from i18n import i18n, xmli18n
     from cal import cal
-    from tabbed import tabbed
-    from progress import progress
 
     from athenademo import calculator
     from athenademo import typeahead
@@ -94,15 +90,12 @@ class Sources(rend.Page):
     def __init__(self, path, _):
         rend.Page.__init__(self, path)
 
-    def render_htmlizer(self, ctx, path):
+    def render_htmlizer(self, ctx, path): 
         from twisted.python import htmlizer
         from io import StringIO
         output = StringIO()
-        try:
-            htmlizer.filter(open(path), output, writer=htmlizer.SmallerHTMLWriter)
-        except AttributeError:
-            output = StringIO("""Starting after Nevow 0.4.1 Twisted
-2.0 is a required dependency. Please install it""")
+        print(97,path)
+        htmlizer.filter(open(path), output, writer=htmlizer.SmallerHTMLWriter)
         return tags.xml(output.getvalue())
 
     docFactory = loaders.stan(
@@ -143,9 +136,7 @@ class Examples(rend.Page):
         manualform=manualform.Page(),
         guarded=guarded.createResource(),
         guarded2=guarded2.createResource(),
-        xul_nevow=xul_nevow.createResource(),
         advanced_manualform=advanced_manualform.Page(),
-        liveanimal=liveanimal.createResource(),
         http_auth=http_auth.AuthorizationRequired(),
         most_basic=most_basic.root,
         logout_guard=logout_guard.createResource(),
@@ -155,8 +146,6 @@ class Examples(rend.Page):
         i18n=i18n.createResource(),
         xmli18n=xmli18n.createResource(),
         calendar=cal.Calendar(),
-        tabbed=tabbed.TabbedPage(),
-        progress=progress.createResource(),
         fragments=fragments.Root(),
         macros=macros.Root(),
         typeahead=typeahead.DataEntry(),
