@@ -344,10 +344,10 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
                                            lambda ign: None)
                 def cbFlattened(result):
                     synchronous.append(None)
-                    return (result, (str(s) for s in results))
+                    return (result, (toBytes(s) for s in results))
                 flattened.addCallback(cbFlattened)
                 if synchronous:
-                    yield ''.join(map(str, results))
+                    yield b''.join(map(toBytes, results))
                 else:
                     yield flattened
             else:
@@ -409,8 +409,6 @@ def flatten(request, root, inAttribute, inXML):
     """
     stack = [_flatten(request, root, [], None, inAttribute, inXML)]
     while stack:
-        if isinstance(stack[-1], str):
-            yield stack.pop(-1)
         try:
             # In Python 2.5, after an exception, a generator's gi_frame is
             # None.
@@ -428,7 +426,7 @@ def flatten(request, root, inAttribute, inXML):
         else:
             if isinstance(element, str):
                 yield element.encode('utf-8')
-            if isinstance(element, bytes):
+            elif isinstance(element, bytes):
                 yield element
             elif isinstance(element, Deferred):
                 def cbx(xxx_todo_changeme):
