@@ -89,14 +89,14 @@ def activeChannel(request):
 class MappingResource(object):
     """
     L{inevow.IResource} which looks up segments in a mapping between symbolic
-    names and the files they correspond to. 
+    names and the files they correspond to.
 
     @type mapping: C{dict}
     @ivar mapping: A map between symbolic, requestable names (eg,
     'Nevow.Athena') and C{str} instances which name files containing data
     which should be served in response.
     """
-    
+
 
     def __init__(self, mapping):
         self.mapping = mapping
@@ -395,7 +395,7 @@ class JSDependencies(object):
             self._loadPlugins = False
 
         jsMod = className
-        
+
         while jsMod:
             try:
                 self.mapping[jsMod]
@@ -1360,11 +1360,11 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
     def getImportStan(self, moduleName):
         moduleDef = jsModuleDeclaration(moduleName);
-        
+
         t=tags.script(type='text/javascript')
         r=tags.raw(toBytes(moduleDef))
         t[r]
-        
+
         return [t,
                 tags.script(type='text/javascript', src=flat.flatten(self.getJSModuleURL(moduleName)))]
 
@@ -1530,7 +1530,7 @@ def _rewriteEventHandlerToAttribute(tag):
                 kw={
                     b'handler': json.serialize(unicode(handler, 'ascii')),
                     b'event': json.serialize(unicode(name, 'ascii'))}
-                
+
                 extraAttributes[unicode(name)] = _handlerFormat % kw
                 tag(**extraAttributes)
     return tag
@@ -1688,7 +1688,7 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         # different module from whence nevow.athena and nevow.testutil could
         # import it. -exarkun
         from nevow.testutil import FakeRequest
-        return "".join(_flat.flatten(FakeRequest(), what, False, False))
+        return b"".join((toBytes(i) for i in _flat.flatten(FakeRequest(), what, False, False)))
 
 
     def _structured(self):

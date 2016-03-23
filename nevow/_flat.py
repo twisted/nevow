@@ -409,6 +409,8 @@ def flatten(request, root, inAttribute, inXML):
     """
     stack = [_flatten(request, root, [], None, inAttribute, inXML)]
     while stack:
+        if isinstance(stack[-1], str):
+            yield stack.pop(-1)
         try:
             # In Python 2.5, after an exception, a generator's gi_frame is
             # None.
@@ -424,6 +426,8 @@ def flatten(request, root, inAttribute, inXML):
             roots.append(frame.f_locals['root'])
             raise FlattenerError(e, roots, extract_tb(exc_info()[2]))
         else:
+            if isinstance(element, str):
+                yield element.encode('utf-8')
             if isinstance(element, bytes):
                 yield element
             elif isinstance(element, Deferred):
