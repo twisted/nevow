@@ -1314,7 +1314,9 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
     def callRemote(self, methodName, *args):
         requestID = 's2c%i' % (self._requestIDCounter(),)
-        message = ('call', (bytes(methodName, 'ascii'), requestID, args))
+        if isinstance(methodName, bytes):
+            methodName=methodName.decode('utf-8')
+        message = ('call', (methodName, requestID, args))
         resultD = defer.Deferred()
         self._remoteCalls[requestID] = resultD
         self.addMessage(message)
@@ -1477,9 +1479,9 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
                     result = (
                         'Divmod.Error',
                         ['%s: %s' % (
-                                result.type.__name__.decode('ascii'),
-                                result.getErrorMessage().decode('ascii'))])
-            message = ('respond', (unicode(requestId), success, result))
+                                result.type.__name__,
+                                result.getErrorMessage())])
+            message = ('respond', (str(requestId), success, result))
             self.addMessage(message)
         result.addBoth(_cbCall)
 
@@ -1794,7 +1796,7 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         return self.page.callRemote(
             "Nevow.Athena.callByAthenaID",
             self._athenaID,
-            str(methodName, 'ascii'),
+            methodName,
             varargs)
 
 
