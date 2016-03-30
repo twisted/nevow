@@ -1021,7 +1021,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
     # proxies) then deferreds returned from notifyOnDisconnect() will be
     # errbacked with ConnectionLost, and the LivePage will be removed from the
     # factory's cache, and then likely garbage collected.
-    TRANSPORTLESS_DISCONNECT_TIMEOUT = 30
+    TRANSPORTLESS_DISCONNECT_TIMEOUT = 300
 
     # This is the amount of time that each 'transport' request will remain open
     # to the server.  Although the underlying transport, i.e. the conceptual
