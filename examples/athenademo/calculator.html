@@ -23,6 +23,10 @@
 
         <table class="calculator" id="calculator" n:pattern="CalculatorPattern" n:render="liveElement"
                 xmlns:athena="http://divmod.org/ns/athena/0.7">
+                <div n:render="subcalc"> test </div>
+                
+                <div class="subcalc" id="subcalc" n:pattern="subcalcPattern" n:render="liveElement" xmlns:athena="http://divmod.org/ns/athena/0.7"><athena:handler event="onclick" handler="subclicked" />hello world</div>
+                
             <tr>
                 <td colspan="4" class="output" id="output">0</td>
             </tr>

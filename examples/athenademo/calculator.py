@@ -14,6 +14,7 @@ from twisted.internet import reactor
 from nevow.athena import LivePage, LiveElement, expose
 from nevow.loaders import xmlfile
 from nevow.appserver import NevowSite
+from nevow.page import renderer
 
 # Handy helper for finding external resources nearby.
 sibling = FilePath(__file__).sibling
@@ -69,6 +70,13 @@ class Calculator(object):
         return self.expression
 
 
+class SubCal(LiveElement):
+    docFactory = xmlfile(sibling('calculator.html').path, 'subcalcPattern')
+
+    jsClass = u"CalculatorDemo.Calculator"
+    def __init__(self, par):
+        self.setFragmentParent(par)
+        
 
 class CalculatorElement(LiveElement):
     """
@@ -86,7 +94,7 @@ class CalculatorElement(LiveElement):
     """
     docFactory = xmlfile(sibling('calculator.html').path, 'CalculatorPattern')
 
-    jsClass = "CalculatorDemo.Calculator"
+    jsClass = u"CalculatorDemo.Calculator"
 
     validSymbols = '0123456789/*-=+.C'
 
@@ -94,7 +102,10 @@ class CalculatorElement(LiveElement):
         LiveElement.__init__(self)
         self.calc = calc
 
-
+    @renderer
+    def subcalc(self, *args):
+        return SubCal(self)
+    
     def buttonClicked(self, symbol):
         """
         Accept a symbol from the browser, perform input validation on it,
@@ -135,6 +146,7 @@ class CalculatorParentPage(LivePage):
         c.setFragmentParent(self)
         return c
 
+    
 
 
 def main():

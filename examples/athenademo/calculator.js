@@ -6,6 +6,9 @@ CalculatorDemo.Calculator.methods(
     /**
      * Handle click events on any of the calculator buttons.
      */
+     function subclicked(self, node){
+         alert(10);
+     },
     function buttonClicked(self, node) {
         var symbol = node.value;
         d = self.callRemote("buttonClicked", symbol);
