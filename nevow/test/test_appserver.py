@@ -201,9 +201,11 @@ class Logging(testutil.TestCase):
 
     def renderResource(self, path):
         """@todo: share me"""
-        proto = self.site.buildProtocol(address.IPv4Address('TCP', 'fakeaddress', 42))
-        proto.transport = FakeTransport(address.IPv4Address('TCP', 'fakeaddress1', 42),
-                                        address.IPv4Address('TCP', 'fakeaddress2', 42))
+        proto = self.site.buildProtocol(
+            address.IPv4Address('TCP', 'fakeaddress', 42))
+        proto.makeConnection(
+            FakeTransport(address.IPv4Address('TCP', 'fakeaddress1', 42),
+                          address.IPv4Address('TCP', 'fakeaddress2', 42)))
         proto.dataReceived('\r\n'.join(['GET %s HTTP/1.0' % path,
                                         'ReFeReR: fakerefer',
                                         'uSeR-AgEnt: fakeagent',
