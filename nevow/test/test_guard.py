@@ -52,6 +52,19 @@ class FakeHTTPChannel:
         for data in datas:
             self.write(data)
 
+    def writeHeaders(self, version, code, reason, headers):
+        """
+        Called by L{Request} objects to write a complete set of HTTP headers to
+        a transport.
+        """
+        responseLine = version + b" " + code + b" " + reason + b"\r\n"
+        headerSequence = [responseLine]
+        headerSequence.extend(
+            name + b': ' + value + b"\r\n" for name, value in headers
+        )
+        headerSequence.append(b"\r\n")
+        self.transport.writeSequence(headerSequence)
+
     # Utility for testing.
 
     def makeFakeRequest(self, path, username='',password='',
