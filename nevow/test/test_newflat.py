@@ -5,7 +5,7 @@
 Tests for L{nevow._flat}.
 """
 
-import sys, traceback
+import sys, traceback, StringIO
 
 from zope.interface import implements
 
@@ -25,6 +25,7 @@ from nevow.flat import flatten as oldFlatten, precompile as oldPrecompile
 from nevow.flat.ten import registerFlattener
 from nevow.testutil import FakeRequest
 from nevow.context import WovenContext
+
 
 # Use the co_filename mechanism (instead of the __file__ mechanism) because
 # it is the mechanism traceback formatting uses.  The two do not necessarily
@@ -113,16 +114,14 @@ class FlattenTests(TestCase, FlattenMixin):
     """
     Tests for L{nevow._flat.flatten}.
     """
-    def flatten(self, root, request=None):
+    def flatten(self, root, request=None, inAttribute=False, inXML=False):
         """
         Helper to get a string from L{flatten}.
         """
-        result = []
-        # This isn't something shorter because this way is nicer to look at in
-        # a debugger.
-        for part in flatten(request, root, False, False):
-            result.append(part)
-        return "".join(result)
+        s = StringIO.StringIO()
+        for _ in flatten(request, s.write, root, inAttribute, inXML):
+            pass
+        return s.getvalue()
 
 
     def test_unflattenable(self):
@@ -165,7 +164,8 @@ class FlattenTests(TestCase, FlattenMixin):
         compatibility.
         """
         self.assertStringEqual(
-            "".join(flatten(None, raw('"&<>'), True, True)), '&quot;&<>')
+            self.flatten(raw('"&<>'), inAttribute=True, inXML=True),
+            '&quot;&<>')
 
 
     def test_attributeString(self):
@@ -174,7 +174,7 @@ class FlattenTests(TestCase, FlattenMixin):
         C{True} is passed for C{inAttribute}.
         """
         self.assertStringEqual(
-            "".join(flatten(None, '"&<>', True, False)),
+            self.flatten('"&<>', inAttribute=True, inXML=False),
             "&quot;&amp;&lt;&gt;")
 
 
@@ -184,7 +184,7 @@ class FlattenTests(TestCase, FlattenMixin):
         passed for C{inXML}.
         """
         self.assertStringEqual(
-            "".join(flatten(None, '"&<>', False, True)),
+            self.flatten('"&<>', inAttribute=False, inXML=True),
             '"&amp;&lt;&gt;')
 
 
