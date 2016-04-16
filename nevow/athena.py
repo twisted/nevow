@@ -1,6 +1,6 @@
 # -*- test-case-name: nevow.test.test_athena -*-
 
-import itertools, os, re, warnings
+import itertools, os, re, warnings, StringIO
 
 from zope.interface import implements
 
@@ -1681,7 +1681,10 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         # different module from whence nevow.athena and nevow.testutil could
         # import it. -exarkun
         from nevow.testutil import FakeRequest
-        return "".join(_flat.flatten(FakeRequest(), what, False, False))
+        s = StringIO.StringIO()
+        for _ in _flat.flatten(FakeRequest(), s.write, what, False, False):
+            pass
+        return s.getvalue()
 
 
     def _structured(self):

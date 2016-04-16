@@ -195,7 +195,7 @@ def _getSlotValue(name, slotData):
 
 
 
-def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
+def _flatten(request, write, root, slotData, renderFactory, inAttribute, inXML):
     """
     Make C{root} slightly more flat by yielding all or part of it as strings or
     generators.
@@ -240,57 +240,54 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
         root = str(root)
         if inAttribute:
             root = root.replace('"', '&quot;')
-        yield root
+        write(root)
     elif isinstance(root, Proto):
         root = str(root)
         if root:
             if root in allowSingleton:
-                yield '<' + root + ' />'
+                write('<' + root + ' />')
             else:
-                yield '<' + root + '></' + root + '>'
+                write('<' + root + '></' + root + '>')
     elif isinstance(root, str):
-        yield escapedData(root, inAttribute, inXML)
+        write(escapedData(root, inAttribute, inXML))
     elif isinstance(root, slot):
         slotValue = _getSlotValue(root.name, slotData)
-        yield _flatten(request, slotValue, slotData, renderFactory,
+        yield _flatten(request, write, slotValue, slotData, renderFactory,
                        inAttribute, inXML)
     elif isinstance(root, _PrecompiledSlot):
         slotValue = _getSlotValue(root.name, slotData)
-        yield _flatten(request, slotValue, slotData, renderFactory,
+        yield _flatten(request, write, slotValue, slotData, renderFactory,
                        root.isAttrib, inXML)
     elif isinstance(root, Tag):
         if root.pattern is Unset or root.pattern is None:
             slotData.append(root.slotData)
             if root.render is Unset:
                 if not root.tagName:
-                    for element in _flatten(request, root.children,
-                                            slotData, renderFactory,
-                                            False, True):
-                        yield element
+                    yield _flatten(request, write, root.children,
+                                   slotData, renderFactory,
+                                   False, True)
                 else:
-                    yield '<'
+                    write('<')
                     if isinstance(root.tagName, unicode):
                         tagName = root.tagName.encode('ascii')
                     else:
                         tagName = str(root.tagName)
-                    yield tagName
+                    write(tagName)
                     for k, v in sorted(root.attributes.iteritems()):
                         if isinstance(k, unicode):
                             k = k.encode('ascii')
-                        yield " " + k + "=\""
-                        for element in _flatten(request, v, slotData,
-                                                renderFactory, True, True):
-                            yield element
-                        yield "\""
+                        write(" " + k + "=\"")
+                        yield _flatten(request, write, v, slotData,
+                                       renderFactory, True, True)
+                        write("\"")
                     if root.children or tagName not in allowSingleton:
-                        yield '>'
-                        for element in _flatten(request, root.children,
-                                                slotData, renderFactory,
-                                                False, True):
-                            yield element
-                        yield '</' + tagName + '>'
+                        write('>')
+                        yield _flatten(request, write, root.children,
+                                       slotData, renderFactory,
+                                       False, True)
+                        write('</' + tagName + '>')
                     else:
-                        yield ' />'
+                        write(' />')
             else:
                 if isinstance(root.render, directive):
                     rendererName = root.render.name
@@ -299,27 +296,27 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
                 root = root.clone(False)
                 del root._specials['render']
                 result = renderFactory.renderer(rendererName)(request, root)
-                yield _flatten(request, result, slotData, renderFactory, None,
-                               inXML)
+                yield _flatten(request, write, result, slotData, renderFactory,
+                               None, inXML)
             slotData.pop()
     elif isinstance(root, URL):
-        yield escapedData(str(root), inAttribute, inXML)
+        write(escapedData(str(root), inAttribute, inXML))
     elif isinstance(root, (tuple, list, GeneratorType)):
         for element in root:
-            yield _flatten(request, element, slotData, renderFactory,
+            yield _flatten(request, write, element, slotData, renderFactory,
                            inAttribute, inXML)
     elif isinstance(root, Entity):
-        yield '&#'
-        yield root.num
-        yield ';'
+        write('&#')
+        write(root.num)
+        write(';')
     elif isinstance(root, xml):
         if isinstance(root.content, unicode):
-            yield root.content.encode('utf-8')
+            write(root.content.encode('utf-8'))
         else:
-            yield root.content
+            write(root.content)
     elif isinstance(root, Deferred):
         yield root.addCallback(
-            lambda result: (result, _flatten(request, result, slotData,
+            lambda result: (result, _flatten(request, write, result, slotData,
                                              renderFactory, inAttribute,
                                              inXML)))
     else:
@@ -331,8 +328,8 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
             # This seems like a reasonable thing to me, since a renderable is a
             # piece of Python code.  It should be isolated from this other
             # stuff, which is primarily data. -exarkun
-            yield _flatten(request, renderable.render(request), [], renderable,
-                           inAttribute, inXML)
+            yield _flatten(request, write, renderable.render(request), [],
+                           renderable, inAttribute, inXML)
         else:
             renderer = IRenderer(root, None)
             if renderer is not None:
@@ -346,7 +343,7 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
                     return (result, (str(s) for s in results))
                 flattened.addCallback(cbFlattened)
                 if synchronous:
-                    yield ''.join(map(str, results))
+                    write(''.join(map(str, results)))
                 else:
                     yield flattened
             else:
@@ -354,8 +351,8 @@ def _flatten(request, root, slotData, renderFactory, inAttribute, inXML):
                 if flattener is not None:
                     ctx = _ctxForRequest(request, slotData, renderFactory,
                                          inAttribute)
-                    yield _flatten(request, flattener(root, ctx), slotData,
-                                   renderFactory, False, False)
+                    yield _flatten(request, write, flattener(root, ctx),
+                                   slotData, renderFactory, False, False)
                 else:
                     raise UnsupportedType(root)
 
@@ -381,7 +378,7 @@ class _OldRendererFactory(object):
 
 
 
-def flatten(request, root, inAttribute, inXML):
+def flatten(request, write, root, inAttribute, inXML):
     """
     Make C{root} into an iterable of C{str} and L{Deferred}.
 
@@ -406,7 +403,7 @@ def flatten(request, root, inAttribute, inXML):
         flattening C{root}.  The returned iterator must not be iterated again
         until the L{Deferred} is called back.
     """
-    stack = [_flatten(request, root, [], None, inAttribute, inXML)]
+    stack = [_flatten(request, write, root, [], None, inAttribute, inXML)]
     while stack:
         try:
             # In Python 2.5, after an exception, a generator's gi_frame is
@@ -424,7 +421,7 @@ def flatten(request, root, inAttribute, inXML):
             raise FlattenerError(e, roots, extract_tb(exc_info()[2]))
         else:
             if type(element) is str:
-                yield element
+                write(element)
             elif isinstance(element, Deferred):
                 def cbx((original, toFlatten)):
                     stack.append(toFlatten)
@@ -524,6 +521,6 @@ def deferflatten(request, root, inAttribute, inXML, write):
         an unexpected exception occurs.
     """
     result = Deferred()
-    state = flatten(request, root, inAttribute, inXML)
+    state = flatten(request, write, root, inAttribute, inXML)
     _flattensome(state, write, _schedule, result)
     return result

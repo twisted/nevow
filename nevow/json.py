@@ -293,11 +293,12 @@ def _serialize(obj, w, seen):
     elif isinstance(obj, (athena.LiveFragment, athena.LiveElement)):
         _serialize(obj._structured(), w, seen)
     elif isinstance(obj, (rend.Fragment, page.Element)):
+        def _w(s):
+            w(stringEncode(s.decode('utf-8')))
         wrapper = tags.div(xmlns="http://www.w3.org/1999/xhtml")
         w('"')
-        w(stringEncode(
-                "".join(_flat.flatten(None, wrapper[obj],
-                                      False, False)).decode('utf-8')))
+        for _ in _flat.flatten(None, _w, wrapper[obj], False, False):
+            pass
         w('"')
     else:
         transportable = IAthenaTransportable(obj, None)
