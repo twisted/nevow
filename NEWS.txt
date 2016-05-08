@@ -1,3 +1,8 @@
+0.14.0 (2016-05-08):
+  - Fixed compatibility with Twisted 16.1.
+  - nevow.page rendering speed was increased by about 7% on CPython (2.7.11)
+    and 58% on PyPy (5.0.1).
+
 0.13.0 (2016-02-16):
   - nevow.appserver.Request.headers and received_headers are now deprecated to
     follow suit with Twisted; older versions of Nevow will not be compatible
