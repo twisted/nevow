@@ -1178,8 +1178,8 @@ Nevow.Athena.Widget.methods(
  * http://www.bazon.net/mishoo/articles.epl?art_id=824
  */
 Nevow.Athena.Widget._makeEventHandler = function (domEventName, methodName) {
-    return function () {
-        return Nevow.Athena.Widget.handleEvent(this, domEventName, methodName);
+    return function (e) {
+        return Nevow.Athena.Widget.handleEvent(this, domEventName, methodName, e);
     };
 };
 
@@ -1216,7 +1216,7 @@ Nevow.Athena.Widget.dispatchEvent = function (widget, eventName, handlerName, ca
  * queue to allow multiple messages from the event handler to be batched up
  * into a single request.
  */
-Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerName) {
+Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerName, event) {
     var widget = Nevow.Athena.Widget.get(node);
     var method = widget[handlerName];
     var result = false;
@@ -1226,7 +1226,7 @@ Nevow.Athena.Widget.handleEvent = function handleEvent(node, eventName, handlerN
         result = Nevow.Athena.Widget.dispatchEvent(
             widget, eventName, handlerName,
             function() {
-                return method.call(widget, node);
+                return method.call(widget, node, event);
             });
     }
     return result;
