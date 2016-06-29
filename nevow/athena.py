@@ -12,7 +12,7 @@ from twisted import plugin
 from nevow import inevow, plugins, flat, _flat
 from nevow import rend, loaders, static
 from nevow import json, util, tags, guard, stan
-from nevow.util import CachedFile, unicode, toBytes
+from nevow.util import CachedFile, unicode, toBytes, getEncoding
 from nevow.useragent import UserAgent, browsers
 from nevow.url import here, URL
 
@@ -185,7 +185,7 @@ class AthenaModule(object):
         """
         Calculate our dependencies given the path to our source.
         """
-        depgen = self._extractImports(open(jsFile, 'rU'))
+        depgen = self._extractImports(open(jsFile, 'rU', encoding=getEncoding(jsFile)))
         return self.packageDeps + list(dict.fromkeys(depgen).keys())
 
 
@@ -1513,7 +1513,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
 
 handler = stan.Proto('athena:handler')
-_handlerFormat = b"return Nevow.Athena.Widget.handleEvent(this, %(event)s, %(handler)s, event);"
+_handlerFormat = b"return Nevow.Athena.Widget.handleEvent(this, %(event)s, %(handler)s);"
 
 def _rewriteEventHandlerToAttribute(tag):
     """
