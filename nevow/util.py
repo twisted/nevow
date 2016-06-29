@@ -244,3 +244,12 @@ class CachedFile(object):
             self._mtime = currentTime
 
         return self._cachedObj
+        
+        
+def getEncoding(path):
+     with subprocess.Popen(['file', '-b', '--mime-encoding', path], stdout=subprocess.PIPE) as t:
+         t.wait()
+         encoding = t.stdout.read().strip().decode('charmap')
+         if encoding == 'binary':
+             encoding = 'charmap'
+         return encoding
