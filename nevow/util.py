@@ -1,7 +1,7 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-import inspect, os.path
+import inspect, os.path, subprocess
 
 def toBytes(obj, codec='utf-8'):
     if isinstance(obj, str):
