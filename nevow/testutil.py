@@ -27,6 +27,13 @@ from formless import iformless
 from nevow import inevow, context, athena, loaders, tags, appserver
 from nevow.jsutil import findJavascriptInterpreter, generateTestScript
 
+try:
+    from twisted.web.test.requesthelper import DummyChannel
+except ImportError:
+    class DummyChannel(object):
+        pass
+
+
 class FakeChannel:
     def __init__(self, site):
         self.site = site
@@ -389,7 +396,7 @@ def renderPage(res, topLevelContext=context.WebContext,
     ctx = topLevelContext(tag=res)
     ctx.remember(req, inevow.IRequest)
 
-    render = appserver.NevowRequest(None, True).gotPageContext
+    render = appserver.NevowRequest(DummyChannel(), True).gotPageContext
 
     result = render(ctx)
     result.addCallback(lambda x: req.accumulator)

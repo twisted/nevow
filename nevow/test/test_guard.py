@@ -65,6 +65,9 @@ class FakeHTTPChannel:
         headerSequence.append(b"\r\n")
         self.transport.writeSequence(headerSequence)
 
+    def isSecure(self):
+        return False
+
     # Utility for testing.
 
     def makeFakeRequest(self, path, username='',password='',
