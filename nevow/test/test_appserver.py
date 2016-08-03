@@ -12,6 +12,7 @@ from shlex import split
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
+from twisted.web.test.requesthelper import DummyChannel
 
 from nevow import inevow
 from nevow import appserver
@@ -24,11 +25,6 @@ from nevow.context import RequestContext
 from nevow.rend import Page
 from nevow.testutil import FakeRequest
 
-try:
-    from twisted.web.test.requesthelper import DummyChannel
-except ImportError:
-    class DummyChannel(object):
-        pass
 
 class Render:
     implements(inevow.IResource)

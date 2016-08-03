@@ -21,17 +21,12 @@ from twisted.internet import defer
 from twisted.web import http
 from twisted.protocols.basic import LineReceiver
 from twisted.web.http_headers import Headers
+from twisted.web.test.requesthelper import DummyChannel
 
 from formless import iformless
 
 from nevow import inevow, context, athena, loaders, tags, appserver
 from nevow.jsutil import findJavascriptInterpreter, generateTestScript
-
-try:
-    from twisted.web.test.requesthelper import DummyChannel
-except ImportError:
-    class DummyChannel(object):
-        pass
 
 
 class FakeChannel:
