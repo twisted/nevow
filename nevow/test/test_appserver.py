@@ -12,6 +12,7 @@ from shlex import split
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
+from twisted.web.test.requesthelper import DummyChannel
 
 from nevow import inevow
 from nevow import appserver
@@ -23,6 +24,7 @@ from nevow.appserver import NevowSite
 from nevow.context import RequestContext
 from nevow.rend import Page
 from nevow.testutil import FakeRequest
+
 
 class Render:
     implements(inevow.IResource)
@@ -101,7 +103,9 @@ class TestLookup(testutil.TestCase):
 class TestSiteAndRequest(testutil.TestCase):
     def renderResource(self, resource, path):
         s = appserver.NevowSite(resource)
-        r = appserver.NevowRequest(testutil.FakeChannel(s), True)
+        channel = DummyChannel()
+        channel.site = s
+        r = appserver.NevowRequest(channel, True)
         r.path = path
         return r.process()
 
@@ -143,7 +147,9 @@ class TestSiteAndRequest(testutil.TestCase):
             def renderHTTP(self, ctx):
                 return rendering
         site = appserver.NevowSite(Res())
-        request = appserver.NevowRequest(testutil.FakeChannel(site), True)
+        channel = DummyChannel()
+        channel.site = site
+        request = appserver.NevowRequest(channel, True)
         request.connectionLost(Exception("Just Testing"))
         rendering.callback(b"finished")
 
@@ -161,8 +167,9 @@ class TestSiteAndRequest(testutil.TestCase):
                 return b''
 
         s = appserver.NevowSite(Res())
-        r = appserver.NevowRequest(
-            testutil.FakeChannel(s), True)
+        channel = DummyChannel()
+        channel.site = s
+        r = appserver.NevowRequest(channel, True)
         r.method = b'POST'
         r.path = b'/'
         r.content = StringIO(b'foo=bar')
