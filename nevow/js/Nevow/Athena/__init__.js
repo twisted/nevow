@@ -492,7 +492,7 @@ Nevow.Athena.ReliableMessageDelivery.methods(
         for (var i = 0; i < self.requests.length; ++i) {
             self.requests[i].abort();
         }
-        self.requests = null;
+        self.requests = [];
         self.page.connectionLost('Connection closed by remote host');
     },
 
