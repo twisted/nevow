@@ -105,6 +105,17 @@ Nevow.Athena.PageWidget.methods(
         var d = self.remoteCalls[responseId];
         delete self.remoteCalls[responseId];
 
+        if (d === undefined) {
+            // If the transport is running then something strange has happened,
+            // otherwise just do nothing.
+            if (self.deliveryChannel.running) {
+                Divmod.msg(
+                    'Received response to unknown or already-responded call: ' +
+                        responseId);
+            }
+            return;
+        }
+
         if (success) {
             d.callback(result);
         } else {
