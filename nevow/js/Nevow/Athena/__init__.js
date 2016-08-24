@@ -109,7 +109,9 @@ Nevow.Athena.PageWidget.methods(
             // If the transport is running then something strange has happened,
             // otherwise just do nothing.
             if (self.deliveryChannel.running) {
-                Divmod.msg('Received response to missing call: ' + responseId);
+                Divmod.msg(
+                    'Received response to unknown or already-responded call: ' +
+                        responseId);
             }
             return;
         }
