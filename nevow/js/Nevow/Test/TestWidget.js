@@ -218,6 +218,15 @@ Nevow.Test.TestWidget.PageWidgetTests.methods(
     },
 
     /**
+     * Trying to respond to a missing call doesn't explode.
+     */
+    function test_respondMissingCall(self) {
+        var OPAQUE_ID = "opaque test remote call id";
+        var RESULT = "opaque test result";
+        self.page.action_respond(OPAQUE_ID, true, RESULT);
+    },
+
+    /**
      * Test that the 'noop' action does nothing, so the server can ping us.
      */
     function test_noopAction(self) {
