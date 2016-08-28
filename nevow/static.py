@@ -131,6 +131,7 @@ def loadMimeTypes(mimetype_locations=['/etc/mime.types']):
             '.patch': 'text/plain',
             '.pjpeg': 'image/pjpeg',
             '.tac':   'text/x-python',
+            '.svg':   'image/svg+xml',
         }
     )
     # Users can override these mime-types by loading them out configuration
