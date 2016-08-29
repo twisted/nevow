@@ -1,3 +1,30 @@
+Nevow 0.14.1 (2016-08-29)
+=========================
+
+Features
+--------
+
+- Nevow will now correctly map the MIME type of SVG files even if the
+  platform registry does not have such a mapping. (#88)
+- Athena no longer logs widget instantiation on initial page load.
+  (#92)
+
+Bugfixes
+--------
+
+- Nevow's test suite is now compatible with Twisted 16.3. (#82)
+- Athena will no longer cause spurious errors resulting from page
+  disconnection. (#84)
+- Athena will now ignore responses to already-responded remote calls
+  during page shutdown. (#86)
+
+Improved Documentation
+----------------------
+
+- Nevow's NEWS file is now generated from news fragments by towncrier.
+  (#81)
+
+
 0.14.0 (2016-05-08):
   - Fixed compatibility with Twisted 16.1.
   - nevow.page rendering speed was increased by about 7% on CPython (2.7.11)
