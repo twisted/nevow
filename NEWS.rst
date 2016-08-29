@@ -1,3 +1,11 @@
+Nevow 0.14.2 (2016-08-29)
+=========================
+
+Re-release of 0.14.2 due to a release engineering mistake.
+
+No changes other than the version number.
+
+
 Nevow 0.14.1 (2016-08-29)
 =========================
 
