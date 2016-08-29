@@ -1416,9 +1416,7 @@ Nevow.Athena.IntrospectionWidget.methods(
  * Instantiate Athena Widgets.
  */
 Nevow.Athena.Widget._instantiateOneWidget = function(cls, node) {
-    Divmod.debug("widget", "Found Widget class " + cls + ", instantiating.");
     var inst = cls.get(node);
-    Divmod.debug("widget", "Widget class " + cls + " instantiated.");
     try {
         var widgetParent = Nevow.Athena.Widget.get(node.parentNode);
         widgetParent.addChildWidget(inst);
@@ -1428,7 +1426,6 @@ Nevow.Athena.Widget._instantiateOneWidget = function(cls, node) {
     }
     if (inst.loaded != undefined) {
         inst.loaded();
-        Divmod.debug("widget", "Widget class " + cls + " loaded.");
     }
     if (inst.nodeInserted != undefined) {
         inst.nodeInserted();
