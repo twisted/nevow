@@ -78,10 +78,10 @@ def staticHTML(someString):
 
 
 def addSlash(request):
-    return "http%s://%s%s/" % (
-        request.isSecure() and 's' or '',
-        request.getHeader("host"),
-        (string.split(request.uri,'?')[0]))
+    return b"http%s://%s%s/" % (
+        request.isSecure() and b's' or b'',
+        request.getHeader("host").encode('ascii'),
+        (bytes.split(request.uri, b'?')[0]))
 
 class Registry(components.Componentized):
     """
@@ -289,7 +289,7 @@ class File:
         # size is the length of the part actually transmitted
         fsize = size = self.getFileSize()
 
-        request.setHeader(b'accept-ranges','bytes')
+        request.setHeader(b'accept-ranges', 'bytes')
 
         if self.type:
             request.setHeader(b'content-type', self.type)
@@ -313,10 +313,10 @@ class File:
 
             if range is not None:
                 # This is a request for partial data...
-                bytesrange = string.split(range, '=')
+                bytesrange = range.split('=')
                 assert bytesrange[0] == 'bytes',\
                        "Syntactically invalid http range header!"
-                start, end = string.split(bytesrange[1],'-')
+                start, end = bytesrange[1].split('-')
                 if start:
                     f.seek(int(start))
                 if end:
@@ -324,8 +324,8 @@ class File:
                 else:
                     end = fsize-1
                 request.setResponseCode(http.PARTIAL_CONTENT)
-                request.setHeader(b'content-range',"bytes %s-%s/%s" % (
-                    str(start), str(end), str(fsize)))
+                request.setHeader(b'content-range', "bytes %s-%i/%i" % (
+                    start, end, fsize))
                 #content-length should be the actual size of the stuff we're
                 #sending, not the full size of the on-server entity.
                 size = 1 + end - int(start)

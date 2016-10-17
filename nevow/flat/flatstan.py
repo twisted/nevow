@@ -229,7 +229,8 @@ def FunctionSerializer(original, context, nocontextfun=FunctionSerializer_nocont
         try:
             nocontext = nocontextfun(original)
             if nocontext is True:
-                if original.__code__.co_argcount==3:
+                if hasattr(original, '__code__') and (original.__code__.co_argcount == 3 or (
+                            original.__code__.co_argcount == 2 and original.__code__.co_varnames[0] != 'self')):
                     result = original(context, data)
                 else:
                     result = original(data)

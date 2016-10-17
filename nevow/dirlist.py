@@ -80,7 +80,7 @@ class DirectoryLister(rend.Page):
 
     def data_header(self, context, data):
         request = context.locate(inevow.IRequest)
-        return "Directory listing for %s" % urllib.parse.unquote(request.uri)
+        return "Directory listing for %s" % urllib.parse.unquote(request.uri.decode('ascii'))
 
     def render_tableLink(self, context, data):
         return tags.a(href=data['link'])[data['linktext']]
