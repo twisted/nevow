@@ -308,7 +308,7 @@ class File:
             else:
                 raise
 
-        if request.setLastModified(self.fp.getmtime()) is http.CACHED:
+        if request.setLastModified(self.fp.getModificationTime()) is http.CACHED:
             return ''
 
         try:
