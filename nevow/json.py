@@ -294,10 +294,8 @@ def _serialize(obj, w, seen):
                 w(',')
         w('}')
     elif isinstance(obj, (athena.LiveFragment, athena.LiveElement)):
-        print(297, obj)
         _serialize(obj._structured(), w, seen)
     elif isinstance(obj, (rend.Fragment, page.Element)):
-        print(299, obj)
         wrapper = tags.div(xmlns="http://www.w3.org/1999/xhtml")
         w('"')
         w(stringEncode(
