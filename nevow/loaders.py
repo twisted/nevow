@@ -24,12 +24,14 @@ import warnings
 import os.path
 from zope.interface import implementer
 
+from twisted.python.filepath import FilePath
 from twisted.python.reflect import getClass
 
 from nevow import inevow
 from nevow import flat
 from nevow.flat import flatsax
 from nevow.util import CachedFile
+
 
 @implementer(inevow.IDocFactory)
 class stan(object):
@@ -39,13 +41,6 @@ class stan(object):
     stan = None
     pattern = None
     _cache = None
-
-    def __init__(self, stan=None, pattern=None):
-        if stan is not None:
-            self.stan = stan
-        if pattern is not None:
-            self.pattern = pattern
-
 
     def load(self, ctx=None, preprocessors=()):
         if self._cache is None:
@@ -57,6 +52,13 @@ class stan(object):
                 stan = inevow.IQ(stan).onePattern(self.pattern)
             self._cache = stan
         return self._cache
+
+
+    def __init__(self, stan=None, pattern=None):
+        if stan is not None:
+            self.stan = stan
+        if pattern is not None:
+            self.pattern = pattern
 
 
 
@@ -108,10 +110,14 @@ class xmlfile(object):
     def __init__(self, template=None, pattern=None, templateDir=None, ignoreDocType=None, ignoreComment=None):
         self._cache = {}
         if template is not None:
+            if isinstance(template, FilePath):
+                template = template.path
             self.template = template
         if pattern is not None:
             self.pattern = pattern
         if templateDir is not None:
+            if isinstance(templateDir, FilePath):
+                templateDir = templateDir.path
             self.templateDir = templateDir
         if ignoreDocType is not None:
             self.ignoreDocType = ignoreDocType
