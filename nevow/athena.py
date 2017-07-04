@@ -36,7 +36,6 @@ expose = util.Expose(
     """)
 
 
-
 class OrphanedFragment(Exception):
     """
     Raised when an operation requiring a parent is attempted on an unattached
@@ -44,13 +43,11 @@ class OrphanedFragment(Exception):
     """
 
 
-
 class LivePageError(Exception):
     """
     Base exception for LivePage errors.
     """
     jsClass = 'Divmod.Error'
-
 
 
 class NoSuchMethod(LivePageError):
@@ -64,7 +61,6 @@ class NoSuchMethod(LivePageError):
         self.objectID = objectID
         self.methodName = methodName
         LivePageError.__init__(self, objectID, methodName)
-
 
 
 def neverEverCache(request):
@@ -97,14 +93,11 @@ class MappingResource(object):
     which should be served in response.
     """
 
-
     def __init__(self, mapping):
         self.mapping = mapping
 
-
     def renderHTTP(self, ctx):
         return rend.FourOhFour()
-
 
     def resourceFactory(self, fileName):
         """
@@ -113,7 +106,6 @@ class MappingResource(object):
         """
         return static.File(fileName)
 
-
     def locateChild(self, ctx, segments):
         try:
             impl = self.mapping[segments[0]]
@@ -121,7 +113,6 @@ class MappingResource(object):
             return rend.NotFound
         else:
             return self.resourceFactory(impl), []
-
 
 
 def _dependencyOrdered(coll, memo):
@@ -133,7 +124,6 @@ def _dependencyOrdered(coll, memo):
     @param memo: A dictionary mapping module names to their dependencies that
                  will be used as a mutable cache.
     """
-
 
 
 class AthenaModule(object):
@@ -155,8 +145,8 @@ class AthenaModule(object):
             return cls._modules[name]
         mod = cls._modules[name] = cls(name, mapping)
         return mod
-    getOrCreate = classmethod(getOrCreate)
 
+    getOrCreate = classmethod(getOrCreate)
 
     def __init__(self, name, mapping):
         self.name = name
@@ -168,18 +158,15 @@ class AthenaModule(object):
 
         self._cache = CachedFile(self.mapping[self.name], self._getDeps)
 
-
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.name,)
 
-
     _importExpression = re.compile('^// import (.+)$', re.MULTILINE)
+
     def _extractImports(self, fileObj):
         s = fileObj.read()
         for m in self._importExpression.finditer(s):
             yield self.getOrCreate(unicode(m.group(1), 'ascii'), self.mapping)
-
-
 
     def _getDeps(self, jsFile):
         """
@@ -188,13 +175,11 @@ class AthenaModule(object):
         depgen = self._extractImports(open(jsFile, 'rU', encoding=getEncoding(jsFile)))
         return self.packageDeps + list(dict.fromkeys(depgen).keys())
 
-
     def dependencies(self):
         """
         Return a list of names of other JavaScript modules we depend on.
         """
         return self._cache.load()
-
 
     def allDependencies(self, memo=None):
         """
@@ -235,13 +220,11 @@ class AthenaModule(object):
         return ordered
 
 
-
 class JSModule(AthenaModule):
     """
     L{AthenaModule} subclass for dealing with Javascript modules.
     """
-    _modules= {}
-
+    _modules = {}
 
 
 class CSSModule(AthenaModule):
@@ -263,7 +246,6 @@ class JSPackage(object):
 
     def __init__(self, mapping):
         self.mapping = mapping
-
 
 
 def _collectPackageBelow(baseDir, extension):
@@ -344,7 +326,6 @@ class AutoCSSPackage(object):
         self.mapping = _collectPackageBelow(baseDir, 'css')
 
 
-
 def allJavascriptPackages():
     """
     Return a dictionary mapping JavaScript module names to local filenames
@@ -358,7 +339,6 @@ def allJavascriptPackages():
     return d
 
 
-
 def allCSSPackages():
     """
     Like L{allJavascriptPackages}, but for CSS packages.
@@ -367,7 +347,6 @@ def allCSSPackages():
     for p in plugin.getPlugIns(inevow.ICSSPackage, plugins):
         d.update(p.mapping)
     return d
-
 
 
 class JSDependencies(object):
@@ -384,7 +363,6 @@ class JSDependencies(object):
             self._loadPlugins = True
         else:
             self.mapping = mapping
-
 
     def getModuleForName(self, className):
         """
@@ -406,17 +384,18 @@ class JSDependencies(object):
             else:
                 return JSModule.getOrCreate(jsMod, self.mapping)
         raise RuntimeError("Unknown class: %r" % (className,))
+
     getModuleForClass = getModuleForName
 
 
 jsDeps = JSDependencies()
 
 
-
 class CSSRegistry(object):
     """
     Keeps track of a set of CSS modules.
     """
+
     def __init__(self, mapping=None):
         if mapping is None:
             mapping = {}
@@ -425,7 +404,6 @@ class CSSRegistry(object):
             loadPlugins = False
         self.mapping = mapping
         self._loadPlugins = loadPlugins
-
 
     def getModuleForName(self, moduleName):
         """
@@ -444,8 +422,8 @@ class CSSRegistry(object):
             raise RuntimeError('Unknown CSS module: %r' % (moduleName,))
         return CSSModule.getOrCreate(moduleName, self.mapping)
 
-_theCSSRegistry = CSSRegistry()
 
+_theCSSRegistry = CSSRegistry()
 
 
 class JSException(Exception):
@@ -454,21 +432,21 @@ class JSException(Exception):
     """
 
 
-
 class JSCode(object):
     """
     Class for mock code objects in mock JS frames.
     """
+
     def __init__(self, name, filename):
         self.co_name = name
         self.co_filename = filename
-
 
 
 class JSFrame(object):
     """
     Class for mock frame objects in JS client-side traceback wrappers.
     """
+
     def __init__(self, func, fname, ln):
         self.f_back = None
         self.f_locals = {}
@@ -477,17 +455,16 @@ class JSFrame(object):
         self.f_lineno = ln
 
 
-
 class JSTraceback(object):
     """
     Class for mock traceback objects representing client-side JavaScript
     tracebacks.
     """
+
     def __init__(self, frame, ln):
         self.tb_frame = frame
         self.tb_lineno = ln
         self.tb_next = None
-
 
 
 def parseStack(stack):
@@ -513,7 +490,6 @@ def parseStack(stack):
     return frames
 
 
-
 def buildTraceback(frames, modules):
     """
     Build a chain of mock traceback objects from a serialized Error (or other
@@ -533,7 +509,6 @@ def buildTraceback(frames, modules):
     return first
 
 
-
 def getJSFailure(exc, modules):
     """
     Convert a serialized client-side exception to a Failure.
@@ -549,15 +524,12 @@ def getJSFailure(exc, modules):
 
 @implementer(inevow.IResource)
 class LivePageTransport(object):
-
     def __init__(self, messageDeliverer, useActiveChannels=True):
         self.messageDeliverer = messageDeliverer
         self.useActiveChannels = useActiveChannels
 
-
     def locateChild(self, ctx, segments):
         return rend.NotFound
-
 
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
@@ -572,7 +544,6 @@ class LivePageTransport(object):
         response.addCallback(json.serialize)
         req.notifyFinish().addErrback(lambda err: self.messageDeliverer._unregisterDeferredAsOutputChannel(response))
         return response
-
 
 
 class LivePageFactory:
@@ -618,6 +589,7 @@ class ConnectionLost(Exception):
 CLOSE = 'close'
 UNLOAD = 'unload'
 
+
 class ReliableMessageDelivery(object):
     """
     A reliable message delivery abstraction over a possibly unreliable transport.
@@ -653,11 +625,12 @@ class ReliableMessageDelivery(object):
     _stopped = False
     _connected = False
 
-    outgoingAck = -1            # sequence number which has been acknowledged
-                                # by this end of the connection.
+    outgoingAck = -1  # sequence number which has been acknowledged
+    # by this end of the connection.
 
-    outgoingSeq = -1            # sequence number of the next message to be
-                                # added to the outgoing queue.
+    outgoingSeq = -1  # sequence number of the next message to be
+
+    # added to the outgoing queue.
 
     def __init__(self,
                  livePage,
@@ -678,16 +651,13 @@ class ReliableMessageDelivery(object):
         self.connectionMade = connectionMade
         self.connectionLost = connectionLost
 
-
     def _connectTimedOut(self):
         self._transportlessTimeoutCall = None
         self.connectionLost(failure.Failure(ConnectFailed("Timeout")))
 
-
     def _transportlessTimedOut(self):
         self._transportlessTimeoutCall = None
         self.connectionLost(failure.Failure(ConnectionLost("Timeout")))
-
 
     def _idleTimedOut(self):
         output, timeout = self.outputs.pop(0)
@@ -695,15 +665,12 @@ class ReliableMessageDelivery(object):
             self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
         output([self.outgoingAck, []])
 
-
     def _sendMessagesToOutput(self, output):
         log.msg(athena_send_messages=True, count=len(self.messages))
         output([self.outgoingAck, self.messages])
 
-
     def pause(self):
         self._paused += 1
-
 
     def _trySendMessages(self):
         """
@@ -717,7 +684,6 @@ class ReliableMessageDelivery(object):
                 self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
             self._sendMessagesToOutput(output)
 
-
     def unpause(self):
         """
         Decrement the pause counter and if the resulting state is not still
@@ -727,7 +693,6 @@ class ReliableMessageDelivery(object):
         if self._paused == 0:
             self._trySendMessages()
             self._flushOutputs()
-
 
     def addMessage(self, msg):
         if self._stopped:
@@ -742,7 +707,6 @@ class ReliableMessageDelivery(object):
                 self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
             self._sendMessagesToOutput(output)
 
-
     def addOutput(self, output):
         if self._transportlessTimeoutCall is not None:
             self._transportlessTimeoutCall.cancel()
@@ -755,7 +719,6 @@ class ReliableMessageDelivery(object):
                 self._sendMessagesToOutput(output)
             else:
                 self.outputs.append((output, self.scheduler(self.idleTimeout, self._idleTimedOut)))
-
 
     def close(self):
         assert not self._stopped, "Cannot multiply stop ReliableMessageDelivery"
@@ -770,7 +733,6 @@ class ReliableMessageDelivery(object):
             self._transportlessTimeoutCall.cancel()
             self._transportlessTimeoutCall = None
 
-
     def _unregisterDeferredAsOutputChannel(self, deferred):
         for i in range(len(self.outputs)):
             if self.outputs[i][0].__self__ is deferred:
@@ -781,7 +743,6 @@ class ReliableMessageDelivery(object):
             return
         if not self.outputs:
             self._transportlessTimeoutCall = self.scheduler(self.transportlessTimeout, self._transportlessTimedOut)
-
 
     def _createOutputDeferred(self):
         """
@@ -795,7 +756,6 @@ class ReliableMessageDelivery(object):
             self._trySendMessages()
             self._flushOutputs()
         return d
-
 
     def _flushOutputs(self):
         """
@@ -813,7 +773,6 @@ class ReliableMessageDelivery(object):
             output, timeout = self.outputs.pop(0)
             timeout.cancel()
             output([self.outgoingAck, []])
-
 
     def basketCaseReceived(self, ctx, basketCase):
         """
@@ -885,6 +844,7 @@ BOOTSTRAP_NODE_ID = 'athena:bootstrap'
 BOOTSTRAP_STATEMENT = ("eval(document.getElementById('" + BOOTSTRAP_NODE_ID +
                        "').getAttribute('payload'));")
 
+
 class _HasJSClass(object):
     """
     A utility to share some code between the L{LivePage}, L{LiveElement}, and
@@ -902,7 +862,6 @@ class _HasJSClass(object):
         """
         return jsDeps.getModuleForClass(self.jsClass)
 
-
     def _getRequiredModules(self, memo):
         """
         Return a list of two-tuples containing module names and URLs at which
@@ -917,7 +876,6 @@ class _HasJSClass(object):
             if self.page._shouldInclude(dep.name)]
 
 
-
 def jsModuleDeclaration(name):
     """
     Generate Javascript for a module declaration.
@@ -928,7 +886,6 @@ def jsModuleDeclaration(name):
     return '%s%s = {"__name__": "%s"};' % (var, name, name)
 
 
-
 class _HasCSSModule(object):
     """
     C{cssModule}-handling code common to L{LivePage}, L{LiveElement} and
@@ -937,6 +894,7 @@ class _HasCSSModule(object):
     @ivar cssModule: A CSS module name.
     @type cssModule: C{unicode} or C{NoneType}
     """
+
     def _getRequiredCSSModules(self, memo):
         """
         Return a list of CSS module URLs.
@@ -951,7 +909,6 @@ class _HasCSSModule(object):
             for dep in module.allDependencies(memo)
             if self.page._shouldIncludeCSSModule(dep.name)]
 
-
     def getStylesheetStan(self, modules):
         """
         Get some stan which will include the given modules.
@@ -964,7 +921,6 @@ class _HasCSSModule(object):
             tags.link(
                 rel='stylesheet', type='text/css', href=url)
             for url in modules]
-
 
 
 class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
@@ -1048,7 +1004,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             tags.body[
                 'Your browser is not supported by the Athena toolkit.']])
 
-
     def __init__(self, iface=None, rootObject=None, jsModules=None,
                  jsModuleRoot=None, transportRoot=None, cssModules=None,
                  cssModuleRoot=None, *a, **kw):
@@ -1074,13 +1029,11 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         self._jsDepsMemo = {}
         self._cssDepsMemo = {}
 
-
     def _shouldInclude(self, moduleName):
         if moduleName not in self._includedModules:
             self._includedModules.append(moduleName)
             return True
         return False
-
 
     def _shouldIncludeCSSModule(self, moduleName):
         """
@@ -1095,7 +1048,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             return True
         return False
 
-
     # Child lookup may be dependent on the application state
     # represented by a LivePage.  In this case, it is preferable to
     # dispatch child lookup on the same LivePage instance as performed
@@ -1109,10 +1061,8 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         else:
             return client, segments[1:]
 
-
     def child___athena_private__(self, ctx):
         return _thePrivateAthenaResource
-
 
     # A note on timeout/disconnect logic: whenever a live client goes from some
     # transports to no transports, a timer starts; whenever it goes from no
@@ -1152,7 +1102,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
         self.addLocalObject(self)
 
-
     def _supportedBrowser(self, request):
         """
         Determine whether a known-unsupported browser is making a request.
@@ -1175,7 +1124,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             return agent.version >= requiredVersion
         return True
 
-
     def renderUnsupported(self, ctx):
         """
         Render a notification to the user that his user agent is
@@ -1186,7 +1134,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         @return: Something renderable (same behavior as L{renderHTTP})
         """
         return flat.flatten(self.unsupportedBrowserLoader.load())
-
 
     def renderHTTP(self, ctx):
         """
@@ -1244,7 +1191,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             return json.serialize(self.clientID.decode("ascii"))
         return rend.Page.renderHTTP(self, ctx)
 
-
     def _connectionMade(self):
         """
         Invoke connectionMade on all attached widgets.
@@ -1252,7 +1198,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         for widget in list(self._localObjects.values()):
             widget.connectionMade()
         self._didConnect = True
-
 
     def _disconnected(self, reason):
         """
@@ -1278,12 +1223,10 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
                     widget.connectionLost(reason)
             self.factory.removeClient(self.clientID)
 
-
     def connectionMade(self):
         """
         Callback invoked when the transport is first connected.
         """
-
 
     def connectionLost(self, reason):
         """
@@ -1294,12 +1237,10 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         Override this.
         """
 
-
     def addLocalObject(self, obj):
         objID = self._localObjectIDCounter()
         self._localObjects[objID] = obj
         return objID
-
 
     def removeLocalObject(self, objID):
         """
@@ -1311,21 +1252,18 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         """
         del self._localObjects[objID]
 
-
     def callRemote(self, methodName, *args):
         requestID = 's2c%i' % (self._requestIDCounter(),)
         if isinstance(methodName, bytes):
-            methodName=methodName.decode('utf-8')
+            methodName = methodName.decode('utf-8')
         message = ('call', (methodName, requestID, args))
         resultD = defer.Deferred()
         self._remoteCalls[requestID] = resultD
         self.addMessage(message)
         return resultD
 
-
     def addMessage(self, message):
         self._messageDeliverer.addMessage(message)
-
 
     def notifyOnDisconnect(self):
         """
@@ -1341,10 +1279,8 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         self._disconnectNotifications.append(d)
         return d
 
-
     def getJSModuleURL(self, moduleName):
         return self.jsModuleRoot.child(moduleName)
-
 
     def getCSSModuleURL(self, moduleName):
         """
@@ -1357,17 +1293,15 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         """
         return self.cssModuleRoot.child(moduleName)
 
-
     def getImportStan(self, moduleName):
         moduleDef = jsModuleDeclaration(moduleName);
 
-        t=tags.script(type='text/javascript')
-        r=tags.raw(toBytes(moduleDef))
+        t = tags.script(type='text/javascript')
+        r = tags.raw(toBytes(moduleDef))
         t[r]
 
         return [t,
                 tags.script(type='text/javascript', src=flat.flatten(self.getJSModuleURL(moduleName)))]
-
 
     def render_liveglue(self, ctx, data):
         bootstrapString = b'\n'.join(
@@ -1387,7 +1321,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
                 BOOTSTRAP_STATEMENT]
         ]
 
-
     def _bootstraps(self, ctx):
         """
         Generate a list of 2-tuples of (methodName, arguments) representing the
@@ -1402,7 +1335,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             ("Nevow.Athena.bootstrap",
              [self.jsClass, self.clientID])]
 
-
     def _bootstrapCall(self, methodName, args):
         """
         Generate a string to call a 'bootstrap' function in an Athena JavaScript
@@ -1416,10 +1348,8 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         return b'%s(%s);' % (
             toBytes(methodName), (b', '.join([json.serialize(arg) for arg in args])))
 
-
     def child_jsmodule(self, ctx):
         return MappingResource(self.jsModules.mapping)
-
 
     def child_cssmodule(self, ctx):
         """
@@ -1427,8 +1357,8 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         """
         return MappingResource(self.cssModules.mapping)
 
-
     _transportResource = None
+
     def child_transport(self, ctx):
         if self._transportResource is None:
             self._transportResource = LivePageTransport(
@@ -1436,12 +1366,10 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
                 self.useActiveChannels)
         return self._transportResource
 
-
     def locateMethod(self, ctx, methodName):
         if methodName in self.iface:
             return getattr(self.rootObject, methodName)
         raise AttributeError(methodName)
-
 
     def liveTransportMessageReceived(self, ctx, xxx_todo_changeme):
         """
@@ -1452,7 +1380,6 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         (action, args) = xxx_todo_changeme
         method = getattr(self, 'action_' + action)
         method(ctx, *args)
-
 
     def action_call(self, ctx, requestId, method, objectID, args, kwargs):
         """
@@ -1465,6 +1392,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             result = defer.fail(NoSuchMethod(objectID, method))
         else:
             result = defer.maybeDeferred(func, *args, **kwargs)
+
         def _cbCall(result):
             success = True
             if isinstance(result, failure.Failure):
@@ -1479,12 +1407,12 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
                     result = (
                         'Divmod.Error',
                         ['%s: %s' % (
-                                result.type.__name__,
-                                result.getErrorMessage())])
+                            result.type.__name__,
+                            result.getErrorMessage())])
             message = ('respond', (str(requestId), success, result))
             self.addMessage(message)
-        result.addBoth(_cbCall)
 
+        result.addBoth(_cbCall)
 
     def action_respond(self, ctx, responseId, success, result):
         """
@@ -1496,12 +1424,10 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         else:
             callDeferred.errback(getJSFailure(result, self.jsModules.mapping))
 
-
     def action_noop(self, ctx):
         """
         Handle noop, used to initialise and ping the live transport.
         """
-
 
     def action_close(self, ctx):
         """
@@ -1511,9 +1437,9 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         self._disconnected(error.ConnectionDone("Connection closed"))
 
 
-
 handler = stan.Proto('athena:handler')
 _handlerFormat = b"return Nevow.Athena.Widget.handleEvent(this, %(event)s, %(handler)s, event);"
+
 
 def _rewriteEventHandlerToAttribute(tag):
     """
@@ -1527,7 +1453,7 @@ def _rewriteEventHandlerToAttribute(tag):
                 info = tag.children.pop(i)
                 name = info.attributes['event'].encode('ascii')
                 handler = info.attributes['handler']
-                kw={
+                kw = {
                     b'handler': json.serialize(unicode(handler, 'ascii')),
                     b'event': json.serialize(unicode(name, 'ascii'))}
 
@@ -1610,15 +1536,17 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
                 if self.fragmentParent is not None:
                     self._page = self.fragmentParent.page
             return self._page
+
         def set(self, value):
             self._page = value
+
         doc = """
         The L{LivePage} instance which is the topmost container of this
         fragment.
         """
         return get, set, None, doc
-    page = property(*page())
 
+    page = property(*page())
 
     def getInitialArguments(self):
         """
@@ -1632,7 +1560,6 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         @rtype: C{list} or C{tuple}
         """
         return ()
-
 
     def _prepare(self, tag):
         """
@@ -1648,7 +1575,6 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         if self.page._didConnect:
             self.connectionMade()
         tag.fillSlots('athena:id', toBytes(self._athenaID))
-
 
     def setFragmentParent(self, fragmentParent):
         """
@@ -1676,7 +1602,6 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         self.page = fragmentParent.page
         fragmentParent.liveFragmentChildren.append(self)
 
-
     def _flatten(self, what):
         """
         Synchronously flatten C{what} and return the result as a C{str}.
@@ -1689,7 +1614,6 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         # import it. -exarkun
         from nevow.testutil import FakeRequest
         return b"".join((toBytes(i) for i in _flat.flatten(FakeRequest(), what, False, False)))
-
 
     def _structured(self):
         """
@@ -1714,20 +1638,20 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
              'requiredCSSModules': requiredCSSModules},
             self._flatten, tags.div(xmlns="http://www.w3.org/1999/xhtml")[self]).decode('utf-8')
 
+        print(1641, children)
         del children[0]
 
         self._structuredCache = {
             'requiredModules': [(name, flat.flatten(url).decode('utf-8'))
-                                 for (name, url) in requiredModules],
+                                for (name, url) in requiredModules],
             'requiredCSSModules': [flat.flatten(url).decode('utf-8')
-                                    for url in requiredCSSModules],
+                                   for url in requiredCSSModules],
             'class': self.jsClass,
             'id': self._athenaID,
             'initArguments': tuple(self.getInitialArguments()),
             'markup': markup,
             'children': children}
         return self._structuredCache
-
 
     def liveElement(self, request, tag):
         """
@@ -1745,9 +1669,9 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         # This will only be set if _structured() is being run.
         if context.get('children') is not None:
             context.get('children').append({
-                    'class': self.jsClass,
-                    'id': self._athenaID,
-                    'initArguments': self.getInitialArguments()})
+                'class': self.jsClass,
+                'id': self._athenaID,
+                'initArguments': self.getInitialArguments()})
             context.get('requiredModules').extend(requiredModules)
             context.get('requiredCSSModules').extend(requiredCSSModules)
             return tag
@@ -1773,17 +1697,15 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
 
             # Okay, application stuff, plus metadata
             tag,
-            )
-    renderer(liveElement)
+        )
 
+    renderer(liveElement)
 
     def render_liveFragment(self, ctx, data):
         return self.liveElement(inevow.IRequest(ctx), ctx.tag)
 
-
     def getImportStan(self, moduleName):
         return self.page.getImportStan(moduleName)
-
 
     def locateMethod(self, ctx, methodName):
         remoteMethod = expose.get(self, methodName, None)
@@ -1791,14 +1713,12 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
             raise AttributeError(self, methodName)
         return remoteMethod
 
-
     def callRemote(self, methodName, *varargs):
         return self.page.callRemote(
             "Nevow.Athena.callByAthenaID",
             self._athenaID,
             methodName,
             varargs)
-
 
     def _athenaDetachServer(self):
         """
@@ -1818,8 +1738,8 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         if page._didConnect:
             self.connectionLost(ConnectionLost('Detached'))
         self.detached()
-    expose(_athenaDetachServer)
 
+    expose(_athenaDetachServer)
 
     def detach(self):
         """
@@ -1836,7 +1756,6 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         d.addCallback(lambda ign: self._athenaDetachServer())
         return d
 
-
     def detached(self):
         """
         Application-level callback invoked when L{detach} succeeds or when the
@@ -1848,14 +1767,12 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         Override this.
         """
 
-
     def connectionMade(self):
         """
         Callback invoked when the transport is first available to this widget.
 
         Override this.
         """
-
 
     def connectionLost(self, reason):
         """
@@ -1868,7 +1785,6 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         """
 
 
-
 class LiveFragment(_LiveMixin, rend.Fragment):
     """
     This class is deprecated because it relies on context objects
@@ -1876,12 +1792,12 @@ class LiveFragment(_LiveMixin, rend.Fragment):
 
     @see: L{LiveElement}
     """
+
     def __init__(self, *a, **kw):
         super(LiveFragment, self).__init__(*a, **kw)
         warnings.warn("[v0.10] LiveFragment has been superceded by LiveElement.",
                       category=DeprecationWarning,
                       stacklevel=2)
-
 
     def rend(self, context, data):
         """
@@ -1892,8 +1808,6 @@ class LiveFragment(_LiveMixin, rend.Fragment):
         context = rend.Fragment.rend(self, context, data)
         self._prepare(context.tag)
         return context
-
-
 
 
 class LiveElement(_LiveMixin, Element):
@@ -1984,6 +1898,7 @@ class LiveElement(_LiveMixin, Element):
 
     syntax as is provided for Javascript modules.
     """
+
     def render(self, request):
         """
         Hook into the rendering process in order to check preconditions and
@@ -1993,7 +1908,6 @@ class LiveElement(_LiveMixin, Element):
         document = tags.invisible[Element.render(self, request)]
         self._prepare(document)
         return document
-
 
 
 class IntrospectionFragment(LiveFragment):
@@ -2006,10 +1920,9 @@ class IntrospectionFragment(LiveFragment):
 
     docFactory = loaders.stan(
         tags.span(render=tags.directive('liveFragment'))[
-        tags.a(
-        href="#DEBUG_ME",
-        class_='toggle-debug')["Debug"]])
-
+            tags.a(
+                href="#DEBUG_ME",
+                class_='toggle-debug')["Debug"]])
 
 
 __all__ = [
@@ -2032,4 +1945,4 @@ __all__ = [
 
     # Decorators
     'expose', 'handler',
-    ]
+]
