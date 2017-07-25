@@ -460,6 +460,7 @@ Nevow.Athena.PageWidget.methods(
     });
 
 Nevow.Athena.ReliableMessageDelivery = Divmod.Class.subclass('Nevow.Athena.ReliableMessageDelivery');
+Nevow.Athena.ReliableMessageDelivery.MAX_FAILURES = 5;
 
 /**
  * A L{ReliableMessageDelivery} is a queue through which messages may be
@@ -486,6 +487,7 @@ Nevow.Athena.ReliableMessageDelivery.methods(
         self.outputFactory = outputFactory;
         self.requests = [];
         self.page = page;
+        self.maxFailures = Nevow.Athena.ReliableMessageDelivery.MAX_FAILURES;
         if (page === undefined) {
             throw new Error("Must supply a page.");
         }
@@ -602,7 +604,7 @@ Nevow.Athena.ReliableMessageDelivery.methods(
                     break;
                 }
             }
-            if (self.failureCount < 3) {
+            if (self.failureCount < self.maxFailures) {
                 if (!theRequest.aborted) {
                     self.flushMessages();
                 }

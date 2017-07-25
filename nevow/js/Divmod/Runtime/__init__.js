@@ -595,6 +595,9 @@ Divmod.Runtime.Platform.namedMethods({
         // Build request with appropriate headers.
         var req = self.makeHTTPRequest();
         req.open(action, url, !synchronous);
+        if (!synchronous) {
+            req.timeout = Divmod._transportTimeout * 1000;
+        }
         for (var i = 0; i < headers.length; ++i) {
             req.setRequestHeader(headers[i][0], headers[i][1]);
         }

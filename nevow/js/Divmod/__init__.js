@@ -9,9 +9,13 @@ Divmod.debugging = false;
  *
  * @param transportRoot: a string, the URL where the root of the server-side
  * Athena transport hierarchy for the current page is located.
+ *
+ * @param transportTimeout: The number of seconds timeout to allow on transport
+ * requests.
  */
-Divmod.bootstrap = function (transportRoot) {
+Divmod.bootstrap = function (transportRoot, transportTimeout) {
     this._location = transportRoot;
+    this._transportTimeout = transportTimeout;
 };
 
 
