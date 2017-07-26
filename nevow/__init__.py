@@ -2,14 +2,56 @@
 # Copyright (c) 2004-2006 Divmod.
 # See LICENSE for details.
 
-from nevow._version import get_versions
-__version__ = get_versions()["version"]
-__version_info__ = tuple(int(part) for part in __version__.split("-", 1)[0].split(".")[:3])
-del get_versions
+def _versions():
+    import re
+    from nevow._version import get_versions
+    from twisted.python.versions import Version
 
-from twisted.python.versions import Version
-version = Version("nevow", *__version_info__)
-del Version
+    # From `packaging`
+    VERSION_PATTERN = re.compile(r"""
+        v?
+        (?:
+            (?:(?P<epoch>[0-9]+)!)?                           # epoch
+            (?P<release>[0-9]+(?:\.[0-9]+)*)                  # release segment
+            (?P<pre>                                          # pre-release
+                [-_\.]?
+                (?P<pre_l>(a|b|c|rc|alpha|beta|pre|preview))
+                [-_\.]?
+                (?P<pre_n>[0-9]+)?
+            )?
+            (?P<post>                                         # post release
+                (?:-(?P<post_n1>[0-9]+))
+                |
+                (?:
+                    [-_\.]?
+                    (?P<post_l>post|rev|r)
+                    [-_\.]?
+                    (?P<post_n2>[0-9]+)?
+                )
+            )?
+            (?P<dev>                                          # dev release
+                [-_\.]?
+                (?P<dev_l>dev)
+                [-_\.]?
+                (?P<dev_n>[0-9]+)?
+            )?
+        )
+        (?:\+(?P<local>[a-z0-9]+(?:[-_\.][a-z0-9]+)*))?       # local version
+    """, re.VERBOSE)
+    __version__ = get_versions()["version"]
+    parts = VERSION_PATTERN.match(__version__)
+    __version_info__ = tuple(int(i) for i in parts.group('release').split("."))
+    version = Version(
+        "nevow",
+        __version_info__[0],
+        __version_info__[1],
+        __version_info__[2],
+        release_candidate=parts.group('pre').replace('rc', ''),
+        dev=parts.group('dev'))
+    return __version__, __version_info__, version
+
+
+__version__, __version_info__, version = _versions()
 
 import sys
 from twisted.python.components import registerAdapter
