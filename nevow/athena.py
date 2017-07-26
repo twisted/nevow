@@ -1017,6 +1017,17 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
     useActiveChannels = True
 
+    # This is the amount of time that each 'transport' request will remain open
+    # to the server.  Although the underlying transport, i.e. the conceptual
+    # connection established by the sequence of requests, remains alive, it is
+    # necessary to periodically cancel requests to avoid browser and proxy
+    # bugs.
+    TRANSPORT_IDLE_TIMEOUT = 30
+
+    # The client-side transport timeout; this is set higher than the server
+    # idle timeout to allow for round-trip delays.
+    TRANSPORT_CLIENT_IDLE_TIMEOUT = TRANSPORT_IDLE_TIMEOUT + 10
+
     # This is the number of seconds that is acceptable for a LivePage to be
     # considered 'connected' without any transports still active.  In other
     # words, if the browser cannot make requests for more than this timeout
@@ -1024,14 +1035,12 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
     # proxies) then deferreds returned from notifyOnDisconnect() will be
     # errbacked with ConnectionLost, and the LivePage will be removed from the
     # factory's cache, and then likely garbage collected.
-    TRANSPORTLESS_DISCONNECT_TIMEOUT = 30
-
-    # This is the amount of time that each 'transport' request will remain open
-    # to the server.  Although the underlying transport, i.e. the conceptual
-    # connection established by the sequence of requests, remains alive, it is
-    # necessary to periodically cancel requests to avoid browser and proxy
-    # bugs.
-    TRANSPORT_IDLE_TIMEOUT = 300
+    #
+    # This timeout races against TRANSPORT_CLIENT_IDLE_TIMEOUT in cases where
+    # the server has sent a response, but the client has not received it; we
+    # set the value to 2 client timeouts plus some padding to give the client
+    # two chances to retry.
+    TRANSPORTLESS_DISCONNECT_TIMEOUT = TRANSPORT_CLIENT_IDLE_TIMEOUT * 2 + 10
 
     page = property(lambda self: self)
 
@@ -1394,7 +1403,8 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         """
         return [
             ("Divmod.bootstrap",
-             [flat.flatten(self.transportRoot, ctx).decode("ascii")]),
+             [flat.flatten(self.transportRoot, ctx).decode("ascii"),
+              self.TRANSPORT_CLIENT_IDLE_TIMEOUT]),
             ("Nevow.Athena.bootstrap",
              [self.jsClass, self.clientID.decode('ascii')])]
 

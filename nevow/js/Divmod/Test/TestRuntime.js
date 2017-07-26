@@ -120,6 +120,7 @@ Divmod.Test.TestRuntime.NetworkTests.methods(
      * string if the request succeeds.
      */
     function test_getPage(self) {
+        Divmod._transportTimeout = 42;
         var gp = self.platform.getPage('/hello/world');
         var realResult = null;
         self.assertIdentical(gp.length, 2);
@@ -127,6 +128,7 @@ Divmod.Test.TestRuntime.NetworkTests.methods(
         self.assertArraysEqual(self.httpRequest.opened,
                                ['GET', '/hello/world', true]);
         self.assertArraysEqual(self.httpRequest.sent, ['']);
+        self.assertIdentical(self.httpRequest.timeout, 42 * 1000);
 
         self.assert(gp[1] instanceof Divmod.Defer.Deferred);
         gp[1].addCallback(function (result) {

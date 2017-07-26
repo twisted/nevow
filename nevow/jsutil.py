@@ -63,7 +63,7 @@ def findJavascriptInterpreter():
     Return a string path to a JavaScript interpreter if one can be found in
     the executable path. If not, return None.
     """
-    for script in ['smjs', 'js']:
+    for script in ['smjs', 'js24', 'js']:
         _jsInterps = which(script)
         if _jsInterps:
             return _jsInterps[0]

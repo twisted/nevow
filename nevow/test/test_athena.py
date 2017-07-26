@@ -1631,7 +1631,7 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
               # Nevow's URL quoting rules are weird, but this is the URL
               # flattener's fault, not mine.  Adjust to taste if that changes
               # (it won't) -glyph
-              [u"http://localhost/'%22"]),
+              [u"http://localhost/'%22", 40]),
              ("Nevow.Athena.bootstrap",
               [u'Nevow.Athena.PageWidget', u'asdf'])])
 
