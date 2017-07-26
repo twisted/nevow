@@ -41,13 +41,19 @@ def _versions():
     __version__ = get_versions()["version"]
     parts = VERSION_PATTERN.match(__version__)
     __version_info__ = tuple(int(i) for i in parts.group('release').split("."))
+    rc = parts.group('pre')
+    if rc:
+        rc = int(rc.replace('rc', ''))
+    dev = parts.group('dev')
+    if dev:
+        dev = int(dev.replace('dev', ''))
     version = Version(
         "nevow",
         __version_info__[0],
         __version_info__[1],
         __version_info__[2],
-        release_candidate=parts.group('pre').replace('rc', ''),
-        dev=parts.group('dev'))
+        release_candidate=rc,
+        dev=dev)
     return __version__, __version_info__, version
 
 
