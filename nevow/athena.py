@@ -1035,6 +1035,11 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
     # proxies) then deferreds returned from notifyOnDisconnect() will be
     # errbacked with ConnectionLost, and the LivePage will be removed from the
     # factory's cache, and then likely garbage collected.
+    #
+    # This timeout races against TRANSPORT_CLIENT_IDLE_TIMEOUT in cases where
+    # the server has sent a response, but the client has not received it; we
+    # set the value to 2 client timeouts plus some padding to give the client
+    # two chances to retry.
     TRANSPORTLESS_DISCONNECT_TIMEOUT = TRANSPORT_CLIENT_IDLE_TIMEOUT * 2 + 10
 
     page = property(lambda self: self)
