@@ -1,0 +1,1 @@
+Athena will now time requests out client-side rather than waiting forever (up to the browser timeout, at least) for a server response that may never come.
