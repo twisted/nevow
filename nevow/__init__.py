@@ -47,13 +47,21 @@ def _versions():
     dev = parts.group('dev')
     if dev:
         dev = int(dev.replace('dev', ''))
-    version = Version(
-        "nevow",
-        __version_info__[0],
-        __version_info__[1],
-        __version_info__[2],
-        release_candidate=rc,
-        dev=dev)
+    try:
+        version = Version(
+            "nevow",
+            __version_info__[0],
+            __version_info__[1],
+            __version_info__[2],
+            release_candidate=rc,
+            dev=dev)
+    except TypeError:
+        # Version might be too old for rc/dev, try without
+        version = Version(
+            "nevow",
+            __version_info__[0],
+            __version_info__[1],
+            __version_info__[2])
     return __version__, __version_info__, version
 
 
