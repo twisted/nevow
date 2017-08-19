@@ -1,3 +1,20 @@
+Nevow 0.14.3 (2017-07-26)
+=========================
+
+Bugfixes
+--------
+
+- Athena will now time requests out client-side rather than waiting forever (up
+  to the browser timeout, at least) for a server response that may never come.
+  (#98)
+
+
+Misc
+----
+
+- #96
+
+
 Nevow 0.14.2 (2016-08-29)
 =========================
 

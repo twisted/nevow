@@ -1,11 +1,6 @@
 #!/usr/bin/python
 
 import versioneer
-versioneer.VCS = 'git'
-versioneer.versionfile_source = 'nevow/_version.py'
-versioneer.versionfile_build = 'nevow/_version.py'
-versioneer.tag_prefix = 'nevow-'
-versioneer.parentdir_prefix = 'Nevow-'
 
 # For the convenience of the travis configuration, make this information
 # particularly easy to find.  See .travis.yml.
