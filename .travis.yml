@@ -95,4 +95,4 @@ install:
 
 script:
   - "trial formless nevow"
-  - "cd doc; make html"
+  - "make -C doc html"
