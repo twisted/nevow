@@ -3,7 +3,7 @@
 
 
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import components
 
@@ -86,10 +86,10 @@ class FormDefaults(components.Adapter):
         self.defaults = {}
 
 
+@implementer(iformless.IFormErrors)
 class FormErrors(components.Adapter):
     """An object which keeps track of which forms have which errors
     """
-    implements(iformless.IFormErrors)
     def __init__(self):
         self.errors = {}
 

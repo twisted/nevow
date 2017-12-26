@@ -18,7 +18,7 @@ except ImportError:
     from md5 import md5
 import io
 
-from zope.interface import implements
+from zope.interface import implementer
 
 # Twisted Imports
 
@@ -40,13 +40,13 @@ def _sessionCookie():
     return md5("%s_%s" % (str(random.random()) , str(time.time()))).hexdigest()
 
 
+@implementer(inevow.ISession, inevow.IGuardSession)
 class GuardSession(components.Componentized):
     """A user's session with a system.
 
     This utility class contains no functionality, but is used to
     represent a session.
     """
-    implements(inevow.ISession, inevow.IGuardSession)
 
     def __init__(self, guard, uid):
         """Initialize a session with a unique ID for that session.
@@ -209,8 +209,8 @@ LOGOUT_AVATAR = '__logout__'
 
 def nomind(*args): return None
 
+@implementer(inevow.IResource)
 class Forbidden(object):
-    implements(inevow.IResource)
 
     def locateChild(self, ctx, segments):
         return self
@@ -221,6 +221,7 @@ class Forbidden(object):
         return ("<html><head><title>Forbidden</title></head>"
                 "<body><h1>Forbidden</h1>Request was forbidden.</body></html>")
 
+@implementer(inevow.IResource)
 class SessionWrapper:
     """
     SessionWrapper
@@ -241,7 +242,6 @@ class SessionWrapper:
         the browser is closed before the session timeout, both the session
         and the cookie go away.
     """
-    implements(inevow.IResource)
 
     sessionLifetime = 3600
     sessionFactory = GuardSession

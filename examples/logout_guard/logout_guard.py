@@ -3,7 +3,7 @@ How to access the session from guard's logout function.
 """
 
 # Some resource for our site
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import guard
 from nevow import rend
@@ -32,8 +32,8 @@ class Mind:
         self.request = request
         self.credentials = credentials
 
+@implementer(IRealm)
 class MyRealm:
-    implements(IRealm)
     
     def requestAvatar(self, avatar_id, mind, *interfaces):
         if IResource in interfaces:

@@ -1,7 +1,7 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet import defer
 from twisted.python import log
@@ -283,11 +283,11 @@ class Group(GroupBase):
         return 0
 
 
+@implementer(inevow.IResource)
 class CanvasSocket(GroupBase):
     """An object which represents the client-side canvas. Defines APIs for drawing
     on the canvas. An instance of this class will be passed to your onload callback.
     """
-    implements(inevow.IResource)
 
     groupName = 'canvas'
 

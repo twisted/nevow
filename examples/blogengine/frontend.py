@@ -1,5 +1,5 @@
 from time import time as now
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 
 from twisted.web import xmlrpc
 from twisted.python.components import registerAdapter
@@ -109,8 +109,8 @@ class UI(BaseUI):
         return Thx()
 
 ##################################
+@implementer(IInsert)
 class NewEntry(BaseUI):
-    implements(IInsert)
                 
     docFactory = loaders.stan(
         t.html[
@@ -150,8 +150,8 @@ class Thx(rend.Page):
             ])
 
 ####################################
+@implementer(IInsert)
 class Entry(UI):
-    implements(IInsert)
     def data_getEntries(self, ctx, data):
         return [data]
 

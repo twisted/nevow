@@ -4,7 +4,7 @@ Tests for on-the-fly content compression encoding.
 from io import StringIO
 from gzip import GzipFile
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import succeed
@@ -213,6 +213,7 @@ class RequestWrapperTests(TestCase):
 
 
 
+@implementer(IResource)
 class TestResource(object):
     """
     L{IResource} implementation for testing.
@@ -223,7 +224,6 @@ class TestResource(object):
     @type segments: C{list}
     @ivar html: The data to return from C{renderHTTP}.
     """
-    implements(IResource)
 
     lastRequest = None
 
@@ -251,11 +251,11 @@ class TestResource(object):
 
 
 
+@implementer(IResource)
 class TestChildlessResource(object):
     """
     L{IResource} implementation with no children.
     """
-    implements(IResource)
 
     def locateChild(self, ctx, segments):
         """
@@ -265,11 +265,11 @@ class TestChildlessResource(object):
 
 
 
+@implementer(IResource)
 class TestDeferredResource(object):
     """
     L{IResource} implementation with children.
     """
-    implements(IResource)
 
     def locateChild(self, ctx, segments):
         """
@@ -288,11 +288,11 @@ class TestResourceWrapper(CompressingResourceWrapper):
     """
 
 
+@implementer(IResource)
 class TestBrokenResource(object):
     """
     L{IResource} implementation that returns garbage from C{locateChild}.
     """
-    implements(IResource)
 
     def locateChild(self, ctx, segments):
         """

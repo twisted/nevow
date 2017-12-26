@@ -1,5 +1,5 @@
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import inevow
 from nevow import loaders
@@ -46,8 +46,8 @@ class IAddItem(annotate.TypedInterface):
     addItem = annotate.autocallable(addItem)
 
 
+@implementer(IAddItem)
 class DBBrowser(rend.Page):
-    implements(IAddItem)
     addSlash = True
 
     def addItem(self, newSubject):
@@ -94,8 +94,8 @@ class IItemWithSubject(annotate.TypedInterface):
     setSubject = annotate.autocallable(setSubject)
 
 
+@implementer(IItemWithSubject)
 class DBItem(rend.Page):
-    implements(IItemWithSubject)
     addSlash=True
 
     def setSubject(self, newSubject):

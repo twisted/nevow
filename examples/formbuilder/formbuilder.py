@@ -1,6 +1,6 @@
 ## formbuilder
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import rend
 from nevow import loaders
@@ -56,8 +56,8 @@ class IFormBuilder(annotate.TypedInterface):
     clearForm = annotate.autocallable(clearForm)
         
 
+@implementer(IFormBuilder)
 class FormBuilder(rend.Page):
-    implements(IFormBuilder)
     addSlash = True
 
     def __init__(self):

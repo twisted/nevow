@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import loaders, rend, tags as t, static, url
 from formless import webform, annotate
@@ -43,9 +43,9 @@ class TransactionalPage(rend.Page):
         return self.store.transact(super(TransactionalPage, self).renderHTTP, ctx)
 
 
+@implementer(IInsert)
 class Root(TransactionalPage):
     child_webform_css = webform.defaultCSS
-    implements(IInsert)
 
     docFactory = loaders.stan(
         t.html[

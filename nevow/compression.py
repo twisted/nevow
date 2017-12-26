@@ -4,7 +4,7 @@ Implementation of on-the-fly content compression for HTTP resources.
 """
 from gzip import GzipFile
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet.defer import maybeDeferred, Deferred
 from twisted.internet.interfaces import IConsumer
@@ -89,6 +89,7 @@ def _makeBase():
             d[attrName] = _ProxyDescriptor(attrName)
     return type('_CompressionRequestWrapperBase', (object,), d)
 
+@implementer(IRequest)
 class CompressingRequestWrapper(_makeBase()):
     """
     A request wrapper with support for transport encoding compression.
@@ -100,7 +101,6 @@ class CompressingRequestWrapper(_makeBase()):
     @ivar compressLevel: the level of gzip compression to apply.
     @type compressLevel: C{int}
     """
-    implements(IRequest)
 
     encoding = 'gzip'
     compressLevel = 6
@@ -152,6 +152,7 @@ class CompressingRequestWrapper(_makeBase()):
 
 
 
+@implementer(IResource)
 class CompressingResourceWrapper(object):
     """
     A resource wrapper with support for transport encoding compression.
@@ -159,7 +160,6 @@ class CompressingResourceWrapper(object):
     @ivar underlying: the resource being wrapped.
     @type underlying: L{IResource}
     """
-    implements(IResource)
 
     def __init__(self, underlying):
         self.underlying = underlying

@@ -34,7 +34,7 @@ background images generally appear to be safe.
 It doesn't appear to be possible to set the vertical-align in some cases in mozilla.
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import static
 from nevow import inevow
@@ -147,6 +147,7 @@ block = _Blocks(tags.span, 'nevow-blocks-block')
 line = _Blocks(tags.div, 'nevow-blocks-line')
 
 
+@implementer(inevow.IRenderer)
 class collapser(object):
     """Render a fragment of html with a head and a body.
     The body can be in two states, expanded and collapsed.
@@ -159,7 +160,6 @@ class collapser(object):
     and a div, and you can omit the visibility image if desired (js would have 
     to change too)
     """
-    implements(inevow.IRenderer)
 
     def __init__(self, headCollapsed, headExpanded, body, collapsed=True):
         self.headCollapsed = headCollapsed

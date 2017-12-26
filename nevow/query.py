@@ -6,10 +6,10 @@
 import twisted.python.components as tpc
 
 from nevow import inevow, stan
-from zope.interface import implements
+from zope.interface import implementer
 
+@implementer(inevow.IQ)
 class QueryContext(tpc.Adapter):
-    implements(inevow.IQ)
 
     def _locatePatterns(self, pattern, default, loop=True):
         if self.original.tag.pattern == pattern:

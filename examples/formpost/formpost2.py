@@ -1,6 +1,6 @@
 # -*- python -*-
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import loaders
 from nevow import rend
@@ -40,8 +40,8 @@ class IMyForm(annotate.TypedInterface):
     bar = annotate.autocallable(bar)
 
 
+@implementer(IMyForm)
 class Implementation(object):
-    implements(IMyForm)
 
     foo = 5
 

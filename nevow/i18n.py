@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import inevow
 
@@ -24,8 +24,8 @@ def languagesFactory(ctx):
     return [lang for quality, lang in langs]
 
     
+@implementer(inevow.II18NConfig)
 class I18NConfig(object):
-    implements(inevow.II18NConfig)
 
     def __init__(self,
                  domain=None,

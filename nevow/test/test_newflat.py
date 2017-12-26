@@ -7,7 +7,7 @@ Tests for L{nevow._flat}.
 
 import sys, traceback, io
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred, succeed
@@ -37,6 +37,7 @@ from nevow.context import WovenContext
 HERE = (lambda: None).__code__.co_filename
 
 
+@implementer(IRenderable)
 class TrivialRenderable(object):
     """
     An object which renders to a parameterized value.
@@ -44,7 +45,6 @@ class TrivialRenderable(object):
     @ivar result: The object which will be returned by the render method.
     @ivar requests: A list of all the objects passed to the render method.
     """
-    implements(IRenderable)
 
     def __init__(self, result):
         self.result = result
@@ -60,6 +60,7 @@ class TrivialRenderable(object):
 
 
 
+@implementer(IRenderable)
 class RenderRenderable(object):
     """
     An object which renders to a parameterized value and has a render method
@@ -71,7 +72,6 @@ class RenderRenderable(object):
     @ivar tag: The value which will be returned from C{render}.
     @ivar result: The value which will be returned from the render method.
     """
-    implements(IRenderable)
 
     def __init__(self, renders, name, tag, result):
         self.renders = renders
@@ -529,8 +529,8 @@ class FlattenTests(TestCase, FlattenMixin):
         replaced with the return value of the named renderer on the
         L{IRenderable} which had the render method which returned the L{Tag}.
         """
+        @implementer(IRenderable)
         class TwoRenderers(object):
-            implements(IRenderable)
 
             def renderer(self, name):
                 return getattr(self, name)
@@ -573,8 +573,8 @@ class FlattenTests(TestCase, FlattenMixin):
         If a render method returns the tag it was passed, the tag is flattened
         as though it did not have a render directive.
         """
+        @implementer(IRenderable)
         class IdempotentRenderable(object):
-            implements(IRenderable)
 
             def renderer(self, name):
                 return getattr(self, name)
@@ -919,8 +919,8 @@ class FlattenTests(TestCase, FlattenMixin):
         def broken():
             raise RuntimeError("foo")
 
+        @implementer(IRenderable)
         class BrokenRenderable(object):
-            implements(IRenderable)
 
             def render(self, request):
                 # insert another stack frame before the exception
@@ -991,8 +991,8 @@ class FlattenerErrorTests(TestCase):
         the repr of that object is included in the string representation of the
         exception.
         """
+        @implementer(IRenderable)
         class Renderable(object):
-            implements(IRenderable)
 
             def __repr__(self):
                 return "renderable repr"
@@ -1150,8 +1150,8 @@ class DeferflattenTests(TestCase, FlattenMixin):
         """
         class TestException(Exception):
             pass
+        @implementer(IRenderable)
         class BrokenRenderable(object):
-            implements(IRenderable)
 
             def render(self, request):
                 raise TestException()

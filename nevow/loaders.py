@@ -22,7 +22,7 @@ developer first ;-).
 import warnings
 
 import os.path
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python.reflect import getClass
 from twisted.web import microdom
@@ -33,10 +33,10 @@ from nevow.flat import flatsax
 from nevow.util import CachedFile
 
 
+@implementer(inevow.IDocFactory)
 class stan(object):
     """A stan tags document factory"""
 
-    implements(inevow.IDocFactory)
 
     stan = None
     pattern = None
@@ -62,10 +62,10 @@ class stan(object):
 
 
 
+@implementer(inevow.IDocFactory)
 class htmlstr(object):
     """A document factory for HTML contained in a string"""
 
-    implements(inevow.IDocFactory)
 
     template = None
     pattern = None
@@ -94,10 +94,10 @@ class htmlstr(object):
             self._cache = doc
         return self._cache
 
+@implementer(inevow.IDocFactory)
 class htmlfile(object):
     """A document factory for an HTML disk template"""
 
-    implements(inevow.IDocFactory)
 
     template = None
     pattern = None
@@ -131,9 +131,9 @@ class htmlfile(object):
         assert not preprocessors, "preprocessors not supported by htmlfile"
         return self._cache.load(ctx)
 
+@implementer(inevow.IDocFactory)
 class xmlstr(object):
 
-    implements(inevow.IDocFactory)
 
     template = None
     pattern = None
@@ -166,9 +166,9 @@ class xmlstr(object):
         return self._cache
 
 
+@implementer(inevow.IDocFactory)
 class xmlfile(object):
 
-    implements(inevow.IDocFactory)
 
     template = None
     templateDir = None

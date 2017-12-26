@@ -7,7 +7,7 @@ with an example of remembering values within the session.
 #
 
 import random
-from zope.interface import implements, Interface
+from zope.interface import implementer, Interface
 
 from nevow import guard
 from nevow import rend
@@ -68,8 +68,8 @@ class Mind:
         self.request = request
         self.credentials = credentials
 
+@implementer(IRealm)
 class MyRealm:
-    implements(IRealm)
     
     def requestAvatar(self, avatar_id, mind, *interfaces):
         if IResource in interfaces:

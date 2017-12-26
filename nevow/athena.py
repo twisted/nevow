@@ -2,7 +2,7 @@
 
 import itertools, os, re, warnings, io
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet import defer, error, reactor
 from twisted.python import log, failure, context
@@ -86,6 +86,7 @@ def activeChannel(request):
 
 
 
+@implementer(inevow.IResource)
 class MappingResource(object):
     """
     L{inevow.IResource} which looks up segments in a mapping between symbolic
@@ -96,7 +97,6 @@ class MappingResource(object):
     'Nevow.Athena') and C{str} instances which name files containing data
     which should be served in response.
     """
-    implements(inevow.IResource)
 
     def __init__(self, mapping):
         self.mapping = mapping
@@ -252,6 +252,7 @@ class CSSModule(AthenaModule):
 
 
 
+@implementer(plugin.IPlugin, inevow.IJavascriptPackage)
 class JSPackage(object):
     """
     A Javascript package.
@@ -260,7 +261,6 @@ class JSPackage(object):
     @ivar mapping: Mapping between JS module names and C{str} representing
     filesystem paths containing their implementations.
     """
-    implements(plugin.IPlugin, inevow.IJavascriptPackage)
 
     def __init__(self, mapping):
         self.mapping = mapping
@@ -320,6 +320,7 @@ def _collectPackageBelow(baseDir, extension):
 
 
 
+@implementer(plugin.IPlugin, inevow.IJavascriptPackage)
 class AutoJSPackage(object):
     """
     A L{inevow.IJavascriptPackage} implementation that scans an on-disk
@@ -329,19 +330,19 @@ class AutoJSPackage(object):
     @ivar baseDir: A path to the root of a JavaScript packages/modules
     filesystem hierarchy.
     """
-    implements(plugin.IPlugin, inevow.IJavascriptPackage)
 
     def __init__(self, baseDir):
         self.mapping = _collectPackageBelow(baseDir, 'js')
 
 
 
+
+@implementer(plugin.IPlugin, inevow.ICSSPackage)
 class AutoCSSPackage(object):
     """
     Like L{AutoJSPackage}, but for CSS packages.  Modules within this package
     can be referenced by L{LivePage.cssModule} or L{LiveElement.cssModule}.
     """
-    implements(plugin.IPlugin, inevow.ICSSPackage)
 
     def __init__(self, baseDir):
         self.mapping = _collectPackageBelow(baseDir, 'css')
@@ -550,8 +551,8 @@ def getJSFailure(exc, modules):
 
 
 
+@implementer(inevow.IResource)
 class LivePageTransport(object):
-    implements(inevow.IResource)
 
     def __init__(self, messageDeliverer, useActiveChannels=True):
         self.messageDeliverer = messageDeliverer

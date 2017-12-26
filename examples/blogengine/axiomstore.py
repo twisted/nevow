@@ -1,5 +1,5 @@
 from iblogengine import IBlog
-from zope.interface import implements
+from zope.interface import implementer
 from axiom import item, store, attributes, sequence
 from epsilon.extime import Time
 
@@ -24,8 +24,8 @@ class Post(item.Item):
     def setModified(self):
         self.modified = Time()
 
+@implementer(IBlog)
 class Blog(item.Item, item.InstallableMixin):
-    implements(IBlog)
 
     typeName = "BlogengineBlog"
     schemaVersion = 1

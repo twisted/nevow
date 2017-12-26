@@ -5,7 +5,7 @@
 Tests for L{nevow.json}.
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow.inevow import IAthenaTransportable
 from nevow import json, rend, page, loaders, tags, athena, testutil
@@ -264,12 +264,12 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         L{IAthenaTransportable.getInitialArguments} when passed an object which
         can be adapted to L{IAthenaTransportable}.
         """
+        @implementer(IAthenaTransportable)
         class Transportable(object):
             """
             Completely parameterized L{IAthenaTransportable} implementation so
             different data can be easily tested.
             """
-            implements(IAthenaTransportable)
 
             def __init__(self, jsClass, initialArgs):
                 self.jsClass = jsClass

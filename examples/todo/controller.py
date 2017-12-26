@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import rend, loaders, tags as t
 from formless import annotate, webform
@@ -21,8 +21,8 @@ class ITodo(annotate.TypedInterface):
         pass
     update = annotate.autocallable(update, invisible=True)
 
+@implementer(ITodo)
 class Root(rend.Page):
-    implements(ITodo)
     
     child_css = webform.defaultCSS
     

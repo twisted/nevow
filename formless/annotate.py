@@ -10,7 +10,7 @@ import os
 import sys
 import inspect
 import warnings
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface.interface import InterfaceClass, Attribute
 
 from nevow import util
@@ -69,6 +69,7 @@ class ValidateError(Exception):
 
 
 
+@implementer(iformless.ITyped)
 class Typed(Attribute):
     """A typed value. Subclasses of Typed are constructed inside of
     TypedInterface class definitions to describe the types of properties,
@@ -92,7 +93,6 @@ class Typed(Attribute):
         of the data from the browser and pass unicode strings to
         coerce.
     """
-    implements(iformless.ITyped)
 
     complexType = False
     strip = False
@@ -358,8 +358,8 @@ class Object(Typed):
 
 
 
+@implementer(iformless.IActionableType)
 class List(Object):
-    implements(iformless.IActionableType)
 
     complexType = True
     def __init__(self, actions=None, header='', footer='', separator='', *args, **kw):
@@ -489,6 +489,7 @@ def autocallable(method, action=None, visible=False, **kw):
 #######################################
 
 
+@implementer(iformless.IBinding)
 class Binding(object):
     """Bindings bind a Typed instance to a name. When TypedInterface is subclassed,
     the metaclass looks through the dict looking for all properties and methods.
@@ -508,7 +509,6 @@ class Binding(object):
     Binding when it is constructed to keep track of what the method is
     supposed to return.
     """
-    implements(iformless.IBinding)
 
     label = None
     description = ''

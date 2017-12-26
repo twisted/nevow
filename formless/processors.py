@@ -2,7 +2,7 @@
 # See LICENSE for details.
 
 import warnings
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.python import components
 
@@ -32,8 +32,8 @@ def exceptblock(f, handler, exception, *a, **kw):
         return result
 
     
+@implementer(iformless.IInputProcessor)
 class ProcessGroupBinding(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
         ## THE SPEC: self.original.typedValue.iface.__spec__
@@ -79,8 +79,8 @@ class ProcessGroupBinding(components.Adapter):
                 raise formless.ValidateError(failures, 'Error:', results)
         return DeferredList(waiters).addBoth(_finish)
 
+@implementer(iformless.IInputProcessor)
 class ProcessMethodBinding(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data, autoConfigure = True):
         """Knows how to process a dictionary of lists
@@ -117,8 +117,8 @@ class ProcessMethodBinding(components.Adapter):
                                boundTo, results)
         return results
 
+@implementer(iformless.IInputProcessor)
 class ProcessPropertyBinding(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data, autoConfigure = True):
         """Knows how to process a dictionary of lists
@@ -142,8 +142,8 @@ class ProcessPropertyBinding(components.Adapter):
                 raise formless.ValidateError({binding.name: e.reason}, e.reason, result)
         return result
 
+@implementer(iformless.IInputProcessor)
 class ProcessTyped(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
         """data is a list of strings at this point
@@ -168,8 +168,8 @@ class ProcessTyped(components.Adapter):
             warnings.warn('Typed.coerce takes two values now, the value to coerce and the configurable in whose context the coerce is taking place. %s %s' % (typed.__class__, typed))
             return typed.coerce(val)
 
+@implementer(iformless.IInputProcessor)
 class ProcessPassword(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
         """Password needs to look at two passwords in the data,
@@ -201,22 +201,22 @@ class ProcessPassword(components.Adapter):
             warnings.warn('Typed.coerce takes two values now, the value to coerce and the configurable in whose context the coerce is taking place. %s %s' % (typed.__class__, typed))
             return typed.coerce(data[0])
 
+@implementer(iformless.IInputProcessor)
 class ProcessRequest(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
         return context.locate(inevow.IRequest)
 
 
+@implementer(iformless.IInputProcessor)
 class ProcessContext(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
         return context
 
 
+@implementer(iformless.IInputProcessor)
 class ProcessUpload(components.Adapter):
-    implements(iformless.IInputProcessor)
 
     def process(self, context, boundTo, data):
 

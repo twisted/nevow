@@ -2,7 +2,7 @@
 # See LICENSE for details.
 
 from twisted.python import log
-from zope.interface import implements
+from zope.interface import implementer
 from nevow import loaders, rend, inevow
 from nevow.stan import directive
 from nevow import tags
@@ -128,12 +128,12 @@ class NameVirtualHost(rend.Page):
         resrc = self._getResourceForRequest(inevow.IRequest(ctx))
         return resrc, segments
 
+@implementer(inevow.IResource)
 class _VHostMonsterResourcePrepathCleaner:
     """VHostMonsterResource cannot modify request.prepath because the
     segments it needs to remove are not appended to prepath until
     *after* it returns the (resource,segments) tuple.
     """
-    implements(inevow.IResource)
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
         request.prepath = request.prepath[3:]
@@ -141,6 +141,7 @@ class _VHostMonsterResourcePrepathCleaner:
 
 _prepathCleaner = _VHostMonsterResourcePrepathCleaner()
 
+@implementer(inevow.IResource)
 class VHostMonsterResource:
     """VHostMonster resource that helps to deploy a Nevow site behind a proxy.
     
@@ -178,7 +179,6 @@ class VHostMonsterResource:
     host name they are contacting. This can lead to cookie stealing or
     cross site scripting attacks. Never expose /vhost to the Internet.
     """
-    implements(inevow.IResource)
 
     def locateChild(self, ctx, segments):
 

@@ -6,7 +6,7 @@ Basic rendering classes for Nevow applications.
 API Stability: Completely unstable.
 """
 
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow.inevow import IRequest, IRenderable, IRendererFactory
 from nevow.errors import MissingRenderMethod, MissingDocumentFactory
@@ -42,6 +42,7 @@ renderer = Expose(
 
 
 
+@implementer(IRenderable)
 class Element(object):
     """
     Base for classes which can render part of a page.
@@ -72,7 +73,6 @@ class Element(object):
     @ivar docFactory: The factory which will be used to load documents to
         return from C{render}.
     """
-    implements(IRenderable)
 
     docFactory = None
     preprocessors = ()

@@ -5,7 +5,7 @@
 """
 A toy email server.
 """
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet import defer
 from twisted.mail import smtp
@@ -31,8 +31,8 @@ Title: TITLE
 Content: CONTENT
 """
 
+@implementer(smtp.IMessageDelivery)
 class BlogMessageDelivery:
-    implements(smtp.IMessageDelivery)
     def __init__(self, store):
         self.store = store
     
@@ -49,8 +49,8 @@ class BlogMessageDelivery:
             return lambda: BlogMessage(self.store)
         raise smtp.SMTPBadRcpt(user)
 
+@implementer(smtp.IMessage)
 class BlogMessage:
-    implements(smtp.IMessage)
     
     def __init__(self, store):
         self.lines = []

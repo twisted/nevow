@@ -12,7 +12,7 @@ skips = []
 
 try:
     import twisted
-    sys.exit(os.system('trial -v nevow.test formless.test'))
+    sys.exit(os.system('trial nevow.test formless.test'))
 except ImportError:
     skips.extend([
         'nevow.test.test_disktemplate',
@@ -35,7 +35,7 @@ mods = [
 for mod in mods:
     names.extend(['.'.join([mod.__name__, x]) for x in getModuleNames(mod)])
 
-names = filter(lambda x: x not in skips, names)
+names = [x for x in names if x not in skips]
 
 
 class SkipTestLoader(unittest.TestLoader):
@@ -43,8 +43,8 @@ class SkipTestLoader(unittest.TestLoader):
         names = unittest.TestLoader.getTestCaseNames(self, testCaseClass)
         for n in names:
             meth = getattr(testCaseClass, n)
-            if hasattr(meth, 'skip'): print "SKIP:", testCaseClass.__name__, n, '\n\t', meth.skip
-            elif hasattr(meth, 'todo'): print "TODO:", testCaseClass.__name__, n, '\n\t', meth.todo
+            if hasattr(meth, 'skip'): print("SKIP:", testCaseClass.__name__, n, '\n\t', meth.skip)
+            elif hasattr(meth, 'todo'): print("TODO:", testCaseClass.__name__, n, '\n\t', meth.todo)
             else: yield n
 
 

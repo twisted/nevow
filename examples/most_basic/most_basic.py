@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from nevow import inevow
 
@@ -15,8 +15,8 @@ from nevow import inevow
 # tuple of (page, remaining_segments)
 # if there is no page, and you want to display a 404 page, you will need to return
 # a None, () tuple.
+@implementer(inevow.IResource)
 class Root(object):
-    implements(inevow.IResource)
 
     def locateChild(self, ctx, segments):
         # This locateChild is 'stupid' since it can only work if the tree of
@@ -42,8 +42,8 @@ class Root(object):
         <a href="./foo" id="foo">foo</a></body></html>
 """
 
+@implementer(inevow.IResource)
 class Foo(object):
-    implements(inevow.IResource)
     
     def locateChild(self, ctx, segments):
         # segments is the remaining segments returned by the root locateChild
@@ -58,8 +58,8 @@ class Foo(object):
         <a href="./foo/baz" id="baz">baz</a></body></html>
 """
 
+@implementer(inevow.IResource)
 class Baz(object):
-    implements(inevow.IResource)
     def locateChild(self, ctx, segments):
         return None, ()
     def renderHTTP(self, ctx):
