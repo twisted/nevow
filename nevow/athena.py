@@ -1261,7 +1261,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         """
         Invoke connectionMade on all attached widgets.
         """
-        for widget in list(self._localObjects.values()):
+        for widget in self._localObjects.values():
             widget.connectionMade()
         self._didConnect = True
 
@@ -1286,7 +1286,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
             for (reqID, resD) in calls.items():
                 resD.errback(reason)
             if self._didConnect:
-                for widget in list(self._localObjects.values()):
+                for widget in self._localObjects.values():
                     widget.connectionLost(reason)
             self.factory.removeClient(self.clientID)
 
@@ -1449,13 +1449,13 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         raise AttributeError(methodName)
 
 
-    def liveTransportMessageReceived(self, ctx, xxx_todo_changeme):
+    def liveTransportMessageReceived(self, ctx, action_and_args):
         """
         A message was received from the reliable transport layer.  Process it by
         dispatching it first to myself, then later to application code if
         applicable.
         """
-        (action, args) = xxx_todo_changeme
+        (action, args) = action_and_args
         method = getattr(self, 'action_' + action)
         method(ctx, *args)
 
@@ -1815,7 +1815,7 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
         """
         if self.fragmentParent is None:
             raise OrphanedFragment(self)
-        for ch in list(self.liveFragmentChildren):
+        for ch in self.liveFragmentChildren:
             ch._athenaDetachServer()
         self.fragmentParent.liveFragmentChildren.remove(self)
         self.fragmentParent = None

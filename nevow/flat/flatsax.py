@@ -132,7 +132,7 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
         specials = {}
         attributes = self.attributeList
         directives = self.directiveMapping
-        for k, v in list(attrs.items()):
+        for k, v in attrs.items():
             att_ns, nons = k
             if att_ns != nevow.namespace:
                 continue
@@ -145,7 +145,7 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
                 del attrs[k]
 
         no_ns_attrs = {}
-        for (attrNs, attrName), v in list(attrs.items()):
+        for (attrNs, attrName), v in attrs.items():
             nsPrefix = self.prefixMap.get(attrNs)
             if nsPrefix is None:
                 no_ns_attrs[attrName] = v

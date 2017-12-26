@@ -53,7 +53,7 @@ def TagSerializer(original, context, contextIsMine=False):
     ## TODO: Do we really need to bypass precompiling for *all* specials?
     ## Perhaps just render?
     if context.precompile and (
-        [x for x in list(original._specials.values()) 
+        [x for x in original._specials.values() 
         if x is not None and x is not Unset]
         or original.slotData):
         ## The tags inside this one get a "fresh" parent chain, because

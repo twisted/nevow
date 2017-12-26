@@ -141,7 +141,7 @@ def parseValue(tokens):
     if type(tokens[0]) == StringToken:
         return parseString(tokens)
 
-    if type(tokens[0]) in (int, float, int):
+    if type(tokens[0]) in (int, float):
         return tokens.pop(0), tokens
 
     raise ParseError("Unexpected %r" % tokens[0])

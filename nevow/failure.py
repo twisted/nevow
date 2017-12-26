@@ -164,7 +164,7 @@ def htmlDict(d):
                 t.td(_class="dictKey")[ k == '__builtins__' and 'builtin dictionary' or htmlrepr(k) ],
                 t.td(_class="dictValue")[ htmlrepr(v) ]
             ]
-            for k, v in list(d.items())
+            for k, v in d.items()
         ]]
     ]
                 
@@ -282,7 +282,7 @@ def formatFailure(myFailure):
         # Instance variables
         for name, var in localVars:
             if name == 'self' and hasattr(var, '__dict__'):
-                usedVars = [ (key, value) for (key, value) in list(var.__dict__.items())
+                usedVars = [ (key, value) for (key, value) in var.__dict__.items()
                              if re.search(r'\Wself.%s\W' % (re.escape(key),), textSnippet) ]
                 if usedVars:
                     frame[

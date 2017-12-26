@@ -34,7 +34,7 @@ class TestSuiteFragment(athena.LiveFragment):
                 else:
                     head.append(test.head())
         gather(self.testInstances)
-        return [_f for _f in head if _f]
+        return [item for item in head if item]
 
 
     def render_tests(self, ctx, data):

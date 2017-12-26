@@ -67,7 +67,7 @@ def process(filename, messages):
 
 
 def report(messages):
-    for msgid, locations in list(messages.items()):
+    for msgid, locations in messages.items():
         for line in locations:
             print(line)
         print(msgid)

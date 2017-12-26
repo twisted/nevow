@@ -175,7 +175,7 @@ def _ctxForRequest(request, slotData, renderFactory, inAttribute):
     ctx.remember(request, IRequest)
     for slotGroup in slotData:
         if slotGroup is not None:
-            for k, v in list(slotGroup.items()):
+            for k, v in slotGroup.items():
                 ctx.fillSlots(k, v)
     if renderFactory is not None:
         ctx.remember(_OldRendererFactory(renderFactory), IRendererFactory)
@@ -423,8 +423,8 @@ def flatten(request, write, root, inAttribute, inXML):
             if type(element) is str:
                 write(element)
             elif isinstance(element, Deferred):
-                def cbx(xxx_todo_changeme):
-                    (original, toFlatten) = xxx_todo_changeme
+                def cbx(args):
+                    (original, toFlatten) = args
                     stack.append(toFlatten)
                     return original
                 yield element.addCallback(cbx)

@@ -193,7 +193,7 @@ class GroupBase(object):
             l[[a(v=x) for x in colors]],
             l[[a(v=x) for x in alphas]],
             l[[a(v=x) for x in ratios]],
-            d[[i(k=k, v=v) for (k, v) in list(matrix.items())]])
+            d[[i(k=k, v=v) for (k, v) in matrix.items()]])
 
     def text(self, text, x, y, height, width):
         """Place the given text on the canvas using the given x, y, height and width.

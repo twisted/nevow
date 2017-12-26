@@ -329,7 +329,7 @@ def defaultsFactory(ctx):
     defaults = webform.FormDefaults()
     if co is not None:
         e = iformless.IFormErrors(co, {})
-        for k, v in list(e.items()):
+        for k, v in e.items():
             defaults.getAllDefaults(k).update(v.partialForm)
     return defaults
 
@@ -341,7 +341,7 @@ def errorsFactory(ctx):
     errs = webform.FormErrors()
     if co is not None:
         e = iformless.IFormErrors(co, {})
-        for k, v in list(e.items()):
+        for k, v in e.items():
             errs.updateErrors(k, v.errors)
             errs.setError(k, v.formErrorMessage)
     return errs
@@ -768,7 +768,7 @@ def mapping(context, data):
        <td><nevow:slot name="email"/></td>
      </tr>
     """
-    for k, v in list(data.items()):
+    for k, v in data.items():
         context.fillSlots(k, v)
     return context.tag
 

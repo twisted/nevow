@@ -94,7 +94,7 @@ class _DictHeaders(MutableMapping):
         Return a C{dict} mapping each header name to the last corresponding
         header value.
         """
-        return dict(list(self.items()))
+        return dict(self.items())
 
 
     def has_key(self, key):

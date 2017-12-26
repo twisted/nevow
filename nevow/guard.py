@@ -148,7 +148,7 @@ class GuardSession(components.Componentized):
         del self.guard.sessions[self.uid]
 
         # Logout of all portals
-        for portal in list(self.portals.keys()):
+        for portal in self.portals.keys():
             self.portalLogout(portal)
 
         for c in self.expireCallbacks:
@@ -272,8 +272,8 @@ class SessionWrapper:
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
         d = defer.maybeDeferred(self._delegate, ctx, [])
-        def _cb(xxx_todo_changeme1, ctx):
-            (resource, segments) = xxx_todo_changeme1
+        def _cb(res_and_segments, ctx):
+            (resource, segments) = res_and_segments
             assert not segments
             res = inevow.IResource(resource)
             return res.renderHTTP(ctx)
@@ -451,10 +451,10 @@ class SessionWrapper:
 
         if authCommand == LOGIN_AVATAR:
             subSegments = segments[1:]
-            def unmangleURL(xxx_todo_changeme):
+            def unmangleURL(res_and_segments):
                 # Tell the session that we just logged in so that it will
                 # remember form values for us.
-                (res,segs) = xxx_todo_changeme
+                (res,segs) = res_and_segments
                 session.justLoggedIn = True
                 # Then, generate a redirect back to where we're supposed to be
                 # by looking at the root of the site and calculating the path
@@ -535,8 +535,8 @@ class SessionWrapper:
             self._cbLoginSuccess, session, segments
         )
 
-    def _cbLoginSuccess(self, xxx_todo_changeme2, session, segments):
-        (iface, res, logout) = xxx_todo_changeme2
+    def _cbLoginSuccess(self, descriptor, session, segments):
+        (iface, res, logout) = descriptor
         session.setResourceForPortal(res, self.portal, logout)
         return res, segments
 

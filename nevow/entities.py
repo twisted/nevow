@@ -10,8 +10,8 @@ import types
 
 __by_number = {}
 
-def makeEntity(xxx_todo_changeme):
-    (name, num, description) = xxx_todo_changeme
+def makeEntity(entity_desc):
+    (name, num, description) = entity_desc
     from nevow.stan import Entity
     e = Entity(name, num, description)
     __by_number[types.IntType(num)] = e

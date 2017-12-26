@@ -52,7 +52,7 @@ class Componentized(_Componentized):
     def __init__(self, adapterCache=None):
         _Componentized.__init__(self)
         if adapterCache:
-            for k, v in list(adapterCache.items()):
+            for k, v in adapterCache.items():
                 self.setComponent(k, v)
 
 
