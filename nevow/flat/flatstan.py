@@ -1,9 +1,9 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
-from __future__ import generators
 
-import urllib, warnings
+
+import urllib.request, urllib.parse, urllib.error, warnings
 
 from twisted.python import log, failure
 
@@ -38,7 +38,7 @@ def TagSerializer(original, context, contextIsMine=False):
     visible = bool(original.tagName)
     
     if visible and context.isAttrib:
-        raise RuntimeError, "Tried to render tag '%s' in an tag attribute context." % (original.tagName)
+        raise RuntimeError("Tried to render tag '%s' in an tag attribute context." % (original.tagName))
 
     if context.precompile and original.macro:
         toBeRenderedBy = original.macro
@@ -53,7 +53,7 @@ def TagSerializer(original, context, contextIsMine=False):
     ## TODO: Do we really need to bypass precompiling for *all* specials?
     ## Perhaps just render?
     if context.precompile and (
-        [x for x in original._specials.values() 
+        [x for x in list(original._specials.values()) 
         if x is not None and x is not Unset]
         or original.slotData):
         ## The tags inside this one get a "fresh" parent chain, because
@@ -111,7 +111,7 @@ def TagSerializer(original, context, contextIsMine=False):
     yield '<%s' % original.tagName
     if original.attributes:
         attribContext = WovenContext(parent=context, precompile=context.precompile, isAttrib=True)
-        for (k, v) in sorted(original.attributes.iteritems()):
+        for (k, v) in sorted(original.attributes.items()):
             if v is None:
                 continue
             yield ' %s="' % k
@@ -155,7 +155,7 @@ def StringSerializer(original, context):
     if context.inURL:
         # The magic string "-_.!*'()" also appears in url.py.  Thinking about
         # changing this?  Change that, too.
-        return urllib.quote(original, safe="-_.!*'()")
+        return urllib.parse.quote(original, safe="-_.!*'()")
     ## quote it
     if context.inJS:
         original = _jsSingleQuoteQuote(original)
@@ -235,7 +235,7 @@ def FunctionSerializer(original, context, nocontextfun=FunctionSerializer_nocont
                 else:
                     result = original(context, data)
         except StopIteration:
-            raise RuntimeError, "User function %r raised StopIteration." % original
+            raise RuntimeError("User function %r raised StopIteration." % original)
         return serialize(result, context)
 
 

@@ -5,7 +5,7 @@
 Tests for L{nevow._flat}.
 """
 
-import sys, traceback, StringIO
+import sys, traceback, io
 
 from zope.interface import implements
 
@@ -34,7 +34,7 @@ from nevow.context import WovenContext
 # lambda to avoid adding anything else to this namespace.  The result will
 # be a string which agrees with the one the traceback module will put into a
 # traceback for frames associated with functions defined in this file.
-HERE = (lambda: None).func_code.co_filename
+HERE = (lambda: None).__code__.co_filename
 
 
 class TrivialRenderable(object):
@@ -118,7 +118,7 @@ class FlattenTests(TestCase, FlattenMixin):
         """
         Helper to get a string from L{flatten}.
         """
-        s = StringIO.StringIO()
+        s = io.StringIO()
         for _ in flatten(request, s.write, root, inAttribute, inXML):
             pass
         return s.getvalue()
@@ -193,8 +193,8 @@ class FlattenTests(TestCase, FlattenMixin):
         An instance of L{unicode} is flattened to the UTF-8 representation of
         itself.
         """
-        self.assertStringEqual(self.flatten(u'bytes<>&"\0'), 'bytes<>&"\0')
-        unich = u"\N{LATIN CAPITAL LETTER E WITH GRAVE}"
+        self.assertStringEqual(self.flatten('bytes<>&"\0'), 'bytes<>&"\0')
+        unich = "\N{LATIN CAPITAL LETTER E WITH GRAVE}"
         self.assertStringEqual(self.flatten(unich), unich.encode('utf-8'))
 
 
@@ -203,7 +203,7 @@ class FlattenTests(TestCase, FlattenMixin):
         An L{xml} instance is flattened to the UTF-8 representation of itself.
         """
         self.assertStringEqual(self.flatten(xml("foo")), "foo")
-        unich = u"\N{LATIN CAPITAL LETTER E WITH GRAVE}"
+        unich = "\N{LATIN CAPITAL LETTER E WITH GRAVE}"
         self.assertStringEqual(self.flatten(xml(unich)), unich.encode('utf-8'))
 
 
@@ -303,8 +303,8 @@ class FlattenTests(TestCase, FlattenMixin):
         A L{Tag} with a C{tagName} attribute which is C{unicode} instead of
         C{str} is flattened to an XML representation.
         """
-        self.assertStringEqual(self.flatten(Tag(u'div')), "<div></div>")
-        self.assertStringEqual(self.flatten(Tag(u'div')['']), "<div></div>")
+        self.assertStringEqual(self.flatten(Tag('div')), "<div></div>")
+        self.assertStringEqual(self.flatten(Tag('div')['']), "<div></div>")
 
 
     def test_unicodeAttributeName(self):
@@ -313,7 +313,7 @@ class FlattenTests(TestCase, FlattenMixin):
         is flattened to an XML representation.
         """
         self.assertStringEqual(
-            self.flatten(Tag(u'div', {u'foo': 'bar'})), '<div foo="bar"></div>')
+            self.flatten(Tag('div', {'foo': 'bar'})), '<div foo="bar"></div>')
 
 
     def test_stringTagAttributes(self):
@@ -820,7 +820,7 @@ class FlattenTests(TestCase, FlattenMixin):
         significantly greater than the Python maximum recursion limit.
         """
         obj = ["foo"]
-        for i in xrange(1000):
+        for i in range(1000):
             obj = [obj]
         self._nestingTest(obj, "foo")
 
@@ -831,7 +831,7 @@ class FlattenTests(TestCase, FlattenMixin):
         significantly greater than the Python maximum recursion limit.
         """
         tag = div()[slot("foo-0")]
-        for i in xrange(1000):
+        for i in range(1000):
             tag.fillSlots("foo-" + str(i), slot("foo-" + str(i + 1)))
         tag.fillSlots("foo-1000", "bar")
         self._nestingTest(tag, "<div>bar</div>")
@@ -844,7 +844,7 @@ class FlattenTests(TestCase, FlattenMixin):
         """
         n = 1000
         tag = div["foo"]
-        for i in xrange(n - 1):
+        for i in range(n - 1):
             tag = div[tag]
         self._nestingTest(tag, "<div>" * n + "foo" + "</div>" * n)
 
@@ -855,7 +855,7 @@ class FlattenTests(TestCase, FlattenMixin):
         nesting significantly greater than the Python maximum recursion limit.
         """
         obj = TrivialRenderable("foo")
-        for i in xrange(1000):
+        for i in range(1000):
             obj = TrivialRenderable(obj)
         self._nestingTest(obj, "foo")
 
@@ -971,13 +971,13 @@ class FlattenerErrorTests(TestCase):
         """
         self.assertEqual(
             str(FlattenerError(
-                    RuntimeError("reason"), [u'abc\N{SNOWMAN}xyz'], [])),
+                    RuntimeError("reason"), ['abc\N{SNOWMAN}xyz'], [])),
             "Exception while flattening:\n"
             "  u'abc\\u2603xyz'\n" # Codepoint for SNOWMAN
             "RuntimeError: reason\n")
         self.assertEqual(
             str(FlattenerError(
-                    RuntimeError("reason"), [u'01234567\N{SNOWMAN}9' * 10],
+                    RuntimeError("reason"), ['01234567\N{SNOWMAN}9' * 10],
                     [])),
             "Exception while flattening:\n"
             "  u'01234567\\u2603901234567\\u26039<...>01234567\\u2603901234567"
@@ -1048,7 +1048,7 @@ class FlattenerErrorTests(TestCase):
 
         try:
             f()
-        except RuntimeError, exc:
+        except RuntimeError as exc:
             # Get the traceback, minus the info for *this* frame
             tbinfo = traceback.extract_tb(sys.exc_info()[2])[1:]
         else:
@@ -1062,8 +1062,8 @@ class FlattenerErrorTests(TestCase):
             "  File \"%s\", line %d, in g\n"
             "    raise RuntimeError(\"reason\")\n"
             "RuntimeError: reason\n" % (
-                HERE, f.func_code.co_firstlineno + 1,
-                HERE, g.func_code.co_firstlineno + 1))
+                HERE, f.__code__.co_firstlineno + 1,
+                HERE, g.__code__.co_firstlineno + 1))
 
 
 
@@ -1234,8 +1234,8 @@ class DeferflattenTests(TestCase, FlattenMixin):
         frames allowed by the Python recursion limit succeeds if all the
         L{Deferred}s have results already.
         """
-        results = [str(i) for i in xrange(1000)]
-        deferreds = map(succeed, results)
+        results = [str(i) for i in range(1000)]
+        deferreds = list(map(succeed, results))
         limit = sys.getrecursionlimit()
         sys.setrecursionlimit(100)
         try:

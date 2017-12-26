@@ -17,12 +17,12 @@ def tabbedPaneFragment():
     C{<h1>} node containing the tab's number.
     """
     return TabbedPaneFragment(
-        [('Page ' + str(i), tags.h1[str(i)]) for i in xrange(4)])
+        [('Page ' + str(i), tags.h1[str(i)]) for i in range(4)])
 
 
 
 class TabbedPaneFetcher(athena.LiveElement):
-    jsClass = u'Nevow.Test.TestTabbedPane.TabbedPaneFetcher'
+    jsClass = 'Nevow.Test.TestTabbedPane.TabbedPaneFetcher'
     docFactory = loaders.xmlstr("""
 <div xmlns:athena="http://divmod.org/ns/athena/0.7"
   xmlns:nevow="http://nevow.com/ns/nevow/0.1"

@@ -28,10 +28,10 @@ class browsers(object):
     """
     Namespace class for Browser identifiers.
     """
-    GECKO = u'gecko'
-    INTERNET_EXPLORER = u'internet explorer'
-    WEBKIT = u'webkit'
-    OPERA = u'opera'
+    GECKO = 'gecko'
+    INTERNET_EXPLORER = 'internet explorer'
+    WEBKIT = 'webkit'
+    OPERA = 'opera'
 
 
 class UserAgent(object):
@@ -97,7 +97,7 @@ class UserAgent(object):
                 end += 1
             version = agentString[start + len(identifier):end]
             try:
-                version = map(int, version.split('.'))
+                version = list(map(int, version.split('.')))
             except ValueError:
                 pass
             else:
@@ -113,7 +113,7 @@ class UserAgent(object):
         if agentString.startswith(prefix):
             version = agentString[len(prefix):].split(None, 1)[0]
             try:
-                version = map(int, version.split('.'))
+                version = list(map(int, version.split('.')))
             except ValueError:
                 pass
             else:
@@ -134,7 +134,7 @@ class UserAgent(object):
                     end = None
                 version = agentString[len(prefix):end]
                 try:
-                    version = map(int, version.split('.'))
+                    version = list(map(int, version.split('.')))
                 except ValueError:
                     pass
                 else:

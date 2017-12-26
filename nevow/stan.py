@@ -21,7 +21,7 @@ code. See nevow.stan.Tag for details, and nevow.tags for tag
 prototypes for all of the XHTML element types.
 """
 
-from __future__ import generators
+
 from zope.interface import implements
 
 from nevow import inevow
@@ -147,7 +147,7 @@ class slot(object):
         """Prevent an infinite loop if someone tries to do
             for x in slot('foo'):
         """
-        raise NotImplementedError, "Stan slot instances are not iterable."
+        raise NotImplementedError("Stan slot instances are not iterable.")
 
 
 
@@ -362,11 +362,11 @@ class Tag(object):
             return self
 
         for name in self.specials:
-            if kw.has_key(name):
+            if name in kw:
                 setattr(self, name, kw[name])
                 del kw[name]
 
-        for k, v in kw.iteritems():
+        for k, v in kw.items():
             if k[-1] == '_':
                 k = k[:-1]
             elif k[0] == '_':
@@ -403,7 +403,7 @@ class Tag(object):
         """Prevent an infinite loop if someone tries to do
             for x in stantaginstance:
         """
-        raise NotImplementedError, "Stan tag instances are not iterable."
+        raise NotImplementedError("Stan tag instances are not iterable.")
 
     def _clearSpecials(self):
         """Clears all the specials in this tag. For use by flatstan.
@@ -496,7 +496,7 @@ class Tag(object):
 
 
 class UnsetClass:
-    def __nonzero__(self):
+    def __bool__(self):
         return False
     def __repr__(self):
         return "Unset"
@@ -546,18 +546,18 @@ class PatternTag(object):
     through a sequence of matching patterns.'''
 
     def __init__(self, patterner):
-        self.pat = patterner.next()
+        self.pat = next(patterner)
         self.patterner = patterner
 
-    def next(self):
+    def __next__(self):
         if self.pat:
             p, self.pat = self.pat, None
             return p
-        return self.patterner.next()
+        return next(self.patterner)
 
 
 def makeForwarder(name):
-    return lambda self, *args, **kw: getattr(self.next(), name)(*args, **kw)
+    return lambda self, *args, **kw: getattr(next(self), name)(*args, **kw)
 
 for forward in ['__call__', '__getitem__', 'fillSlots']:
     setattr(PatternTag, forward, makeForwarder(forward))
@@ -591,7 +591,7 @@ def _locatePatterns(tag, pattern, default, loop=True):
                 yield cloned
 
     if default is None:
-        raise NodeNotFound, ("pattern", pattern)
+        raise NodeNotFound("pattern", pattern)
     if hasattr(default, 'clone'):
         while True:  yield default.clone(deep=False)
     else:

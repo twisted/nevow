@@ -61,25 +61,28 @@ class Test404(testutil.TestCase):
         """
         root = Root()
         def later(resource):
-            self.failUnless(isinstance(resource, rend.FourOhFour))
-            def morelater((code, html)):
-                self.assertEquals(rend.FourOhFour.notFound, html)
-                self.assertEquals(code, 404)
+            self.assertTrue(isinstance(resource, rend.FourOhFour))
+            def morelater(xxx_todo_changeme):
+                (code, html) = xxx_todo_changeme
+                self.assertEqual(rend.FourOhFour.notFound, html)
+                self.assertEqual(code, 404)
             return renderResource('/foo').addCallback(morelater)
         return getResource(root, '/foo').addCallback(later)
 
     def test_remembered404Handler(self):
-        def later((code, html)):
-            self.assertEquals(html, NotFoundHandler.html)
-            self.assertEquals(code, 404)
+        def later(xxx_todo_changeme1):
+            (code, html) = xxx_todo_changeme1
+            self.assertEqual(html, NotFoundHandler.html)
+            self.assertEqual(code, 404)
 
         return renderResource('/foo', notFoundHandler=NotFoundHandler()).addCallback(later)
 
     def test_keyErroringNotFoundHandler(self):
-        def later((code, html)):
-            self.assertEquals(rend.FourOhFour.notFound, html)
-            self.assertEquals(code, 404)
+        def later(xxx_todo_changeme2):
+            (code, html) = xxx_todo_changeme2
+            self.assertEqual(rend.FourOhFour.notFound, html)
+            self.assertEqual(code, 404)
             fe = self.flushLoggedErrors(BrokenException)
-            self.assertEquals(len(fe), 1)
+            self.assertEqual(len(fe), 1)
         return renderResource('/foo', notFoundHandler=BadNotFoundHandler()).addCallback(later)
 

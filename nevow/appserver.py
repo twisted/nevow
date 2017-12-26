@@ -9,7 +9,7 @@ A web application server built using twisted.web
 import cgi
 import warnings
 from collections import MutableMapping
-from urllib import unquote
+from urllib.parse import unquote
 
 from zope.interface import implements, classImplements
 
@@ -94,7 +94,7 @@ class _DictHeaders(MutableMapping):
         Return a C{dict} mapping each header name to the last corresponding
         header value.
         """
-        return dict(self.items())
+        return dict(list(self.items()))
 
 
     def has_key(self, key):
@@ -235,7 +235,7 @@ class NevowRequest(tpc.Componentized, server.Request):
 
         # Resource Identification
         self.prepath = []
-        self.postpath = map(unquote, self.path[1:].split('/'))
+        self.postpath = list(map(unquote, self.path[1:].split('/')))
         self.sitepath = []
 
         self.deferred = defer.Deferred()
@@ -445,7 +445,7 @@ class NevowSite(server.Site):
             assert  len(newpath) < len(path), "Infinite loop impending..."
 
         ## We found a Resource... update the request.prepath and postpath
-        for x in xrange(len(path) - len(newpath)):
+        for x in range(len(path) - len(newpath)):
             if request.postpath:
                 request.prepath.append(request.postpath.pop(0))
 

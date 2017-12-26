@@ -21,7 +21,7 @@ def _drive(iterable, finished):
     it after those Deferreds fire.
     """
     try:
-        next = iterable.next()
+        next = next(iterable)
     except StopIteration:
         finished.callback('')
     except:

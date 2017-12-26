@@ -24,8 +24,8 @@ class tabbedPaneGlue:
 
 
 class TabbedPaneFragment(athena.LiveFragment):
-    jsClass = u'Nevow.TagLibrary.TabbedPane.TabbedPane'
-    cssModule = u'Nevow.TagLibrary.TabbedPane'
+    jsClass = 'Nevow.TagLibrary.TabbedPane.TabbedPane'
+    cssModule = 'Nevow.TagLibrary.TabbedPane'
 
     docFactory = loaders.xmlstr("""
 <div class="nevow-tabbedpane"
@@ -55,7 +55,7 @@ class TabbedPaneFragment(athena.LiveFragment):
         super(TabbedPaneFragment, self).__init__()
 
     def getInitialArguments(self):
-        return (unicode(self.pages[self.selected][0], 'utf-8'),)
+        return (str(self.pages[self.selected][0], 'utf-8'),)
 
     def render_tabs(self, ctx, data):
         tabPattern = inevow.IQ(self.docFactory).patternGenerator('tab')

@@ -45,14 +45,14 @@ class TestHTMLRenderer(testutil.TestCase):
     def test_stringTemplate(self):
         r = rend.Page(docFactory=loaders.htmlstr(self.xhtml))
         return deferredRender(r).addCallback(
-            lambda result: self.assertEquals(result, self.xhtml))
+            lambda result: self.assertEqual(result, self.xhtml))
 
     def test_diskTemplate(self):
         temp = self.mktemp()
         setContent(temp, self.xhtml)
         r = rend.Page(docFactory=loaders.htmlfile(temp))
         return deferredRender(r).addCallback(
-            lambda result: self.assertEquals(result, self.xhtml))
+            lambda result: self.assertEqual(result, self.xhtml))
 
 
 class TestStandardRenderers(testutil.TestCase):
@@ -100,7 +100,7 @@ class TestStandardRenderers(testutil.TestCase):
         tr = TemplateRenderer(docFactory=loaders.htmlfile(temp))
 
         return deferredRender(tr).addCallback(
-            lambda result: self.assertEquals(
+            lambda result: self.assertEqual(
             result,
             '<html><head><title>THE TITLE</title></head><body><h3>THE HEADER</h3>SOME DUMMY TEXT</body></html>'
             ))
@@ -119,7 +119,7 @@ class TestStandardRenderers(testutil.TestCase):
 
         return deferredRender(tr).addCallback(
             lambda result:
-            self.assertEquals(
+            self.assertEqual(
             result, '<ol><li>one</li><li>two</li><li>three</li></ol>',
             "Whoops. We didn't get what we expected!"
             ))
@@ -138,7 +138,7 @@ class TestStandardRenderers(testutil.TestCase):
 
         return deferredRender(tr).addCallback(
             lambda result:
-            self.assertEquals(
+            self.assertEqual(
             result, '<ol><li><span>one</span></li><li><span>two</span></li><li><span>three</span></li></ol>',
             "Whoops. We didn't get what we expected!"
             ))
@@ -158,13 +158,13 @@ class TestStandardRenderers(testutil.TestCase):
             def data_aDict(self,context,data):
                 return {'1':'one','2':'two','3':'three','4':'four'}
             def render_slots(self,context,data):
-                for name,value in data.items():
+                for name,value in list(data.items()):
                     context.fillSlots(name, value)
                 return context.tag
 
         return deferredRender(Renderer(docFactory=loaders.htmlfile(temp))).addCallback(
             lambda result:
-            self.assertEquals(
+            self.assertEqual(
             result,
             "<table><tr><td>one</td><td>two</td></tr><tr><td>three</td><td>four</td></tr></table>",
             "Whoops. We didn't get what we expected!"))
@@ -183,11 +183,11 @@ class TestStandardRenderers(testutil.TestCase):
 
         return defer.DeferredList([
             deferredRender(Mine("one", docFactory=loaders.htmlfile(temp))).addCallback(
-            lambda result: self.assertEquals(result, '<span>ONE</span>')),
+            lambda result: self.assertEqual(result, '<span>ONE</span>')),
             deferredRender(Mine("two", docFactory=loaders.htmlfile(temp))).addCallback(
-            lambda result: self.assertEquals(result, '<span>TWO</span>')),
+            lambda result: self.assertEqual(result, '<span>TWO</span>')),
             deferredRender(Mine("three", docFactory=loaders.htmlfile(temp))).addCallback(
-            lambda result: self.assertEquals(result, '<span>THREE</span>'))
+            lambda result: self.assertEqual(result, '<span>THREE</span>'))
             ], fireOnOneErrback=True)
 
 
@@ -214,7 +214,7 @@ class TestSubclassAsRenderAndDataFactory(testutil.TestCase):
         def after(result):
             self.assertSubstring('hello', result)
             self.assertSubstring('world', result)
-            self.assertEquals(result,
+            self.assertEqual(result,
                               "<html><div>hello</div>world</html>")
         return D.addCallback(after)
 

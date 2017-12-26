@@ -83,7 +83,7 @@ class ExampleJavaScriptTestCase(JavaScriptTestCase):
         base.examplePath = self.examplePath
         try:
             base.setUp()
-        except SkipTest, e:
+        except SkipTest as e:
             result.startTest(self)
             result.addSkip(self, str(e))
             result.stopTest(self)
@@ -152,8 +152,8 @@ class Echo00(ExampleTestBase, TestCase):
         eb = EchoElement()
         echoed = []
         eb.callRemote = lambda method, message: echoed.append((method, message))
-        eb.say(u'HELLO... Hello... hello...')
-        self.assertEquals(echoed, [('addText', u'HELLO... Hello... hello...')])
+        eb.say('HELLO... Hello... hello...')
+        self.assertEqual(echoed, [('addText', 'HELLO... Hello... hello...')])
 
 
 
@@ -205,8 +205,8 @@ class RenderAndChat01(ExampleTestBase, TestCase):
         from chatthing.chatterbox import ChatterElement, ChatRoom
         cb = ChatterElement(ChatRoom())
         setUsername = expose.get(cb, 'setUsername')
-        setUsername(u'jethro')
-        self.assertIdentical(u'jethro', cb.username)
+        setUsername('jethro')
+        self.assertIdentical('jethro', cb.username)
 
 
     def test_loginThenWall(self):
@@ -220,14 +220,14 @@ class RenderAndChat01(ExampleTestBase, TestCase):
         cr = ChatRoom()
         user1 = cr.makeChatter()
         user1.wall = lambda msg: jethroHeard.append(msg)
-        user1.setUsername(u'jethro')
+        user1.setUsername('jethro')
         user2 = cr.makeChatter()
         user2.wall = lambda msg: cletusHeard.append(msg)
-        user2.setUsername(u'cletus')
-        self.assertEquals(jethroHeard,
-                          [u' * user jethro has joined the room',
-                           u' * user cletus has joined the room'])
-        self.assertEquals(cletusHeard, [u' * user cletus has joined the room'])
+        user2.setUsername('cletus')
+        self.assertEqual(jethroHeard,
+                          [' * user jethro has joined the room',
+                           ' * user cletus has joined the room'])
+        self.assertEqual(cletusHeard, [' * user cletus has joined the room'])
 
 
     def test_sayThenHear(self):
@@ -239,18 +239,18 @@ class RenderAndChat01(ExampleTestBase, TestCase):
         cr = ChatRoom()
         user1 = cr.makeChatter()
         user1.wall = lambda msg: msg
-        user1.setUsername(u'jethro')
+        user1.setUsername('jethro')
         user2 = cr.makeChatter()
         user2.wall = lambda msg: msg
-        user2.setUsername(u'cletus')
+        user2.setUsername('cletus')
         jethroHeard = []
         cletusHeard = []
         user1.hear = lambda who, what: jethroHeard.append((who,what))
         user2.hear = lambda who, what: cletusHeard.append((who,what))
         say = expose.get(user1, 'say')
-        say(u'Hey, Cletus!')
-        self.assertEquals(jethroHeard, cletusHeard)
-        self.assertEquals(cletusHeard, [(u'jethro', u'Hey, Cletus!')])
+        say('Hey, Cletus!')
+        self.assertEqual(jethroHeard, cletusHeard)
+        self.assertEqual(cletusHeard, [('jethro', 'Hey, Cletus!')])
 
 
     def test_wallTellsClient(self):
@@ -262,8 +262,8 @@ class RenderAndChat01(ExampleTestBase, TestCase):
         cb = ChatRoom().makeChatter()
         heard = []
         cb.callRemote = lambda method, msg: heard.append((method, msg))
-        cb.wall(u'Message for everyone...')
-        self.assertEquals(heard, [('displayMessage', u'Message for everyone...')])
+        cb.wall('Message for everyone...')
+        self.assertEqual(heard, [('displayMessage', 'Message for everyone...')])
 
     def test_hearTellsClient(self):
         """
@@ -274,6 +274,6 @@ class RenderAndChat01(ExampleTestBase, TestCase):
         cb = ChatRoom().makeChatter()
         heard = []
         cb.callRemote = lambda method, who, what: heard.append((method, who, what))
-        cb.hear(u'Hello', u'Chat')
-        self.assertEquals(heard, [('displayUserMessage', u'Hello', u'Chat')])
+        cb.hear('Hello', 'Chat')
+        self.assertEqual(heard, [('displayUserMessage', 'Hello', 'Chat')])
 

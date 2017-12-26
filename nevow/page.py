@@ -97,7 +97,7 @@ class Element(object):
         Load and return C{self.docFactory}.
         """
         rend = self.rend
-        if rend.im_func is not Element.__dict__['rend']:
+        if rend.__func__ is not Element.__dict__['rend']:
             context = _ctxForRequest(request, [], self, False)
             return rend(context, None)
 

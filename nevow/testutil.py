@@ -120,7 +120,7 @@ class FakeRequest(Componentized):
         self.site = FakeSite()
         self.requestHeaders = Headers()
         if headers:
-            for k, v in headers.iteritems():
+            for k, v in headers.items():
                 self.requestHeaders.setRawHeaders(k, [v])
         if cookies is not None:
             self.cookies = cookies
@@ -517,7 +517,7 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
     def run(self, result):
         try:
             self.checkDependencies()
-        except NotSupported, e:
+        except NotSupported as e:
             result.startTest(self)
             result.addSkip(self, str(e))
             result.stopTest(self)
@@ -598,7 +598,7 @@ class CSSModuleTestMixin:
             return fname
 
         return athena.CSSRegistry(
-            {u'TestCSSModuleDependencies': makeModule(),
-             u'TestCSSModuleDependencies.Dependor': makeModule(
+            {'TestCSSModuleDependencies': makeModule(),
+             'TestCSSModuleDependencies.Dependor': makeModule(
                 '// import TestCSSModuleDependencies.Dependee\n'),
-             u'TestCSSModuleDependencies.Dependee': makeModule()})
+             'TestCSSModuleDependencies.Dependee': makeModule()})

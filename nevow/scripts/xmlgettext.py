@@ -1,5 +1,5 @@
 from xml.dom import pulldom
-from cStringIO import StringIO
+from io import StringIO
 from twisted.python import usage
 import nevow
 
@@ -38,14 +38,14 @@ class LineBasedStream(object):
 
 def getMsgID(node):
     out = StringIO()
-    print >>out, 'msgid ""'
+    print('msgid ""', file=out)
     for child in node.childNodes:
         s = child.toxml('utf-8')
         s = s.replace('\\', '\\\\')
         s = s.replace('"', '\\"')
         s = s.replace('\n', '\\n')
-        print >>out, '"%s"' % s
-    print >>out, 'msgstr ""'
+        print('"%s"' % s, file=out)
+    print('msgstr ""', file=out)
     return out.getvalue()
 
 def process(filename, messages):
@@ -67,14 +67,14 @@ def process(filename, messages):
 
 
 def report(messages):
-    for msgid, locations in messages.items():
+    for msgid, locations in list(messages.items()):
         for line in locations:
-            print line
-        print msgid
+            print(line)
+        print(msgid)
 
 class GettextOptions(usage.Options):
     def opt_version(self):
-        print 'Nevow version:', nevow.__version__
+        print('Nevow version:', nevow.__version__)
         usage.Options.opt_version(self)
 
     def parseArgs(self, *files):

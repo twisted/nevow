@@ -140,7 +140,7 @@ class _Blocks(object):
             _class=self.className,
             style='; '.join(
                 [': '.join((k.replace('_', '-'), v))
-                for (k, v) in kw.items()]))
+                for (k, v) in list(kw.items())]))
 
 
 block = _Blocks(tags.span, 'nevow-blocks-block')
