@@ -1,5 +1,5 @@
 
-from __future__ import division
+
 
 from twisted.python import filepath
 
@@ -31,7 +31,7 @@ class Benchmark(athena.LivePage):
             yield top
 
 class InitializationBenchmark(athena.LiveFragment):
-    jsClass = u'Nevow.Benchmarks.InitializationBenchmark'
+    jsClass = 'Nevow.Benchmarks.InitializationBenchmark'
 
     docFactory = loaders.stan(
         tags.div(render=tags.directive('liveFragment'))[

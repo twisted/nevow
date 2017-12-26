@@ -84,7 +84,7 @@ class CanvasDemo(canvas.Canvas):
         """Demo of drawing with a CanvasSocket object.
         """
         ## Create a bunch of groups
-        for x in xrange(random.randint(5, 15)):
+        for x in range(random.randint(5, 15)):
             newGroup = canvas.group()
             if random.choice([True, False]):
                 Alphaerizer(newGroup)

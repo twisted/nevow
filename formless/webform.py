@@ -4,7 +4,7 @@
 # See LICENSE for details.
 
 
-from __future__ import generators
+
 
 import warnings
 from zope.interface import implements, Interface
@@ -66,7 +66,7 @@ class BaseInputRenderer(components.Adapter):
         return context.tag
 
     def input(self, context, slot, data, name, value):
-        raise NotImplementedError, "Implement in subclass"
+        raise NotImplementedError("Implement in subclass")
 
 class PasswordRenderer(BaseInputRenderer):
     def input(self, context, slot, data, name, value):
@@ -437,7 +437,7 @@ def renderForms(configurableKey='', bindingNames=None, bindingDefaults=None):
             if bindingDefaults is None:
                 available = configurable.getBindingNames(context)
             else:
-                available = bindingDefaults.iterkeys()
+                available = iter(bindingDefaults.keys())
 
             def _callback(binding):
                 renderer = iformless.IBindingRenderer(binding, defaultBindingRenderer)

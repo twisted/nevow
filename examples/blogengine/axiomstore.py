@@ -38,10 +38,10 @@ class Blog(item.Item, item.InstallableMixin):
         self.posts = sequence.List(store=self.store)
         post = Post(store=self.store,
                     id=self.getNextId(),
-                    author=u'mike',
-                    title=u'FIRST POST!!!!',
-                    category=u'Test',
-                    content=u'I guess it worked.')
+                    author='mike',
+                    title='FIRST POST!!!!',
+                    category='Test',
+                    content='I guess it worked.')
         self.addNewPost(post)
 
     def installOn(self, other):

@@ -7,7 +7,7 @@ from twisted.python import log, util
 from nevow import athena, loaders, static
 
 class Clock(athena.LiveFragment):
-    jsClass = u"WidgetDemo.Clock"
+    jsClass = "WidgetDemo.Clock"
 
     docFactory = loaders.xmlstr('''\
 <div xmlns:nevow="http://nevow.com/ns/nevow/0.1"
@@ -49,7 +49,7 @@ class Clock(athena.LiveFragment):
             self.running = False
 
     def updateTime(self):
-        self.callRemote('setTime', unicode(time.ctime(), 'ascii')).addErrback(self._oops)
+        self.callRemote('setTime', str(time.ctime(), 'ascii')).addErrback(self._oops)
 
 class WidgetPage(athena.LivePage):
     docFactory = loaders.xmlstr("""\
@@ -73,7 +73,7 @@ class WidgetPage(athena.LivePage):
 
     def __init__(self, *a, **kw):
         super(WidgetPage, self).__init__(*a, **kw)
-        self.jsModules.mapping[u'WidgetDemo'] = util.sibpath(__file__, 'widgets.js')
+        self.jsModules.mapping['WidgetDemo'] = util.sibpath(__file__, 'widgets.js')
 
     def childFactory(self, ctx, name):
         ch = super(WidgetPage, self).childFactory(ctx, name)

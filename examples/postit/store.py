@@ -37,11 +37,11 @@ def initialize():
     s = store.Store('postit.axiom')
     postit = IPostit(s, None)
     if not postit:
-        Application(store=s, name=u'Postit').installOn(s)
+        Application(store=s, name='Postit').installOn(s)
         Post(store=s, 
-             title=u"This is the title",
-             url=u"http://www.divmod.org",
-             content=u"Here is the content for the link",
-             author=u"dialtone",
+             title="This is the title",
+             url="http://www.divmod.org",
+             content="Here is the content for the link",
+             author="dialtone",
              created=Time())
     return s

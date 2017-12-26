@@ -16,7 +16,7 @@ def label(length=None):
    """
 
    first = random.choice(alpha)
-   rest = [random.choice(alphaDigit) for i in xrange(length or 7)]
+   rest = [random.choice(alphaDigit) for i in range(length or 7)]
    newLabel = first + ''.join(rest)
    return newLabel
 

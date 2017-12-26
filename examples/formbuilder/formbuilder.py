@@ -28,7 +28,7 @@ class BuilderCore(configurable.Configurable):
             annotate.Method(arguments=self.formElements))
 
     def action(self, **kw):
-        print "ACTION!", kw
+        print("ACTION!", kw)
 
     def addElement(self, name, type):
         self.formElements.append(

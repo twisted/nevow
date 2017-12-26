@@ -92,15 +92,15 @@ class BlogMessage:
         post['content'] = '\n'.join(ctnt_buff)
         
         for header in 'content author category title'.split():
-            if not post.has_key(header):
+            if header not in post:
                 self.lines = []
                 return defer.fail(None) 
-        if post.has_key('id'):
+        if 'id' in post:
             oldpost = IBlog(self.store).getOne(int(post['id']))
-            oldpost.author = unicode(post['author'])
-            oldpost.title = unicode(post['title'])
-            oldpost.category = unicode(post['category'])
-            oldpost.content = unicode(post['content'])
+            oldpost.author = str(post['author'])
+            oldpost.title = str(post['title'])
+            oldpost.category = str(post['category'])
+            oldpost.content = str(post['content'])
             oldpost.setModified()
             action = 'modified'
             id = post['id']
@@ -108,10 +108,10 @@ class BlogMessage:
             newid = IBlog(self.store).getNextId()
             newPost = Post(store=self.store,
                            id=newid,
-                           author=unicode(post['author']),
-                           title=unicode(post['title']),
-                           category=unicode(post['category']),
-                           content=unicode(post['content']))
+                           author=str(post['author']),
+                           title=str(post['title']),
+                           category=str(post['category']),
+                           content=str(post['content']))
             IBlog(self.store).addNewPost(newPost)
             action = 'added'
             id = newid
@@ -125,7 +125,7 @@ Post number %s successfully %s
     eomReceived = transacted(eomReceived)
     
     def toLog(self, what):
-        print what
+        print(what)
         
     def sendNotify(self, to_addr, msg):
         d = smtp.sendmail(SMTP_HOST, FROM, to_addr, msg)

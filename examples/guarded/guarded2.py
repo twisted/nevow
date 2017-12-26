@@ -53,7 +53,7 @@ class MyPage(rend.Page):
         return context.tag[sess.uid]
  
     def logout(self):
-        print "Bye"
+        print("Bye")
  
 ### Authentication
 def noLogout():

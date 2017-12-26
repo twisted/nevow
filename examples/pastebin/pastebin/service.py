@@ -1,4 +1,4 @@
-import cPickle as pickle
+import pickle as pickle
 import os.path
 import time
 from zope.interface import implements

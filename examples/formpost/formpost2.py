@@ -18,7 +18,7 @@ from twisted.internet import defer
 
 # If you still want to use an attribute or method of some other object, you should use a function as shown below,
 # but look up IResource(ctx) or IConfigurable(ctx), whichever is more appropriate.
-newChoicesWay = annotate.Choice(lambda c, d: range(30))
+newChoicesWay = annotate.Choice(lambda c, d: list(range(30)))
 deferChoicesWay = annotate.Choice(lambda c, d: defer.succeed(['abcd', 'efgh', 'ijkl']))
 radioChoices = annotate.Radio(["Old", "Tyme", "Radio"])
 

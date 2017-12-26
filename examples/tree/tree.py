@@ -13,7 +13,7 @@ class Tree(dict):
             self.add(child)
     def add(self, child):
         self[child.name] = child
-    def __nonzero__(self):
+    def __bool__(self):
         return True
  
 class ITreeEdit(annotate.TypedInterface):
@@ -55,7 +55,7 @@ class TreeRenderer(rend.Page):
     def data_description(self, context, data):
         return self.original.description
     def data_children(self, context, data):
-        return self.original.items()
+        return list(self.original.items())
     def render_childLink(self, context, data):
         return T.a(href='subtree_%s/'%data[0])[data[1].description]
     def childFactory(self, ctx, name):
@@ -63,7 +63,8 @@ class TreeRenderer(rend.Page):
             return self.original[name[len('subtree_'):]]
     def render_descriptionForm(self, context, data):
         return webform.renderForms()
-    def render_childDel(self, context, (name, _)):
+    def render_childDel(self, context, xxx_todo_changeme):
+        (name, _) = xxx_todo_changeme
         ret = T.form(action="./freeform_post!!deleteChild",
                      enctype="multipart/form-data", method="POST")[
                T.input(type="hidden", name="name", value=name),
