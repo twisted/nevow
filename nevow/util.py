@@ -180,6 +180,12 @@ def _namedAnyWithBuiltinTranslation(name):
         name='types.NoneType'
     elif name == '__builtin__.generator':
         name='types.GeneratorType'
+    elif name == '__builtin__.dict':
+        return '__builtins.__dict__'
+    elif name == '__builtin__.list':
+        return '__builtins.list'
+    elif name == '__builtin__.tuple':
+        return '__builtins.tuple'
     return namedAny(name)
 
 # Import resource_filename from setuptools's pkg_resources module if possible

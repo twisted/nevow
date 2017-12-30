@@ -620,10 +620,6 @@ class GroupBinding(Binding):
         print("CONFIGURING GROUP BINDING", boundTo, group)
 
 
-def _sorter(x, y):
-    return cmp(x.id, y.id)
-
-
 class _Marker(object):
     pass
 
@@ -675,6 +671,15 @@ def labelAndDescriptionFromDocstring(docstring):
         return docs[0], '\n'.join(docs[1:])
     else:
         return None, '\n'.join(docs)
+
+
+def _getKeyForObject(ob):
+	"""returns an object's id.
+
+	This is used to have a reliable ordering of functions and properties
+	below.
+	"""
+	return ob.id
 
 
 class MetaTypedInterface(InterfaceClass):
@@ -813,10 +818,10 @@ class MetaTypedInterface(InterfaceClass):
                 )
         for attacher in actionAttachers:
             attacher.attachActionBindings(possibleActions)
-        methods.sort(_sorter)
-        properties.sort(_sorter)
+        methods.sort(key=_getKeyForObject)
+        properties.sort(key=_getKeyForObject)
         cls.__spec__ = spec = methods + properties
-        spec.sort(_sorter)
+        spec.sort(key=_getKeyForObject)
         cls.name = name
 
         # because attributes "label" and "description" would become Properties,

@@ -10,8 +10,6 @@ import os, string, time
 import io
 import traceback
 import warnings
-StringIO = cStringIO
-del cStringIO
 from zope.interface import implementer
 
 try:

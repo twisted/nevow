@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2006 Divmod.
 # See LICENSE for details.
 
+
 def _versions():
     import re
     from nevow._version import get_versions
@@ -70,16 +71,13 @@ __version__, __version_info__, version = _versions()
 import sys
 from twisted.python.components import registerAdapter
 
-from nevow import flat
-from nevow.util import _namedAnyWithBuiltinTranslation
-
-# Python2.2 has a stupidity where instance methods have name
-# '__builtin__.instance method' instead of '__builtin__.instancemethod'
-# Workaround this error.
-def clean(o):
-    if o == '__builtin__.instancemethod' and sys.version_info < (2,3):
-        return '__builtin__.instance method'
-    return o
+# all of these need to be imported explictly because they're used
+# further down when registering standard adapters.
+from . import accessors
+from . import flat
+from . import inevow
+from . import stan
+from .util import _namedAnyWithBuiltinTranslation
 
 
 def load(S):
@@ -87,8 +85,9 @@ def load(S):
         line = line.strip()
         if line and not line.startswith('#'):
             (a, o, i) = line.split()
+            print("calling", a, o, i)
             registerAdapter(_namedAnyWithBuiltinTranslation(a),
-                            _namedAnyWithBuiltinTranslation(clean(o)),
+                            _namedAnyWithBuiltinTranslation(o),
                             _namedAnyWithBuiltinTranslation(i))
 
 
@@ -97,7 +96,7 @@ def loadFlatteners(S):
         line = line.strip()
         if line and not line.startswith('#'):
             f, o = line.split()
-            flat.registerFlattener(f, clean(o))
+            flat.registerFlattener(f, o)
 
 
 namespace = "http://nevow.com/ns/nevow/0.1"
@@ -201,7 +200,7 @@ nevow.query.QueryNeverFind  nevow.stan.directive          nevow.inevow.IQ
 nevow.i18n.languagesFactory     nevow.context.RequestContext    nevow.inevow.ILanguages
 """
 
-load(basic_adapters)
+# load(basic_adapters)
 
 
 flatteners = """
@@ -272,7 +271,7 @@ nevow.flat.flatstan.StringCastSerializer          decimal.Decimal
 if sys.version_info >= (2, 4):
     flatteners += flatteners_2_4
 
-loadFlatteners(flatteners)
+# loadFlatteners(flatteners)
 
 
 __all__ = [
