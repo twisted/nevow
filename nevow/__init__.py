@@ -85,7 +85,6 @@ def load(S):
         line = line.strip()
         if line and not line.startswith('#'):
             (a, o, i) = line.split()
-            print("calling", a, o, i)
             registerAdapter(_namedAnyWithBuiltinTranslation(a),
                             _namedAnyWithBuiltinTranslation(o),
                             _namedAnyWithBuiltinTranslation(i))
@@ -200,16 +199,16 @@ nevow.query.QueryNeverFind  nevow.stan.directive          nevow.inevow.IQ
 nevow.i18n.languagesFactory     nevow.context.RequestContext    nevow.inevow.ILanguages
 """
 
-# load(basic_adapters)
+load(basic_adapters)
 
 
 flatteners = """
-nevow.flat.flatmdom.MicroDomDocumentSerializer          twisted.web.microdom.Document
-nevow.flat.flatmdom.MicroDomTextSerializer              twisted.web.microdom.Text
-nevow.flat.flatmdom.MicroDomCommentSerializer           twisted.web.microdom.Comment
-nevow.flat.flatmdom.MicroDomElementSerializer           twisted.web.microdom.Element
-nevow.flat.flatmdom.MicroDomEntityReferenceSerializer   twisted.web.microdom.EntityReference
-nevow.flat.flatmdom.MicroDomCDATASerializer   twisted.web.microdom.CDATASection
+#nevow.flat.flatmdom.MicroDomDocumentSerializer          twisted.web.microdom.Document
+#nevow.flat.flatmdom.MicroDomTextSerializer              twisted.web.microdom.Text
+#nevow.flat.flatmdom.MicroDomCommentSerializer           twisted.web.microdom.Comment
+#nevow.flat.flatmdom.MicroDomElementSerializer           twisted.web.microdom.Element
+#nevow.flat.flatmdom.MicroDomEntityReferenceSerializer   twisted.web.microdom.EntityReference
+#nevow.flat.flatmdom.MicroDomCDATASerializer   twisted.web.microdom.CDATASection
 
 nevow.flat.flatstan.ProtoSerializer               nevow.stan.Proto
 nevow.flat.flatstan.TagSerializer                 nevow.stan.Tag
@@ -218,11 +217,9 @@ nevow.flat.flatstan.CommentSerializer             nevow.stan.Comment
 nevow.flat.flatstan.XmlSerializer                 nevow.stan.xml
 nevow.flat.flatstan.RawSerializer                 nevow.stan.raw
 nevow.flat.flatstan.StringSerializer              __builtin__.str
-nevow.flat.flatstan.StringSerializer              __builtin__.unicode
 nevow.flat.flatstan.NoneWarningSerializer         __builtin__.NoneType
 nevow.flat.flatstan.StringCastSerializer          __builtin__.int
 nevow.flat.flatstan.StringCastSerializer          __builtin__.float
-nevow.flat.flatstan.StringCastSerializer          __builtin__.long
 nevow.flat.flatstan.BooleanSerializer          __builtin__.bool
 nevow.flat.flatstan.ListSerializer                __builtin__.list
 nevow.flat.flatstan.StringCastSerializer          __builtin__.dict
@@ -250,11 +247,11 @@ nevow.flat.flatstan.ListSerializer  itertools.chain
 nevow.flat.flatstan.ListSerializer  itertools.count
 nevow.flat.flatstan.ListSerializer  itertools.cycle
 nevow.flat.flatstan.ListSerializer  itertools.dropwhile
-nevow.flat.flatstan.ListSerializer  itertools.ifilter
-nevow.flat.flatstan.ListSerializer  itertools.ifilterfalse
-nevow.flat.flatstan.ListSerializer  itertools.imap
+nevow.flat.flatstan.ListSerializer  __builtin__.filter
+nevow.flat.flatstan.ListSerializer  itertools.filterfalse
+nevow.flat.flatstan.ListSerializer  __builtin__.map
 nevow.flat.flatstan.ListSerializer  itertools.islice
-nevow.flat.flatstan.ListSerializer  itertools.izip
+nevow.flat.flatstan.ListSerializer  __builtin__.zip
 nevow.flat.flatstan.ListSerializer  itertools.repeat
 nevow.flat.flatstan.ListSerializer  itertools.starmap
 nevow.flat.flatstan.ListSerializer  itertools.takewhile
@@ -271,7 +268,7 @@ nevow.flat.flatstan.StringCastSerializer          decimal.Decimal
 if sys.version_info >= (2, 4):
     flatteners += flatteners_2_4
 
-# loadFlatteners(flatteners)
+loadFlatteners(flatteners)
 
 
 __all__ = [

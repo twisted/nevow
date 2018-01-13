@@ -1,6 +1,7 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
+import builtins
 import inspect, os.path
 
 class UnexposedMethodError(Exception):
@@ -177,15 +178,13 @@ def _namedAnyWithBuiltinTranslation(name):
     elif name == '__builtin__.instancemethod':
         name='types.MethodType'
     elif name == '__builtin__.NoneType':
-        name='types.NoneType'
+        return type(None)
     elif name == '__builtin__.generator':
         name='types.GeneratorType'
-    elif name == '__builtin__.dict':
-        return '__builtins.__dict__'
-    elif name == '__builtin__.list':
-        return '__builtins.list'
-    elif name == '__builtin__.tuple':
-        return '__builtins.tuple'
+    elif name.startswith("__builtin__."):
+        val = getattr(builtins, name[12:], None)
+        if val is not None:
+            return val
     return namedAny(name)
 
 # Import resource_filename from setuptools's pkg_resources module if possible
