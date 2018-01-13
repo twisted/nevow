@@ -268,7 +268,7 @@ def _flatten(request, write, root, slotData, renderFactory, inAttribute, inXML):
                     write('<')
                     # bomb out if tagName has non-ascii
                     root.tagName.encode('ascii')
-                    write(tagName)
+                    write(root.tagName)
                     for k, v in sorted(root.attributes.items()):
                         # Bomb out if k has non-ascii
                         k.encode('ascii')
@@ -276,12 +276,12 @@ def _flatten(request, write, root, slotData, renderFactory, inAttribute, inXML):
                         yield _flatten(request, write, v, slotData,
                                        renderFactory, True, True)
                         write("\"")
-                    if root.children or tagName not in allowSingleton:
+                    if root.children or root.tagName not in allowSingleton:
                         write('>')
                         yield _flatten(request, write, root.children,
                                        slotData, renderFactory,
                                        False, True)
-                        write('</' + tagName + '>')
+                        write('</' + root.tagName + '>')
                     else:
                         write(' />')
             else:

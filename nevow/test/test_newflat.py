@@ -204,7 +204,9 @@ class FlattenTests(TestCase, FlattenMixin):
         """
         self.assertStringEqual(self.flatten(xml("foo")), "foo")
         unich = "\N{LATIN CAPITAL LETTER E WITH GRAVE}"
-        self.assertStringEqual(self.flatten(xml(unich)), unich.encode('utf-8'))
+        self.assertEqual(
+            self.flatten(xml(unich)).encode('utf-8'), 
+            unich.encode('utf-8'))
 
 
     def test_entity(self):
