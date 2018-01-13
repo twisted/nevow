@@ -124,6 +124,8 @@ class URL(object):
     ## class methods used to build URL objects ##
 
     def fromString(klass, st):
+        if isinstance(st, bytes):
+            st = st.decode("utf-8")
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(st)
         u = klass(
             scheme, netloc,
@@ -625,5 +627,5 @@ class URLRedirectAdapter:
             # It might also be relative so resolve it against the current URL
             # and flatten it again.
             u = flat.flatten(URL.fromContext(ctx).click(u), ctx)
-            return redirectTo(u, inevow.IRequest(ctx))
+            return redirectTo(u.encode("utf-8"), inevow.IRequest(ctx))
         return flat.flattenFactory(self.original, ctx, bits.append, flattened)

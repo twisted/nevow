@@ -90,10 +90,10 @@ u = unicodedata.lookup('QUARTER NOTE')
 class TestUnicode(TestCase):
     
     def test_it(self):
-        self.assertEqual(ten.flatten(u), u.encode('utf8'))
+        self.assertEqual(ten.flatten(u).encode('utf-8'), u.encode('utf8'))
 
     def test_unescaped(self):
-        self.assertEqual(ten.flatten(tags.xml('<<<%s>>>' % u)), ('<<<%s>>>' % u).encode('utf8'))
+        self.assertEqual(ten.flatten(tags.xml('<<<%s>>>' % u)).encode('utf-8'), ('<<<%s>>>' % u).encode('utf8'))
     
 class Registration(TestCase):
     def testBadRegister(self):

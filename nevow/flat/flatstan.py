@@ -169,6 +169,16 @@ def StringSerializer(original, context):
         return original.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+
+def BytesSerializer(original, context):
+    # utf-8-decode and quote the string as necessary.  It's not entirely
+    # clear if this is a good idea, but byte strings can originate from
+    # various sources (e.g., URLs).  Whether these can always be expected
+    # to be in utf-8 is another matter, of course...
+    return StringSerializer(original.decode("utf-8"), context)
+
+
+
 def NoneWarningSerializer(original, context):
     if context.isAttrib:
         ## We don't want the big red None warning inside a html attribute. Just leave it blank.

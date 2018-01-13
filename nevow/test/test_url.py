@@ -650,10 +650,10 @@ class RedirectResource(TestCase):
 
 
     def test_urlRedirect(self):
-        u = "http://localhost/"
+        u = b"http://localhost/"
         D = self.renderResource(url.URL.fromString(u))
-        def after(xxx_todo_changeme):
-            (html, redirected_to) = xxx_todo_changeme
+        def after(res):
+            (html, redirected_to) = res
             self.assertIn(u, html)
             self.assertEqual(u, redirected_to)
         return D.addCallback(after)
@@ -661,10 +661,10 @@ class RedirectResource(TestCase):
 
     def test_urlRedirectWithParams(self):
         D = self.renderResource(url.URL.fromString("http://localhost/").child('child').add('foo', 'bar'))
-        def after(xxx_todo_changeme1):
-            (html, redirected_to) = xxx_todo_changeme1
-            self.assertIn("http://localhost/child?foo=bar", html)
-            self.assertEqual("http://localhost/child?foo=bar", redirected_to)
+        def after(res):
+            (html, redirected_to) = res
+            self.assertIn(b"http://localhost/child?foo=bar", html)
+            self.assertEqual(b"http://localhost/child?foo=bar", redirected_to)
         return D.addCallback(after)
 
 
@@ -673,18 +673,18 @@ class RedirectResource(TestCase):
             url.URL.fromString("http://localhost/")
             .child(util.succeed('child')).add('foo',util.succeed('bar'))
             )
-        def after(xxx_todo_changeme2):
-            (html, redirected_to) = xxx_todo_changeme2
-            self.assertIn("http://localhost/child?foo=bar", html)
-            self.assertEqual("http://localhost/child?foo=bar", redirected_to)
+        def after(res):
+            (html, redirected_to) = res
+            self.assertIn(b"http://localhost/child?foo=bar", html)
+            self.assertEqual(b"http://localhost/child?foo=bar", redirected_to)
         return D.addCallback(after)
 
 
     def test_deferredURLOverlayParam(self):
         D = self.renderResource(url.here.child(util.succeed('child')).add('foo',util.succeed('bar')))
-        def after(xxx_todo_changeme3):
-            (html, redirected_to) = xxx_todo_changeme3
-            self.assertIn("http://localhost/child?foo=bar", html)
-            self.assertEqual("http://localhost/child?foo=bar", redirected_to)
+        def after(res):
+            (html, redirected_to) = res
+            self.assertIn(b"http://localhost/child?foo=bar", html)
+            self.assertEqual(b"http://localhost/child?foo=bar", redirected_to)
         return D.addCallback(after)
 

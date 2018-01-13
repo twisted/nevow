@@ -173,7 +173,10 @@ class FakeRequest(Componentized):
         self.deferred.callback('')
 
     def getHeader(self, key):
-        return self.requestHeaders.getRawHeaders(key, [None])[0]
+        val = self.requestHeaders.getRawHeaders(key)
+        if val is None:
+            return val
+        return val[0]
 
     def setHeader(self, key, val):
         self.responseHeaders.setRawHeaders(key, [val])
