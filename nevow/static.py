@@ -81,7 +81,7 @@ def addSlash(request):
     return "http%s://%s%s/" % (
         request.isSecure() and 's' or '',
         request.getHeader("host"),
-        (string.split(request.uri,'?')[0]))
+        (request.uri.split('?')[0]))
 
 class Registry(components.Componentized):
     """
@@ -314,10 +314,10 @@ class File:
 
             if range is not None:
                 # This is a request for partial data...
-                bytesrange = string.split(range, '=')
+                bytesrange = range.split('=')
                 assert bytesrange[0] == 'bytes',\
                        "Syntactically invalid http range header!"
-                start, end = string.split(bytesrange[1],'-')
+                start, end = bytesrange[1].split('-')
                 if start:
                     f.seek(int(start))
                 if end:

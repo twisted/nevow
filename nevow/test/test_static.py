@@ -21,7 +21,7 @@ class Range(unittest.TestCase):
         self.tmpdir = self.mktemp()
         os.mkdir(self.tmpdir)
         name = os.path.join(self.tmpdir, 'junk')
-        with file(name, 'w') as f:
+        with open(name, 'w') as f:
             f.write(800 * '0123456789')
         self.file = static.File(name)
         self.request = testutil.FakeRequest()

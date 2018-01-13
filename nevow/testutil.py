@@ -156,13 +156,15 @@ class FakeRequest(Componentized):
         return get,
     v = property(*v())
 
-    def write(self, bytes):
+    def write(self, stuff):
         """
         Accumulate the given bytes as part of the response body.
 
         @type bytes: C{str}
         """
-        self.accumulator += bytes
+        if isinstance(stuff, bytes):
+            stuff = stuff.decode("utf-8")
+        self.accumulator += stuff
 
 
     finished = False
@@ -591,7 +593,7 @@ class CSSModuleTestMixin:
         """
         def makeModule(contents=None):
             fname = self.mktemp()
-            with file(fname, 'w') as f:
+            with open(fname, 'w') as f:
                 if contents is not None:
                     f.write(contents)
             return fname
