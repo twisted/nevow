@@ -358,6 +358,7 @@ class TestComplexSerialization(Base):
             pass
         @implementer(IFoo)
         class Foo(str):
+       	    pass
 
         def checkContext(ctx, data):
             self.assertEqual(ctx.locate(IFoo), Foo("inner"))

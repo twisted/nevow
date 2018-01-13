@@ -5,6 +5,7 @@
 trees.
 """
 
+import builtins
 import types
 
 
@@ -14,7 +15,8 @@ def makeEntity(entity_desc):
     (name, num, description) = entity_desc
     from nevow.stan import Entity
     e = Entity(name, num, description)
-    __by_number[types.IntType(num)] = e
+    # int is overwritten as an entity, so we take it from a safe place.
+    __by_number[builtins.int(num)] = e
     globals()[name] = e
 
 

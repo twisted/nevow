@@ -609,6 +609,7 @@ class IThing(formless.TypedInterface):
 
 @implementer(IThing)
 class Thing:
+    foo = 1
 
 class TestLocateConfigurable(unittest.TestCase):
 
