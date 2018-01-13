@@ -224,9 +224,7 @@ def _flatten(request, write, root, slotData, renderFactory, inAttribute, inXML):
     @return: An iterator which yields C{str}, L{Deferred}, and more iterators
         of the same type.
     """
-    if isinstance(root, str):
-        root = root.encode('utf-8')
-    elif isinstance(root, WovenContext):
+    if isinstance(root, WovenContext):
         # WovenContext is supported via the getFlattener case, but that is a
         # very slow case.  Checking here is an optimization.  It also lets us
         # avoid the deprecation warning which would be emitted whenever a
@@ -268,14 +266,12 @@ def _flatten(request, write, root, slotData, renderFactory, inAttribute, inXML):
                                    False, True)
                 else:
                     write('<')
-                    if isinstance(root.tagName, str):
-                        tagName = root.tagName.encode('ascii')
-                    else:
-                        tagName = str(root.tagName)
+                    # bomb out if tagName has non-ascii
+                    root.tagName.encode('ascii')
                     write(tagName)
                     for k, v in sorted(root.attributes.items()):
-                        if isinstance(k, str):
-                            k = k.encode('ascii')
+                        # Bomb out if k has non-ascii
+                        k.encode('ascii')
                         write(" " + k + "=\"")
                         yield _flatten(request, write, v, slotData,
                                        renderFactory, True, True)
@@ -310,10 +306,7 @@ def _flatten(request, write, root, slotData, renderFactory, inAttribute, inXML):
         write(root.num)
         write(';')
     elif isinstance(root, xml):
-        if isinstance(root.content, str):
-            write(root.content.encode('utf-8'))
-        else:
-            write(root.content)
+        write(root.content)
     elif isinstance(root, Deferred):
         yield root.addCallback(
             lambda result: (result, _flatten(request, write, result, slotData,

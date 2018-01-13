@@ -1,3 +1,16 @@
+Nevow 1.0 (2018-02-01)
+======================
+
+Features
+--------
+
+This release is compatible with python3, and actually incompatible with
+path2.
+
+- _flat.flatten no longer worries about encoding strings; this has
+  to be done by the write function passed.
+
+
 Nevow 0.14.3 (2017-07-26)
 =========================
 

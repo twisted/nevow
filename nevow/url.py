@@ -507,17 +507,13 @@ def URLSerializer(original, context):
     Unicode path, query and fragment components are handled according to the
     IRI standard (RFC 3987).
     """
-    def _maybeEncode(s):
-        if isinstance(s, str):
-            s = s.encode('utf-8')
-        return s
     urlContext = WovenContext(parent=context, precompile=context.precompile, inURL=True)
     if original.scheme:
         # TODO: handle Unicode (see #2409)
         yield "%s://%s" % (original.scheme, original.netloc)
     for pathsegment in original._qpathlist:
         yield '/'
-        yield serialize(_maybeEncode(pathsegment), urlContext)
+        yield serialize(pathsegment, urlContext)
     query = original._querylist
     if query:
         yield '?'
@@ -531,13 +527,13 @@ def URLSerializer(original, context):
                     yield '&'
             else:
                 first = False
-            yield serialize(_maybeEncode(key), urlContext)
+            yield serialize(key, urlContext)
             if value is not None:
                 yield '='
-                yield serialize(_maybeEncode(value), urlContext)
+                yield serialize(value, urlContext)
     if original.fragment:
         yield "#"
-        yield serialize(_maybeEncode(original.fragment), urlContext)
+        yield serialize(original.fragment, urlContext)
 
 
 def URLOverlaySerializer(original, context):

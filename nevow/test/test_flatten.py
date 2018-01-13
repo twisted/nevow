@@ -39,7 +39,7 @@ class TestSerialization(TestCase):
         self.assertEqual(type(ten.flatten('<>')), tags.raw)
         self.assertEqual(ten.flatten('<abc&&>123'), '&lt;abc&amp;&amp;&gt;123')
         self.assertEqual(ten.flatten(tags.xml('<>&')), '<>&')
-        self.assertEqual(ten.flatten(tags.xml('\xc2\xa3')), '\xc3\x82\xc2\xa3')
+        self.assertEqual(ten.flatten(tags.xml('\xc2\xa3')), '\xc2\xa3')
         
     def test_flattenTwice(self):
         """Test that flattening a string twice does not encode it twice.
