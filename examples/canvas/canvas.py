@@ -1,4 +1,4 @@
-import os, string, random
+import imp, os, string, random
 
 from twisted.internet import task
 
@@ -164,7 +164,7 @@ class Reloader(rend.Page):
     canvas = None
     def locateChild(self, ctx, segs):
         if segs == ('',):
-            reload(__import__(__name__))
+            imp.reload(__import__(__name__))
             self.canvas = CanvasDemo(words)
             self.canvas.addSlash = True
             return self.canvas, segs

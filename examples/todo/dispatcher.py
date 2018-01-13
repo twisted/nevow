@@ -1,3 +1,5 @@
+import imp
+
 from nevow import rend
 import itodo
 import controller
@@ -9,5 +11,5 @@ import controller
 class Dispatch(rend.Page):
     def locateChild(self, ctx, segments):
         if itodo.IEnv(ctx).development:
-            reload(controller)
+            imp.reload(controller)
         return controller.root.locateChild(ctx,segments)
