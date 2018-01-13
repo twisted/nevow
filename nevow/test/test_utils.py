@@ -279,7 +279,8 @@ class ExposeTestCase(TestCase):
 class CachedFileTests(TestCase):
     def setUp(self):
         self.testFile = self.mktemp()
-        file(self.testFile, 'w').close()
+        with open(self.testFile, 'w'):
+            pass
 
         counter = count()
         self.cache = CachedFile(self.testFile, lambda path: next(counter))

@@ -461,11 +461,8 @@ class JavaScriptTestCase(TrialTestCase):
 
     def _writeToTemp(self, contents):
         fname = self.mktemp()
-        fd = file(fname, 'w')
-        try:
+        with open(fname, 'w') as fd:
             fd.write(contents)
-        finally:
-            fd.close()
         return fname
 
 
@@ -594,10 +591,9 @@ class CSSModuleTestMixin:
         """
         def makeModule(contents=None):
             fname = self.mktemp()
-            f = file(fname, 'w')
-            if contents is not None:
-                f.write(contents)
-            f.close()
+            with file(fname, 'w') as f:
+                if contents is not None:
+                    f.write(contents)
             return fname
 
         return athena.CSSRegistry(

@@ -19,7 +19,8 @@ class tabbedPaneGlue:
 
     fileCSS = static.File(stylesheetPath, 'text/css')
 
-    inlineCSS = t.style(type_='text/css')[ t.xml(file(stylesheetPath).read()) ]
+    with open(stylesheetPath) as f:
+        inlineCSS = t.style(type_='text/css')[ t.xml(f.read()) ]
 
 
 

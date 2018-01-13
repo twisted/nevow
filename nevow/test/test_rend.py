@@ -286,9 +286,8 @@ class TestPage(unittest.TestCase):
         """
         doc = '<p>fum</p>'
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(doc)
 
         return self._testDocFactoryInStanTree(
             loaders.htmlfile(temp),
@@ -305,9 +304,8 @@ class TestPage(unittest.TestCase):
         """
         doc = '<p>I</p>'
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(doc)
 
         return self._testDocFactoryInStanTree(
             loaders.xmlfile(temp),
@@ -953,9 +951,8 @@ class TestMacro(unittest.TestCase):
 </html>
         """
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(doc)
 
         class Base(rend.Page):
             docFactory = loaders.xmlfile(temp)

@@ -37,12 +37,12 @@ class FSPasteBinService(service.Service):
         return os.path.join(self._dir, name)
 
     def _loadPastingData(self, oid):
-        f = file(self._makeFilename(str(oid)), 'rb')
-        return pickle.load(f)
+        with open(self._makeFilename(str(oid)), 'rb') as f:
+            return pickle.load(f)
 
     def _savePastingData(self, oid, data):
-        f = file(self._makeFilename(str(oid)), 'wb')
-        pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+        with open(self._makeFilename(str(oid)), 'wb') as f:
+            pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
     def getPasting(self, oid):
         data = self._loadPastingData(oid)
@@ -70,8 +70,8 @@ class FSPasteBinService(service.Service):
     def startService(self):
         log.msg('Loading index')
         try:
-            f = file(self._makeFilename('index'), 'rb')
-            d = pickle.load(f)
+            with open(self._makeFilename('index'), 'rb') as f:
+                d = pickle.load(f)
             self._index = d['index']
             self._nextOid = d['nextOid']
         except IOError:
@@ -81,8 +81,8 @@ class FSPasteBinService(service.Service):
     def stopService(self):
         log.msg('Storing index')
         d = {'index':self._index, 'nextOid':self._nextOid}
-        f = file(self._makeFilename('index'), 'wb')
-        pickle.dump(d, f, pickle.HIGHEST_PROTOCOL)
+        with open(self._makeFilename('index'), 'wb'):
+            pickle.dump(d, f, pickle.HIGHEST_PROTOCOL)
 
 @implementer(pasting.IPasting)
 class Pasting(object):

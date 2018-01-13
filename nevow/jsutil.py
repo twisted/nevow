@@ -111,6 +111,7 @@ def generateTestScript(fname, after={}, dependencies=None):
         if m.name in after:
             js.extend(after[m.name])
 
-    js.append(file(fname).read())
+    with open(fname) as f:
+        js.append(f.read())
 
     return '\n'.join(js)

@@ -73,9 +73,8 @@ class TestDocFactories(unittest.TestCase):
     def test_htmlfile(self):
         doc = '<ul id="nav"><li>a</li><li>b</li><li>c</li></ul>'
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(doc)
         df = loaders.htmlfile(temp)
         self.assertEqual(df.load()[0], doc)
     test_htmlfile.suppress = [
@@ -87,9 +86,8 @@ class TestDocFactories(unittest.TestCase):
     def test_htmlfile_slots(self):
         doc = '<nevow:slot name="foo">Hi there</nevow:slot>'
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(doc)
         df = loaders.htmlfile(temp)
         self.assertEqual(df.load()[0].children, ['Hi there'])
     test_htmlfile_slots.suppress = [
@@ -117,9 +115,8 @@ class TestDocFactories(unittest.TestCase):
     def test_xmlfile(self):
         doc = '<ul id="nav"><li>a</li><li>b</li><li>c</li></ul>'
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(doc)
         df = loaders.xmlfile(temp)
         self.assertEqual(df.load()[0], doc)
 
@@ -130,9 +127,8 @@ class TestDocFactories(unittest.TestCase):
         preprocessors it is given.
         """
         xmlFile = self.mktemp()
-        f = file(xmlFile, 'w')
-        f.write('<div><span>Hello</span><span>world</span></div>')
-        f.close()
+        with open(xmlFile, 'w') as f:
+            f.write('<div><span>Hello</span><span>world</span></div>')
         factory = loaders.xmlfile(xmlFile)
         return self._preprocessorTest(factory)
 
@@ -214,9 +210,8 @@ class TestDocFactoriesCache(unittest.TestCase):
 
     def test_htmlfile(self):
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(self.doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(self.doc)
 
         loader = loaders.htmlfile(temp)
         self.assertEqual( id(loader.load()), id(loader.load()) )
@@ -236,9 +231,8 @@ class TestDocFactoriesCache(unittest.TestCase):
 
     def test_htmlfileReload(self):
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(self.doc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(self.doc)
 
         loader = loaders.htmlfile(temp)
         r = loader.load()
@@ -290,9 +284,8 @@ class TestDocFactoriesCache(unittest.TestCase):
     def test_xmlfile(self):
 
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(self.nsdoc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(self.nsdoc)
 
         loader = loaders.xmlfile(temp)
         self.assertEqual( id(loader.load()), id(loader.load()) )
@@ -311,9 +304,8 @@ class TestDocFactoriesCache(unittest.TestCase):
     def test_xmlfileReload(self):
 
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write(self.nsdoc)
-        f.close()
+        with open(temp, 'w') as f:
+            f.write(self.nsdoc)
 
         loader = loaders.xmlfile(temp)
         r = loader.load()
@@ -328,9 +320,8 @@ class TestDocFactoriesCache(unittest.TestCase):
         temp = self.mktemp()
 
         # Write some content
-        f = file(temp, 'w')
-        f.write('<p>foo</p>')
-        f.close()
+        with open(temp, 'w') as f:
+            f.write('<p>foo</p>')
 
         # Precompile the doc
         ctx = context.WovenContext()
@@ -342,9 +333,8 @@ class TestDocFactoriesCache(unittest.TestCase):
 
         # Write the file with different content and make sure the
         # timestamp changes
-        f = file(temp, 'w')
-        f.write('<p>bar</p>')
-        f.close()
+        with open(temp, 'w') as f:
+            f.write('<p>bar</p>')
         os.utime(temp, (os.path.getatime(temp), os.path.getmtime(temp)+5))
 
         after = ''.join(flat.serialize(pc, ctx))
@@ -372,9 +362,8 @@ class TestContext(unittest.TestCase):
 
     def test_xmlfile(self):
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write('<p>hello</p>')
-        f.close()
+        with open(temp, 'w') as f:
+            f.write('<p>hello</p>')
         self._withAndWithout(loaders.xmlfile(temp))
 
     def test_htmlstr(self):
@@ -387,9 +376,8 @@ class TestContext(unittest.TestCase):
 
     def test_htmlfile(self):
         temp = self.mktemp()
-        f = file(temp, 'w')
-        f.write('<p>hello</p>')
-        f.close()
+        with open(temp, 'w')
+            f.write('<p>hello</p>')
         self._withAndWithout(loaders.htmlfile(temp))
     test_htmlfile.suppress = [
         util.suppress(message=

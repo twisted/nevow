@@ -165,9 +165,8 @@ the end
         Write L{testModuleImpl} to a file.
         """
         self.testModuleFilename = self.mktemp()
-        testModule = file(self.testModuleFilename, 'w')
-        testModule.write(self.testModuleImpl)
-        testModule.close()
+        with open(self.testModuleFilename, 'w') as testModule:
+            testModule.write(self.testModuleImpl)
 
 
     def test_getOrCreate(self):
@@ -190,7 +189,8 @@ the end
         Create a complicated network of module dependencies.
         """
         emptyModulePath = self.mktemp()
-        file(emptyModulePath, 'w').close()
+        with open(emptyModulePath, 'w') as f:
+            pass
         modules = {
             'testmodule': self.testModuleFilename,
             'Another': self.mktemp(),
@@ -199,13 +199,12 @@ the end
             'SecondaryDependency': emptyModulePath,
             'ExampleDependency': emptyModulePath}
 
-        anotherModule = file(modules['Another'], 'w')
-        anotherModule.write('// import SecondaryDependency\n')
-        anotherModule.close()
+        
+        with open(modules['Another'], 'w') as anotherModule:
+            anotherModule.write('// import SecondaryDependency\n')
 
-        exampleModule = file(modules['ExampleModule'], 'w')
-        exampleModule.write('// import ExampleDependency\n')
-        exampleModule.close()
+        with open(modules['ExampleModule'], 'w') as exampleModule:
+            exampleModule.write('// import ExampleDependency\n')
 
         return modules
 
@@ -255,12 +254,11 @@ the end
         name when CR LF newlines are used in a JavaScript source file.
         """
         fooModuleFilename = self.mktemp()
-        fooModule = file(fooModuleFilename, 'wb')
-        fooModule.write('// import Bar\r\n')
-        fooModule.close()
+        with open(fooModuleFilename, 'wb') as fooModule:
+            fooModule.write('// import Bar\r\n')
         barModuleFilename = self.mktemp()
-        barModule = file(barModuleFilename, 'wb')
-        barModule.close()
+        with open(barModuleFilename, 'wb') as barModule:
+            pass
 
         modules = {
             'Foo': fooModuleFilename,
@@ -276,9 +274,8 @@ the end
         L{athena.AthenaModule} should cache module dependencies.
         """
         testModuleFilename = self.mktemp()
-        testModule = file(testModuleFilename, 'w')
-        testModule.write('')
-        testModule.close()
+        with open(testModuleFilename, 'w') as testModule:
+            testModule.write('')
 
         modules = {'testmodule': testModuleFilename}
         m = self.moduleClass('testmodule', modules)
@@ -307,8 +304,12 @@ the end
         dependencies.
         """
         modules = {'Foo': self.mktemp(), 'Foo.Bar': self.mktemp()}
-        file(modules['Foo'], 'wb').close()
-        file(modules['Foo.Bar'], 'wb').close()
+        with open(modules['Foo'], 'wb'):
+            pass
+
+        with open(modules['Foo.Bar'], 'wb'):
+            pass
+
         foo = self.moduleClass.getOrCreate('Foo', modules)
         bar = self.moduleClass.getOrCreate('Foo.Bar', modules)
         self.assertIn(foo, bar.allDependencies())
@@ -379,9 +380,8 @@ class MemoizationTests(unittest.TestCase):
         @rtype: C{str}
         """
         fname = self.mktemp()
-        fObj = file(fname, 'w')
-        fObj.write(s)
-        fObj.close()
+        with open(fname, 'w') as fObj:
+            fObj.write(s)
         return fname
 
 
@@ -473,7 +473,8 @@ class _AutoPackageTestMixin:
 
         def childPath(*a):
             path = os.path.join(packageDir, *a)
-            file(path, 'w').close()
+            with open(path, 'w'):
+                pass
             return path
 
         expected = {

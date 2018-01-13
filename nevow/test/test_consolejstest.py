@@ -54,9 +54,8 @@ class _ConsoleJSTestMixin:
         @rtype: C{str}
         """
         fname = self.mktemp()
-        fObj = file(fname, 'w')
-        fObj.write(s)
-        fObj.close()
+        with open(fname, 'w') as fObj:
+            fObj.write(s)
         return fname
 
 class DependenciesTestCase(TestCase, _ConsoleJSTestMixin):
