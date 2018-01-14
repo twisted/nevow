@@ -154,9 +154,9 @@ class FreeformChildMixin:
         bindingName = None
 
         name = segments[0]
-        if name.startswith('freeform_post!'):
+        if name.startswith(b'freeform_post!'):
             configurableName, bindingName = name.split('!')[1:3]
-        elif name.startswith('freeform-action-post!'):
+        elif name.startswith(b'freeform-action-post!'):
             configurableName, request.args['freeform-actee'] = name.split('!')[1:3]
             bindingName = request.args['freeform-action'][0]
         if bindingName:

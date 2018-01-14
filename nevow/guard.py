@@ -37,7 +37,10 @@ from nevow import inevow, url, stan
 
 
 def _sessionCookie():
-    return md5("%s_%s" % (str(random.random()) , str(time.time()))).hexdigest()
+    return md5((b"%b_%b" % (
+        str(random.random()).encode("ascii"), 
+        str(time.time()).encode("ascii")))
+    ).hexdigest()
 
 
 @implementer(inevow.ISession, inevow.IGuardSession)
@@ -148,7 +151,7 @@ class GuardSession(components.Componentized):
         del self.guard.sessions[self.uid]
 
         # Logout of all portals
-        for portal in self.portals.keys():
+        for portal in list(self.portals.keys()):
             self.portalLogout(portal)
 
         for c in self.expireCallbacks:
@@ -202,9 +205,9 @@ def urlToChild(ctx, *ar, **kw):
     return u
 
 
-SESSION_KEY = '__session_key__'
-LOGIN_AVATAR = '__login__'
-LOGOUT_AVATAR = '__logout__'
+SESSION_KEY = b'__session_key__'
+LOGIN_AVATAR = b'__login__'
+LOGOUT_AVATAR = b'__logout__'
 
 
 def nomind(*args): return None
@@ -377,7 +380,7 @@ class SessionWrapper:
         sz.method = request.method
         sz._requestHeaders = request.requestHeaders
         sz.checkExpired()
-        return urlToChild(ctx, SESSION_KEY+newCookie, *segments)
+        return urlToChild(ctx, SESSION_KEY+newCookie.encode("ascii"), *segments)
 
     def checkLogin(self, ctx, session, segments, sessionURL=None, httpAuthCredentials=None):
         """

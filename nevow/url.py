@@ -151,8 +151,8 @@ class URL(object):
         process.'''
         request = inevow.IRequest(context)
         uri = request.prePathURL()
-        if '?' in request.uri:
-            uri += '?' + request.uri.split('?')[-1]
+        if b'?' in request.uri:
+            uri += b'?' + request.uri.split(b'?')[-1]
         return klass.fromString(uri)
     fromContext = classmethod(fromContext)
 
