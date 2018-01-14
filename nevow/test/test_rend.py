@@ -93,7 +93,7 @@ class TestPage(unittest.TestCase):
         """Test when data is missing, i.e. self.original is None and no data
         directives had been used"""
         class R(rend.Page):
-            docFactory = loaders.htmlstr('<p nevow:render="foo"></p>')
+            docFactory = loaders.htmlstr('<p xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:render="foo"></p>')
             def render_foo(self, ctx, data):
                 return ctx.tag.clear()[data]
         r = R()
@@ -106,7 +106,7 @@ class TestPage(unittest.TestCase):
 
 
     def test_render(self):
-        xhtml = '<span nevow:render="replace">replace this</span>'
+        xhtml = '<span xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:render="replace">replace this</span>'
 
         class R(rend.Page):
             docFactory = loaders.htmlstr(xhtml)
@@ -124,7 +124,7 @@ class TestPage(unittest.TestCase):
 
     def test_dataAndRender(self):
         xhtml = '''
-        <table nevow:data="numbers" nevow:render="sequence">
+        <table xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:data="numbers" nevow:render="sequence">
         <tr nevow:pattern="header"><th>English</th><th>French</th></tr>
         <tr nevow:pattern="item" nevow:render="row"><td><nevow:slot name="english"/></td><td><nevow:slot name="french"/></td></tr>
         </table>
@@ -154,11 +154,6 @@ class TestPage(unittest.TestCase):
                 '<tr><td>two</td><td>deux</td></tr>'
                 '<tr><td>three</td><td>trois</td></tr>'
                 '</table>'))
-    test_dataAndRender.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
 
     def test_stanData(self):
         class R(rend.Page):
@@ -489,10 +484,10 @@ class TestPage(unittest.TestCase):
             docFactory = loaders.stan(div(id='inner'))
 
         root = RootPage()
-        r = self.successResultOf(getResource(root, b'/child'))
+        r = self.successResultOf(getResource(root, '/child'))
         r.tag.renderHTTP(r)
         req = inevow.IRequest(r)
-        self.assertTrue(req.redirected_to.endswith(b'/'))
+        self.assertTrue(req.redirected_to.endswith('/'))
 
 
 
@@ -781,13 +776,7 @@ class TestLocateChild(unittest.TestCase):
         p = Parent()
         return self._dotestparent(p)
 
-    def test_oldResource(self):
-        from twisted.web import twcgi
-        class Parent(rend.Page):
-            child_child = twcgi.CGIScript('abc.cgi')
-        p = Parent()
-        return getResource(p, '/child').addCallback(
-            lambda r: self.assertTrue(inevow.IResource.providedBy(r.tag)))
+    # old test_oldResource removed: there is no twcgi any more.
 
     def test_noneChild(self):
         class Parent(rend.Page):
@@ -827,7 +816,7 @@ class TestLocateChild(unittest.TestCase):
             lambda r: self.assertTrue(inevow.IResource.providedBy(r.tag)))
 
     def test_redirectToURL(self):
-        redirectTarget = "http://example.com/bar"
+        redirectTarget = b"http://example.com/bar"
         class RedirectingPage(rend.Page):
             def locateChild(self, ctx, segments):
                 return url.URL.fromString(redirectTarget), ()
@@ -850,7 +839,7 @@ class TestLocateChild(unittest.TestCase):
 
         def dotest(r):
             r.tag.renderHTTP(r)
-            self.assertEqual(uchr,
+            self.assertEqual(uchr.encode('utf-8'),
                               inevow.IRequest(r).redirected_to)
 
         return getResource(page, '/url').addCallback(dotest)
@@ -922,9 +911,10 @@ class TestStandardRenderers(unittest.TestCase):
         tag = p(render=rend.data)
         self.assertEqual(flat.flatten(tag, ctx), '<p>foo</p>')
 
-        ctx.remember('\xc2\xa3'.decode('utf-8'), inevow.IData)
+        ctx.remember(b'\xc2\xa3'.decode('utf-8'), inevow.IData)
         tag = p(render=rend.data)
-        self.assertEqual(flat.flatten(tag, ctx), '<p>\xc2\xa3</p>')
+        self.assertEqual(flat.flatten(tag, ctx), 
+            b'<p>\xc2\xa3</p>'.decode('utf-8'))
 
         ctx.remember([1,2,3,4,5], inevow.IData)
         tag = p(render=rend.data)
