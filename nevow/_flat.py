@@ -44,7 +44,10 @@ class FlattenerError(Exception):
     def __init__(self, exception, roots, traceback):
         self._exception = exception
         self._roots = roots
-        self._traceback = traceback
+        # we mangle the traceback object to retain the python 2 format
+        self._traceback = [
+        	(frame.filename, frame.lineno, frame.name, frame.line)
+          for frame in traceback]
         Exception.__init__(self, exception, roots, traceback)
 
 

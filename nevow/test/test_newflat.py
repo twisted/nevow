@@ -195,7 +195,9 @@ class FlattenTests(TestCase, FlattenMixin):
         """
         self.assertStringEqual(self.flatten('bytes<>&"\0'), 'bytes<>&"\0')
         unich = "\N{LATIN CAPITAL LETTER E WITH GRAVE}"
-        self.assertStringEqual(self.flatten(unich), unich.encode('utf-8'))
+        self.assertEqual(
+            self.flatten(unich).encode('utf-8'), 
+            unich.encode('utf-8'))
 
 
     def test_xml(self):
@@ -937,8 +939,8 @@ class FlattenTests(TestCase, FlattenMixin):
             # There are probably some frames above this, but I don't care what
             # they are.
             exc._traceback[-2:],
-            [(HERE, 927, 'render', 'broken()'),
-             (HERE, 920, 'broken', 'raise RuntimeError("foo")')])
+            [(HERE, 931, 'render', 'broken()'),
+             (HERE, 924, 'broken', 'raise RuntimeError("foo")')])
 
 
 
