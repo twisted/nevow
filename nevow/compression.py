@@ -146,7 +146,7 @@ class CompressingRequestWrapper(_makeBase()):
         Finish off gzip stream.
         """
         if self._gzipFile is None:
-            self.write('')
+            self.write(b'')
         self._gzipFile.close()
         self.underlying.finishRequest(success)
 
@@ -190,6 +190,13 @@ class CompressingResourceWrapper(object):
 
         def _cbDoneRendering(html):
             if isinstance(html, str):
+                # TODO: Auto-encoding is probably a bad idea
+                # Let's see how badly it bites us.  For now
+                # nevow.test.test_compression depends on this (and
+                # probably more as long as we work with strings
+                # in request).
+                html = html.encode("utf-8")
+            if isinstance(html, bytes):
                 req.write(html)
                 req.finishRequest(True)
                 return errorMarker

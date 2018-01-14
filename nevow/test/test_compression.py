@@ -1,7 +1,7 @@
 """
 Tests for on-the-fly content compression encoding.
 """
-from io import StringIO
+from io import BytesIO
 from gzip import GzipFile
 
 from zope.interface import implementer
@@ -180,16 +180,16 @@ class RequestWrapperTests(TestCase):
 
         This is necessary to avoid terminating the header too quickly.
         """
-        self.assertEqual(self.request.accumulator, '')
-        self.wrapper.write('foo')
-        self.assertNotEqual(self.request.accumulator, '')
+        self.assertEqual(self.request.accumulator, b'')
+        self.wrapper.write(b'foo')
+        self.assertNotEqual(self.request.accumulator, b'')
 
 
     def _ungzip(self, data):
         """
         Un-gzip some data.
         """
-        s = StringIO(data)
+        s = BytesIO(data)
         return GzipFile(fileobj=s, mode='rb').read()
 
 
@@ -197,10 +197,10 @@ class RequestWrapperTests(TestCase):
         """
         Response content should be written out in compressed format.
         """
-        self.wrapper.write('foo')
-        self.wrapper.write('bar')
+        self.wrapper.write(b'foo')
+        self.wrapper.write(b'bar')
         self.wrapper.finishRequest(True)
-        self.assertEqual(self._ungzip(self.request.accumulator), 'foobar')
+        self.assertEqual(self._ungzip(self.request.accumulator), b'foobar')
 
 
     def test_finish(self):
