@@ -9,7 +9,7 @@ A web application server built using twisted.web
 import cgi
 import warnings
 from collections import MutableMapping
-from urllib.parse import unquote
+from urllib.parse import unquote_to_bytes
 
 from zope.interface import implementer, classImplements
 
@@ -201,6 +201,7 @@ class NevowRequest(server.Request):
     _lostConnection = False
 
     def __init__(self, *args, **kw):
+        # twisted request wants path a bytes instance
         server.Request.__init__(self, *args, **kw)
         tpc.Componentized.__init__(self)
 
@@ -217,7 +218,7 @@ class NevowRequest(server.Request):
 
     def process(self):
         # extra request parsing
-        if self.method == 'POST':
+        if self.method == b'POST':
             t = self.content.tell()
             self.content.seek(0)
             self.fields = cgi.FieldStorage(
@@ -235,7 +236,8 @@ class NevowRequest(server.Request):
 
         # Resource Identification
         self.prepath = []
-        self.postpath = list(map(unquote, self.path[1:].split('/')))
+        self.postpath = [unquote_to_bytes(p)
+            for p in self.path[1:].split(b'/')]
         self.sitepath = []
 
         self.deferred = defer.Deferred()
@@ -294,6 +296,9 @@ class NevowRequest(server.Request):
             # No response can be sent at this point.
             pass
         elif isinstance(html, str):
+            self.write(html.encode("utf-8"))
+            self.finishRequest(  True )
+        elif isinstance(html, bytes):
             self.write(html)
             self.finishRequest(  True )
         elif html is errorMarker:
@@ -470,7 +475,18 @@ class NevowSite(server.Site):
 
     def log(self, request):
         if request._logger is None:
-            server.Site.log(self, request)
+            # TODO: as of twisted 16.6, http.HTTPFactory.log tries
+            # to write strings (rather than bytes).  I'm simply overriding
+            # this here for now -- this needs to become
+            #   server.Site.log(self, request)
+            # again when twisted is fixed.
+            try:
+                logFile = self.logFile
+            except AttributeError:
+                pass
+            else:
+                line = self._logFormatter(self._logDateTime, request) + u"\n"
+                logFile.write(line.encode("utf-8"))
         else:
             request._logger()
 

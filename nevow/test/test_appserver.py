@@ -7,7 +7,7 @@ Tests for L{nevow.appserver}.
 
 from zope.interface import implementer
 
-from io import StringIO
+from io import BytesIO
 from shlex import split
 
 from twisted.trial.unittest import TestCase
@@ -114,7 +114,7 @@ class TestSiteAndRequest(testutil.TestCase):
             def renderHTTP(self, context):
                 return util.succeed("hello")
 
-        return self.renderResource(Deferreder(), 'foo').addCallback(
+        return self.renderResource(Deferreder(), b'foo').addCallback(
             lambda result: self.assertEqual(result, "hello"))
 
     def test_regularRender(self):
@@ -122,7 +122,7 @@ class TestSiteAndRequest(testutil.TestCase):
             def renderHTTP(self, context):
                 return "world"
 
-        return self.renderResource(Regular(), 'bar').addCallback(
+        return self.renderResource(Regular(), b'bar').addCallback(
             lambda result: self.assertEqual(result, 'world'))
 
     def test_returnsResource(self):
@@ -134,7 +134,7 @@ class TestSiteAndRequest(testutil.TestCase):
             def renderHTTP(self, ctx):
                 return Res2()
 
-        return self.renderResource(Res1(), 'bar').addCallback(
+        return self.renderResource(Res1(), b'bar').addCallback(
             lambda result: self.assertEqual(result, 'world'))
 
     def test_connectionLost(self):
@@ -172,9 +172,9 @@ class TestSiteAndRequest(testutil.TestCase):
         r = appserver.NevowRequest(channel, True)
         r.method = b'POST'
         r.path = b'/'
-        r.content = StringIO(b'foo=bar')
+        r.content = BytesIO(b'foo=bar')
         self.successResultOf(r.process())
-        self.assertEqual(r.fields[b'foo'].value, b'bar')
+        self.assertEqual(r.fields['foo'].value, 'bar')
 
 
 
@@ -184,7 +184,7 @@ class FakeTransport(protocol.FileWrapper):
     disconnecting = False
     disconnect_done = False
     def __init__(self, addr, peerAddr):
-        self.data = StringIO()
+        self.data = BytesIO()
         protocol.FileWrapper.__init__(self, self.data)
         self.addr = addr
         self.peerAddr = peerAddr
@@ -203,21 +203,22 @@ class Logging(testutil.TestCase):
         self.site = appserver.NevowSite(Res1())
         self.site.startFactory()
         self.addCleanup(self.site.stopFactory)
-        self.site.logFile = StringIO()
+        self.site.logFile = BytesIO()
 
 
     def renderResource(self, path):
         """@todo: share me"""
+        path = path.encode("utf-8")
         proto = self.site.buildProtocol(
             address.IPv4Address('TCP', 'fakeaddress', 42))
         transport = FakeTransport(
             address.IPv4Address('TCP', 'fakeaddress1', 42),
             address.IPv4Address('TCP', 'fakeaddress2', 42))
         proto.makeConnection(transport)
-        proto.dataReceived('\r\n'.join(['GET %s HTTP/1.0' % path,
-                                        'ReFeReR: fakerefer',
-                                        'uSeR-AgEnt: fakeagent',
-                                        '', '']))
+        proto.dataReceived(b'\r\n'.join([b'GET %b HTTP/1.0' % path,
+                                        b'ReFeReR: fakerefer',
+                                        b'uSeR-AgEnt: fakeagent',
+                                        b'', b'']))
         assert transport.disconnecting
         return proto
 
@@ -239,7 +240,7 @@ class Logging(testutil.TestCase):
         logLines = proto.site.logFile.getvalue().splitlines()
         self.assertEqual(len(logLines), 1)
         self.assertEqual(
-            split(logLines[0]),
+            split(logLines[0].decode("utf-8")),
             ['fakeaddress2', '-', '-', 'faketime', 'GET /foo HTTP/1.0', '200', '6',
              'fakerefer', 'fakeagent'])
 
@@ -251,9 +252,9 @@ class Logging(testutil.TestCase):
                 request = inevow.IRequest(ctx)
                 self.logged.append(('fakeLog',
                                     request.getClientIP(),
-                                    request.method,
-                                    request.uri,
-                                    request.clientproto,
+                                    request.method.decode("utf-8"),
+                                    request.uri.decode("utf-8"),
+                                    request.clientproto.decode("utf-8"),
                                     request.code,
                                     request.sentLength))
 

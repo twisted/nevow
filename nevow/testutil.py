@@ -60,8 +60,9 @@ class FakeRequest(Componentized):
     @ivar lastModified: The value passed to L{setLastModified} or C{None} if
         that method has not been called.
 
-    @type accumulator: C{str}
-    @ivar accumulator: The bytes written to the response body.
+    @type accumulator: C{bytes}
+    @ivar accumulator: The bytes written to the response body.  write()
+        will autmatically encode strings to utf-8.
 
     @type deferred: L{Deferred}
     @ivar deferred: The deferred which represents rendering of the response
@@ -80,7 +81,7 @@ class FakeRequest(Componentized):
     method = 'GET'
     code = http.OK
     deferred = None
-    accumulator = ''
+    accumulator = b''
     _appRootURL = None
 
     def __init__(self, headers=None, args=None, avatar=None,
@@ -162,8 +163,8 @@ class FakeRequest(Componentized):
 
         @type bytes: C{str}
         """
-        if isinstance(stuff, bytes):
-            stuff = stuff.decode("utf-8")
+        if isinstance(stuff, str):
+            stuff = stuff.encode("utf-8")
         self.accumulator += stuff
 
 
