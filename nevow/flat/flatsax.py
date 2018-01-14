@@ -132,7 +132,7 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
         specials = {}
         attributes = self.attributeList
         directives = self.directiveMapping
-        for k, v in attrs.items():
+        for k, v in list(attrs.items()):
             att_ns, nons = k
             if att_ns != nevow.namespace:
                 continue

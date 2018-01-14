@@ -75,7 +75,7 @@ class TestPage(unittest.TestCase):
 
     def test_data(self):
         xhtml = (
-            '<ul id="nav" nevow:data="numbers" nevow:render="sequence">'
+            '<ul xmlns:nevow="http://nevow.com/ns/nevow/0.1" id="nav" nevow:data="numbers" nevow:render="sequence">'
             '<li nevow:pattern="item" nevow:render="string">number</li>'
             '</ul>')
 
@@ -88,11 +88,6 @@ class TestPage(unittest.TestCase):
             lambda result: self.assertEqual(
             result,
             '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'))
-    test_data.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
 
     def test_noData(self):
         """Test when data is missing, i.e. self.original is None and no data
