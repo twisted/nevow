@@ -5,6 +5,8 @@
 Tests for parts of L{nevow.loaders}.
 """
 
+import re
+
 from twisted.internet import defer
 
 from nevow import context
@@ -44,21 +46,21 @@ class TestHTMLRenderer(testutil.TestCase):
     def test_stringTemplate(self):
         r = rend.Page(docFactory=loaders.htmlstr(self.xhtml))
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, self.xhtml))
+            lambda result: self.assertEqual(result, self.xhtml.encode("ascii")))
 
     def test_diskTemplate(self):
         temp = self.mktemp()
         setContent(temp, self.xhtml)
         r = rend.Page(docFactory=loaders.htmlfile(temp))
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, self.xhtml))
+            lambda result: self.assertEqual(result, self.xhtml.encode("ascii")))
 
 
 class TestStandardRenderers(testutil.TestCase):
 
     def test_diskTemplate(self):
         temp = self.mktemp()
-        setContent(temp, """<html>
+        setContent(temp, """<html xmlns:nevow="http://nevow.com/ns/nevow/0.1">
     <head>
         <title nevow:data="theTitle" nevow:render="string">This is some template data!</title>
     </head>
@@ -100,7 +102,7 @@ class TestStandardRenderers(testutil.TestCase):
 
         return deferredRender(tr).addCallback(
             lambda result: self.assertEqual(
-            result,
+            re.sub("\n *", "", result.decode("ascii")),
             '<html><head><title>THE TITLE</title></head><body><h3>THE HEADER</h3>SOME DUMMY TEXT</body></html>'
             ))
 
@@ -108,7 +110,7 @@ class TestStandardRenderers(testutil.TestCase):
         """Test case provided by mg
         """
         temp = self.mktemp()
-        setContent(temp, """<ol nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item" nevow:render="string"></li></ol>""")
+        setContent(temp, """<ol xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item" nevow:render="string"></li></ol>""")
 
         class TemplateRenderer(rend.Page):
             def data_aList(self,context,data):
@@ -119,7 +121,7 @@ class TestStandardRenderers(testutil.TestCase):
         return deferredRender(tr).addCallback(
             lambda result:
             self.assertEqual(
-            result, '<ol><li>one</li><li>two</li><li>three</li></ol>',
+            result, b'<ol><li>one</li><li>two</li><li>three</li></ol>',
             "Whoops. We didn't get what we expected!"
             ))
 
@@ -127,7 +129,7 @@ class TestStandardRenderers(testutil.TestCase):
         """Test case provided by radix
         """
         temp = self.mktemp()
-        setContent(temp, """<ol nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item"><span nevow:render="string" /></li></ol>""")
+        setContent(temp, """<ol xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:data="aList" nevow:render="sequence"><li nevow:pattern="item"><span nevow:render="string" /></li></ol>""")
 
         class TemplateRenderer(rend.Page):
             def data_aList(self,context,data):
@@ -138,7 +140,7 @@ class TestStandardRenderers(testutil.TestCase):
         return deferredRender(tr).addCallback(
             lambda result:
             self.assertEqual(
-            result, '<ol><li><span>one</span></li><li><span>two</span></li><li><span>three</span></li></ol>',
+            result, b'<ol><li><span>one</span></li><li><span>two</span></li><li><span>three</span></li></ol>',
             "Whoops. We didn't get what we expected!"
             ))
 
@@ -148,10 +150,7 @@ class TestStandardRenderers(testutil.TestCase):
         """
         temp = self.mktemp()
         setContent(temp, """
-        <table nevow:data="aDict" nevow:render="slots">
-        <tr><td><nevow:slot name="1" /></td><td><nevow:slot name="2" /></td></tr>
-        <tr><td><nevow:slot name="3" /></td><td><nevow:slot name="4" /></td></tr>
-        </table>""")
+        <table xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:data="aDict" nevow:render="slots"><tr><td><nevow:slot name="1" /></td><td><nevow:slot name="2" /></td></tr><tr><td><nevow:slot name="3" /></td><td><nevow:slot name="4" /></td></tr></table>""")
     
         class Renderer(rend.Page):
             def data_aDict(self,context,data):
@@ -165,12 +164,12 @@ class TestStandardRenderers(testutil.TestCase):
             lambda result:
             self.assertEqual(
             result,
-            "<table><tr><td>one</td><td>two</td></tr><tr><td>three</td><td>four</td></tr></table>",
+            b"<table><tr><td>one</td><td>two</td></tr><tr><td>three</td><td>four</td></tr></table>",
             "Whoops. We didn't get what we expected!"))
 
     def test_patterns(self):
         temp = self.mktemp()
-        setContent(temp, """<span nevow:render="foo">
+        setContent(temp, """<span xmlns:nevow="http://nevow.com/ns/nevow/0.1" nevow:render="foo">
 			<span nevow:pattern="one">ONE</span>
 			<span nevow:pattern="two">TWO</span>
 			<span nevow:pattern="three">THREE</span>
@@ -182,11 +181,11 @@ class TestStandardRenderers(testutil.TestCase):
 
         return defer.DeferredList([
             deferredRender(Mine("one", docFactory=loaders.htmlfile(temp))).addCallback(
-            lambda result: self.assertEqual(result, '<span>ONE</span>')),
+            lambda result: self.assertEqual(result, b'<span>ONE</span>')),
             deferredRender(Mine("two", docFactory=loaders.htmlfile(temp))).addCallback(
-            lambda result: self.assertEqual(result, '<span>TWO</span>')),
+            lambda result: self.assertEqual(result, b'<span>TWO</span>')),
             deferredRender(Mine("three", docFactory=loaders.htmlfile(temp))).addCallback(
-            lambda result: self.assertEqual(result, '<span>THREE</span>'))
+            lambda result: self.assertEqual(result, b'<span>THREE</span>'))
             ], fireOnOneErrback=True)
 
 
@@ -211,10 +210,10 @@ class TestSubclassAsRenderAndDataFactory(testutil.TestCase):
         sr = Subclass()
         D = deferredRender(sr)
         def after(result):
-            self.assertSubstring('hello', result)
-            self.assertSubstring('world', result)
+            self.assertSubstring(b'hello', result)
+            self.assertSubstring(b'world', result)
             self.assertEqual(result,
-                              "<html><div>hello</div>world</html>")
+                              b"<html><div>hello</div>world</html>")
         return D.addCallback(after)
 
 
@@ -245,10 +244,10 @@ class TestAttrReplacement(testutil.TestCase):
 
 
     def testHTML(self):
-        t = '<a href="#"><nevow:attr name="href">href</nevow:attr>label</a>'
+        t = '<a xmlns:nevow="http://nevow.com/ns/nevow/0.1" href="#"><nevow:attr name="href">href</nevow:attr>label</a>'
         doc = flat.flatten(loaders.htmlstr(t).load())
         self.assertEqual(doc, '<a href="href">label</a>')
-        t = '<a href="#"><nevow:attr name="href"><nevow:slot name="href"/></nevow:attr>label</a>'
+        t = '<a xmlns:nevow="http://nevow.com/ns/nevow/0.1" href="#"><nevow:attr name="href"><nevow:slot name="href"/></nevow:attr>label</a>'
         precompiled = loaders.htmlstr(t).load()
         ctx = context.WovenContext(tag=tags.invisible[precompiled])
         ctx.fillSlots('href', 'href')
