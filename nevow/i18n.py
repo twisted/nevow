@@ -3,6 +3,19 @@ from zope.interface import implementer
 from nevow import inevow
 
 
+def _robustFloat(literal):
+    """returns a float for literal.
+
+    Non-int literals are mapped to -1; nevow 0.14 and earlier accepts
+    this kind of thing (but we now sort such items to the end of the
+    preference list).
+    """
+    try:
+        return float(literal)
+    except ValueError:
+        return -1
+
+
 def languagesFactory(ctx):
     header = inevow.IRequest(ctx).getHeader('accept-language')
     if header is None:
@@ -20,7 +33,7 @@ def languagesFactory(ctx):
         langs.append((quality, lang))
         if '-' in lang:
             langs.append((quality, lang.split('-')[0])) 
-    langs.sort(lambda a,b: cmp(b[0], a[0]))
+    langs.sort(key=lambda ob: _robustFloat(ob[0]), reverse=True)
     return [lang for quality, lang in langs]
 
     
@@ -111,13 +124,13 @@ class Translator(object):
     @ivar kwargs: keyword arguments to pass to translator.
 
     @ivar gettextFunction: If using the default translator function,
-    name of GNU gettext function to wrap. Useful for 'ungettext'.
+    name of GNU gettext function to wrap. Useful for 'ngettext'.
     """
     translator = None
     args = None
     kwargs = None
 
-    gettextFunction = 'ugettext'
+    gettextFunction = 'gettext'
 
     def _gettextTranslation(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
@@ -162,7 +175,7 @@ class Translator(object):
         Translate a string.
 
         @param args: arguments to pass to translator, usually the
-        string to translate, or for things like ungettext two strings
+        string to translate, or for things like ngettext two strings
         and a number.
 
         @param kwargs: keyword arguments for the translator.
@@ -181,7 +194,7 @@ class Translator(object):
         
 _ = Translator()
 
-ungettext = Translator(gettextFunction='ungettext')
+ngettext = Translator(gettextFunction='ngettext')
 
 def render(translator=None):
     """

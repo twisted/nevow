@@ -141,7 +141,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEqual(r, ['ba', 'fo'])
+        self.assertEqual(r, ['fo', 'ba'])
 
     def test_quality_invalid_notFloat(self):
         request = FakeRequest(headers={
@@ -149,7 +149,7 @@ class Languages(unittest.TestCase):
             })
         ctx = context.RequestContext(tag=request)
         r = inevow.ILanguages(ctx)
-        self.assertEqual(r, ['ba', 'fo'])
+        self.assertEqual(r, ['fo', 'ba'])
 
 class Render(unittest.TestCase):
     def makePage(self, content):
@@ -288,32 +288,32 @@ class Interpolation(InterpolateMixin, unittest.TestCase, InterpolateTests):
         InterpolateMixin.check(self, fmt, args,
                                *['MOCK()[%s]' % x for x in wants])
 
-class UNGettext(unittest.TestCase):
+class NGettext(unittest.TestCase):
     def test_simple(self):
-        s1 = i18n.ungettext('%d foo', '%d foos', 1)
-        s2 = i18n.ungettext('%d foo', '%d foos', 42)
+        s1 = i18n.ngettext('%d foo', '%d foos', 1)
+        s2 = i18n.ngettext('%d foo', '%d foos', 42)
 
     def test_simple_flat_one(self):
-        s = i18n.ungettext('%d foo', '%d foos', 1)
+        s = i18n.ngettext('%d foo', '%d foos', 1)
         r = flat.ten.flatten(s, None)
         self.assertEqual(r, '%d foo')
 
     def test_simple_flat_many(self):
-        s = i18n.ungettext('%d foo', '%d foos', 42)
+        s = i18n.ngettext('%d foo', '%d foos', 42)
         r = flat.ten.flatten(s, None)
         self.assertEqual(r, '%d foos')
 
     def test_simple_flat_many(self):
-        s = i18n.ungettext('%d foo', '%d foos', 42)
+        s = i18n.ngettext('%d foo', '%d foos', 42)
         r = flat.ten.flatten(s, None)
         self.assertEqual(r, '%d foos')
 
     def test_format_one(self):
-        s = i18n.ungettext('%d foo', '%d foos', 1) % 1
+        s = i18n.ngettext('%d foo', '%d foos', 1) % 1
         r = flat.ten.flatten(s, None)
         self.assertEqual(r, "1 foo")
 
     def test_format_many(self):
-        s = i18n.ungettext('%d foo', '%d foos', 42) % 42
+        s = i18n.ngettext('%d foo', '%d foos', 42) % 42
         r = flat.ten.flatten(s, None)
         self.assertEqual(r, "42 foos")
