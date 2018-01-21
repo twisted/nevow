@@ -1,6 +1,7 @@
 # Copyright (c) 2004 Divmod.
 # See LICENSE for details.
 
+
 import builtins
 import inspect, os.path
 
@@ -148,6 +149,7 @@ def getPOSTCharset(ctx):
     return 'utf-8'
 
 
+from twisted.python.compat import networkString
 from twisted.python.reflect import qual, namedAny
 from twisted.python.util import uniquify
 
@@ -159,11 +161,11 @@ from twisted.python import log
 
 ## The tests rely on these, but they should be removed ASAP
 def remainingSegmentsFactory(ctx):
-    return tuple(ctx.tag.postpath)
+    return tuple(toString(s) for s in ctx.tag.postpath)
 
 
 def currentSegmentsFactory(ctx):
-    return tuple(ctx.tag.prepath)
+    return tuple(toString(s) for s in ctx.tag.prepath)
 
 class _RandomClazz(object):
     pass
@@ -234,3 +236,25 @@ class CachedFile(object):
             self._mtime = currentTime
 
         return self._cachedObj
+
+
+def toBytes(strOrBytes):
+	"""returns a bytes instance from either a string or bytes instance.
+
+	If a string is passed in, it is encoded to nevow's default encoding
+	(currently fixed to utf-8).
+	"""
+	if isinstance(strOrBytes, str):
+		return strOrBytes.encode("utf-8")
+	return strOrBytes
+
+
+def toString(strOrBytes):
+	"""returns a string instance from either a string or bytes instance.
+
+	If bytes are passed in, they are decoded from nevow's default encoding
+	(currently fixed to utf-8).
+	"""
+	if isinstance(strOrBytes, bytes):
+		return strOrBytes.decode("utf-8")
+	return strOrBytes

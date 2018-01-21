@@ -154,6 +154,8 @@ class URL(object):
         process.'''
         request = inevow.IRequest(context)
         uri = request.prePathURL()
+        if isinstance(uri, str):   # nevow requests do that for now
+            uri = networkString(uri)
         if b'?' in request.uri:
             uri += b'?' + request.uri.split(b'?')[-1]
         return klass.fromString(uri)

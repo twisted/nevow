@@ -14,6 +14,7 @@ try:
 except ImportError:
     subunit = None
 
+from twisted.python.compat import networkString
 from twisted.python.log import msg
 from twisted.trial.unittest import TestCase as TrialTestCase
 from twisted.python.components import Componentized
@@ -62,7 +63,7 @@ class FakeRequest(Componentized):
 
     @type accumulator: C{bytes}
     @ivar accumulator: The bytes written to the response body.  write()
-        will autmatically encode strings to utf-8.
+        will autmatically encode strings passed in to utf-8.
 
     @type deferred: L{Deferred}
     @ivar deferred: The deferred which represents rendering of the response
@@ -101,22 +102,24 @@ class FakeRequest(Componentized):
         @param isSecure: whether this request represents an HTTPS url
         """
         Componentized.__init__(self)
+        if isinstance(uri, str):
+            uri = networkString(uri)
         self.uri = uri
-        if not uri.startswith('/'):
+        if not uri.startswith(b'/'):
             raise ValueError('uri must be relative with absolute path')
         self.path = uri
         self.prepath = []
-        postpath = uri.split('?')[0]
-        assert postpath.startswith('/')
-        self.postpath = postpath[1:].split('/')
+        postpath = uri.split(b'?')[0]
+        assert postpath.startswith(b'/')
+        self.postpath = postpath[1:].split(b'/')
         if currentSegments is not None:
             for seg in currentSegments:
                 assert seg == self.postpath[0]
                 self.prepath.append(self.postpath.pop(0))
         else:
-            self.prepath.append('')
+            self.prepath.append(b'')
         self.responseHeaders = Headers()
-        self.args = args or {}
+        self.args = dict((networkString(k), val) for k, v in (args or {}))
         self.sess = FakeSession(avatar)
         self.site = FakeSite()
         self.requestHeaders = Headers()
@@ -202,8 +205,8 @@ class FakeRequest(Componentized):
 
         @rtype: C{str}.
         """
-        return 'http://%s/%s' % (self.getHeader('host') or 'localhost',
-                                 '/'.join(self.prepath))
+        return b'http://%s/%s' % (self.getHeader(b'host') or b'localhost',
+                                 b'/'.join(self.prepath))
 
     def getClientIP(self):
         return '127.0.0.1'

@@ -38,6 +38,7 @@ def deferredRender(res, request=None):
                 tag=request)))
 
     def done(result):
+        assert not isinstance(result, bytes)
         if isinstance(result, str):
             request.write(result)
         request.d.callback(request.accumulator)
@@ -52,12 +53,7 @@ class TestPage(unittest.TestCase):
         xhtml = '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'
         r = rend.Page(docFactory=loaders.htmlstr(xhtml))
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, xhtml))
-    test_simple.suppress = [
-        SUPPRESS(message=
-                 r"\[v0.8\] htmlstr is deprecated because it's buggy. "
-                 "Please start using xmlfile and/or xmlstr.")]
-
+            lambda result: self.assertEqual(result, util.toBytes(xhtml)))
 
 
     def test_extend(self):
@@ -66,7 +62,7 @@ class TestPage(unittest.TestCase):
             docFactory = loaders.htmlstr(xhtml)
         r = R()
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, xhtml))
+            lambda result: self.assertEqual(result, util.toBytes(xhtml)))
     test_extend.suppress = [
         SUPPRESS(message=
                  r"\[v0.8\] htmlstr is deprecated because it's buggy. "
@@ -87,7 +83,7 @@ class TestPage(unittest.TestCase):
         return deferredRender(r).addCallback(
             lambda result: self.assertEqual(
             result,
-            '<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'))
+            b'<ul id="nav"><li>one</li><li>two</li><li>three</li></ul>'))
 
     def test_noData(self):
         """Test when data is missing, i.e. self.original is None and no data
@@ -98,7 +94,7 @@ class TestPage(unittest.TestCase):
                 return ctx.tag.clear()[data]
         r = R()
         return deferredRender(r).addCallback(
-            lambda result: self.assertIn('None', result))
+            lambda result: self.assertIn(b'None', result))
     test_noData.suppress = [
         SUPPRESS(message=
                  r"\[v0.8\] htmlstr is deprecated because it's buggy. "
@@ -115,7 +111,7 @@ class TestPage(unittest.TestCase):
 
         r = R()
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, '<span>abc</span>'))
+            lambda result: self.assertEqual(result, b'<span>abc</span>'))
     test_render.suppress = [
         SUPPRESS(message=
                  r"\[v0.8\] htmlstr is deprecated because it's buggy. "
@@ -148,12 +144,12 @@ class TestPage(unittest.TestCase):
         d.addCallback(
             lambda result: self.assertEqual(
                 result,
-                '<table>'
+                util.toBytes('<table>'
                 '<tr><th>English</th><th>French</th></tr>'
                 '<tr><td>one</td><td>un/une</td></tr>'
                 '<tr><td>two</td><td>deux</td></tr>'
                 '<tr><td>three</td><td>trois</td></tr>'
-                '</table>'))
+                '</table>')))
 
     def test_stanData(self):
         class R(rend.Page):
@@ -166,7 +162,7 @@ class TestPage(unittest.TestCase):
 
         r = R()
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, '<ul><li>one</li><li>two</li><li>three</li></ul>'))
+            lambda result: self.assertEqual(result, b'<ul><li>one</li><li>two</li><li>three</li></ul>'))
 
     def test_stanRender(self):
 
@@ -179,7 +175,7 @@ class TestPage(unittest.TestCase):
 
         r = R()
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, '<span>abc</span>'))
+            lambda result: self.assertEqual(result, b'<span>abc</span>'))
 
     def test_stanDataAndRender(self):
 
@@ -206,7 +202,7 @@ class TestPage(unittest.TestCase):
 
         r = R()
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, '<table><tr><th>English</th><th>French</th></tr><tr><td>one</td><td>un/une</td></tr><tr><td>two</td><td>deux</td></tr><tr><td>three</td><td>trois</td></tr></table>'))
+            lambda result: self.assertEqual(result, b'<table><tr><th>English</th><th>French</th></tr><tr><td>one</td><td>un/une</td></tr><tr><td>two</td><td>deux</td></tr><tr><td>three</td><td>trois</td></tr></table>'))
 
     def test_composite(self):
 
@@ -222,7 +218,7 @@ class TestPage(unittest.TestCase):
                 )
         r = R()
         return deferredRender(r).addCallback(
-            lambda result: self.assertEqual(result, '<div id="outer"><div id="inner"></div></div>'))
+            lambda result: self.assertEqual(result, b'<div id="outer"><div id="inner"></div></div>'))
 
     def _testDocFactoryInStanTree(self, docFactory, expected):
         class Page(rend.Page):
@@ -236,7 +232,7 @@ class TestPage(unittest.TestCase):
                 return self.included
 
         return deferredRender(Page(docFactory)).addCallback(
-            self.assertEqual, '<div>' + expected + '</div>')
+            self.assertEqual, util.toBytes('<div>' + expected + '</div>'))
 
 
     def test_stanInStanTree(self):
@@ -322,12 +318,12 @@ class TestPage(unittest.TestCase):
 
         d = deferredRender(p1)
         def rendered(result):
-            self.assertEqual(result, '<div>first</div>')
+            self.assertEqual(result, b'<div>first</div>')
             return deferredRender(p2)
         d.addCallback(rendered)
 
         def renderedAgain(result):
-            self.assertEqual(result, '<div><p>second</p></div>')
+            self.assertEqual(result, b'<div><p>second</p></div>')
         d.addCallback(renderedAgain)
 
         return d
@@ -341,7 +337,7 @@ class TestPage(unittest.TestCase):
         p = Page()
         return deferredRender(p).addCallback(
             lambda result:
-            self.assertEqual(result, '<html><head><title>test</title></head></html>'))
+            self.assertEqual(result, b'<html><head><title>test</title></head></html>'))
 
     def test_component(self):
         """
@@ -369,7 +365,7 @@ class TestPage(unittest.TestCase):
         page = Page()
         return deferredRender(page).addCallback(
             lambda result:
-            self.assertEqual(result, '<div><p><strong>foo</strong> bar</p></div>'))
+            self.assertEqual(result, b'<div><p><strong>foo</strong> bar</p></div>'))
 
     def test_fragmentContext(self):
         # A fragment is remembered as the IRendererFactory. It must create a new context
@@ -650,7 +646,7 @@ class TestDeferredDefaultValue(unittest.TestCase):
             d = deferred
 
         return deferredRender(rend.Page(Implementation(), docFactory=loaders.stan(html[freeform.renderForms('original')]))).addCallback(
-            lambda result: self.assertIn('value="the default value"', result))
+            lambda result: self.assertIn(b'value="the default value"', result))
 
 
 class TestRenderString(unittest.TestCase):
@@ -858,7 +854,7 @@ class TestLocateChild(unittest.TestCase):
 
         return getResource(page, '/foo').addCallback(
             lambda c: deferredRender(c.tag).addCallback(
-            lambda result: self.assertEqual(result, theString)))
+            lambda result: self.assertEqual(result, util.toBytes(theString))))
 
     def test_freeformChildMixin_nonTrue(self):
         """Configurables that have c.__nonzero__()==False are accepted."""
@@ -883,7 +879,7 @@ class TestLocateChild(unittest.TestCase):
             def x3(r):
                 self.assertFalse(isinstance(r.tag, rend.FourOhFour))
                 return deferredRender(r.tag).addCallback(
-                    lambda result: self.assertEqual(result, 'You posted a form to foo'))
+                    lambda result: self.assertEqual(result, b'You posted a form to foo'))
             D2.addCallback(x3)
             return D2
         D.addCallback(x2)
@@ -896,7 +892,7 @@ class TestLocateChild(unittest.TestCase):
                 self.assertFalse(isinstance(r.tag, rend.FourOhFour))
                 return deferredRender(r.tag).addCallback(
                     lambda result:
-                    self.assertEqual(result, 'You posted a form to foo'))
+                    self.assertEqual(result, b'You posted a form to foo'))
             return D3.addCallback(x5)
         D.addCallback(x4)
         return D
