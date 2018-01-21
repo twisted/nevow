@@ -574,7 +574,7 @@ class LivePageTransport(object):
         messageData = json.parse(requestContent)
 
         response = self.messageDeliverer.basketCaseReceived(ctx, messageData)
-        response.addCallback(json.serialize)
+        response.addCallback(json.dumps)
         req.notifyFinish().addErrback(lambda err: self.messageDeliverer._unregisterDeferredAsOutputChannel(response))
         return response
 
@@ -1255,7 +1255,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
 
         neverEverCache(request)
         if request.args.get(ATHENA_RECONNECT):
-            return json.serialize(self.clientID)
+            return json.dumps(self.clientID)
         return rend.Page.renderHTTP(self, ctx)
 
 
@@ -1422,7 +1422,7 @@ class LivePage(rend.Page, _HasJSClass, _HasCSSModule):
         arguments to the named method.
         """
         return '%s(%s);' % (
-            methodName, ', '.join([json.serialize(arg) for arg in args]))
+            methodName, ', '.join([json.dumps(arg) for arg in args]))
 
 
     def child_jsmodule(self, ctx):
@@ -1536,8 +1536,8 @@ def _rewriteEventHandlerToAttribute(tag):
                 name = info.attributes['event']
                 handler = info.attributes['handler']
                 extraAttributes[name] = _handlerFormat % {
-                    'handler': json.serialize(handler),
-                    'event': json.serialize(name)}
+                    'handler': json.dumps(handler),
+                    'event': json.dumps(name)}
                 tag(**extraAttributes)
     return tag
 
@@ -1771,7 +1771,7 @@ class _LiveMixin(_HasJSClass, _HasCSSModule):
             # where it can easily be found.
             tags.textarea(id='athena-init-args-' + str(self._athenaID),
                           style="display: none")[
-                json.serialize(self.getInitialArguments())],
+                json.dumps(self.getInitialArguments())],
 
             # Arrange to be instantiated
             tags.script(type='text/javascript')[
