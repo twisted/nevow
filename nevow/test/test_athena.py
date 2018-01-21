@@ -1,5 +1,9 @@
 
+<<<<<<< Updated upstream
 import os, sets
+=======
+import codecs, os
+>>>>>>> Stashed changes
 
 from xml.dom.minidom import parseString
 
@@ -8,11 +12,12 @@ from twisted.python import util
 from twisted.internet.defer import Deferred
 from twisted.application.service import IServiceMaker
 from twisted.application.internet import TCPServer
+from twisted.python.compat import networkString, nativeString
 from twisted.python.reflect import qual
 from twisted.python.usage import UsageError
 from twisted.plugin import IPlugin
 
-from nevow import athena, rend, tags, flat, loaders, url
+from nevow import athena, json, rend, tags, flat, loaders, url
 from nevow.loaders import stan
 from nevow.athena import LiveElement, ConnectionLost
 from nevow.appserver import NevowSite
@@ -53,10 +58,10 @@ class MappingResourceTests(unittest.TestCase):
         C{resourceFactory} method products when supplied a valid key.
         """
         m = athena.MappingResource({'name': 'value'})
-        m.resourceFactory = sets.Set
+        m.resourceFactory = set
         resource, segments = m.locateChild(None, ('name',))
         self.assertEqual(segments, [])
-        self.assertEqual(resource, sets.Set('value'))
+        self.assertEqual(resource, set('value'))
 
 
 
@@ -255,7 +260,7 @@ the end
         """
         fooModuleFilename = self.mktemp()
         with open(fooModuleFilename, 'wb') as fooModule:
-            fooModule.write('// import Bar\r\n')
+            fooModule.write(b'// import Bar\r\n')
         barModuleFilename = self.mktemp()
         with open(barModuleFilename, 'wb') as barModule:
             pass
@@ -591,15 +596,24 @@ class UtilitiesTests(unittest.TestCase):
         element.setFragmentParent(page)
 
         def _verifyRendering(result):
-            self.assertIn('<input id="athenaid:%s-foo"' % (element._athenaID,), result)
-            self.assertIn('<label for="athenaid:%s-foo"' % (element._athenaID,), result)
-            self.assertIn('<th headers=""', result)
-            self.assertIn('<th headers="athenaid:%s-foo"' % (
-                element._athenaID,), result)
-            self.assertIn('<td headers="athenaid:%s-foo athenaid:%s-bar"' % (
-                element._athenaID, element._athenaID), result)
-            self.assertIn('<td headers="athenaid:%s-foo athenaid:%s-bar athenaid:%s-baz"' % (
-                element._athenaID, element._athenaID, element._athenaID), result)
+            self.assertIn(
+                networkString('<input id="athenaid:%s-foo"' % (element._athenaID,)), 
+                result)
+            self.assertIn(
+                networkString('<label for="athenaid:%s-foo"' % (element._athenaID,)), 
+                result)
+            self.assertIn(networkString('<th headers=""'), result)
+            self.assertIn(networkString(
+                '<th headers="athenaid:%s-foo"' % ( element._athenaID,)), 
+                result)
+            self.assertIn(
+                networkString('<td headers="athenaid:%s-foo athenaid:%s-bar"' % (
+                    element._athenaID, element._athenaID)), 
+                result)
+            self.assertIn(
+                networkString('<td headers="athenaid:%s-foo athenaid:%s-bar athenaid:%s-baz"' % (
+                    element._athenaID, element._athenaID, element._athenaID)), 
+                result)
 
         return renderLivePage(page).addCallback(_verifyRendering)
 
@@ -668,7 +682,7 @@ class UtilitiesTests(unittest.TestCase):
         d = renderPage(page, reqFactory=lambda: req)
         d.addCallback(
             self.assertEqual,
-            flat.flatten(page.unsupportedBrowserLoader))
+            networkString(flat.flatten(page.unsupportedBrowserLoader)))
         return d
 
 
@@ -922,10 +936,14 @@ class Transport(unittest.TestCase):
         Test that if there are several messages queued they are all sent at
         once when an output channel becomes available.
         """
+        inHex = nativeString(
+            codecs.encode(networkString(self.theMessage), "hex"))
         self.rdm.addMessage(self.theMessage)
-        self.rdm.addMessage(self.theMessage.encode('hex'))
+        self.rdm.addMessage(inHex)
         self.rdm.addOutput(mappend(self.transport))
-        self.assertEqual(self.transport, [[(0, self.theMessage), (1, self.theMessage.encode('hex'))]])
+
+        self.assertEqual(self.transport, [
+            [(0, self.theMessage), (1, inHex)]])
 
 
     def testMultipleQueuedOutputs(self):
@@ -1476,7 +1494,7 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
                 page.getStylesheetStan(
                     [page.getCSSModuleURL('TestCSSModuleDependencies.Dependee'),
                      page.getCSSModuleURL('TestCSSModuleDependencies.Dependor')]))
-            self.assertIn(expected, result)
+            self.assertIn(networkString(expected), result)
         D.addCallback(cbRendered)
         return D
 
@@ -1503,7 +1521,7 @@ class LiveMixinTestsMixin(CSSModuleTestMixin):
                 page.getStylesheetStan(
                     [page.getCSSModuleURL('TestCSSModuleDependencies.Dependee'),
                      page.getCSSModuleURL('TestCSSModuleDependencies.Dependor')]))
-            self.assertIn(expected, result)
+            self.assertIn(networkString(expected), result)
         D.addCallback(cbRendered)
         return D
 
@@ -1573,7 +1591,7 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         bc = self.page._bootstrapCall(
             "SomeModule.someMethod", ["one", 2, {"three": 4.1}])
         self.assertEqual(
-            bc, 'SomeModule.someMethod("one", 2, {"three":4.1});')
+            bc, 'SomeModule.someMethod("one", 2, {"three": 4.1});')
 
 
     def test_pageJsClassDependencies(self):

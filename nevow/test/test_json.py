@@ -87,12 +87,12 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
 
     def testSerialize(self):
         for struct in TEST_OBJECTS:
-            json.serialize(struct)
+            json.dumps(struct)
 
     def testRoundtrip(self):
         for struct in TEST_OBJECTS:
-            bytes = json.serialize(struct)
-            unstruct = json.parse(bytes)
+            bytes = json.dumps(struct)
+            unstruct = json.loads(bytes)
             self.assertEqual(
                 unstruct, struct,
                 "Failed to roundtrip %r: %r (through %r)" % (
@@ -103,13 +103,15 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         """
         C{undefined} is parsed as Python C{None}.
         """
-        self.assertEqual(None, json.parse(b'undefined'))
+        self.assertEqual(None, json.loads(b'undefined'))
+    test_undefined.skip = ("I don't think built-in json can be coerced to do"
+        " 'undefined' -- and of course it's not json anyway")
 
 
     def testStringlikeRountrip(self):
         for struct in TEST_STRINGLIKE_OBJECTS:
-            bytes = json.serialize(struct)
-            unstruct = json.parse(bytes)
+            bytes = json.dumps(struct)
+            unstruct = json.loads(bytes)
             failMsg = "Failed to roundtrip %r: %r (through %r)" % (
                     struct, unstruct, bytes)
             self.assertEqual(unstruct, struct, failMsg)
@@ -119,7 +121,7 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
     def test_lineTerminators(self):
         """
         When passed a unicode string containing a line terminator,
-        L{json.serialize} emits an escape sequence representing that character
+        L{json.dumps} emits an escape sequence representing that character
         (not a UTF-8 sequence directly representing that the line terminator
         code point).
 
@@ -127,31 +129,31 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         handle them properly.
         """
         # These are the four line terminators currently in Unicode.
-        self.assertEqual('"\\r"', json.serialize("\r"))
-        self.assertEqual('"\\n"', json.serialize("\n"))
-        self.assertEqual('"\\u2028"', json.serialize("\u2028"))
-        self.assertEqual('"\\u2029"', json.serialize("\u2029"))
+        self.assertEqual('"\\r"', json.dumps("\r"))
+        self.assertEqual('"\\n"', json.dumps("\n"))
+        self.assertEqual('"\\u2028"', json.dumps("\u2028"))
+        self.assertEqual('"\\u2029"', json.dumps("\u2029"))
 
 
     def testScientificNotation(self):
-        self.assertEqual(json.parse('1e10'), 10**10)
-        self.assertEqual(json.parse('1e0'), 1)
+        self.assertEqual(json.loads('1e10'), 10**10)
+        self.assertEqual(json.loads('1e0'), 1)
 
 
     def testHexEscapedCodepoints(self):
         self.assertEqual(
-            json.parse('"\\xe1\\xe9\\xed\\xf3\\xfa\\xfd"'),
+            json.loads('"\\u00e1\\u00e9\\u00ed\\u00f3\\u00fa\\u00fd"'),
             "\xe1\xe9\xed\xf3\xfa\xfd")
 
     def testEscapedControls(self):
         self.assertEqual(
-            json.parse('"\\f\\b\\n\\t\\r"'),
+            json.loads('"\\f\\b\\n\\t\\r"'),
             "\f\b\n\t\r")
 
 
     def _rendererTest(self, cls):
         self.assertEqual(
-            json.serialize(
+            json.dumps(
                 cls(
                     docFactory=loaders.stan(tags.p['Hello, world.']))),
             '"<div xmlns=\\"http://www.w3.org/1999/xhtml\\"><p>Hello, world.</p></div>"')
@@ -176,13 +178,13 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
     def _doubleSerialization(self, cls):
         fragment = cls(docFactory=loaders.stan(tags.div['Hello']))
         self.assertEqual(
-            json.serialize(fragment),
-            json.serialize(fragment))
+            json.dumps(fragment),
+            json.dumps(fragment))
 
 
     def test_doubleFragmentSerialization(self):
         """
-        Test that repeatedly calling L{json.serialize} with an instance of
+        Test that repeatedly calling L{json.dumps} with an instance of
         L{rend.Fragment} results in the same result each time.
         """
         return self._doubleSerialization(rend.Fragment)
@@ -204,8 +206,8 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
                  tags.div(render=tags.directive('foo'))]))
         liveFragment.setFragmentParent(livePage)
         self.assertEqual(
-            json.serialize(liveFragment),
-            json.serialize(liveFragment))
+            json.dumps(liveFragment),
+            json.dumps(liveFragment))
 
 
     def test_doubleLiveFragmentSerialization(self):
@@ -244,22 +246,21 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
 
     def test_unsupportedSerialization(self):
         """
-        L{json.serialize} should raise a L{TypeError} if it is passed an object
+        L{json.dumps} should raise a L{TypeError} if it is passed an object
         which it does not know how to serialize.
         """
         class Unsupported(object):
             def __repr__(self):
                 return 'an unsupported object'
-        exception = self.assertRaises(TypeError, json.serialize, Unsupported())
+        exception = self.assertRaises(TypeError, json.dumps, Unsupported())
         self.assertEqual(
             str(exception),
-            "Unsupported type <class 'nevow.test.test_json.Unsupported'>: "
-            "an unsupported object")
+            "an unsupported object is not JSON serializable")
 
 
     def test_customSerialization(self):
         """
-        L{json.serialize} should emit JavaScript calls to the JavaScript object
+        L{json.dumps} should emit JavaScript calls to the JavaScript object
         named by L{IAthenaTransportable.jsClass} with the arguments returned by
         L{IAthenaTransportable.getInitialArguments} when passed an object which
         can be adapted to L{IAthenaTransportable}.
@@ -276,18 +277,23 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
                 self.getInitialArguments = lambda: initialArgs
 
         self.assertEqual(
-            json.serialize(Transportable("Foo", ())),
+            json.dumps(Transportable("Foo", ())),
             "(new Foo())")
         self.assertEqual(
-            json.serialize(Transportable("Bar", (None,))),
+            json.dumps(Transportable("Bar", (None,))),
             "(new Bar(null))")
         self.assertEqual(
-            json.serialize(Transportable("Baz.Quux", (1, 2))),
+            json.dumps(Transportable("Baz.Quux", (1, 2))),
             "(new Baz.Quux(1,2))")
 
         # The style of the quotes in this assertion is basically irrelevant.
         # If, for some reason, the serializer changes to use ' instead of ",
         # there's no reason not to change this test to reflect that. -exarkun
         self.assertEqual(
-            json.serialize(Transportable("Quux", ("Foo",))),
+            json.dumps(Transportable("Quux", ("Foo",))),
             '(new Quux("Foo"))')
+
+    test_customSerialization.skip = ("I don't see a way to inject this"
+        " sort of json violation into the built-in json machinery."
+        "  If we want this to work again, we'll have to resurrect the"
+        " old nevow json module.")

@@ -12,6 +12,7 @@ import urllib.request, urllib.parse, urllib.error
 
 from zope.interface import implementer
 
+from twisted.python.compat import networkString, nativeString
 from twisted.web.util import redirectTo
 
 from nevow import inevow, flat
@@ -141,8 +142,10 @@ class URL(object):
         already been processed.
         """
         uri = request.prePathURL()
-        if '?' in request.uri:
-            uri += '?' + request.uri.split('?')[-1]
+        if isinstance(uri, str):   # nevow requests do that for now
+            uri = networkString(uri)
+        if b'?' in request.uri:
+            uri += b'?' + request.uri.split(b'?')[-1]
         return klass.fromString(uri)
     fromRequest = classmethod(fromRequest)
 
