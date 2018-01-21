@@ -21,17 +21,24 @@ Use utils.toBytes or utils.toString to turn function arguments into
 strings or bytes as requrired.
 
 
-Twisted.web.server.Request
-==========================
+Bytes within Twisted we're concerned with
+=========================================
 
 The most important items that are byte strings within request, include:
 
 * uri
 * keys and values in args (this hurts a lot)
-* headers
+* header keys (but header values are decoded)
 * prePath -- this is where segments come from; segments, however, are
   nevow interface and hence strings.
 * the arguments to write (in nevow, we accept strings, too)
+
+
+At least cred.checkers.InMemoryUsernamePasswordDatabaseDontUse
+explicitly ASCII-encodes their usernames right now.  Since that's
+what's used in the unit tests, I'm following ASCII-encoded usernames
+in guard.  This seems insane.  Anyone actually working with guard
+should look into this.
 
 
 Bytes usage within nevow itself

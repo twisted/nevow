@@ -96,9 +96,9 @@ class directive(object):
         return hash((directive, self.name))
 
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         if isinstance(other, directive):
-            return cmp(self.name, other.name)
+            return self.name == other.name
         return NotImplemented
 
 

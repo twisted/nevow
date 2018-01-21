@@ -977,15 +977,15 @@ class FlattenerErrorTests(TestCase):
             str(FlattenerError(
                     RuntimeError("reason"), ['abc\N{SNOWMAN}xyz'], [])),
             "Exception while flattening:\n"
-            "  u'abc\\u2603xyz'\n" # Codepoint for SNOWMAN
+            "  'abc\u2603xyz'\n" # Codepoint for SNOWMAN
             "RuntimeError: reason\n")
         self.assertEqual(
             str(FlattenerError(
                     RuntimeError("reason"), ['01234567\N{SNOWMAN}9' * 10],
                     [])),
             "Exception while flattening:\n"
-            "  u'01234567\\u2603901234567\\u26039<...>01234567\\u2603901234567"
-            "\\u26039'\n"
+            "  '01234567\u2603901234567\u26039<...>01234567\u2603901234567"
+            "\u26039'\n"
             "RuntimeError: reason\n")
 
 
@@ -1055,11 +1055,12 @@ class FlattenerErrorTests(TestCase):
         except RuntimeError as exc:
             # Get the traceback, minus the info for *this* frame
             tbinfo = traceback.extract_tb(sys.exc_info()[2])[1:]
+            excStr = str(FlattenerError(exc, [], tbinfo))
         else:
             self.fail("f() must raise RuntimeError")
 
         self.assertEqual(
-            str(FlattenerError(exc, [], tbinfo)),
+            excStr,
             "Exception while flattening:\n"
             "  File \"%s\", line %d, in f\n"
             "    g()\n"

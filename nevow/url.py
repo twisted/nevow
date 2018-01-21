@@ -15,7 +15,7 @@ from zope.interface import implementer
 from twisted.python.compat import networkString, nativeString
 from twisted.web.util import redirectTo
 
-from nevow import inevow, flat
+from nevow import inevow, flat, util
 from nevow.stan import raw
 from nevow.flat import serialize
 from nevow.context import WovenContext
@@ -153,9 +153,7 @@ class URL(object):
         '''Create a URL object that represents the current URL in the traversal
         process.'''
         request = inevow.IRequest(context)
-        uri = request.prePathURL()
-        if isinstance(uri, str):   # nevow requests do that for now
-            uri = networkString(uri)
+        uri = util.toBytes(request.prePathURL())
         if b'?' in request.uri:
             uri += b'?' + request.uri.split(b'?')[-1]
         return klass.fromString(uri)

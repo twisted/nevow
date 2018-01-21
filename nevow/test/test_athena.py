@@ -1,9 +1,5 @@
 
-<<<<<<< Updated upstream
-import os, sets
-=======
 import codecs, os
->>>>>>> Stashed changes
 
 from xml.dom.minidom import parseString
 
@@ -26,7 +22,7 @@ from nevow.context import WovenContext
 from nevow.testutil import FakeRequest, renderPage, renderLivePage, CSSModuleTestMixin
 from nevow._widget_plugin import WidgetPluginRoot
 from nevow._widget_plugin import ElementRenderingLivePage
-from nevow.json import serialize
+from nevow.json import dumps as serialize
 
 from twisted.plugins.nevow_widget import widgetServiceMaker
 
@@ -1573,6 +1569,7 @@ class LivePageTests(unittest.TestCase, CSSModuleTestMixin):
         Create and remember a L{LivePage} instance.
         """
         self.page = athena.LivePage()
+        self.page.docFactory = stan(tags.div())
 
 
     def tearDown(self):

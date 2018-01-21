@@ -291,5 +291,5 @@ class HandleSegment(TestCase):
         site = NevowSite(rootResource)
         result = site.handleSegment(
             (childResource, ()), request, ('foo', 'bar'), context)
-        self.assertEqual(request.prepath, [''])
+        self.assertEqual(request.prepath, [b''])
         self.assertEqual(request.postpath, [])

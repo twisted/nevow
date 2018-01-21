@@ -21,6 +21,7 @@ from nevow import inevow
 from nevow import guard
 from nevow import context
 from nevow import appserver
+from nevow import util
 
 
 class FakeHTTPChannel:
@@ -78,9 +79,7 @@ class FakeHTTPChannel:
         req.user = username
         req.password = password
         req.received_cookies.update(self.received_cookies)
-        if isinstance(path, str):
-            path = path.encode("ascii")
-        req.requestReceived(b"GET", path, b"HTTP/1.0")
+        req.requestReceived(b"GET", util.toBytes(path), b"HTTP/1.0")
         return req
 
 
@@ -295,7 +294,7 @@ class GuardTestFuncs:
         if not self.guardPath:
             return b''
         else:
-            return b'/' + b'/'.join(self.guardPath)
+            return b'/' + b'/'.join([util.toBytes(s) for s in self.guardPath])
 
     def test_httpAuthInit(self):
         """
@@ -338,14 +337,16 @@ class GuardTestFuncs:
 
         # The URL should have the cookie segment in it and the correct path segments at the end
         self.assertEqual(req.responseHeaders.getRawHeaders('location')[0],
-            b'http://fake.com%s/%s/xxx/yyy/' % (self.getGuardPath(), guard.SESSION_KEY+cookie, ))
+            'http://fake.com%s/%s/xxx/yyy/' % (
+                util.toString(self.getGuardPath()), 
+                guard.SESSION_KEY+cookie))
 
         # Now, let's follow the redirect
         req = req.followRedirect()
         # Our session should now be set up and we will be redirected to our final destination
         self.assertEqual(
             req.responseHeaders.getRawHeaders('location')[0].split('?')[0],
-            b'http://fake.com%s/xxx/yyy/' % self.getGuardPath())
+            'http://fake.com%s/xxx/yyy/' % util.toString(self.getGuardPath()))
 
         # Let's follow the redirect to the final page
         req = req.followRedirect()
@@ -377,7 +378,7 @@ class GuardTestFuncs:
         # The URL should have the session id segment in it and the correct path segments at the end
         [location] = req.responseHeaders.getRawHeaders('location')
         location = location.encode("ascii")
-        prefix = b'http://fake.com%s/%s' % (self.getGuardPath(), guard.SESSION_KEY)
+        prefix = b'http://fake.com%s/%s' % (self.getGuardPath(), util.toBytes(guard.SESSION_KEY))
         suffix = b'/xxx/yyy/'
         self.assertTrue(location.startswith(prefix))
         self.assertTrue(location.endswith(suffix))
@@ -438,13 +439,14 @@ class GuardTestFuncs:
 
         request = channel.makeFakeRequest(
             b'%s/?foo=1&bar=2' % self.getGuardPath()).followAllRedirects()
-        self.assertEqual(request.written.getvalue(), '')
+        self.assertEqual(request.written.getvalue(), b'')
         self.assertEqual(
-            renders, [({'foo': ['1'], 'bar': ['2']},
-                       None,
-                       None,
-                       'GET',
-                       Headers({'host': ['fake.com']}))])
+            renders,
+            [({b'bar': [b'2'], b'foo': [b'1']}, 
+                None, 
+                None, 
+                b'GET', 
+                Headers({b'host': [b'fake.com']}))])
 
 
     def test_loginRestoresRequestParameters(self):
@@ -480,7 +482,7 @@ class GuardTestFuncs:
             self.getGuardPath() + b'/__login__?username=test&password=test')
         request = request.followAllRedirects()
 
-        self.assertEqual(request.written.getvalue(), '')
+        self.assertEqual(request.written.getvalue(), b'')
         self.assertEqual(
             renders, [({'foo': ['1'], 'bar': ['2']},
                        None,
@@ -513,13 +515,13 @@ class GuardTestFuncs:
             self.getGuardPath() + b'/__login__?username=test&password=test')
         request = request.followAllRedirects()
 
-        self.assertEqual(request.written.getvalue(), '')
+        self.assertEqual(request.written.getvalue(), b'')
         self.assertEqual(
-            renders, [({'username': ['test'], 'password': ['test']},
+            renders, [({b'username': [b'test'], b'password': [b'test']},
                        None,
-                       '',
-                       'GET',
-                       Headers({'host': ['fake.com']}))])
+                       b'',
+                       b'GET',
+                       Headers({b'host': [b'fake.com']}))])
 
 
     def testNoSlash(self):
@@ -532,8 +534,8 @@ class GuardTestFuncs:
         self.assertEqual(req.written.getvalue(), b"No")
 
         # now try requesting just the guard path
-        self.assertTrue(req.path.startswith(b'%s/%s' % (self.getGuardPath(), guard.SESSION_KEY)))
-        self.assertTrue(req.path.endswith('/'))
+        self.assertTrue(req.path.startswith(b'%s/%s' % (self.getGuardPath(), util.toBytes(guard.SESSION_KEY))))
+        self.assertTrue(req.path.endswith(b'/'))
         req = chan.makeFakeRequest(req.path[:-1], requestClass=FakeHTTPRequest_noCookies).followAllRedirects()
 
         # it should work just as well as with the slash
@@ -543,15 +545,17 @@ class GuardTestFuncs:
     def testTrailingSlashMatters_noCookies(self):
         class TrailingSlashPage(rend.Page):
             def locateChild(self, context, segments):
-                return self.__class__('%s/%s' % (self.original, segments[0])), segments[1:]
+                return self.__class__('%s/%s' % (
+                        util.toString(self.original)
+                        , segments[0])), segments[1:]
 
         class TrailingSlashAvatar(TrailingSlashPage):
             def renderHTTP(self, context):
-                return 'Authenticated %s' % self.original
+                return 'Authenticated %s' % util.toString(self.original)
 
         class TrailingSlashAnonymous(TrailingSlashPage):
             def renderHTTP(self, ctx):
-                return 'Anonymous %s' % self.original
+                return 'Anonymous %s' % util.toString(self.original)
 
         @implementer(IRealm)
         class TrailingSlashRealm:
@@ -570,15 +574,15 @@ class GuardTestFuncs:
 
         req = chan.makeFakeRequest(b'%s/' % self.getGuardPath(), requestClass=FakeHTTPRequest_noCookies).followAllRedirects()
         # We should have the final resource, which is an anonymous resource
-        self.assertEqual(req.written.getvalue(), b"Anonymous %s/" % self.getGuardPath())
+        self.assertEqual(req.written.getvalue(), b"Anonymous %b/" % self.getGuardPath())
 
         # now try requesting just the guard path
-        self.assertTrue(req.path.startswith(b'%s/%s' % (self.getGuardPath(), guard.SESSION_KEY)))
-        self.assertTrue(req.path.endswith('/'))
+        self.assertTrue(req.path.startswith(b'%s/%s' % (self.getGuardPath(), util.toBytes(guard.SESSION_KEY))))
+        self.assertTrue(req.path.endswith(b'/'))
         req = chan.makeFakeRequest(req.path[:-1], requestClass=FakeHTTPRequest_noCookies).followAllRedirects()
 
         # it should no longer have the trailing slash
-        self.assertEqual(req.written.getvalue(), b"Anonymous %s" % self.getGuardPath())
+        self.assertEqual(req.written.getvalue(), b"Anonymous %b" % self.getGuardPath())
 
     def testTrailingSlashMatters_withCookies(self):
         # omitting the trailing slash when not using session keys can
@@ -588,7 +592,8 @@ class GuardTestFuncs:
         
         class TrailingSlashPage(rend.Page):
             def locateChild(self, context, segments):
-                return self.__class__('%s/%s' % (self.original, segments[0])), segments[1:]
+                return self.__class__('%s/%s' % (
+                    util.toString(self.original), segments[0])), segments[1:]
 
         class TrailingSlashAvatar(TrailingSlashPage):
             def renderHTTP(self, context):
@@ -596,7 +601,7 @@ class GuardTestFuncs:
 
         class TrailingSlashAnonymous(TrailingSlashPage):
             def renderHTTP(self, ctx):
-                return 'Anonymous %s' % self.original
+                return 'Anonymous %s' % util.toString(self.original)
 
         @implementer(IRealm)
         class TrailingSlashRealm:
@@ -613,13 +618,13 @@ class GuardTestFuncs:
         p = self.createPortal(realmFactory=lambda : TrailingSlashRealm(self.getGuardPath()))
         chan = self.createGuard(p)
 
-        req = chan.makeFakeRequest(b'%s/' % self.getGuardPath()).followAllRedirects()
+        req = chan.makeFakeRequest(b'%b/' % self.getGuardPath()).followAllRedirects()
         # We should have the final resource, which is an anonymous resource
-        self.assertEqual(req.written.getvalue(), b"Anonymous %s/" % self.getGuardPath())
+        self.assertEqual(req.written.getvalue(), b"Anonymous %b/" % self.getGuardPath())
 
         req = chan.makeFakeRequest(b'%s' % self.getGuardPath()).followAllRedirects()
         # We should have the final resource, which is an anonymous resource
-        self.assertEqual(req.written.getvalue(), b"Anonymous %s" % self.getGuardPath())
+        self.assertEqual(req.written.getvalue(), b"Anonymous %b" % self.getGuardPath())
 
     def testPlainTextCookie(self):
         """Cookies from non-SSL sites have no secure attribute."""
@@ -702,8 +707,8 @@ class GuardTestFuncs:
         cookie, a, kw = list(req._cookieCache.values())[0]
         path = kw.get('path', None)
         wanted = self.getGuardPath()
-        if wanted == '':
-            wanted = '/'
+        if wanted == b'':
+            wanted = b'/'
         self.assertEqual(path, wanted)
 
 
@@ -790,8 +795,8 @@ class GuardTestFuncs:
         p.registerChecker(InMemoryUsernamePasswordDatabaseDontUse(test='test'), IUsernamePassword)
         chan = self.createGuard(p)
 
-        req = chan.makeFakeRequest(b'%s/__login__?username=test&password=test' % self.getGuardPath()).followAllRedirects()
-        self.assertEqual(req.written.getvalue(), "GetLoggedInAvatar")
+        req = chan.makeFakeRequest('%s/__login__?username=test&password=test' % util.toString(self.getGuardPath())).followAllRedirects()
+        self.assertEqual(req.written.getvalue(), b"GetLoggedInAvatar")
 
     def testGetLoggedInRoot_httpAuthLogin(self):
 
@@ -800,7 +805,7 @@ class GuardTestFuncs:
         chan = self.createGuard(p)
         for x in range(4):
             req = chan.makeFakeRequest(b'%s/' % self.getGuardPath(), "test", "test")
-            self.assertEqual(req.written.getvalue(), "GetLoggedInAvatar")
+            self.assertEqual(req.written.getvalue(), b"GetLoggedInAvatar")
         self.assertEqual(len(self.sessions),1)
 
     def testErrorPage_httpAuth(self):
@@ -832,9 +837,10 @@ class GuardTestFuncs:
         self.assertFalse(req.responseHeaders.hasHeader('location'))
         self.assertEqual(req.code, 403)
         self.assertEqual(req.written.getvalue(),
-                          '<html><head><title>Forbidden</title></head>'
-                          +'<body><h1>Forbidden</h1>Request was forbidden.'
-                          +'</body></html>')
+                          util.toBytes(
+                            '<html><head><title>Forbidden</title></head>'
+                            +'<body><h1>Forbidden</h1>Request was forbidden.'
+                            +'</body></html>'))
         self.assertEqual(req.path, b'%s/quux/thud' % self.getGuardPath())
 
     def testErrorPage_getLogin(self):

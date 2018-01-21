@@ -19,7 +19,7 @@ from nevow.url import here, URL
 from nevow.page import Element, renderer
 
 ATHENA_XMLNS_URI = "http://divmod.org/ns/athena/0.7"
-ATHENA_RECONNECT = "__athena_reconnect__"
+ATHENA_RECONNECT = b"__athena_reconnect__"
 
 expose = util.Expose(
     """

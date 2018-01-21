@@ -14,7 +14,6 @@ try:
 except ImportError:
     subunit = None
 
-from twisted.python.compat import networkString
 from twisted.python.log import msg
 from twisted.trial.unittest import TestCase as TrialTestCase
 from twisted.python.components import Componentized
@@ -26,7 +25,7 @@ from twisted.web.test.requesthelper import DummyChannel
 
 from formless import iformless
 
-from nevow import inevow, context, athena, loaders, tags, appserver
+from nevow import inevow, context, athena, loaders, tags, appserver, util
 from nevow.jsutil import findJavascriptInterpreter, generateTestScript
 
 
@@ -103,7 +102,7 @@ class FakeRequest(Componentized):
         """
         Componentized.__init__(self)
         if isinstance(uri, str):
-            uri = networkString(uri)
+            uri = util.toBytes(uri)
         self.uri = uri
         if not uri.startswith(b'/'):
             raise ValueError('uri must be relative with absolute path')
@@ -114,12 +113,13 @@ class FakeRequest(Componentized):
         self.postpath = postpath[1:].split(b'/')
         if currentSegments is not None:
             for seg in currentSegments:
-                assert seg == self.postpath[0]
+                assert util.toBytes(seg) == self.postpath[0]
                 self.prepath.append(self.postpath.pop(0))
         else:
             self.prepath.append(b'')
         self.responseHeaders = Headers()
-        self.args = dict((networkString(k), val) for k, v in (args or {}))
+        self.args = dict((util.toBytes(k), v) 
+            for k, v in (args or {}).items())
         self.sess = FakeSession(avatar)
         self.site = FakeSite()
         self.requestHeaders = Headers()

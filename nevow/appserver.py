@@ -29,6 +29,7 @@ from nevow import inevow
 from nevow import url
 from nevow import flat
 from nevow import stan
+from nevow import util
 
 
 
@@ -244,7 +245,8 @@ class NevowRequest(server.Request):
 
         requestContext = context.RequestContext(parent=self.site.context, tag=self)
         requestContext.remember( (), inevow.ICurrentSegments)
-        requestContext.remember(tuple(self.postpath), inevow.IRemainingSegments)
+        requestContext.remember(tuple(util.toString(s) for s in self.postpath), 
+            inevow.IRemainingSegments)
 
         return self.site.getPageContextForRequestContext(
             requestContext
@@ -456,8 +458,10 @@ class NevowSite(server.Site):
 
         ## Create a context object to represent this new resource
         ctx = context.PageContext(tag=newres, parent=pageContext)
-        ctx.remember(tuple(request.prepath), inevow.ICurrentSegments)
-        ctx.remember(tuple(request.postpath), inevow.IRemainingSegments)
+        ctx.remember(tuple(util.toString(s) for s in request.prepath), 
+            inevow.ICurrentSegments)
+        ctx.remember(tuple(util.toString(s) for s in request.postpath), 
+            inevow.IRemainingSegments)
 
         res = newres
         path = newpath

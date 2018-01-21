@@ -13,7 +13,7 @@ from nevow._widget_plugin import ElementRenderingLivePage
 from nevow.testutil import renderLivePage, JavaScriptTestCase
 from nevow.athena import jsDeps, expose
 
-from nevow import plugins
+from nevow import plugins, util
 
 
 class ExampleTestBase(object):
@@ -138,9 +138,11 @@ class Echo00(ExampleTestBase, TestCase):
         def checkContent(result):
             # The "liveElement" renderer inserts this, let's look for it to
             # make sure it rendered live:
-            self.assertIn('id="athena:'+str(eb._athenaID)+'"', result)
-            self.assertIn('athena:class="EchoThing.EchoWidget"', result)
-            self.assertIn(TEXT, result)
+            self.assertIn(
+                util.toBytes('id="athena:'+str(eb._athenaID)+'"'), result)
+            self.assertIn(
+                util.toBytes('athena:class="EchoThing.EchoWidget"'), result)
+            self.assertIn(util.toBytes(TEXT), result)
         return renderLivePage(erlp).addCallback(checkContent)
 
 
@@ -192,9 +194,11 @@ class RenderAndChat01(ExampleTestBase, TestCase):
         def checkContent(result):
             # The "liveElement" renderer inserts this, let's look for it to
             # make sure it rendered live:
-            self.assertIn('id="athena:'+str(cb._athenaID)+'"', result)
-            self.assertIn('athena:class="ChatThing.ChatterWidget"', result)
-            self.assertIn(PROMPT, result)
+            self.assertIn(util.toBytes('id="athena:'+str(cb._athenaID)+'"'), 
+                result)
+            self.assertIn(
+                util.toBytes('athena:class="ChatThing.ChatterWidget"'), result)
+            self.assertIn(util.toBytes(PROMPT), result)
         return renderLivePage(erlp).addCallback(checkContent)
 
 

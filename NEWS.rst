@@ -5,13 +5,13 @@ Features
 --------
 
 This release is compatible with python3, and actually incompatible with
-path2.
+python2.
 
 - _flat.flatten no longer worries about encoding strings; this has
   to be done by the write function passed.
 - htmlfile and htmlstr are now aliases for xmlfile and xmlstr and 
   consequently require well-formed XML.  This change results from the
-  depreciation of microdom in twisted.web.
+  microdom being effecively dropped from twisted.web for python3
 
 
 Nevow 0.14.3 (2017-07-26)

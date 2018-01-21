@@ -123,12 +123,12 @@ class TestURL(TestCase):
         urlpath = url.URL.fromContext(context.RequestContext(tag=r))
         self.assertEqual('http://localhost/', str(urlpath))
 
-        r.prepath = ['a']
+        r.prepath = [b'a']
         urlpath = url.URL.fromContext(context.RequestContext(tag=r))
         self.assertEqual('http://localhost/a', str(urlpath))
 
         r = FakeRequest(uri='/a/b/c?foo=bar')
-        r.prepath = ['a','b']
+        r.prepath = [b'a',b'b']
         urlpath = url.URL.fromContext(context.RequestContext(tag=r))
         self.assertEqual('http://localhost/a/b?foo=bar', str(urlpath))
 

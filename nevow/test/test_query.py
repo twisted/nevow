@@ -278,4 +278,4 @@ class TestGenerator(testutil.TestCase):
         """
         patterns = IQ([tags.div(pattern="foo", bar="baz")]).patternGenerator("foo")
         for i in range(3):
-            self.assertEqual(patterns.next().attributes['bar'], "baz")
+            self.assertEqual(patterns.__next__().attributes['bar'], "baz")

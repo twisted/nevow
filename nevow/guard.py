@@ -33,7 +33,7 @@ except ImportError:
     from twisted.protocols import http
 
 # Nevow imports
-from nevow import inevow, url, stan
+from nevow import inevow, url, stan, util
 
 
 def _sessionCookie():
@@ -205,9 +205,9 @@ def urlToChild(ctx, *ar, **kw):
     return u
 
 
-SESSION_KEY = b'__session_key__'
-LOGIN_AVATAR = b'__login__'
-LOGOUT_AVATAR = b'__logout__'
+SESSION_KEY = '__session_key__'
+LOGIN_AVATAR = '__login__'
+LOGOUT_AVATAR = '__logout__'
 
 
 def nomind(*args): return None
@@ -345,7 +345,11 @@ class SessionWrapper:
             sz = self.sessions[httpAuthSessionKey] = self.sessionFactory(self, httpAuthSessionKey)
             # kick off the expiry timer.
             sz.checkExpired()
-            return self.checkLogin(ctx, sz, segments, None, UsernamePassword(*userpass))
+            return self.checkLogin(ctx, sz, segments, None, 
+                # XXX insanity: see at getCredentials
+                UsernamePassword(
+                    util.toBytes(userpass[0]), 
+                    util.toString(userpass[1])))
 
         # no, really, without a session
         ## Redirect to the URL with the session key in it, plus the segments of the url
@@ -371,7 +375,7 @@ class SessionWrapper:
             else:
                 expires = None
             request.addCookie(self.cookieKey, newCookie,
-                              path="/%s" % '/'.join(request.prepath),
+                              path=b"/%s" % b'/'.join(request.prepath),
                               secure=secure, expires=expires,
                               domain=self.cookieDomainForRequest(request))
         sz = self.sessions[newCookie] = self.sessionFactory(self, newCookie)
@@ -380,7 +384,7 @@ class SessionWrapper:
         sz.method = request.method
         sz._requestHeaders = request.requestHeaders
         sz.checkExpired()
-        return urlToChild(ctx, SESSION_KEY+newCookie.encode("ascii"), *segments)
+        return urlToChild(ctx, SESSION_KEY+newCookie, *segments)
 
     def checkLogin(self, ctx, session, segments, sessionURL=None, httpAuthCredentials=None):
         """
@@ -436,7 +440,6 @@ class SessionWrapper:
 
             del session.args, session.fields, session.method, session._requestHeaders
 
-
         if segments and segments[0] in (LOGIN_AVATAR, LOGOUT_AVATAR):
             authCommand = segments[0]
         else:
@@ -451,7 +454,7 @@ class SessionWrapper:
             return self.login(request, session, httpAuthCredentials, segments).addErrback(
                 self.authRequiredError, session
                 )
-
+        
         if authCommand == LOGIN_AVATAR:
             subSegments = segments[1:]
             def unmangleURL(res_and_segments):
@@ -511,8 +514,12 @@ class SessionWrapper:
         session.portalLogout(self.portal)
 
     def getCredentials(self, request):
-        username = request.args.get('username', [''])[0]
-        password = request.args.get('password', [''])[0]
+        # XXX insanity: cred.checkers.InMemoryUsernamePasswordDatabaseDontUse
+        # has bytes-valued usernames.  No idea why; anyway, I'd really
+        # like these to be actual strings.
+        # We're doing the same madness below (look for XXX insanity)
+        username = util.toBytes(request.args.get(b'username', [''])[0])
+        password = util.toString(request.args.get(b'password', [''])[0])
         return UsernamePassword(username, password)
 
     def login(self, request, session, credentials, segments):

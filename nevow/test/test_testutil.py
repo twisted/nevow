@@ -41,7 +41,7 @@ class TestFakeRequest(TestCase):
         requested URL.
         """
         req = FakeRequest(currentSegments=['a'], uri='/a/b')
-        self.assertEqual(req.prePathURL(), 'http://localhost/a')
+        self.assertEqual(req.prePathURL(), b'http://localhost/a')
 
 
     def test_prePathURLHost(self):
@@ -52,7 +52,7 @@ class TestFakeRequest(TestCase):
         req = FakeRequest(currentSegments=['a', 'b'],
                           uri='/a/b/c/',
                           headers={'host': 'foo.bar'})
-        self.assertEqual(req.prePathURL(), 'http://foo.bar/a/b')
+        self.assertEqual(req.prePathURL(), b'http://foo.bar/a/b')
 
 
     def test_getRootURL(self):
@@ -109,7 +109,7 @@ class TestFakeRequest(TestCase):
                 root.child('foo'))
 
         def _checkForUrl(result):
-            return self.assertEqual('http://localhost/foo', result)
+            return self.assertEqual(b'http://localhost/foo', result)
 
         return renderPage(_URLPage()).addCallback(_checkForUrl)
 
@@ -150,7 +150,7 @@ class TestFakeRequest(TestCase):
         Test that the path attribute of a fake request is set.
         """
         req = FakeRequest(uri='/foo')
-        self.assertEqual(req.path, '/foo')
+        self.assertEqual(req.path, b'/foo')
 
 
 

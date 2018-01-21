@@ -84,7 +84,7 @@ class TestDocFactories(unittest.TestCase):
 
 
     def test_htmlfile_slots(self):
-        doc = '<nevow:slot name="foo">Hi there</nevow:slot>'
+        doc = '<nevow:slot xmlns:nevow="http://nevow.com/ns/nevow/0.1" name="foo">Hi there</nevow:slot>'
         temp = self.mktemp()
         with open(temp, 'w') as f:
             f.write(doc)
@@ -156,7 +156,7 @@ class TestDocFactories(unittest.TestCase):
 class TestDocFactoriesCache(unittest.TestCase):
 
     doc = '''
-    <div>
+    <div xmlns:nevow="http://nevow.com/ns/nevow/0.1">
     <p nevow:pattern="1">one</p>
     <p nevow:pattern="2">two</p>
     </div>
@@ -376,7 +376,7 @@ class TestContext(unittest.TestCase):
 
     def test_htmlfile(self):
         temp = self.mktemp()
-        with open(temp, 'w')
+        with open(temp, 'w') as f:
             f.write('<p>hello</p>')
         self._withAndWithout(loaders.htmlfile(temp))
     test_htmlfile.suppress = [
