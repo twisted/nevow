@@ -49,7 +49,6 @@ install:
         # Build and install a wheel of Nevow.
         pip install wheel
 
-        # Explicitly select the py27 tag because it makes the filename more predictable.
         python setup.py bdist_wheel
 
         # Install whatever was just built.  The filename is tricky to figure
