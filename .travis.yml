@@ -49,13 +49,12 @@ install:
         # Build and install a wheel of Nevow.
         pip install wheel
 
-        # Explicitly select the py27 tag because it makes the filename more predictable.
-        python setup.py bdist_wheel --python-tag py27
+        python setup.py bdist_wheel
 
         # Install whatever was just built.  The filename is tricky to figure
         # out because wheels mangle the version in certain ways.  Replicate
         # some of that mangling here.
-        pip install dist/Nevow-"$(python setup.py --version | tr - _)"-py27-none-any.whl
+        pip install dist/Nevow-"$(python setup.py --version | tr - _)"-py2-none-any.whl
 
         # Also install the extra documentation requirements.  Unfortunately, it
         # seems pip doesn't automatically handle that case when installing from
