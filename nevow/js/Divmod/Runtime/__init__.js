@@ -490,10 +490,11 @@ Divmod.Runtime.Platform.namedMethods({
      */
     'getAttribute': function (self, node, localName, namespaceURI,
                               namespaceIdentifier) {
-        if(namespaceURI == undefined && namespaceIdentifier == undefined) {
+        var noNS = (namespaceURI == undefined && namespaceIdentifier == undefined);
+        if (noNS) {
             localName = self._mangleAttributeName(localName);
         }
-        if (node.hasAttributeNS) {
+        if (!noNS && node.hasAttributeNS) {
             if (node.hasAttributeNS(namespaceURI, localName)) {
                 return node.getAttributeNS(namespaceURI, localName);
             } else if (node.hasAttributeNS(namespaceIdentifier, localName)) {
