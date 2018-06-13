@@ -1,3 +1,13 @@
+Nevow 0.14.4 (2018-06-13)
+=========================
+
+Bugfixes
+--------
+
+- Divmod.Runtime.getAttribute now works again on newer Microsoft Edge versions.
+  (#102)
+
+
 Nevow 0.14.3 (2017-07-26)
 =========================
 

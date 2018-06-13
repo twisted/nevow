@@ -1,0 +1,3 @@
+[tool.towncrier]
+package = "nevow"
+filename = "NEWS.rst"
