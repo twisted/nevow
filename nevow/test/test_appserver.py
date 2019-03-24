@@ -13,6 +13,25 @@ from shlex import split
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.web.test.requesthelper import DummyChannel
+from twisted.web.util import DeferredResource
+from twisted.internet.defer import succeed
+from twisted.cred.portal import (
+    Portal,
+    IRealm,
+)
+from twisted.cred.checkers import (
+    AllowAnonymousAccess,
+)
+from twisted.web.resource import (
+    IResource,
+)
+from twisted.web.static import (
+    Data,
+)
+from twisted.web.guard import (
+    HTTPAuthSessionWrapper,
+    BasicCredentialFactory,
+)
 
 from nevow import inevow
 from nevow import appserver
@@ -311,3 +330,145 @@ class HandleSegment(TestCase):
             (childResource, ()), request, ('foo', 'bar'), context)
         self.assertEqual(request.prepath, [''])
         self.assertEqual(request.postpath, [])
+
+
+class OldResourceAdapterTests(TestCase):
+    def test_deferredResource(self):
+        expected = b"success"
+        resource = Data(expected, b"text/plain")
+        deferredResource = DeferredResource(succeed(resource))
+
+        rootPage = Page()
+        rootPage.child_deferredresource = deferredResource
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                rootPage,
+                b"/deferredresource",
+                b"GET",
+            ),
+        )
+        self.assertTrue(
+            actual.endswith(b"\r\n\r\n" + expected),
+            "{!r} did not include expected response body {!r}".format(
+                actual,
+                expected,
+            )
+        )
+
+    def test_deferredResourceChild(self):
+        expected = b"success"
+        resource = Data(expected, b"text/plain")
+        intermediate = Data(b"incorrect intermediate", b"text/plain")
+        intermediate.putChild(b"child", resource)
+        deferredResource = DeferredResource(succeed(intermediate))
+
+        rootPage = Page()
+        rootPage.child_deferredresource = deferredResource
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                rootPage,
+                b"/deferredresource/child",
+                b"GET",
+            ),
+        )
+        self.assertTrue(
+            actual.endswith(b"\r\n\r\n" + expected),
+            "{!r} did not include expected response body {!r}".format(
+                actual,
+                expected,
+            )
+        )
+
+@implementer(IRealm)
+class Realm(object):
+    def __init__(self, avatar):
+        self._avatar = avatar
+
+    def requestAvatar(self, avatarId, mind, *interfaces):
+        if IResource in interfaces:
+            return IResource, self._avatar, lambda: None
+        raise NotImplementedError("Only IResource")
+
+class GuardTests(TestCase):
+    """
+    Tests for interaction with L{twisted.web.guard}.
+    """
+    def setUp(self):
+        self.avatar_content = b"avatar content"
+        self.child_content = b"child content"
+        self.grandchild_content = b"grandchild content"
+
+        grandchild = Data(self.grandchild_content, b"text/plain")
+
+        child = Data(self.child_content, b"text/plain")
+        child.putChild(b"grandchild", grandchild)
+
+        self.avatar = Data(self.avatar_content, b"text/plain")
+        self.avatar.putChild(b"child", child)
+
+        self.realm = Realm(self.avatar)
+        self.portal = Portal(
+            self.realm,
+            [AllowAnonymousAccess()],
+        )
+        self.guard = HTTPAuthSessionWrapper(
+            self.portal,
+            [BasicCredentialFactory("example.com")],
+        )
+
+    def test_avatar(self):
+        """
+        A request for exactly the guarded resource results in the avatar returned
+        by cred.
+        """
+        root = Page()
+        root.child_guarded = self.guard
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                root,
+                b"/guarded",
+                b"GET",
+            ),
+        )
+        self.assertIn(self.avatar_content, actual)
+
+    def test_child(self):
+        """
+        A request for a direct child of the guarded resource results in that child
+        of the avatar returned by cred.
+        """
+        root = Page()
+        root.child_guarded = self.guard
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                root,
+                b"/guarded/child",
+                b"GET",
+            ),
+        )
+        self.assertIn(self.child_content, actual)
+
+    def test_grandchild(self):
+        """
+        A request for a grandchild of the guarded resource results in that
+        grandchild of the avatar returned by cred.
+
+        Ideally this test would be redundant with L{test_child} but the
+        implementation of L{IResource} support results in different codepaths
+        for the 1st descendant vs the Nth descendant.
+        """
+        root = Page()
+        root.child_guarded = self.guard
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                root,
+                b"/guarded/child/grandchild",
+                b"GET",
+            ),
+        )
+        self.assertIn(self.grandchild_content, actual)
