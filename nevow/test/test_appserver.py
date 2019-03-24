@@ -5,7 +5,7 @@
 Tests for L{nevow.appserver}.
 """
 
-from zope.interface import implements
+from zope.interface import implements, implementer
 
 from cStringIO import StringIO
 from shlex import split
@@ -39,18 +39,42 @@ class Render:
         return ''
 
 
+def getResourceFor(root, url):
+    request = testutil.FakeRequest()
+    request.postpath = url.split('/')
+    ctx = context.RequestContext(tag=request)
+    return util.maybeDeferred(
+        appserver.NevowSite(root).getPageContextForRequestContext, ctx)
+
+def renderResource(resource, path, method=None):
+    s = appserver.NevowSite(resource)
+    channel = DummyChannel()
+    channel.site = s
+    r = appserver.NevowRequest(channel, True)
+    r.path = path
+    if method is not None:
+        r.method = method
+    return r.process()
+
+def renderResourceReturnTransport(resource, path, method):
+    s = appserver.NevowSite(resource)
+    channel = DummyChannel()
+    channel.site = s
+    r = appserver.NevowRequest(channel, True)
+    r.path = path
+    if method is not None:
+        r.method = method
+    d = r.process()
+    d.addCallback(lambda ignored: channel.transport.written.getvalue())
+    return d
+
 class TestLookup(testutil.TestCase):
     def getResourceFor(self, root, url):
-        r = testutil.FakeRequest()
-        self.request = r
-        r.postpath = url.split('/')
-        ctx = context.RequestContext(tag=self.request)
-        return util.maybeDeferred(
-            appserver.NevowSite(root).getPageContextForRequestContext, ctx)
+        return getResourceFor(root, url)
 
     def test_leafIsRoot(self):
         root = Render()
-        self.getResourceFor(root, 'foo/bar/baz').addCallback(
+        return self.getResourceFor(root, 'foo/bar/baz').addCallback(
             lambda result: self.assertIdentical(result.tag, root))
 
     def test_children(self):
@@ -94,7 +118,7 @@ class TestLookup(testutil.TestCase):
         def asserterr(f):
             f.trap(AssertionError)
             return self.getResourceFor(root, 'notself')
-        self.getResourceFor(root, 'self').addCallbacks(
+        return self.getResourceFor(root, 'self').addCallbacks(
             lambda : self.fail(),
             asserterr)
 
@@ -102,12 +126,7 @@ class TestLookup(testutil.TestCase):
 
 class TestSiteAndRequest(testutil.TestCase):
     def renderResource(self, resource, path):
-        s = appserver.NevowSite(resource)
-        channel = DummyChannel()
-        channel.site = s
-        r = appserver.NevowRequest(channel, True)
-        r.path = path
-        return r.process()
+        return renderResource(resource, path)
 
     def test_deferredRender(self):
         class Deferreder(Render):
