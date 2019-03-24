@@ -414,7 +414,12 @@ class OldResourceAdapterTests(TestCase):
         )
 
 @implementer(IRealm)
-class Realm(object):
+class OneIResourceAvatarRealm(object):
+    """
+    An L{IRealm} with a hard-coded L{IResource} avatar that it always returns.
+
+    @ivar _avatar: The avatar.
+    """
     def __init__(self, avatar):
         self._avatar = avatar
 
@@ -440,7 +445,7 @@ class GuardTests(TestCase):
         self.avatar = Data(self.avatar_content, b"text/plain")
         self.avatar.putChild(b"child", child)
 
-        self.realm = Realm(self.avatar)
+        self.realm = OneIResourceAvatarRealm(self.avatar)
         self.portal = Portal(
             self.realm,
             [AllowAnonymousAccess()],
