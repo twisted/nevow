@@ -59,6 +59,18 @@ class Render:
 
 
 def getResourceFor(root, url):
+    """
+    Perform traversal for C{url} beginning at C{root}.
+
+    @param root: The L{nevow.inevow.IResource} at which to begin.
+
+    @param url: The relative path string of the url of the resource to
+        retrieve.
+    @type url: L{bytes}
+
+    @return: A L{Deferred} that fires with a L{PageContext} for the discovered
+        resource.
+    """
     request = testutil.FakeRequest()
     request.postpath = url.split('/')
     ctx = context.RequestContext(tag=request)
@@ -66,6 +78,19 @@ def getResourceFor(root, url):
         appserver.NevowSite(root).getPageContextForRequestContext, ctx)
 
 def renderResource(resource, path, method=None):
+    """
+    Perform a synthetic request for the given resource.
+
+    @param resource: The L{nevow.inevow.IResource} from which to begin
+        processing.
+
+    @param path: The path of the url to use in processing.
+
+    @param method: An optional request method to use.
+
+    @return: The return value of L{NevowRequest.process} for this resource,
+        path, and method.
+    """
     s = appserver.NevowSite(resource)
     channel = DummyChannel()
     channel.site = s
@@ -76,6 +101,13 @@ def renderResource(resource, path, method=None):
     return r.process()
 
 def renderResourceReturnTransport(resource, path, method):
+    """
+    Perform a synthetic request for the given resource.  This is like
+    L{renderResource} but with a different return value.
+
+    @return: All of the bytes written to the transport as a result of the
+        rendering.
+    """
     s = appserver.NevowSite(resource)
     channel = DummyChannel()
     channel.site = s
