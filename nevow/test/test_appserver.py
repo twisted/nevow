@@ -5,7 +5,7 @@
 Tests for L{nevow.appserver}.
 """
 
-from zope.interface import implements
+from zope.interface import implements, implementer
 
 from cStringIO import StringIO
 from shlex import split
@@ -13,6 +13,25 @@ from shlex import split
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.web.test.requesthelper import DummyChannel
+from twisted.web.util import DeferredResource
+from twisted.internet.defer import succeed
+from twisted.cred.portal import (
+    Portal,
+    IRealm,
+)
+from twisted.cred.checkers import (
+    AllowAnonymousAccess,
+)
+from twisted.web.resource import (
+    IResource,
+)
+from twisted.web.static import (
+    Data,
+)
+from twisted.web.guard import (
+    HTTPAuthSessionWrapper,
+    BasicCredentialFactory,
+)
 
 from nevow import inevow
 from nevow import appserver
@@ -39,18 +58,74 @@ class Render:
         return ''
 
 
+def getResourceFor(root, url):
+    """
+    Perform traversal for C{url} beginning at C{root}.
+
+    @param root: The L{nevow.inevow.IResource} at which to begin.
+
+    @param url: The relative path string of the url of the resource to
+        retrieve.
+    @type url: L{bytes}
+
+    @return: A L{Deferred} that fires with a L{PageContext} for the discovered
+        resource.
+    """
+    request = testutil.FakeRequest()
+    request.postpath = url.split('/')
+    ctx = context.RequestContext(tag=request)
+    return util.maybeDeferred(
+        appserver.NevowSite(root).getPageContextForRequestContext, ctx)
+
+def renderResource(resource, path, method=None):
+    """
+    Perform a synthetic request for the given resource.
+
+    @param resource: The L{nevow.inevow.IResource} from which to begin
+        processing.
+
+    @param path: The path of the url to use in processing.
+
+    @param method: An optional request method to use.
+
+    @return: The return value of L{NevowRequest.process} for this resource,
+        path, and method.
+    """
+    s = appserver.NevowSite(resource)
+    channel = DummyChannel()
+    channel.site = s
+    r = appserver.NevowRequest(channel, True)
+    r.path = path
+    if method is not None:
+        r.method = method
+    return r.process()
+
+def renderResourceReturnTransport(resource, path, method):
+    """
+    Perform a synthetic request for the given resource.  This is like
+    L{renderResource} but with a different return value.
+
+    @return: All of the bytes written to the transport as a result of the
+        rendering.
+    """
+    s = appserver.NevowSite(resource)
+    channel = DummyChannel()
+    channel.site = s
+    r = appserver.NevowRequest(channel, True)
+    r.path = path
+    if method is not None:
+        r.method = method
+    d = r.process()
+    d.addCallback(lambda ignored: channel.transport.written.getvalue())
+    return d
+
 class TestLookup(testutil.TestCase):
     def getResourceFor(self, root, url):
-        r = testutil.FakeRequest()
-        self.request = r
-        r.postpath = url.split('/')
-        ctx = context.RequestContext(tag=self.request)
-        return util.maybeDeferred(
-            appserver.NevowSite(root).getPageContextForRequestContext, ctx)
+        return getResourceFor(root, url)
 
     def test_leafIsRoot(self):
         root = Render()
-        self.getResourceFor(root, 'foo/bar/baz').addCallback(
+        return self.getResourceFor(root, 'foo/bar/baz').addCallback(
             lambda result: self.assertIdentical(result.tag, root))
 
     def test_children(self):
@@ -94,7 +169,7 @@ class TestLookup(testutil.TestCase):
         def asserterr(f):
             f.trap(AssertionError)
             return self.getResourceFor(root, 'notself')
-        self.getResourceFor(root, 'self').addCallbacks(
+        return self.getResourceFor(root, 'self').addCallbacks(
             lambda : self.fail(),
             asserterr)
 
@@ -102,12 +177,7 @@ class TestLookup(testutil.TestCase):
 
 class TestSiteAndRequest(testutil.TestCase):
     def renderResource(self, resource, path):
-        s = appserver.NevowSite(resource)
-        channel = DummyChannel()
-        channel.site = s
-        r = appserver.NevowRequest(channel, True)
-        r.path = path
-        return r.process()
+        return renderResource(resource, path)
 
     def test_deferredRender(self):
         class Deferreder(Render):
@@ -292,3 +362,172 @@ class HandleSegment(TestCase):
             (childResource, ()), request, ('foo', 'bar'), context)
         self.assertEqual(request.prepath, [''])
         self.assertEqual(request.postpath, [])
+
+
+class OldResourceAdapterTests(TestCase):
+    """
+    Tests for L{OldResourceAdapter}.
+    """
+    def _deferredResourceTest(self, makeResource, pathSuffix):
+        """
+        Test the result of rendering some L{DeferredResource}-containing
+        hierarchy.
+
+        @param makeResource: A one-argument callable that returns a
+            L{twisted.web.resource.IResource} provider to place into the
+            resource hierarchy.  There should be a L{DeferredResource}
+            somewhere in this hierarchy.  The argument is a byte string which
+            should be included in the response to a request for the resource
+            targetted by C{pathSuffix}.
+
+        @pathSuffix: An absolute path into the resource returned by
+            C{makeResource} identifying the resource to request and test the
+            rendering of.
+
+        @raise: A test-failing exception if the resource beneath
+            C{makeResource(expected)} identified by C{pathSuffix} does not
+            contain C{expected}.
+        """
+        expected = b"success"
+        deferredResource = makeResource(expected)
+
+        rootPage = Page()
+        rootPage.child_deferredresource = deferredResource
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                rootPage,
+                b"/deferredresource" + pathSuffix,
+                b"GET",
+            ),
+        )
+        self.assertTrue(
+            actual.endswith(b"\r\n\r\n" + expected),
+            "{!r} did not include expected response body {!r}".format(
+                actual,
+                expected,
+            )
+        )
+
+    def test_deferredResource(self):
+        """
+        A L{twisted.web.util.DeferredResource} can be placed into a L{NevowSite}
+        resource hierarchy and when requested uses the result of its
+        L{Deferred} to render a response.
+        """
+        def makeResource(expected):
+            resource = Data(expected, b"text/plain")
+            return DeferredResource(succeed(resource))
+        return self._deferredResourceTest(makeResource, b"")
+
+    def test_deferredResourceChild(self):
+        """
+        A L{twisted.web.util.DeferredResource} can be placed into a L{NevowSite}
+        resource hierarchy and when a child of it is requested it uses the
+        result of its L{Deferred} for child lookup and the resulting child is
+        then rendered.
+        """
+        def makeResource(expected):
+            resource = Data(expected, b"text/plain")
+            intermediate = Data(b"incorrect intermediate", b"text/plain")
+            intermediate.putChild(b"child", resource)
+            return DeferredResource(succeed(intermediate))
+        return self._deferredResourceTest(makeResource, b"/child")
+
+
+@implementer(IRealm)
+class OneIResourceAvatarRealm(object):
+    """
+    An L{IRealm} with a hard-coded L{IResource} avatar that it always returns.
+
+    @ivar _avatar: The avatar.
+    """
+    def __init__(self, avatar):
+        self._avatar = avatar
+
+    def requestAvatar(self, avatarId, mind, *interfaces):
+        if IResource in interfaces:
+            return IResource, self._avatar, lambda: None
+        raise NotImplementedError("Only IResource")
+
+class GuardTests(TestCase):
+    """
+    Tests for interaction with L{twisted.web.guard}.
+    """
+    def setUp(self):
+        self.avatar_content = b"avatar content"
+        self.child_content = b"child content"
+        self.grandchild_content = b"grandchild content"
+
+        grandchild = Data(self.grandchild_content, b"text/plain")
+
+        child = Data(self.child_content, b"text/plain")
+        child.putChild(b"grandchild", grandchild)
+
+        self.avatar = Data(self.avatar_content, b"text/plain")
+        self.avatar.putChild(b"child", child)
+
+        self.realm = OneIResourceAvatarRealm(self.avatar)
+        self.portal = Portal(
+            self.realm,
+            [AllowAnonymousAccess()],
+        )
+        self.guard = HTTPAuthSessionWrapper(
+            self.portal,
+            [BasicCredentialFactory("example.com")],
+        )
+
+    def test_avatar(self):
+        """
+        A request for exactly the guarded resource results in the avatar returned
+        by cred.
+        """
+        root = Page()
+        root.child_guarded = self.guard
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                root,
+                b"/guarded",
+                b"GET",
+            ),
+        )
+        self.assertIn(self.avatar_content, actual)
+
+    def test_child(self):
+        """
+        A request for a direct child of the guarded resource results in that child
+        of the avatar returned by cred.
+        """
+        root = Page()
+        root.child_guarded = self.guard
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                root,
+                b"/guarded/child",
+                b"GET",
+            ),
+        )
+        self.assertIn(self.child_content, actual)
+
+    def test_grandchild(self):
+        """
+        A request for a grandchild of the guarded resource results in that
+        grandchild of the avatar returned by cred.
+
+        Ideally this test would be redundant with L{test_child} but the
+        implementation of L{IResource} support results in different codepaths
+        for the 1st descendant vs the Nth descendant.
+        """
+        root = Page()
+        root.child_guarded = self.guard
+
+        actual = self.successResultOf(
+            renderResourceReturnTransport(
+                root,
+                b"/guarded/child/grandchild",
+                b"GET",
+            ),
+        )
+        self.assertIn(self.grandchild_content, actual)
