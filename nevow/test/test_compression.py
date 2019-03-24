@@ -155,11 +155,11 @@ class RequestWrapperTests(TestCase):
         """
         self.assertFalse(
             self.request.responseHeaders.hasHeader('content-length'))
-        self.wrapper.setHeader('content-length', 1234)
+        self.wrapper.setHeader('content-length', '1234')
         self.assertFalse(
             self.request.responseHeaders.hasHeader('content-length'))
 
-        self.request.setHeader('content-length', 1234)
+        self.request.setHeader('content-length', '1234')
         self.wrapper = CompressingRequestWrapper(self.request)
         self.assertFalse(
             self.request.responseHeaders.hasHeader('content-length'))
