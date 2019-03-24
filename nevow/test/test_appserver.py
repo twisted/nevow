@@ -365,10 +365,31 @@ class HandleSegment(TestCase):
 
 
 class OldResourceAdapterTests(TestCase):
-    def test_deferredResource(self):
+    """
+    Tests for L{OldResourceAdapter}.
+    """
+    def _deferredResourceTest(self, makeResource, pathSuffix):
+        """
+        Test the result of rendering some L{DeferredResource}-containing
+        hierarchy.
+
+        @param makeResource: A one-argument callable that returns a
+            L{twisted.web.resource.IResource} provider to place into the
+            resource hierarchy.  There should be a L{DeferredResource}
+            somewhere in this hierarchy.  The argument is a byte string which
+            should be included in the response to a request for the resource
+            targetted by C{pathSuffix}.
+
+        @pathSuffix: An absolute path into the resource returned by
+            C{makeResource} identifying the resource to request and test the
+            rendering of.
+
+        @raise: A test-failing exception if the resource beneath
+            C{makeResource(expected)} identified by C{pathSuffix} does not
+            contain C{expected}.
+        """
         expected = b"success"
-        resource = Data(expected, b"text/plain")
-        deferredResource = DeferredResource(succeed(resource))
+        deferredResource = makeResource(expected)
 
         rootPage = Page()
         rootPage.child_deferredresource = deferredResource
@@ -376,7 +397,7 @@ class OldResourceAdapterTests(TestCase):
         actual = self.successResultOf(
             renderResourceReturnTransport(
                 rootPage,
-                b"/deferredresource",
+                b"/deferredresource" + pathSuffix,
                 b"GET",
             ),
         )
@@ -387,31 +408,32 @@ class OldResourceAdapterTests(TestCase):
                 expected,
             )
         )
+
+    def test_deferredResource(self):
+        """
+        A L{twisted.web.util.DeferredResource} can be placed into a L{NevowSite}
+        resource hierarchy and when requested uses the result of its
+        L{Deferred} to render a response.
+        """
+        def makeResource(expected):
+            resource = Data(expected, b"text/plain")
+            return DeferredResource(succeed(resource))
+        return self._deferredResourceTest(makeResource, b"")
 
     def test_deferredResourceChild(self):
-        expected = b"success"
-        resource = Data(expected, b"text/plain")
-        intermediate = Data(b"incorrect intermediate", b"text/plain")
-        intermediate.putChild(b"child", resource)
-        deferredResource = DeferredResource(succeed(intermediate))
+        """
+        A L{twisted.web.util.DeferredResource} can be placed into a L{NevowSite}
+        resource hierarchy and when a child of it is requested it uses the
+        result of its L{Deferred} for child lookup and the resulting child is
+        then rendered.
+        """
+        def makeResource(expected):
+            resource = Data(expected, b"text/plain")
+            intermediate = Data(b"incorrect intermediate", b"text/plain")
+            intermediate.putChild(b"child", resource)
+            return DeferredResource(succeed(intermediate))
+        return self._deferredResourceTest(makeResource, b"/child")
 
-        rootPage = Page()
-        rootPage.child_deferredresource = deferredResource
-
-        actual = self.successResultOf(
-            renderResourceReturnTransport(
-                rootPage,
-                b"/deferredresource/child",
-                b"GET",
-            ),
-        )
-        self.assertTrue(
-            actual.endswith(b"\r\n\r\n" + expected),
-            "{!r} did not include expected response body {!r}".format(
-                actual,
-                expected,
-            )
-        )
 
 @implementer(IRealm)
 class OneIResourceAvatarRealm(object):
