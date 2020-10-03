@@ -145,8 +145,8 @@ class TestLoader(runner.TestLoader):
 
 
     def loadByName(self, name, recurse=False):
-        thing = self.findByName(name)
-        return self.loadAnything(thing, recurse)
+        return self.findByName(name) 
+        #return self.loadAnything(thing, recurse) #findByName calls loadAnything
 
 
     def loadMethod(self, method):

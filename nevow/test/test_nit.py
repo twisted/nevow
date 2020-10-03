@@ -15,7 +15,7 @@ from nevow.livetrial.testcase import TestSuite, TestError
 from nevow.livetrial.runner import TestFrameworkRoot
 from nevow.scripts import nit
 
-MESSAGE = 'I am an error'
+MESSAGE = b'I am an error'
 
 
 

@@ -421,7 +421,7 @@ class TestProtocolLineReceiverServer(LineReceiver):
     Subunit protocol which is also a Twisted LineReceiver so that it
     includes line buffering logic.
     """
-    delimiter = '\n'
+    delimiter = b'\n'
 
     def __init__(self, proto):
         self.proto = proto
@@ -432,7 +432,7 @@ class TestProtocolLineReceiverServer(LineReceiver):
         Forward the line on to the subunit protocol's lineReceived method,
         which expects it to be newline terminated.
         """
-        self.proto.lineReceived(line + '\n')
+        self.proto.lineReceived(line + self.delimiter)
 
 
 
@@ -549,23 +549,24 @@ Divmod.UnitTest.runRemote(Divmod.UnitTest.loadFromModule(%(module)s));
             msg("Running JavaScript interpreter, argv = %r" % (argv,))
             child = Popen(argv, stdout=PIPE)
             while True:
-                bytes = child.stdout.read(4096)
-                if bytes:
-                    protocol.dataReceived(bytes)
+                buf = child.stdout.read(4096)
+                if buf:
+                    protocol.dataReceived(buf)
                 else:
                     break
             returnCode = child.wait()
             if returnCode < 0:
+                #result.addError(self, failure.Failure(error.ProcessTerminated()))
                 result.addError(
                     self,
                     (Exception,
-                     "JavaScript interpreter exited due to signal %d" % (-returnCode,),
+                     Exception("JavaScript interpreter exited due to signal %d" % (-returnCode,)),
                      None))
             elif returnCode:
                 result.addError(
                     self,
                     (Exception,
-                     "JavaScript interpreter had error exit: %d" % (returnCode,),
+                     Exception("JavaScript interpreter had error exit: %d" % (returnCode,)),
                      None))
         self._runWithSigchild(run)
 

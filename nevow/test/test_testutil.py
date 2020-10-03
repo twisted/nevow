@@ -189,7 +189,7 @@ class JavaScriptTests(TestCase):
         it received a signal.
         """
         segfault = FilePath(self.mktemp())
-        segfault.setContent("""\
+        segfault.setContent(b"""\
 #!/usr/bin/python
 # Generate an unhandled SIGSEGV for this process immediately upon import.
 

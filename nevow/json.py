@@ -37,7 +37,10 @@ class NevowJSONEncoder(json.JSONEncoder):
 
             transportable = IAthenaTransportable(obj, None)
             if transportable is None:
-                return json.JSONEncoder.default(self, obj)
+                if isinstance(obj, type(None)):
+                    return 'null'
+                else:
+                    return json.dumps(obj)
             else:
                 _w('(new ' + transportable.jsClass + '(')
                 arguments = transportable.getInitialArguments()
@@ -75,6 +78,8 @@ def loads(string, **kwargs):
     """
     if isinstance(string, bytes):
         string = string.decode("utf-8")
+    if string == 'undefined':
+        return None
     return NevowJSONDecoder(**kwargs).decode(string)
 
 

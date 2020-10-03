@@ -321,7 +321,7 @@ class TestDocFactoriesCache(unittest.TestCase):
 
         # Write some content
         with open(temp, 'w') as f:
-            f.write('<p>foo</p>')
+          f.write('<p>foo</p>')
 
         # Precompile the doc
         ctx = context.WovenContext()
@@ -330,11 +330,11 @@ class TestDocFactoriesCache(unittest.TestCase):
 
         before = ''.join(flat.serialize(pc, ctx))
 
-
         # Write the file with different content and make sure the
         # timestamp changes
         with open(temp, 'w') as f:
-            f.write('<p>bar</p>')
+          f.write('<p>bar</p>')
+
         os.utime(temp, (os.path.getatime(temp), os.path.getmtime(temp)+5))
 
         after = ''.join(flat.serialize(pc, ctx))
@@ -342,9 +342,9 @@ class TestDocFactoriesCache(unittest.TestCase):
         self.assertIn('foo', before)
         self.assertIn('bar', after)
         self.assertNotEqual(before, after)
-    test_reloadAfterPrecompile.todo = \
-        'Fix so that disk templates are reloaded even after a precompile. ' \
-        'Probably just a matter of making the DocSerializer really lazy'
+        test_reloadAfterPrecompile.todo = \
+            'Fix so that disk templates are reloaded even after a precompile. ' \
+            'Probably just a matter of making the DocSerializer really lazy'
 
 
 class TestContext(unittest.TestCase):

@@ -622,7 +622,7 @@ class Serialization(TestCase):
         """
         base = url.URL.fromString(rfc1808_relative_link_base)
         for link, result in rfc1808_relative_link_tests:
-            #print link
+            print(link)
             self.assertEqual(result, flatten(base.click(link)))
     test_rfc1808.todo = 'Many of these fail miserably at the moment; often with a / where there shouldn\'t be'
 

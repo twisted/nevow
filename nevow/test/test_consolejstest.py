@@ -155,14 +155,15 @@ class JSGenerationTestCase(TestCase, _ConsoleJSTestMixin):
         scriptfname = self._outputToTempFile(script)
 
         def gotResult(s):
-            self.assertEqual(s.split('\n'),
-                             ['hello from ConsoleJSTestFoo',
-                              'hello from ConsoleJSTestFoo.Bar',
-                              'hello from ConsoleJSTestFoo.Baz',
-                              'hello from the test module',
-                              ''])
+            self.assertEqual(s.split(b'\n'),
+                             [b'hello from ConsoleJSTestFoo',
+                              b'hello from ConsoleJSTestFoo.Bar',
+                              b'hello from ConsoleJSTestFoo.Baz',
+                              b'hello from the test module',
+                              b''])
 
-        result = getProcessOutput(self.javascriptInterpreter, ('-f', scriptfname))
+        #result = getProcessOutput(self.javascriptInterpreter, ('-f', scriptfname))
+        result = getProcessOutput(self.javascriptInterpreter, (scriptfname,))
         result.addCallback(gotResult)
         return result
 

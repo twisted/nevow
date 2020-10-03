@@ -4,6 +4,8 @@
 from xml.sax import make_parser, handler
 import xml as pyxml
 
+from twisted.python import compat
+
 from nevow.stan import xml, Tag, directive, slot
 import nevow
 
@@ -145,7 +147,7 @@ class ToStan(handler.ContentHandler, handler.EntityResolver):
                 del attrs[k]
 
         no_ns_attrs = {}
-        for (attrNs, attrName), v in attrs.items():
+        for (attrNs, attrName), v in list(attrs.items()):
             nsPrefix = self.prefixMap.get(attrNs)
             if nsPrefix is None:
                 no_ns_attrs[attrName] = v
@@ -248,5 +250,16 @@ def parse(fl, ignoreDocType=False, ignoreComment=False):
     return s.document
 
 def parseString(t, ignoreDocType=False, ignoreComment=False):
-    from io import StringIO
-    return parse(StringIO(t), ignoreDocType, ignoreComment)
+    """returns stan from an XML literal in a string.
+
+    t should be a byte string with the correct charset declaration.
+    To make things easy, we accept unicode strings, too, and encode them
+    as utf-8; you should therefore not declare any charsets in such
+    literals.
+    """
+    from io import BytesIO
+
+    if isinstance(t, compat.unicode):
+    	t = t.encode("utf-8")
+
+    return parse(BytesIO(t), ignoreDocType, ignoreComment)

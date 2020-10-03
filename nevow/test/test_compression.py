@@ -148,18 +148,28 @@ class RequestWrapperTests(TestCase):
         self.request._privateTestAttribute = 42
         self.assertRaises(AttributeError, getattr, self.wrapper, '_privateTestAttribute')
 
-
+    #!!!! the test below is questionable and should be reviewed !!!!
+    #
+    #the original test code (lines changed are left commented out) failed in
+    # 
+    #twisted.web.http_headers.py:40:sanitizeLinearWhitespace
+    #builtins.AttributeError: 'int' object has no attribute 'splitlines'
+    #
+    #according to the doc setHeader does take an integer as arg, but splitlines
+    #is working on strings
     def test_contentLength(self):
         """
         Content-Length header should be discarded when compression is in use.
         """
         self.assertFalse(
             self.request.responseHeaders.hasHeader('content-length'))
-        self.wrapper.setHeader('content-length', 1234)
+        #self.wrapper.setHeader('content-length', 1234)
+        self.wrapper.setHeader('content-length', "1234")
         self.assertFalse(
             self.request.responseHeaders.hasHeader('content-length'))
 
-        self.request.setHeader('content-length', 1234)
+        #self.request.setHeader('content-length', 1234)
+        self.request.setHeader('content-length', "1234")
         self.wrapper = CompressingRequestWrapper(self.request)
         self.assertFalse(
             self.request.responseHeaders.hasHeader('content-length'))

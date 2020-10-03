@@ -104,11 +104,9 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         C{undefined} is parsed as Python C{None}.
         """
         self.assertEqual(None, json.loads(b'undefined'))
-    test_undefined.skip = ("I don't think built-in json can be coerced to do"
-        " 'undefined' -- and of course it's not json anyway")
 
 
-    def testStringlikeRountrip(self):
+    def testStringlikeRoundtrip(self):
         for struct in TEST_STRINGLIKE_OBJECTS:
             bytes = json.dumps(struct)
             unstruct = json.loads(bytes)
@@ -255,7 +253,7 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
         exception = self.assertRaises(TypeError, json.dumps, Unsupported())
         self.assertEqual(
             str(exception),
-            "an unsupported object is not JSON serializable")
+            "Object of type Unsupported is not JSON serializable")
 
 
     def test_customSerialization(self):
@@ -278,22 +276,17 @@ class JavascriptObjectNotationTestCase(unittest.TestCase):
 
         self.assertEqual(
             json.dumps(Transportable("Foo", ())),
-            "(new Foo())")
+            '"(new Foo())"')
         self.assertEqual(
             json.dumps(Transportable("Bar", (None,))),
-            "(new Bar(null))")
+            '"(new Bar(null))"')
         self.assertEqual(
             json.dumps(Transportable("Baz.Quux", (1, 2))),
-            "(new Baz.Quux(1,2))")
+            '"(new Baz.Quux(1,2))"')
 
         # The style of the quotes in this assertion is basically irrelevant.
         # If, for some reason, the serializer changes to use ' instead of ",
         # there's no reason not to change this test to reflect that. -exarkun
         self.assertEqual(
             json.dumps(Transportable("Quux", ("Foo",))),
-            '(new Quux("Foo"))')
-
-    test_customSerialization.skip = ("I don't see a way to inject this"
-        " sort of json violation into the built-in json machinery."
-        "  If we want this to work again, we'll have to resurrect the"
-        " old nevow json module.")
+            '"(new Quux(\\"Foo\\"))"')
