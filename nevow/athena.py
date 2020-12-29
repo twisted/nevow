@@ -571,7 +571,7 @@ class LivePageTransport(object):
             activeChannel(req)
 
         requestContent = req.content.read()
-        messageData = json.parse(requestContent)
+        messageData = json.loads(requestContent)
 
         response = self.messageDeliverer.basketCaseReceived(ctx, messageData)
         response.addCallback(json.dumps)

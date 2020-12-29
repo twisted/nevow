@@ -18,6 +18,8 @@ class NevowJSONEncoder(json.JSONEncoder):
     """
     def default(self, obj):
         from nevow import athena
+        if isinstance(obj, bytes):
+            obj = str(obj)
         if isinstance(obj, (athena.LiveFragment, athena.LiveElement)):
             return obj._structured()
 

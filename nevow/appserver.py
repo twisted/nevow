@@ -174,6 +174,31 @@ def processingFailed(reason, request, ctx):
 def defaultExceptionHandlerFactory(ctx):
     return DefaultExceptionHandler()
 
+##########################################################
+# changes introduced by wth are below
+class Encoder():
+    """
+    plugged into the encode slot this class makes sure for uniformly
+    sending byte arrays only to tranport level write functions
+    """
+    def encode(self, data):
+        if isinstance(data, bytes):
+            return data
+        return data.encode()
+
+    def finish(self):
+        pass
+
+class FieldStorage(cgi.FieldStorage):
+    """
+    attempting to rewrite the original cgi.FieldStorage into
+    something  which addresses the problem mentioned in the
+    class comments for NevowRequest
+    """
+    def read_binary(self):
+        """Internal: read binary data."""
+        self._binary_file = True        # force binary mode on file storage
+        super().read_binary()
 
 @implementer(inevow.IRequest)
 class NevowRequest(server.Request):
@@ -205,9 +230,8 @@ class NevowRequest(server.Request):
         # twisted request wants path a bytes instance
         server.Request.__init__(self, *args, **kw)
         tpc.Componentized.__init__(self)
-
+        self._encoder = Encoder()
         self.notifyFinish().addErrback(self._flagLostConnection)
-
 
     def _flagLostConnection(self, error):
         """
@@ -222,7 +246,7 @@ class NevowRequest(server.Request):
         if self.method == b'POST':
             t = self.content.tell()
             self.content.seek(0)
-            self.fields = cgi.FieldStorage(
+            self.fields = FieldStorage(
                 self.content, _DictHeaders(self.requestHeaders),
                 environ={'REQUEST_METHOD': 'POST'})
             self.content.seek(t)
@@ -255,6 +279,9 @@ class NevowRequest(server.Request):
         ).addCallback(
             self.gotPageContext
         )
+
+    def write(self, data):
+        super().write(data)
 
     def gotPageContext(self, pageContext):
         if pageContext is not errorMarker:
